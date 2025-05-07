@@ -1,54 +1,181 @@
-# React + TypeScript + Vite
+# BetterBooks 📚
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 📋 Project Overview
 
-Currently, two official plugins are available:
+BetterBooks is an advanced book management and accounting reconciliation system that leverages cutting-edge AI technologies to automate and streamline the accounting process. The system combines Optical Character Recognition (OCR) and Large Language Models (LLM) to create an intelligent, end-to-end automated accounts reconciliation solution.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 🎯 Key Capabilities
 
-## Expanding the ESLint configuration
+### 💡 AI Integration
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+The system integrates multiple AI technologies:
+- OCR for document digitization
+- LLM for intelligent data processing
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+A modern book management application built with React, Vite, Supabase, and Shadcn UI.
+
+## 🚀 Features
+
+- **Modern Tech Stack**
+  - React 19 with TypeScript
+  - Vite for fast development and building
+  - Supabase for backend and authentication
+  - Shadcn UI for beautiful, accessible components
+  - Tailwind CSS for styling
+
+- **AI & Machine Learning**
+  - OCR integration for document processing
+  - LLM-powered data analysis
+
+- **UI Components**
+  - Responsive design
+  - Accessible components
+  - Modern and clean interface
+
+## 🛠️ Prerequisites
+
+- Node.js (v20.x.x)
+- npm
+- Supabase account
+
+## 📦 Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/codejunkiedev/betterbooks.git
+cd betterbooks
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+2. Install dependencies:
+```bash
+npm install
 ```
+
+3. Set up environment variables:
+   - Copy `.env.example` to `.env.development` and `.env.production`
+   - Fill in your Supabase credentials:
+```env
+VITE_APP_ENV=development
+VITE_API_URL=your_api_url
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## 🚀 Running the Application
+
+### Development
+```baloggingsh
+# Build and start development server
+npm run build
+npm run dev
+```
+
+### Production
+```bash
+# Build for production
+npm run build-production
+
+# Start production server
+npm run start
+```
+
+## 🏗️ Project Structure
+
+```
+betterbooks/
+├── src/
+│   ├── components/     # React components
+│   │   └── ui/        # Shadcn UI components
+│   ├── lib/           # Utility functions and configurations
+│   ├── hooks/         # Custom React hooks
+│   └── App.tsx        # Main application component
+├── public/            # Static assets
+├── .env.development   # Development environment variables
+├── .env.production    # Production environment variables
+└── vite.config.ts     # Vite configuration
+```
+
+## 🎨 Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for development
+- `npm run build-production` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
+
+## 🔧 Configuration
+
+### Vite Configuration
+The project uses Vite with the following features:
+- TypeScript support
+- Path aliases (@/ for src directory)
+- Environment variables
+- Production optimizations
+
+### Supabase Setup
+1. Create a new Supabase project
+2. Enable authentication
+3. Configure your database schema
+4. Add your Supabase URL and anon key to environment variables
+
+### Shadcn UI
+The project uses Shadcn UI components which are:
+- Built on Radix UI primitives
+- Styled with Tailwind CSS
+- Fully accessible
+- Customizable
+
+## 🧪 Testing
+
+To test the application:
+
+1. Development testing:
+```bash
+npm run build
+npm run dev
+```
+
+2. Production testing:
+```bash
+npm run build-production
+npm run start
+```
+
+## 📝 Environment Variables
+
+Required environment variables:
+- `VITE_APP_ENV`: Environment name (development/production)
+- `VITE_API_URL`: Your API URL
+- `VITE_SUPABASE_URL`: Your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+
+## 🔐 Security
+
+- Environment variables are not committed to the repository
+- Supabase authentication is used for secure user management
+- API keys are kept secure and not exposed to the client
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👥 Authors
+
+- Talha Mushtaq - Initial work
+
+## 🙏 Acknowledgments
+
+- [Vite](https://vitejs.dev/)
+- [React](https://reactjs.org/)
+- [Supabase](https://supabase.io/)
+- [Shadcn UI](https://ui.shadcn.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
