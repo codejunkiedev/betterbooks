@@ -83,16 +83,37 @@ npm run start
 
 ```
 betterbooks/
-├── src/
-│   ├── components/     # React components
-│   │   └── ui/        # Shadcn UI components
-│   ├── lib/           # Utility functions and configurations
-│   ├── hooks/         # Custom React hooks
-│   └── App.tsx        # Main application component
-├── public/            # Static assets
-├── .env.development   # Development environment variables
-├── .env.production    # Production environment variables
-└── vite.config.ts     # Vite configuration
+├── dist/                   # Production build output
+├── node_modules/           # Project dependencies
+├── public/                 # Static assets
+├── src/                    # Source code
+│   ├── assets/             # Images and static assets
+│   ├── components/         # React components (including Shadcn UI)
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Utility functions and configurations
+│   ├── pages/              # Page-level components (if using routing)
+│   ├── services/           # API and service layer
+│   ├── types/              # TypeScript type definitions
+│   ├── App.css             # App-level CSS
+│   ├── App.tsx             # Main App component
+│   ├── index.css           # Global styles (Tailwind CSS)
+│   ├── main.tsx            # Application entry point
+│   └── vite-env.d.ts       # Vite environment type definitions
+├── .env.development        # Development environment variables
+├── .env.production         # Production environment variables
+├── .gitignore              # Git ignore rules
+├── components.json         # Shadcn UI components registry
+├── eslint.config.js        # ESLint configuration
+├── index.html              # Main HTML file
+├── package.json            # Project metadata and scripts
+├── package-lock.json       # Dependency lock file
+├── postcss.config.cjs      # PostCSS configuration
+├── README.md               # Project documentation
+├── tailwind.config.cjs     # Tailwind CSS configuration
+├── tsconfig.app.json       # TypeScript config for app
+├── tsconfig.json           # Base TypeScript configuration
+├── tsconfig.node.json      # TypeScript config for node
+└── vite.config.ts          # Vite configuration
 ```
 
 ## 🎨 Available Scripts
