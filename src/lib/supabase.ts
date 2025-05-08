@@ -5,9 +5,6 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
     console.error('❌ Supabase configuration missing! Please check your environment variables.')
-} else {
-    console.log('🔌 Supabase URL:', supabaseUrl)
-    console.log('🔑 Supabase Anon Key:', supabaseAnonKey.substring(0, 10) + '...')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
