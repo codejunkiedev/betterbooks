@@ -38,11 +38,6 @@ const DashboardLayout = () => {
       }
 
       if (!session) {
-        toast({
-          title: "Authentication Required",
-          description: "Please login to access this page.",
-          variant: "destructive",
-        });
         navigate("/login", { replace: true });
         return;
       }
