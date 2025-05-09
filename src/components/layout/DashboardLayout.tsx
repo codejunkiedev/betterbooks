@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
 import { Menu, Home, Upload, Sparkles, User, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { getSession, signOut } from "@/services/authService";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
@@ -31,7 +31,7 @@ const DashboardLayout = () => {
 
   const checkUser = async () => {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const { data: { session }, error } = await getSession();
       
       if (error) {
         throw error;
@@ -64,7 +64,7 @@ const DashboardLayout = () => {
 
   // Logout handler
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await signOut();
     if (error) {
       toast({
         title: "Error",
