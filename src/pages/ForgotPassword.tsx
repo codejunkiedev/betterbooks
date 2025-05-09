@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-
+import { resetPassword } from "@/services/authService";
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,9 +19,7 @@ export default function ForgotPassword() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + "/login",
-    });
+    const { error } = await resetPassword(email);
     setLoading(false);
 
     if (error) {
