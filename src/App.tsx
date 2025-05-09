@@ -4,20 +4,24 @@ import Login from "@/pages/Login";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
-
-function Home() {
-  return <div className="p-8 text-2xl font-bold">Welcome to BetterBooks</div>;
-}
-
-function Upload() {
-  return <div className="p-8 text-2xl font-bold">Upload Invoice Page</div>;
-}
+import Dashboard from "@/pages/Dashboard";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import UploadDocument from "@/pages/UploadDocument";
+import AISuggestion from "@/pages/AISuggestion";
 
 export default function App() {
   const routes = useRoutes([
-    { path: "/", element: <Home /> },
+    {
+      path: "/",
+      element: <DashboardLayout />,
+      children: [
+        { path: "", element: <Dashboard /> },
+        { path: "upload", element: <UploadDocument /> },
+        { path: "ai-suggestion", element: <AISuggestion /> },
+        { path: "profile", element: <div>Profile Page</div> },
+      ],
+    },
     { path: "/signup", element: <SignUp /> },
-    { path: "/upload", element: <Upload /> },
     { path: "/login", element: <Login /> },
     { path: "/forgot-password", element: <ForgotPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
