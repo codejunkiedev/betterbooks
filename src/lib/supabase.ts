@@ -1,3 +1,4 @@
+import { getSession } from '@/services/authService'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -10,7 +11,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Test connection
-supabase.auth.getSession().then(({ error }) => {
+getSession().then(({ error }) => {
     if (error) {
         console.error('❌ Supabase connection failed:', error.message)
     } else {
