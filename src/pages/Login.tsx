@@ -29,7 +29,7 @@ export default function Login() {
       toast({ title: "Login Failed", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Logged in successfully!" });
-      navigate("/upload");
+      navigate("/");
     }
   };
 
