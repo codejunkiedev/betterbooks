@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
 import { Menu, Home, Upload, Sparkles, User, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getSession, signOut } from "@/services/authService";
+import { getSession, signOut } from "@/lib/supabase/auth";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
@@ -31,7 +31,7 @@ const DashboardLayout = () => {
 
   const checkUser = async () => {
     try {
-      const { data: { session }, error } = await getSession();
+      const { session, error } = await getSession();
       
       if (error) {
         throw error;
@@ -191,7 +191,7 @@ function SidebarContent({ isActive, onNavigate = () => {}, isCollapsed = false, 
         <SidebarLink 
           to="/upload" 
           icon={<Upload className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />} 
-          label="Upload Document" 
+          label="Upload Invoice" 
           active={isActive("/upload")} 
           onNavigate={onNavigate} 
           isCollapsed={isCollapsed} 

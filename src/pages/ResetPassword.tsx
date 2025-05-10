@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { updatePassword } from "@/services/authService";
+import { updatePassword } from "@/lib/supabase/auth";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
