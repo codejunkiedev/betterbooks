@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { updatePassword } from "@/lib/supabase/auth";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -58,9 +58,7 @@ export default function ResetPassword() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({
-      password: password,
-    });
+    const { error } = await updatePassword(password);
     setLoading(false);
 
     if (error) {

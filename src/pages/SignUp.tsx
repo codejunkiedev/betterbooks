@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useNavigate, Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { signIn, signUp } from "@/lib/supabase/auth";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -33,10 +33,7 @@ export default function SignUp() {
 
     setLoading(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error: signInError } = await signIn(email, password);
 
     if (signInError) {
       if (signInError.message.includes("Email not confirmed")) {
@@ -68,7 +65,7 @@ export default function SignUp() {
     }
 
     // If not registered, proceed with sign up
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await signUp(email, password);
     setLoading(false);
 
     if (error) {
