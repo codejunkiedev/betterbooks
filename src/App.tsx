@@ -6,7 +6,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 import Dashboard from "@/pages/Dashboard";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import UploadDocument from "@/pages/UploadDocument";
+import UploadInvoice from "@/pages/UploadInvoice";
 import AISuggestion from "@/pages/AISuggestion";
 
 export default function App() {
@@ -16,7 +16,7 @@ export default function App() {
       element: <DashboardLayout />,
       children: [
         { path: "", element: <Dashboard /> },
-        { path: "upload", element: <UploadDocument /> },
+        { path: "upload", element: <UploadInvoice /> },
         { path: "ai-suggestion", element: <AISuggestion /> },
         { path: "profile", element: <div>Profile Page</div> },
       ],

@@ -49,7 +49,7 @@ export default function Dashboard() {
         <div className="flex gap-2">
           <Button asChild variant="outline" className="flex items-center gap-2">
             <a href="/upload">
-              <Upload className="h-4 w-4" /> Upload Document
+              <Upload className="h-4 w-4" /> Upload Invoice
             </a>
           </Button>
           <Button asChild variant="outline" className="flex items-center gap-2">
