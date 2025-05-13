@@ -60,13 +60,15 @@ export const signOut = async (): Promise<{ error: AuthError | null }> => {
     }
 };
 
-export const getCurrentUser = async (): Promise<{ user: User | null; error: AuthError | null }> => {
+export const getCurrentUser = async (): Promise<User> => {
     try {
         const { data: { user }, error } = await supabase.auth.getUser();
-        return { user, error };
+        if (error) throw error;
+        if (!user) throw new Error('User not authenticated');
+        return user;
     } catch (error) {
         console.error('Error getting current user:', error);
-        return { user: null, error: error as AuthError };
+        throw error;
     }
 };
 

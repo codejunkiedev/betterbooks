@@ -5,6 +5,9 @@ import { X, Image as ImageIcon, Upload, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { uploadFiles } from "@/lib/supabase/storage";
+import { uploadInvoice } from "@/lib/supabase/invoice";
+import { UploadedFile } from "@/interfaces/storage";
+import { processInvoiceFunction } from "@/api/processInvoice";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg'];
@@ -69,10 +72,16 @@ const UploadInvoice = () => {
 
     try {
       const { data, error } = await uploadFiles(files);
-      console.log(data);
       if (error) {
         throw error;
       }
+
+      const {error: invoiceError } = await uploadInvoice({ files: data as UploadedFile[] });
+      if (invoiceError) {
+        throw invoiceError;
+      }
+
+     await processInvoiceFunction();
 
       toast({
         title: "Upload complete",
