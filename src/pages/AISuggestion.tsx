@@ -109,7 +109,7 @@ const AISuggestion = () => {
               <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold">
                 1
               </div>
-              <h3 className="font-medium">Upload Document</h3>
+              <h3 className="font-medium">Upload Invoice</h3>
               <p className="text-sm text-gray-600">
                 Upload your document in PDF or Word format
               </p>

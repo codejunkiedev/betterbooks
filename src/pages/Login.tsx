@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { signIn } from "@/services/authService";
+import { signIn } from "@/lib/supabase/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -22,7 +22,7 @@ export default function Login() {
     }
 
     setLoading(true);
-    const { error } = await signIn({ email, password });
+    const { error } = await signIn(email, password);
     setLoading(false);
 
     if (error) {
