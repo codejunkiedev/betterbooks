@@ -6,8 +6,8 @@ import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 import Dashboard from "@/pages/Dashboard";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import UploadInvoice from "@/pages/UploadInvoice";
-import AISuggestion from "@/pages/AISuggestion";
+import UploadDocument from "@/pages/UploadInvoice";
+import InvoiceSuggestion from "@/pages/AISuggestion";
 
 export default function App() {
   const routes = useRoutes([
@@ -16,8 +16,8 @@ export default function App() {
       element: <DashboardLayout />,
       children: [
         { path: "", element: <Dashboard /> },
-        { path: "upload", element: <UploadInvoice /> },
-        { path: "ai-suggestion", element: <AISuggestion /> },
+        { path: "upload", element: <UploadDocument /> },
+        { path: "ai-suggestion", element: <InvoiceSuggestion /> },
         { path: "profile", element: <div>Profile Page</div> },
       ],
     },
