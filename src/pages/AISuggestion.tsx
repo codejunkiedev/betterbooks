@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase"; // Assuming supabase client is here
-import { Sparkles, Loader2, FileText, AlertTriangle } from "lucide-react";
+import { Sparkles, Loader2, FileText, Check, Edit2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,80 +10,167 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { InvoiceSuggestionType } from "@/interfaces/suggestion";
+import { 
+  fetchInvoiceSuggestions,  
+  updateInvoiceSuggestion 
+} from "@/lib/supabase/suggestion";
 
-interface InvoiceFile {
-  name: string;
-  path: string;
-}
-
-interface AIResponse {
-  debitAccount?: string;
-  creditAccount?: string;
-  amount?: string;
-  confidence?: string;
-  explanation?: string;
-  error?: string; // To capture potential errors from AI processing
-}
-
-export interface InvoiceSuggestionType {
-  invoice_id: string;
-  user_id: string;
-  file: InvoiceFile;
-  ai_response: AIResponse;
-  created_at?: string; // Optional: if you want to display creation time
-  status?: "pending" | "processing" | "completed" | "failed"; // Optional: for processing status
-}
+const ITEMS_PER_PAGE = 3;
 
 const InvoiceSuggestion = () => {
   const [suggestions, setSuggestions] = useState<InvoiceSuggestionType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<{ debit: string; credit: string }>({ debit: "", credit: "" });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchInvoiceSuggestions();
-  }, []);
+    loadSuggestions();
+  }, [currentPage]);
 
-  const fetchInvoiceSuggestions = async () => {
+  const loadSuggestions = async () => {
     setIsLoading(true);
     try {
-      // TODO: Replace 'invoice_suggestions' with your actual Supabase table name
-      // TODO: Add RLS policies in Supabase for this table to allow users to fetch their own data.
-      const { data, error } = await supabase
-        .from("invoice_suggestions") // USER: Please confirm or provide your table name
-        .select("*")
-        .order("created_at", { ascending: false }); // Optional: order by creation date
-
-      if (error) {
-        throw error;
-      }
-      setSuggestions(data || []);
-    } catch (error: any) {
+      const { data, error } = await fetchInvoiceSuggestions(currentPage, ITEMS_PER_PAGE);
+      if (error) throw error;
+      setSuggestions(data?.items || []);
+      setTotalItems(data?.total || 0);
+    } catch (error: unknown) {
       console.error("Error fetching invoice suggestions:", error);
       toast({
         title: "Error Fetching Suggestions",
-        description: error.message || "Could not retrieve invoice suggestions from the database.",
+        description: error instanceof Error ? error.message : "Could not retrieve invoice suggestions from the database.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      const suggestion = suggestions.find(s => s.id === id);
+      if (!suggestion) throw new Error("Suggestion not found");
+
+      const { error } = await updateInvoiceSuggestion(id, suggestion.deepseek_response);
+      if (error) throw error;
+
+      setSuggestions(prev => prev.filter(s => s.id !== id));
+
+      toast({
+        title: "Entry Approved",
+        description: "The accounting entry has been approved successfully.",
+      });
+    } catch (error: unknown) {
+      console.error("Error approving entry:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve the entry. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEdit = (suggestion: InvoiceSuggestionType) => {
+    setEditingId(suggestion.id);
+    setEditValues({
+      debit: suggestion.deepseek_response.debitAccount,
+      credit: suggestion.deepseek_response.creditAccount,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (id: string) => {
+    setIsSaving(true);
+    try {
+      const suggestion = suggestions.find(s => s.id === id);
+      if (!suggestion) throw new Error("Suggestion not found");
+
+      const updatedDeepseekResponse = {
+        ...suggestion.deepseek_response,
+        debitAccount: editValues.debit,
+        creditAccount: editValues.credit,
+      };
+
+      const { error } = await updateInvoiceSuggestion(id, updatedDeepseekResponse);
+      if (error) throw error;
+
+      setSuggestions(prev => prev.filter(s => s.id !== id));
+      setEditingId(null);
+      setIsModalOpen(false);
+
+      toast({
+        title: "Changes Saved",
+        description: "The accounting entry has been updated and approved successfully.",
+      });
+    } catch (error: unknown) {
+      console.error("Error saving changes:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save changes. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto"> {/* Increased max-width for table */}
+      <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold">Invoice Suggestions</h1>
             <p className="text-gray-500 mt-2">
-              Review AI-generated suggestions for your uploaded invoices.
+              Review and approve AI-generated suggestions for your uploaded invoices.
             </p>
           </div>
-          {/* Optional: Button to manually trigger processing or refresh */}
-          <Button onClick={fetchInvoiceSuggestions} className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            Refresh Suggestions 
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button onClick={loadSuggestions} className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Refresh Suggestions 
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Refresh the list of invoice suggestions</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {isLoading ? (
@@ -97,74 +183,153 @@ const InvoiceSuggestion = () => {
              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">No Invoice Suggestions Yet</h3>
             <p className="text-gray-500">Upload an invoice, and AI suggestions will appear here.</p>
-            {/* You might want to link to the upload page */}
-            {/* <Button asChild className="mt-4"> */}
-            {/*   <Link to="/upload">Upload Invoice</Link> */}
-            {/* </Button> */}
           </div>
         ) : (
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">File Name</TableHead>
-                  <TableHead>Debit Acc.</TableHead>
-                  <TableHead>Credit Acc.</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Confidence</TableHead>
-                  <TableHead className="w-[300px]">Explanation / Error</TableHead>
-                  {/* <TableHead>Status</TableHead> */}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {suggestions.map((suggestion) => (
-                  <TableRow key={suggestion.invoice_id}>
-                    <TableCell className="font-medium truncate" title={suggestion.file.name}>
-                      {suggestion.file.name}
-                    </TableCell>
-                    <TableCell>{suggestion.ai_response.debitAccount || "-"}</TableCell>
-                    <TableCell>{suggestion.ai_response.creditAccount || "-"}</TableCell>
-                    <TableCell>{suggestion.ai_response.amount || "-"}</TableCell>
-                    <TableCell>
-                      {suggestion.ai_response.confidence 
-                        ? `${(parseFloat(suggestion.ai_response.confidence) * 100).toFixed(0)}%`
-                        : "-"}
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-600">
-                      {suggestion.ai_response.error ? (
-                        <span className="text-red-600 flex items-center">
-                          <AlertTriangle className="h-4 w-4 mr-1 shrink-0" />
-                          {suggestion.ai_response.error}
-                        </span>
-                      ) : (
-                        suggestion.ai_response.explanation || "-"
-                      )}
-                    </TableCell>
-                    {/* Optional: Display status if you have it
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          suggestion.status === "completed"
-                            ? "bg-green-100 text-green-700"
-                            : suggestion.status === "processing"
-                            ? "bg-blue-100 text-blue-700"
-                            : suggestion.status === "failed"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {suggestion.status ? suggestion.status.charAt(0).toUpperCase() + suggestion.status.slice(1) : 'Unknown'}
-                      </span>
-                    </TableCell>
-                    */}
+          <>
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">File Name</TableHead>
+                    <TableHead>Debit Account</TableHead>
+                    <TableHead>Credit Account</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Confidence</TableHead>
+                    <TableHead className="w-[300px]">Explanation</TableHead>
+                    <TableHead className="w-[150px]">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {suggestions.map((suggestion) => (
+                    <TableRow key={suggestion.id}>
+                      <TableCell className="font-medium truncate" title={suggestion.file.name}>
+                        {suggestion.file.name}
+                      </TableCell>
+                      <TableCell>{suggestion.deepseek_response.debitAccount}</TableCell>
+                      <TableCell>{suggestion.deepseek_response.creditAccount}</TableCell>
+                      <TableCell>${suggestion.deepseek_response.amount?.toFixed(2)}</TableCell>
+                      <TableCell>
+                        {(suggestion.deepseek_response.confidence * 100).toFixed(0)}%
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {suggestion.deepseek_response.explanation}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEdit(suggestion)}
+                                  className="h-8"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Edit accounting entry</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          {suggestion.status !== "approved" && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleApprove(suggestion.id)}
+                                    className="h-8"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Approve this entry</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="mt-4 flex items-center justify-between px-2">
+              <div className="text-sm text-gray-500">
+                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)} of {totalItems} entries
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="text-sm text-gray-500">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </>
         )}
 
-        {/* "How it works" section can be kept or removed based on your preference */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Accounting Entry</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="debit">Debit Account</Label>
+                <Input
+                  id="debit"
+                  value={editValues.debit}
+                  onChange={(e) => setEditValues(prev => ({ ...prev, debit: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="credit">Credit Account</Label>
+                <Input
+                  id="credit"
+                  value={editValues.credit}
+                  onChange={(e) => setEditValues(prev => ({ ...prev, credit: e.target.value }))}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+                Cancel
+              </Button>
+              <Button onClick={() => handleSave(editingId!)} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <div className="mt-12 bg-gray-50 rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -190,9 +355,9 @@ const InvoiceSuggestion = () => {
               <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold text-lg">
                 3
               </div>
-              <h3 className="font-medium text-gray-700">Review Suggestions</h3>
+              <h3 className="font-medium text-gray-700">Review & Approve</h3>
               <p className="text-sm text-gray-600">
-                Check the extracted data and AI confidence scores here.
+                Review the suggestions and approve or make adjustments as needed.
               </p>
             </div>
           </div>
