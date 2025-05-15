@@ -5,12 +5,23 @@ export interface FileInfo {
     type: string;
   }
   
- export interface DeepSeekResponse {
+ export interface LineItemSuggestion {
+    description: string;
+    amount: number;
+    quantity: number;
+    unit_price?: number;
+    is_asset: boolean;
+    asset_type?: string;
+    asset_life_months?: number;
+  }
+  
+  export interface DeepSeekResponse {
     amount: number;
     confidence: number;
     explanation: string;
     debitAccount: string;
     creditAccount: string;
+    line_items?: LineItemSuggestion[];
   }
   
   export interface InvoiceSuggestionType {

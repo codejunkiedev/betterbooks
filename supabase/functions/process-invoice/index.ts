@@ -35,12 +35,23 @@ interface MistralOCRResponse {
 }
 
 // Add DeepSeek response type definitions
+interface LineItemSuggestion {
+  description: string;
+  amount: number;
+  quantity: number;
+  unit_price?: number;
+  is_asset: boolean;
+  asset_type?: string;
+  asset_life_months?: number;
+}
+
 interface DeepSeekResponse {
   debitAccount: string;
   creditAccount: string;
   amount: number;
   confidence: number;
   explanation: string;
+  line_items?: LineItemSuggestion[];
 }
 
 // Constants
@@ -270,14 +281,27 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
   try {
     console.log('Sending text analysis request to DeepSeek via OpenRouter');
     
-    const prompt = `Analyze the following invoice text and suggest a basic accounting entry. 
+    const prompt = `Analyze the following invoice text and suggest a basic accounting entry.
+    Additionally, identify any line items that represent assets (non-perishable items with useful life > 1 year).
+    
     Return the response in JSON format with the following structure:
     {
       "debitAccount": "string (e.g., 'Office Supplies', 'Rent Expense', etc.)",
       "creditAccount": "string (e.g., 'Accounts Payable', 'Cash', etc.)",
       "amount": number,
       "confidence": number (0-1),
-      "explanation": "string (brief explanation of the categorization)"
+      "explanation": "string (brief explanation of the categorization)",
+      "line_items": [
+        {
+          "description": "string (description of the item)",
+          "amount": number (total price),
+          "quantity": number,
+          "unit_price": number (optional),
+          "is_asset": boolean (true if this is a non-perishable asset with useful life > 1 year),
+          "asset_type": "string (type of asset if is_asset is true, e.g., 'Equipment', 'Furniture', 'Computer', etc.)",
+          "asset_life_months": number (estimated useful life in months, if is_asset is true)
+        }
+      ]
     }
     
     Invoice text:
@@ -296,7 +320,7 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert accountant. Analyze invoice text and suggest appropriate accounting entries. Always respond in valid JSON format without any markdown formatting or code blocks.'
+            content: 'You are an expert accountant. Analyze invoice text and suggest appropriate accounting entries. Identify line items that represent assets (non-perishable items with useful life > 1 year). Always respond in valid JSON format without any markdown formatting or code blocks.'
           },
           {
             role: 'user',
@@ -304,7 +328,7 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
           }
         ],
         temperature: 0.1,
-        max_tokens: 500
+        max_tokens: 1000
       })
     });
 
@@ -321,13 +345,20 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
       content = content.replace(/```json\n?|\n?```/g, '').trim();
       
       const parsedResponse = JSON.parse(content);
-      return {
+      const response: DeepSeekResponse = {
         debitAccount: parsedResponse.debitAccount,
         creditAccount: parsedResponse.creditAccount,
         amount: parsedResponse.amount,
         confidence: parsedResponse.confidence,
         explanation: parsedResponse.explanation
       };
+
+      // Add line items if present
+      if (parsedResponse.line_items && Array.isArray(parsedResponse.line_items)) {
+        response.line_items = parsedResponse.line_items;
+      }
+
+      return response;
     } catch (parseError) {
       console.error('Failed to parse response:', {
         content,
