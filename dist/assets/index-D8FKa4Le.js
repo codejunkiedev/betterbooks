@@ -36672,6 +36672,38 @@ const Label = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PU
   }
 ));
 Label.displayName = Root$5.displayName;
+const createLineItem = async (data) => {
+  try {
+    const { data: lineItem, error } = await supabase.from("line_items").insert(data).select().single();
+    if (error) throw error;
+    return {
+      data: lineItem,
+      error: null
+    };
+  } catch (error) {
+    console.error("Error creating line item:", error);
+    return {
+      data: null,
+      error
+    };
+  }
+};
+const getInvoiceLineItems = async (invoiceId) => {
+  try {
+    const { data: lineItems, error } = await supabase.from("line_items").select("*").eq("invoice_id", invoiceId);
+    if (error) throw error;
+    return {
+      data: lineItems,
+      error: null
+    };
+  } catch (error) {
+    console.error("Error fetching line items:", error);
+    return {
+      data: null,
+      error
+    };
+  }
+};
 const fetchInvoiceSuggestions = async (page = 1, pageSize = 10) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -36693,14 +36725,43 @@ const fetchInvoiceSuggestions = async (page = 1, pageSize = 10) => {
 };
 const updateInvoiceSuggestion = async (id, deepseekResponse) => {
   try {
-    const { error } = await supabase.from("invoices").update({
+    const { error: transactionError } = await supabase.rpc("begin_transaction");
+    if (transactionError) throw transactionError;
+    const { error: updateError } = await supabase.from("invoices").update({
       status: "approved",
       data: deepseekResponse
     }).eq("id", id);
-    if (error) throw error;
+    if (updateError) {
+      await supabase.rpc("rollback_transaction");
+      throw updateError;
+    }
+    if (deepseekResponse.line_items && Array.isArray(deepseekResponse.line_items)) {
+      const assetLineItems = deepseekResponse.line_items.filter((item) => item.is_asset);
+      if (assetLineItems.length > 0) {
+        for (const item of assetLineItems) {
+          const lineItemData = {
+            invoice_id: id,
+            description: item.description,
+            amount: item.amount,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            is_asset: true,
+            asset_type: item.asset_type,
+            asset_life_months: item.asset_life_months
+          };
+          const { error: createError } = await createLineItem(lineItemData);
+          if (createError) {
+            await supabase.rpc("rollback_transaction");
+            throw createError;
+          }
+        }
+      }
+    }
+    await supabase.rpc("commit_transaction");
     return { error: null };
   } catch (error) {
     console.error("Error saving changes:", error);
+    await supabase.rpc("rollback_transaction");
     return { error };
   }
 };
@@ -36715,6 +36776,8 @@ const InvoiceSuggestion = () => {
   const [currentPage, setCurrentPage] = reactExports.useState(1);
   const [totalItems, setTotalItems] = reactExports.useState(0);
   const { toast: toast2 } = useToast();
+  const [selectedLineItems, setSelectedLineItems] = reactExports.useState([]);
+  const [showLineItems, setShowLineItems] = reactExports.useState(false);
   reactExports.useEffect(() => {
     loadSuggestions();
   }, [currentPage]);
@@ -36762,13 +36825,28 @@ const InvoiceSuggestion = () => {
       });
     }
   };
-  const handleEdit = (suggestion) => {
+  const handleRowClick = (suggestion) => {
     setEditingId(suggestion.id);
     setEditValues({
       debit: suggestion.deepseek_response.debitAccount,
       credit: suggestion.deepseek_response.creditAccount
     });
     setIsModalOpen(true);
+    fetchLineItems(suggestion.id);
+  };
+  const fetchLineItems = async (invoiceId) => {
+    const { data, error } = await getInvoiceLineItems(invoiceId);
+    if (error) {
+      console.error("Error fetching line items:", error);
+      toast2({
+        title: "Error",
+        description: "Failed to fetch line items. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setSelectedLineItems(data || []);
+    setShowLineItems(data ? data.length > 0 : false);
   };
   const handleSave = async (id) => {
     setIsSaving(true);
@@ -36803,6 +36881,33 @@ const InvoiceSuggestion = () => {
   const handleCancel = () => {
     setEditingId(null);
     setIsModalOpen(false);
+  };
+  const LineItemsView = ({ lineItems }) => {
+    if (lineItems.length === 0) return null;
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-4 border p-4 rounded-lg", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "font-medium text-lg mb-2", children: "Asset Line Items" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "overflow-x-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Table, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TableHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Description" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Quantity" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Unit Price" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Amount" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Asset Type" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Useful Life (months)" })
+        ] }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: lineItems.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: item.description }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: item.quantity }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: item.unit_price ? `$${item.unit_price.toFixed(2)}` : "N/A" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { children: [
+            "$",
+            item.amount.toFixed(2)
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: item.asset_type || "N/A" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: item.asset_life_months || "N/A" })
+        ] }, item.id)) })
+      ] }) })
+    ] });
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "container mx-auto px-4 py-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-6xl mx-auto", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-between mb-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -36857,7 +36962,7 @@ const InvoiceSuggestion = () => {
                     {
                       size: "sm",
                       variant: "outline",
-                      onClick: () => handleEdit(suggestion),
+                      onClick: () => handleRowClick(suggestion),
                       className: "h-8",
                       children: /* @__PURE__ */ jsxRuntimeExports.jsx(Pen, { className: "h-4 w-4" })
                     }
@@ -36921,40 +37026,43 @@ const InvoiceSuggestion = () => {
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open: isModalOpen, onOpenChange: setIsModalOpen, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: "Edit Accounting Entry" }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-4 py-4", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "debit", children: "Debit Account" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            Input,
-            {
-              id: "debit",
-              value: editValues.debit,
-              onChange: (e) => setEditValues((prev) => ({ ...prev, debit: e.target.value }))
-            }
-          )
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(Dialog, { open: isModalOpen, onOpenChange: setIsModalOpen, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: "Edit Accounting Entry" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-4 py-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "debit", children: "Debit Account" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Input,
+              {
+                id: "debit",
+                value: editValues.debit,
+                onChange: (e) => setEditValues((prev) => ({ ...prev, debit: e.target.value }))
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "credit", children: "Credit Account" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Input,
+              {
+                id: "credit",
+                value: editValues.credit,
+                onChange: (e) => setEditValues((prev) => ({ ...prev, credit: e.target.value }))
+              }
+            )
+          ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "credit", children: "Credit Account" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            Input,
-            {
-              id: "credit",
-              value: editValues.credit,
-              onChange: (e) => setEditValues((prev) => ({ ...prev, credit: e.target.value }))
-            }
-          )
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogFooter, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: handleCancel, disabled: isSaving, children: "Cancel" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: () => handleSave(editingId), disabled: isSaving, children: isSaving ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "mr-2 h-4 w-4 animate-spin" }),
+            "Saving..."
+          ] }) : "Save Changes" })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogFooter, { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: handleCancel, disabled: isSaving, children: "Cancel" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: () => handleSave(editingId), disabled: isSaving, children: isSaving ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "mr-2 h-4 w-4 animate-spin" }),
-          "Saving..."
-        ] }) : "Save Changes" })
-      ] })
-    ] }) }),
+      showLineItems && /* @__PURE__ */ jsxRuntimeExports.jsx(LineItemsView, { lineItems: selectedLineItems })
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-12 bg-gray-50 rounded-lg p-6", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-xl font-semibold mb-4 text-gray-800", children: "How It Works" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-6", children: [
@@ -37719,4 +37827,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) })
 );
-//# sourceMappingURL=index-2AkI-Y_d.js.map
+//# sourceMappingURL=index-D8FKa4Le.js.map
