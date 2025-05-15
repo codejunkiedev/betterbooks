@@ -34,6 +34,15 @@ interface MistralOCRResponse {
   }>;
 }
 
+// Add DeepSeek response type definitions
+interface DeepSeekResponse {
+  debitAccount: string;
+  creditAccount: string;
+  amount: number;
+  confidence: number;
+  explanation: string;
+}
+
 // Constants
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -46,9 +55,10 @@ const CORS_HEADERS = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
 const mistralApiKey =  'Gj38vvaAgl92OyNqC2HeMDSjSpeFt20z' //Deno.env.get('MISTRAL_API_KEY');
+const openRouterApiKey = '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' // Deno.env.get('OPENROUTER_API_KEY');
 
-if (!supabaseUrl || !supabaseKey || !mistralApiKey) {
-  throw new Error('Missing required environment variables: SUPABASE_URL, SUPABASE_ANON_KEY, or MISTRAL_API_KEY');
+if (!supabaseUrl || !supabaseKey || !mistralApiKey || !openRouterApiKey) {
+  throw new Error('Missing required environment variables: SUPABASE_URL, SUPABASE_ANON_KEY, MISTRAL_API_KEY, or OPENROUTER_API_KEY');
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -254,6 +264,162 @@ async function updateInvoiceWithOCRResponse(invoiceId: string, response: Mistral
 }
 
 /**
+ * Analyzes invoice text using DeepSeek via OpenRouter
+ */
+async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
+  try {
+    console.log('Sending text analysis request to DeepSeek via OpenRouter');
+    
+    const prompt = `Analyze the following invoice text and suggest a basic accounting entry. 
+    Return the response in JSON format with the following structure:
+    {
+      "debitAccount": "string (e.g., 'Office Supplies', 'Rent Expense', etc.)",
+      "creditAccount": "string (e.g., 'Accounts Payable', 'Cash', etc.)",
+      "amount": number,
+      "confidence": number (0-1),
+      "explanation": "string (brief explanation of the categorization)"
+    }
+    
+    Invoice text:
+    ${text}`;
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openRouterApiKey}`,
+        'HTTP-Referer': 'https://betterbooks-git-develop-cj-devs-projects.vercel.app',
+        'X-Title': 'BetterBooks'
+      },
+      body: JSON.stringify({
+        model: "deepseek/deepseek-chat:free",
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert accountant. Analyze invoice text and suggest appropriate accounting entries. Always respond in valid JSON format without any markdown formatting or code blocks.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.1,
+        max_tokens: 500
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
+      throw new Error(`OpenRouter API error: ${response.statusText}${errorData ? ` - ${JSON.stringify(errorData)}` : ''}`);
+    }
+
+    const result = await response.json();
+    let content = result.choices[0].message.content;
+    
+    try {
+      // Remove markdown code block formatting if present
+      content = content.replace(/```json\n?|\n?```/g, '').trim();
+      
+      const parsedResponse = JSON.parse(content);
+      return {
+        debitAccount: parsedResponse.debitAccount,
+        creditAccount: parsedResponse.creditAccount,
+        amount: parsedResponse.amount,
+        confidence: parsedResponse.confidence,
+        explanation: parsedResponse.explanation
+      };
+    } catch (parseError) {
+      console.error('Failed to parse response:', {
+        content,
+        error: parseError.message
+      });
+      throw new Error(`Failed to parse OpenRouter response: ${parseError.message}`);
+    }
+  } catch (error) {
+    console.error('OpenRouter analysis error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Updates invoice with DeepSeek analysis
+ */
+async function updateInvoiceWithDeepSeekAnalysis(invoiceId: string, analysis: DeepSeekResponse): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('invoices')
+      .update({
+        deepseek_response: analysis,
+        status: 'completed'
+      })
+      .eq('id', invoiceId);
+
+    if (error) {
+      throw new InvoiceProcessingError(
+        `Failed to save DeepSeek analysis: ${error.message}`,
+        invoiceId
+      );
+    }
+  } catch (error) {
+    if (error instanceof InvoiceProcessingError) {
+      throw error;
+    }
+    throw new InvoiceProcessingError(
+      `Failed to save DeepSeek analysis: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      invoiceId,
+      error instanceof Error ? error : undefined
+    );
+  }
+}
+
+/**
+ * Processes and formats markdown text from OCR results
+ */
+function processMarkdownText(pages: Array<{ index: number; markdown: string }>): string {
+  return pages.map(page => {
+    let text = page.markdown;
+    
+    // Clean up common OCR issues in tables and structure
+    text = text
+      // Clean up tables
+      .replace(/\|\s*\|\s*\|/g, '') // Remove empty table rows
+      .replace(/\|\s+\|/g, '| |') // Normalize whitespace in empty cells
+      .replace(/\|\s*:\s*\|/g, '|:') // Fix alignment markers
+      .replace(/\|\s*-\s*\|/g, '|-') // Fix alignment markers
+      
+      // Clean up headers
+      .replace(/^#+\s+/gm, '## ') // Normalize headers to level 2
+      .replace(/^#+\s*$/gm, '') // Remove empty headers
+      
+      // Clean up whitespace
+      .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+      .replace(/\s+$/gm, '') // Remove trailing whitespace on each line
+      .replace(/^\s+/gm, '') // Remove leading whitespace on each line
+      
+      // Clean up common OCR artifacts
+      .replace(/[^\S\n]+/g, ' ') // Normalize horizontal whitespace
+      .replace(/\|\s*$/, '|') // Ensure table rows end with |
+      .replace(/^\s*\|/, '|') // Ensure table rows start with |
+      
+      // Clean up amounts and numbers
+      .replace(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)/g, '$$$1') // Normalize currency format
+      .replace(/(\d+)\s*-\s*(\d+)/g, '$1-$2') // Normalize number ranges
+      
+      // Clean up dates
+      .replace(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/g, '$1/$2/$3') // Normalize date format
+      
+      // Clean up contact information
+      .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, ' $1 ') // Add space around emails
+      .replace(/(\d{3}[-.]?\d{3}[-.]?\d{4})/g, ' $1 ') // Add space around phone numbers
+      
+      // Final cleanup
+      .trim(); // Remove leading/trailing whitespace
+      
+    return text;
+  }).join('\n\n---\n\n'); // Separate pages with horizontal rule
+}
+
+/**
  * Processes a single invoice by fetching its image and processing with OCR
  */
 async function processInvoice(invoice: Invoice): Promise<{ url: string; isAccessible: boolean; publicUrl: string }> {
@@ -272,9 +438,19 @@ async function processInvoice(invoice: Invoice): Promise<{ url: string; isAccess
     // Update invoice with OCR response
     await updateInvoiceWithOCRResponse(invoice.id, ocrResult);
 
-    console.log(`OCR processing completed for invoice ${invoice.id}:`, {
+    // Extract and format text from OCR result using the dedicated function
+    const extractedText = processMarkdownText(ocrResult.pages);
+
+    // Analyze text with DeepSeek
+    const accountingAnalysis = await analyzeWithDeepSeek(extractedText);
+
+    // Update invoice with DeepSeek analysis
+    await updateInvoiceWithDeepSeekAnalysis(invoice.id, accountingAnalysis);
+
+    console.log(`Processing completed for invoice ${invoice.id}:`, {
       invoiceId: invoice.id,
       pages: ocrResult.pages.length,
+      accountingAnalysis,
       timestamp: new Date().toISOString()
     });
 
@@ -480,6 +656,7 @@ Local Development Instructions:
    - SUPABASE_URL
    - SUPABASE_ANON_KEY
    - MISTRAL_API_KEY
+   - OPENROUTER_API_KEY
 
 2. Start Supabase CLI:
    supabase start

@@ -1,5 +1,5 @@
 -- Step 1: Create enum type named `status`
-CREATE TYPE status AS ENUM ('pending', 'processing', 'completed', 'failed');
+CREATE TYPE status AS ENUM ('pending', 'processing', 'completed', 'failed', 'approved');
 
 -- Step 2: Create the invoices table
 CREATE TABLE invoices (
