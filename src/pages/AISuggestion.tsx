@@ -31,7 +31,7 @@ import {
   updateInvoiceSuggestion 
 } from "@/lib/supabase/suggestion";
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 5;
 
 const InvoiceSuggestion = () => {
   const [suggestions, setSuggestions] = useState<InvoiceSuggestionType[]>([]);
@@ -158,19 +158,6 @@ const InvoiceSuggestion = () => {
               Review and approve AI-generated suggestions for your uploaded invoices.
             </p>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button onClick={loadSuggestions} className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Refresh Suggestions 
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Refresh the list of invoice suggestions</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
 
         {isLoading ? (
@@ -187,6 +174,14 @@ const InvoiceSuggestion = () => {
         ) : (
           <>
             <div className="bg-white rounded-lg border overflow-hidden">
+              <div className="flex items-center justify-between p-4 pb-2">
+                <div className="text-lg font-semibold text-black flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-blue-500" /> Invoices
+                </div>
+                {isLoading && (
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
+                )}
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>

@@ -1,5 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Upload, Sparkles, FileText, Activity } from "lucide-react";
+import { Sparkles, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { fetchInvoiceSuggestions } from "@/lib/supabase/suggestion";
+import { Loader2 } from "lucide-react";
 
 const mockStats = [
   {
@@ -12,33 +17,113 @@ const mockStats = [
     label: "AI Suggestions",
     value: 42,
   },
-  {
-    icon: <Activity className="h-6 w-6 text-black" />,
-    label: "Active Sessions",
-    value: 5,
-  },
+
 ];
 
-const mockRecent = [
-  {
-    name: "Invoice_March.pdf",
-    date: "2024-06-01",
-    status: "Processed",
-    type: "Document",
-  },
-  {
-    name: "AI Summary for Q1",
-    date: "2024-05-28",
-    status: "Completed",
-    type: "AI Suggestion",
-  },
-  {
-    name: "Report_April.pdf",
-    date: "2024-05-20",
-    status: "Processed",
-    type: "Document",
-  },
-];
+
+function InvoiceSuggestionsTablePreview() {
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const ITEMS_PER_PAGE = 5;
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await fetchInvoiceSuggestions(currentPage, ITEMS_PER_PAGE);
+        if (error) throw error;
+        setSuggestions(data?.items || []);
+        setTotalItems(data?.total || 0);
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Could not load invoices.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, [currentPage]);
+
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto mt-8">
+      <div className="flex items-center justify-between p-4 pb-2">
+        <div className="text-lg font-semibold text-black flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-blue-500" /> Invoices
+        </div>
+        {isLoading && (
+          <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
+        )}
+      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-24">
+          <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+        </div>
+      ) : suggestions.length === 0 ? (
+        <div className="text-center py-6 text-gray-500">No invoice yet.</div>
+      ) : (
+        <>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>File Name</TableHead>
+                <TableHead>Debit</TableHead>
+                <TableHead>Credit</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Confidence</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {suggestions.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell>{s.file?.name}</TableCell>
+                  <TableCell>{s.deepseek_response?.debitAccount}</TableCell>
+                  <TableCell>{s.deepseek_response?.creditAccount}</TableCell>
+                  <TableCell>{s.deepseek_response?.amount}</TableCell>
+                  <TableCell>{s.deepseek_response?.confidence ? `${(s.deepseek_response.confidence * 100).toFixed(0)}%` : "-"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {/* Pagination Controls (matching Invoice Suggestions page) */}
+          <div className="mt-4 flex items-center justify-between px-2">
+            <div className="text-sm text-gray-500">
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)} of {totalItems} entries
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-sm text-gray-500">
+                Page {currentPage} of {totalPages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   return (
@@ -46,18 +131,7 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h1 className="text-3xl font-bold text-black">Dashboard</h1>
-        <div className="flex gap-2">
-          <Button asChild variant="outline" className="flex items-center gap-2">
-            <a href="/upload">
-              <Upload className="h-4 w-4" /> Upload Invoice
-            </a>
-          </Button>
-          <Button asChild variant="outline" className="flex items-center gap-2">
-            <a href="/ai-suggestion">
-              <Sparkles className="h-4 w-4" /> AI Suggestion
-            </a>
-          </Button>
-        </div>
+     
       </div>
 
       {/* Stats Cards */}
@@ -78,34 +152,8 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Recent Activity Table */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto">
-        <div className="p-4 pb-2 text-lg font-semibold text-black">Recent Activity</div>
-        <table className="min-w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 text-gray-500">
-              <th className="py-2 px-4 font-medium">Name</th>
-              <th className="py-2 px-4 font-medium">Type</th>
-              <th className="py-2 px-4 font-medium">Date</th>
-              <th className="py-2 px-4 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockRecent.map((item, idx) => (
-              <tr key={idx} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
-                <td className="py-2 px-4 text-black">{item.name}</td>
-                <td className="py-2 px-4 text-gray-700">{item.type}</td>
-                <td className="py-2 px-4 text-gray-700">{item.date}</td>
-                <td className="py-2 px-4">
-                  <span className="inline-block rounded px-2 py-1 text-xs font-medium bg-gray-100 text-black">
-                    {item.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Invoice Suggestions Table Preview */}
+      <InvoiceSuggestionsTablePreview />
     </div>
   );
 } 
