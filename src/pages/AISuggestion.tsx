@@ -124,9 +124,8 @@ const InvoiceSuggestion = () => {
       });
       return;
     }
-    
     setSelectedLineItems(data || []);
-    setShowLineItems(data && data.length > 0);
+    setShowLineItems(data ? data.length > 0 : false);
   };
 
   const handleSave = async (id: string) => {
