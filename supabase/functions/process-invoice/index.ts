@@ -281,8 +281,17 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
   try {
     console.log('Sending text analysis request to DeepSeek via OpenRouter');
     
-    const prompt = `Analyze the following invoice text and suggest a basic accounting entry.
-    Additionally, identify any line items that represent assets (non-perishable items with useful life > 1 year).
+    const prompt = `You are an expert accountant who can analyze invoices in both English and Urdu. 
+    The following invoice text may be in either English or Urdu (or both). 
+    Please analyze it and provide the accounting entry in English, regardless of the input language.
+    
+    For Urdu text, translate and interpret the content to English before analysis.
+    Pay special attention to:
+    - Numbers and amounts (which may be in either language)
+    - Dates (which may be in different formats)
+    - Line items and descriptions
+    - Tax information
+    - Currency symbols and amounts
     
     Return the response in JSON format with the following structure:
     {
@@ -290,10 +299,10 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
       "creditAccount": "string (e.g., 'Accounts Payable', 'Cash', etc.)",
       "amount": number,
       "confidence": number (0-1),
-      "explanation": "string (brief explanation of the categorization)",
+      "explanation": "string (brief explanation of the categorization in English)",
       "line_items": [
         {
-          "description": "string (description of the item)",
+          "description": "string (description of the item in English)",
           "amount": number (total price),
           "quantity": number,
           "unit_price": number (optional),
@@ -320,7 +329,7 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert accountant. Analyze invoice text and suggest appropriate accounting entries. Identify line items that represent assets (non-perishable items with useful life > 1 year). Always respond in valid JSON format without any markdown formatting or code blocks.'
+            content: 'You are an expert accountant fluent in both English and Urdu. Analyze invoice text in either language and provide accounting entries in English. Translate and interpret Urdu content to English before analysis. Identify line items that represent assets (non-perishable items with useful life > 1 year). Always respond in valid JSON format without any markdown formatting or code blocks.'
           },
           {
             role: 'user',
