@@ -22,3 +22,8 @@ export interface FileInfo {
     updated_at: string;
     deepseek_response: DeepSeekResponse;
   }
+
+  export interface PaginatedResponse {
+    items: InvoiceSuggestionType[];
+    total: number;
+  }
