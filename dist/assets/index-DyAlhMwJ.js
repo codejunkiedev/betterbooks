@@ -31591,13 +31591,10 @@ const RecentInvoicesTable = () => {
   };
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE$1);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto mt-8", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between p-4 pb-2", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(ChartBar, { className: "h-5 w-5 text-blue-500" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-lg font-semibold text-black", children: "Invoices" })
-      ] }),
-      isLoading && /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "h-5 w-5 animate-spin text-gray-500" })
-    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-between p-4 pb-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(ChartBar, { className: "h-5 w-5 text-blue-500" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-lg font-semibold text-black", children: "Invoices" })
+    ] }) }),
     isLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-center h-24", children: /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "h-6 w-6 animate-spin text-gray-500" }) }) : suggestions.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center py-6 text-gray-500", children: "No invoices yet." }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs(Table, { children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
@@ -37827,4 +37824,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) })
 );
-//# sourceMappingURL=index-D8FKa4Le.js.map
+//# sourceMappingURL=index-DyAlhMwJ.js.map

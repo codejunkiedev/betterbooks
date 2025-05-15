@@ -48,9 +48,6 @@ const RecentInvoicesTable = () => {
           <ChartBar className="h-5 w-5 text-blue-500" />
           <div className="text-lg font-semibold text-black">Invoices</div>
         </div>
-        {isLoading && (
-          <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
-        )}
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center h-24">
