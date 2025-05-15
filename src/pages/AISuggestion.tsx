@@ -30,6 +30,8 @@ import {
   fetchInvoiceSuggestions,  
   updateInvoiceSuggestion 
 } from "@/lib/supabase/suggestion";
+import { getInvoiceLineItems } from '../lib/supabase/line-item';
+import { LineItem } from '../interfaces/line-item';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -43,6 +45,8 @@ const InvoiceSuggestion = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const { toast } = useToast();
+  const [selectedLineItems, setSelectedLineItems] = useState<LineItem[]>([]);
+  const [showLineItems, setShowLineItems] = useState(false);
 
   useEffect(() => {
     loadSuggestions();
@@ -99,13 +103,30 @@ const InvoiceSuggestion = () => {
     }
   };
 
-  const handleEdit = (suggestion: InvoiceSuggestionType) => {
+  const handleRowClick = (suggestion: InvoiceSuggestionType) => {
     setEditingId(suggestion.id);
     setEditValues({
       debit: suggestion.deepseek_response.debitAccount,
       credit: suggestion.deepseek_response.creditAccount,
     });
     setIsModalOpen(true);
+    fetchLineItems(suggestion.id);
+  };
+
+  const fetchLineItems = async (invoiceId: string) => {
+    const { data, error } = await getInvoiceLineItems(invoiceId);
+    if (error) {
+      console.error("Error fetching line items:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch line items. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSelectedLineItems(data || []);
+    setShowLineItems(data && data.length > 0);
   };
 
   const handleSave = async (id: string) => {
@@ -146,6 +167,42 @@ const InvoiceSuggestion = () => {
   const handleCancel = () => {
     setEditingId(null);
     setIsModalOpen(false);
+  };
+
+  const LineItemsView = ({ lineItems }: { lineItems: LineItem[] }) => {
+    if (lineItems.length === 0) return null;
+    
+    return (
+      <div className="mt-4 border p-4 rounded-lg">
+        <h3 className="font-medium text-lg mb-2">Asset Line Items</h3>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Description</TableHead>
+                <TableHead>Quantity</TableHead>
+                <TableHead>Unit Price</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Asset Type</TableHead>
+                <TableHead>Useful Life (months)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lineItems.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.description}</TableCell>
+                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>{item.unit_price ? `$${item.unit_price.toFixed(2)}` : 'N/A'}</TableCell>
+                  <TableCell>${item.amount.toFixed(2)}</TableCell>
+                  <TableCell>{item.asset_type || 'N/A'}</TableCell>
+                  <TableCell>{item.asset_life_months || 'N/A'}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -217,7 +274,7 @@ const InvoiceSuggestion = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleEdit(suggestion)}
+                                  onClick={() => handleRowClick(suggestion)}
                                   className="h-8"
                                 >
                                   <Edit2 className="h-4 w-4" />
@@ -323,6 +380,7 @@ const InvoiceSuggestion = () => {
               </Button>
             </DialogFooter>
           </DialogContent>
+          {showLineItems && <LineItemsView lineItems={selectedLineItems} />}
         </Dialog>
 
         <div className="mt-12 bg-gray-50 rounded-lg p-6">
