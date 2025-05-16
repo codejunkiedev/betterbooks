@@ -48,56 +48,16 @@ export const fetchInvoiceSuggestions = async (page: number = 1, pageSize: number
 
 export const updateInvoiceSuggestion = async (id: string, deepseekResponse: InvoiceSuggestionType['deepseek_response']) => {
   try {
-    // Start a transaction to ensure all or none of the operations succeed
-    const { error: transactionError } = await supabase.rpc('begin_transaction');
-    if (transactionError) throw transactionError;
+    // Use Supabase's transaction support
+    const { error } = await supabase.rpc('update_invoice_with_line_items', {
+      p_invoice_id: id,
+      p_deepseek_response: deepseekResponse
+    });
 
-    // Update the invoice with the deepseek response
-    const { error: updateError } = await supabase
-      .from("invoices")
-      .update({
-        status: "approved",
-        data: deepseekResponse
-      })
-      .eq("id", id);
-
-    if (updateError) {
-      await supabase.rpc('rollback_transaction');
-      throw updateError;
-    }
-
-    // If there are line items in the response and they are assets, save them to the line_items table
-    if (deepseekResponse.line_items && Array.isArray(deepseekResponse.line_items)) {
-      const assetLineItems = deepseekResponse.line_items.filter(item => item.is_asset);
-      
-      if (assetLineItems.length > 0) {
-        // Create line items for each asset
-        for (const item of assetLineItems) {
-          const lineItemData: CreateLineItemData = {
-            invoice_id: id,
-            description: item.description,
-            amount: item.amount,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            is_asset: true,
-            asset_type: item.asset_type,
-            asset_life_months: item.asset_life_months
-          };
-
-          const { error: createError } = await createLineItem(lineItemData);
-          if (createError) {
-            await supabase.rpc('rollback_transaction');
-            throw createError;
-          }
-        }
-      }
-    }
-
-    await supabase.rpc('commit_transaction');
+    if (error) throw error;
     return { error: null };
   } catch (error) {
     console.error("Error saving changes:", error);
-    await supabase.rpc('rollback_transaction');
     return { error };
   }
 };
