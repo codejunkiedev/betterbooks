@@ -1,8 +1,8 @@
 import { supabase } from "./client";
 import { InvoiceSuggestionType, PaginatedResponse } from "@/interfaces/suggestion";
 import { PostgrestError } from "@supabase/supabase-js";
-import { CreateLineItemData } from '../../interfaces/line-item';
-import { createLineItem } from './line-item';
+// import { CreateLineItemData } from '../../interfaces/line-item';
+// import { createLineItem } from './line-item';
 
 export const fetchInvoiceSuggestions = async (page: number = 1, pageSize: number = 10): Promise<{ data: PaginatedResponse | null; error: PostgrestError | null }> => {
   try {
