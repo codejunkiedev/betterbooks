@@ -43,11 +43,14 @@ export const fetchInvoiceSuggestions = async (page: number = 1, pageSize: number
 
 export const updateInvoiceSuggestion = async (id: string, deepseekResponse: InvoiceSuggestionType['deepseek_response']) => {
   try {
-    // Use Supabase's transaction support
-    const { error } = await supabase.rpc('update_invoice_with_line_items', {
-      p_invoice_id: id,
-      p_deepseek_response: deepseekResponse
-    });
+    // Simply update the invoice status and data
+    const { error } = await supabase
+      .from("invoices")
+      .update({
+        status: "approved",
+        data: deepseekResponse
+      })
+      .eq("id", id);
 
     if (error) throw error;
     return { error: null };
