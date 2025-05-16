@@ -36669,38 +36669,6 @@ const Label = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PU
   }
 ));
 Label.displayName = Root$5.displayName;
-const createLineItem = async (data) => {
-  try {
-    const { data: lineItem, error } = await supabase.from("line_items").insert(data).select().single();
-    if (error) throw error;
-    return {
-      data: lineItem,
-      error: null
-    };
-  } catch (error) {
-    console.error("Error creating line item:", error);
-    return {
-      data: null,
-      error
-    };
-  }
-};
-const getInvoiceLineItems = async (invoiceId) => {
-  try {
-    const { data: lineItems, error } = await supabase.from("line_items").select("*").eq("invoice_id", invoiceId);
-    if (error) throw error;
-    return {
-      data: lineItems,
-      error: null
-    };
-  } catch (error) {
-    console.error("Error fetching line items:", error);
-    return {
-      data: null,
-      error
-    };
-  }
-};
 const fetchInvoiceSuggestions = async (page = 1, pageSize = 10) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -36722,44 +36690,31 @@ const fetchInvoiceSuggestions = async (page = 1, pageSize = 10) => {
 };
 const updateInvoiceSuggestion = async (id, deepseekResponse) => {
   try {
-    const { error: transactionError } = await supabase.rpc("begin_transaction");
-    if (transactionError) throw transactionError;
-    const { error: updateError } = await supabase.from("invoices").update({
-      status: "approved",
-      data: deepseekResponse
-    }).eq("id", id);
-    if (updateError) {
-      await supabase.rpc("rollback_transaction");
-      throw updateError;
-    }
-    if (deepseekResponse.line_items && Array.isArray(deepseekResponse.line_items)) {
-      const assetLineItems = deepseekResponse.line_items.filter((item) => item.is_asset);
-      if (assetLineItems.length > 0) {
-        for (const item of assetLineItems) {
-          const lineItemData = {
-            invoice_id: id,
-            description: item.description,
-            amount: item.amount,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            is_asset: true,
-            asset_type: item.asset_type,
-            asset_life_months: item.asset_life_months
-          };
-          const { error: createError } = await createLineItem(lineItemData);
-          if (createError) {
-            await supabase.rpc("rollback_transaction");
-            throw createError;
-          }
-        }
-      }
-    }
-    await supabase.rpc("commit_transaction");
+    const { error } = await supabase.rpc("update_invoice_with_line_items", {
+      p_invoice_id: id,
+      p_deepseek_response: deepseekResponse
+    });
+    if (error) throw error;
     return { error: null };
   } catch (error) {
     console.error("Error saving changes:", error);
-    await supabase.rpc("rollback_transaction");
     return { error };
+  }
+};
+const getInvoiceLineItems = async (invoiceId) => {
+  try {
+    const { data: lineItems, error } = await supabase.from("line_items").select("*").eq("invoice_id", invoiceId);
+    if (error) throw error;
+    return {
+      data: lineItems,
+      error: null
+    };
+  } catch (error) {
+    console.error("Error fetching line items:", error);
+    return {
+      data: null,
+      error
+    };
   }
 };
 const ITEMS_PER_PAGE = 5;
@@ -37824,4 +37779,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) })
 );
-//# sourceMappingURL=index-DyAlhMwJ.js.map
+//# sourceMappingURL=index-Cf6ygc4o.js.map
