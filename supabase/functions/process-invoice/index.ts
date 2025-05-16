@@ -382,11 +382,12 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
 }
 
 /**
- * Updates invoice with DeepSeek analysis
+ * Updates invoice with DeepSeek analysis and line items
  */
 async function updateInvoiceWithDeepSeekAnalysis(invoiceId: string, analysis: DeepSeekResponse): Promise<void> {
   try {
-    const { error } = await supabase
+    // First update the invoice with the analysis
+    const { error: updateError } = await supabase
       .from('invoices')
       .update({
         deepseek_response: analysis,
@@ -394,11 +395,40 @@ async function updateInvoiceWithDeepSeekAnalysis(invoiceId: string, analysis: De
       })
       .eq('id', invoiceId);
 
-    if (error) {
+    if (updateError) {
       throw new InvoiceProcessingError(
-        `Failed to save DeepSeek analysis: ${error.message}`,
+        `Failed to save DeepSeek analysis: ${updateError.message}`,
         invoiceId
       );
+    }
+
+    // If there are line items and they are assets, save them
+    if (analysis.line_items && Array.isArray(analysis.line_items)) {
+      const assetLineItems = analysis.line_items.filter(item => item.is_asset);
+      
+      if (assetLineItems.length > 0) {
+        const { error: lineItemsError } = await supabase
+          .from('line_items')
+          .insert(
+            assetLineItems.map(item => ({
+              invoice_id: invoiceId,
+              description: item.description,
+              amount: item.amount,
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              is_asset: true,
+              asset_type: item.asset_type,
+              asset_life_months: item.asset_life_months
+            }))
+          );
+
+        if (lineItemsError) {
+          throw new InvoiceProcessingError(
+            `Failed to save line items: ${lineItemsError.message}`,
+            invoiceId
+          );
+        }
+      }
     }
   } catch (error) {
     if (error instanceof InvoiceProcessingError) {
