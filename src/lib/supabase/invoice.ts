@@ -6,6 +6,8 @@ import {
     UpdateInvoiceData
 } from '../../interfaces/invoice';
 import { getCurrentUser } from './auth';
+import { PaginatedResponse } from '@/interfaces/suggestion';
+import { PostgrestError } from '@supabase/supabase-js';
 
 // Helper function to get current user
 
@@ -164,3 +166,40 @@ export const deleteInvoice = async (id: string): Promise<ApiResponse<void>> => {
         };
     }
 }; 
+
+export const fetchInvoices = async (page: number = 1, pageSize: number = 10): Promise<{ data: PaginatedResponse | null; error: PostgrestError | null }> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // First, get the total count
+      const { count, error: countError } = await supabase
+        .from("invoices")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "approved")
+        .eq("user_id", user?.id);
+  
+      if (countError) throw countError;
+  
+      // Then, get the paginated data
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("status", "approved")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false })
+        .range((page - 1) * pageSize, page * pageSize - 1);
+  
+      if (error) throw error;
+  
+      return { 
+        data: { 
+          items: data || [], 
+          total: count || 0 
+        }, 
+        error: null 
+      };
+    } catch (error) {
+      console.error("Error fetching invoice suggestions:", error);
+      return { data: null, error: error as PostgrestError };
+    }
+  };
