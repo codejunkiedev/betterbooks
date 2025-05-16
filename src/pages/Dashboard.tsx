@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { fetchInvoiceSuggestions } from "@/lib/supabase/suggestion";
 import { Loader2 } from "lucide-react";
+import { AccountingSummary } from "@/components/accounting/AccountingSummary";
 
 const mockStats = [
   {
@@ -131,8 +132,10 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h1 className="text-3xl font-bold text-black">Dashboard</h1>
-     
       </div>
+
+      {/* Accounting Summary */}
+      <AccountingSummary />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
