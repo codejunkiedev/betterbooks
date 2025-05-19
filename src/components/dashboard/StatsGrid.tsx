@@ -1,6 +1,6 @@
-import { FileText, Sparkles, BarChart } from "lucide-react";
-import StatsCard from "./StatsCard";
+import { FileText, Sparkles, CheckCircle } from "lucide-react";
 import { DashboardStats } from "@/interfaces/dashboard";
+import { Skeleton } from "@/components/ui/loading";
 
 interface StatsGridProps {
   stats: DashboardStats | null;
@@ -13,29 +13,40 @@ const StatsGrid = ({ stats, isLoading }: StatsGridProps) => {
       icon: <FileText className="h-6 w-6 text-black" />,
       label: "Documents Uploaded",
       value: stats?.totalDocuments || 0,
+      color: "text-gray-900"
     },
     {
       icon: <Sparkles className="h-6 w-6 text-black" />,
       label: "AI Suggestions",
       value: stats?.totalSuggestions || 0,
+      color: "text-gray-900"
     },
     {
-      icon: <BarChart className="h-6 w-6 text-black" />,
+      icon: <CheckCircle className="h-6 w-6 text-black" />,
       label: "Approved Invoices",
       value: stats?.approvedInvoices || 0,
-    },
+      color: "text-gray-900"
+    }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-      {statsData.map((stat, index) => (
-        <StatsCard
-          key={index}
-          icon={stat.icon}
-          label={stat.label}
-          value={stat.value}
-          isLoading={isLoading}
-        />
+    <div className="grid gap-4 md:grid-cols-3">
+      {statsData.map((stat) => (
+        <div key={stat.label} className="bg-white p-6 rounded-lg border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {stat.icon}
+              <span className="text-sm font-medium text-gray-500">{stat.label}</span>
+            </div>
+          </div>
+          <div className={`mt-2 text-2xl font-bold ${stat.color}`}>
+            {isLoading ? (
+              <Skeleton className="h-8 w-32" />
+            ) : (
+              stat.value.toLocaleString()
+            )}
+          </div>
+        </div>
       ))}
     </div>
   );

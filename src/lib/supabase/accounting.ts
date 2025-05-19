@@ -18,6 +18,7 @@ interface AccountingEntry {
     debitAccount: string;
     creditAccount: string;
     amount: number;
+    confidence: number;
     explanation: string;
   };
   file: {
@@ -163,5 +164,30 @@ export const fetchAccountingEntries = async (
   } catch (error) {
     console.error("Error fetching accounting entries:", error);
     return { data: null, error: error as PostgrestError };
+  }
+};
+
+export const updateAccountingEntry = async (
+  id: string,
+  deepseekResponse: AccountingEntry['deepseek_response']
+): Promise<{ error: PostgrestError | null }> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const { error } = await supabase
+      .from("invoices")
+      .update({
+        deepseek_response: deepseekResponse,
+        status: "approved"
+      })
+      .eq("id", id)
+      .eq("user_id", user?.id);
+
+    if (error) throw error;
+
+    return { error: null };
+  } catch (error) {
+    console.error("Error updating accounting entry:", error);
+    return { error: error as PostgrestError };
   }
 }; 

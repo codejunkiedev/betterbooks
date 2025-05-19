@@ -43,21 +43,26 @@ export const deleteFile = async (path: string): Promise<{ error: Error | null }>
     }
 };
 
-export const getFileUrl = (path: string, options?: { transform?: { width?: number; height?: number; resize?: 'cover' | 'contain' | 'fill'; format?: 'origin' | 'webp'; quality?: number } }): string => {
-    const { data } = supabase.storage
+export const getFileUrl = async (path: string, options?: { transform?: { width?: number; height?: number; resize?: 'cover' | 'contain' | 'fill'; format?: 'origin'; quality?: number } }): Promise<string> => {
+    const { data, error } = await supabase.storage
         .from('invoices')
-        .getPublicUrl(path, options);
+        .createSignedUrl(path, 3600, options);
 
-    return data.publicUrl;
+    if (error) {
+        console.error('Error creating signed URL:', error);
+        throw error;
+    }
+
+    return data.signedUrl;
 };
 
-export const getThumbnailUrl = (path: string): string => {
+export const getThumbnailUrl = async (path: string): Promise<string> => {
     return getFileUrl(path, {
         transform: {
             width: 200,
             height: 200,
             resize: 'contain',
-            format: 'webp',
+            format: 'origin',
             quality: 80
         }
     });
