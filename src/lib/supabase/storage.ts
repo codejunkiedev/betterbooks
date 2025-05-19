@@ -43,10 +43,22 @@ export const deleteFile = async (path: string): Promise<{ error: Error | null }>
     }
 };
 
-export const getFileUrl = (path: string): string => {
+export const getFileUrl = (path: string, options?: { transform?: { width?: number; height?: number; resize?: 'cover' | 'contain' | 'fill'; format?: 'origin' | 'webp'; quality?: number } }): string => {
     const { data } = supabase.storage
         .from('invoices')
-        .getPublicUrl(path);
+        .getPublicUrl(path, options);
 
     return data.publicUrl;
+};
+
+export const getThumbnailUrl = (path: string): string => {
+    return getFileUrl(path, {
+        transform: {
+            width: 200,
+            height: 200,
+            resize: 'contain',
+            format: 'webp',
+            quality: 80
+        }
+    });
 }; 

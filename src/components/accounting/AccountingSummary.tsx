@@ -44,7 +44,6 @@ export function AccountingSummary() {
   }
 
   const periodStart = new Date(summary.period.start);
-  const periodEnd = new Date(summary.period.end);
   const periodLabel = `${format(periodStart, "MMMM yyyy")}`;
 
   const summaryData = [
@@ -96,4 +95,4 @@ export function AccountingSummary() {
       </div>
     </div>
   );
-} 
+}

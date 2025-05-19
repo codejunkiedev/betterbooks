@@ -1,14 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { Sparkles, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import { fetchInvoiceSuggestions } from "@/lib/supabase/suggestion";
-import { Loader2 } from "lucide-react";
 import { AccountingSummary } from "@/components/accounting/AccountingSummary";
 import { AccountingEntriesTable } from "@/components/accounting/AccountingEntriesTable";
 import StatsGrid from "@/components/dashboard/StatsGrid";
-import RecentInvoicesTable from "@/components/dashboard/RecentInvoicesTable";
 import { DashboardStats } from "@/interfaces/dashboard";
 import { fetchDashboardStats } from "@/lib/supabase/dashboard";
 

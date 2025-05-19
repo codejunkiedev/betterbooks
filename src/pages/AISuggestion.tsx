@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Loader2, FileText, Check, Edit2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, Loader2, FileText, Check, Edit2, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -32,6 +32,7 @@ import {
 } from "@/lib/supabase/suggestion";
 import { getInvoiceLineItems } from '../lib/supabase/line-item';
 import { LineItem } from '../interfaces/line-item';
+import { getFileUrl } from "@/lib/supabase/storage";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -47,6 +48,8 @@ const InvoiceSuggestion = () => {
   const { toast } = useToast();
   const [selectedLineItems, setSelectedLineItems] = useState<LineItem[]>([]);
   const [showLineItems, setShowLineItems] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     loadSuggestions();
@@ -168,6 +171,12 @@ const InvoiceSuggestion = () => {
     setIsModalOpen(false);
   };
 
+  const handlePreview = (suggestion: InvoiceSuggestionType) => {
+    const url = getFileUrl(suggestion.file.path);
+    setPreviewUrl(url);
+    setIsPreviewOpen(true);
+  };
+
   const LineItemsView = ({ lineItems }: { lineItems: LineItem[] }) => {
     if (lineItems.length === 0) return null;
     
@@ -267,6 +276,23 @@ const InvoiceSuggestion = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handlePreview(suggestion)}
+                                  className="h-8"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Preview invoice</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -380,6 +406,26 @@ const InvoiceSuggestion = () => {
             </DialogFooter>
           </DialogContent>
           {showLineItems && <LineItemsView lineItems={selectedLineItems} />}
+        </Dialog>
+
+        {/* Image Preview Modal */}
+        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Invoice Preview</DialogTitle>
+            </DialogHeader>
+            <div className="relative w-full h-[80vh] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
+              {previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt="Invoice preview"
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : (
+                <div className="text-gray-500">Loading preview...</div>
+              )}
+            </div>
+          </DialogContent>
         </Dialog>
 
         <div className="mt-12 bg-gray-50 rounded-lg p-6">
