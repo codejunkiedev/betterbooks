@@ -31406,7 +31406,7 @@ const StatsCard = ({ icon, label, value, isLoading = false }) => {
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2.5 bg-blue-50 rounded-lg border border-blue-100", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-blue-600 w-5 h-5", children: icon }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 min-w-0", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-medium text-gray-600 truncate", children: label }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xl font-semibold text-gray-900 mt-1", children: isLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-6 w-20 bg-gray-100 rounded animate-pulse" }) : value.toLocaleString() })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xl font-semibold text-gray-900 mt-1", children: isLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-6 w-20 bg-gray-100 rounded animate-pulse" }) : value.toLocaleString() })
     ] })
   ] }) });
 };
@@ -35937,8 +35937,8 @@ const UploadInvoice = () => {
       }
       await processInvoice();
       toast2({
-        title: "Upload complete",
-        description: "Your images have been successfully uploaded."
+        title: "Upload completed",
+        description: "Images uploaded successfully for processing."
       });
       setFiles([]);
     } catch (err) {
@@ -37783,4 +37783,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) })
 );
-//# sourceMappingURL=index-D6Ch2Zzc.js.map
+//# sourceMappingURL=index-C7-l9Yuj.js.map
