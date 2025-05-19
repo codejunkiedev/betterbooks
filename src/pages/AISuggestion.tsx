@@ -229,7 +229,7 @@ const InvoiceSuggestion = () => {
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-lg border overflow-hidden">
+            <div className="bg-white rounded-lg border">
               <div className="flex items-center justify-between p-4 pb-2">
                 <div className="text-lg font-semibold text-black flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-blue-500" /> Invoices
@@ -262,7 +262,7 @@ const InvoiceSuggestion = () => {
                       <TableCell>
                         {(suggestion.deepseek_response.confidence * 100).toFixed(0)}%
                       </TableCell>
-                      <TableCell className="text-sm text-gray-600">
+                      <TableCell className="max-w-md truncate" title={suggestion.deepseek_response.explanation}>
                         {suggestion.deepseek_response.explanation}
                       </TableCell>
                       <TableCell>
