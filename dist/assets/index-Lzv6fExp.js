@@ -31205,36 +31205,24 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$j = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
-const Check = createLucideIcon("check", __iconNode$j);
+const __iconNode$i = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
+const Check = createLucideIcon("check", __iconNode$i);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$i = [["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]];
-const ChevronLeft = createLucideIcon("chevron-left", __iconNode$i);
+const __iconNode$h = [["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]];
+const ChevronLeft = createLucideIcon("chevron-left", __iconNode$h);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$h = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
-const ChevronRight = createLucideIcon("chevron-right", __iconNode$h);
-/**
- * @license lucide-react v0.508.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$g = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
-  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
-];
-const CircleAlert = createLucideIcon("circle-alert", __iconNode$g);
+const __iconNode$g = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
+const ChevronRight = createLucideIcon("chevron-right", __iconNode$g);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
@@ -31242,25 +31230,37 @@ const CircleAlert = createLucideIcon("circle-alert", __iconNode$g);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$f = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
+  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
+];
+const CircleAlert = createLucideIcon("circle-alert", __iconNode$f);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$e = [
   ["path", { d: "M21.801 10A10 10 0 1 1 17 3.335", key: "yps3ct" }],
   ["path", { d: "m9 11 3 3L22 4", key: "1pflzl" }]
 ];
-const CircleCheckBig = createLucideIcon("circle-check-big", __iconNode$f);
+const CircleCheckBig = createLucideIcon("circle-check-big", __iconNode$e);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$e = [["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }]];
-const Circle = createLucideIcon("circle", __iconNode$e);
+const __iconNode$d = [["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }]];
+const Circle = createLucideIcon("circle", __iconNode$d);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$d = [
+const __iconNode$c = [
   [
     "path",
     {
@@ -31270,21 +31270,7 @@ const __iconNode$d = [
   ],
   ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
 ];
-const Eye = createLucideIcon("eye", __iconNode$d);
-/**
- * @license lucide-react v0.508.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$c = [
-  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
-  ["path", { d: "M10 9H8", key: "b1mrlr" }],
-  ["path", { d: "M16 13H8", key: "t4e002" }],
-  ["path", { d: "M16 17H8", key: "z1uh3a" }]
-];
-const FileText = createLucideIcon("file-text", __iconNode$c);
+const Eye = createLucideIcon("eye", __iconNode$c);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
@@ -31292,6 +31278,20 @@ const FileText = createLucideIcon("file-text", __iconNode$c);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$b = [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M10 9H8", key: "b1mrlr" }],
+  ["path", { d: "M16 13H8", key: "t4e002" }],
+  ["path", { d: "M16 17H8", key: "z1uh3a" }]
+];
+const FileText = createLucideIcon("file-text", __iconNode$b);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$a = [
   ["path", { d: "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8", key: "5wwlr5" }],
   [
     "path",
@@ -31301,19 +31301,7 @@ const __iconNode$b = [
     }
   ]
 ];
-const House = createLucideIcon("house", __iconNode$b);
-/**
- * @license lucide-react v0.508.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$a = [
-  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
-  ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
-  ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
-];
-const Image$1 = createLucideIcon("image", __iconNode$a);
+const House = createLucideIcon("house", __iconNode$a);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
@@ -33269,16 +33257,30 @@ const DialogDescription = reactExports.forwardRef(({ className, ...props }, ref)
 ));
 DialogDescription.displayName = Description$1.displayName;
 const InvoicePreview = ({ isOpen, onClose, previewUrl }) => {
+  const [isImageLoading, setIsImageLoading] = reactExports.useState(true);
+  reactExports.useEffect(() => {
+    if (isOpen && previewUrl) {
+      setIsImageLoading(true);
+    }
+  }, [isOpen, previewUrl]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open: isOpen, onOpenChange: onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "max-w-4xl", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: "Invoice Preview" }) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative w-full h-[80vh] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden", children: previewUrl ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "img",
-      {
-        src: previewUrl,
-        alt: "Invoice preview",
-        className: "max-w-full max-h-full object-contain"
-      }
-    ) : /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingSpinner, { text: "Loading preview..." }) })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative w-full h-[80vh] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden", children: previewUrl ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      isImageLoading && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center bg-gray-100", children: /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingSpinner, { text: "Loading preview..." }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "img",
+        {
+          src: previewUrl,
+          alt: "Invoice preview",
+          className: "max-w-full max-h-full object-contain",
+          onLoad: () => setIsImageLoading(false),
+          onError: () => {
+            setIsImageLoading(false);
+            console.error("Error loading image:", previewUrl);
+          }
+        }
+      )
+    ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingSpinner, { text: "Loading preview..." }) })
   ] }) });
 };
 const uploadFiles = async (files, folder = "invoices") => {
@@ -33303,9 +33305,13 @@ const uploadFiles = async (files, folder = "invoices") => {
     return { data: null, error };
   }
 };
-const getFileUrl = (path, options) => {
-  const { data } = supabase.storage.from("invoices").getPublicUrl(path, options);
-  return data.publicUrl;
+const getFileUrl = async (path, options) => {
+  const { data, error } = await supabase.storage.from("invoices").createSignedUrl(path, 3600, options);
+  if (error) {
+    console.error("Error creating signed URL:", error);
+    throw error;
+  }
+  return data.signedUrl;
 };
 const sides = ["top", "right", "bottom", "left"];
 const min = Math.min;
@@ -36027,8 +36033,8 @@ const AccountingEntriesTable = () => {
       setCurrentPage(newPage);
     }
   };
-  const handlePreview = (entry) => {
-    const url = getFileUrl(entry.file.name);
+  const handlePreview = async (entry) => {
+    const url = await getFileUrl(entry.file.path);
     setPreviewUrl(url);
     setIsPreviewOpen(true);
   };
@@ -36036,6 +36042,7 @@ const AccountingEntriesTable = () => {
     if (isLoading) {
       return /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: Array.from({ length: ITEMS_PER_PAGE$1 }).map((_, index2) => /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-8" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
@@ -36044,7 +36051,7 @@ const AccountingEntriesTable = () => {
       ] }, index2)) });
     }
     if (entries.length === 0) {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TableRow, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { colSpan: 6, className: "text-center py-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center", children: [
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TableRow, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { colSpan: 7, className: "text-center py-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-12 w-12 text-gray-400 mb-4" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-lg font-medium text-gray-900 mb-1", children: "No Accounting Entries" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500", children: "There are no accounting entries to display." })
@@ -36054,14 +36061,18 @@ const AccountingEntriesTable = () => {
       var _a;
       return /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: new Date(entry.created_at).toLocaleDateString() }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "truncate cursor-help", children: entry.file.name }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: entry.file.name }) })
+        ] }) }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
             Button,
             {
               size: "sm",
-              variant: "ghost",
+              variant: "outline",
               onClick: () => handlePreview(entry),
-              className: "h-8 w-8 p-0",
+              className: "h-8",
               children: /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "h-4 w-4" })
             }
           ) }),
@@ -36069,12 +36080,12 @@ const AccountingEntriesTable = () => {
         ] }) }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-md truncate cursor-help", children: entry.deepseek_response.explanation }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "View full description" }) })
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "max-w-md whitespace-normal", children: entry.deepseek_response.explanation }) })
         ] }) }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: entry.deepseek_response.debitAccount }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: entry.deepseek_response.creditAccount }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { className: "text-right", children: [
-          "$",
+          "PKR ",
           (_a = entry.deepseek_response.amount) == null ? void 0 : _a.toFixed(2)
         ] })
       ] }, entry.id);
@@ -36085,7 +36096,8 @@ const AccountingEntriesTable = () => {
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bg-white rounded-lg border overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Table, { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(TableHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Date" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Image" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: "File Name" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Preview" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Description" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Debit Account" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Credit Account" }),
@@ -38256,19 +38268,56 @@ const UploadInvoice = () => {
       return true;
     });
   };
-  const handleDrop = (e) => {
+  const handleDragEnter = reactExports.useCallback((e) => {
     e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+  const handleDragLeave = reactExports.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
-    const validFiles = validateFiles(e.dataTransfer.files);
-    if (validFiles.length) setFiles((prev) => [...prev, ...validFiles]);
-  };
-  const handleFileSelect = (e) => {
-    const selectedFiles = e.target.files;
-    if (selectedFiles) {
-      const validFiles = validateFiles(selectedFiles);
-      if (validFiles.length) setFiles((prev) => [...prev, ...validFiles]);
+  }, []);
+  const handleDragOver = reactExports.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) {
+      setIsDragging(true);
     }
-  };
+  }, [isDragging]);
+  const handleDrop = reactExports.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
+      const validFiles = validateFiles(droppedFiles);
+      if (validFiles.length) {
+        setFiles((prev) => [...prev, ...validFiles]);
+        toast2({
+          title: "Files added",
+          description: `Added ${validFiles.length} file(s) to upload.`
+        });
+      }
+    }
+  }, [toast2]);
+  const handleFileSelect = reactExports.useCallback((e) => {
+    const selectedFiles = e.target.files;
+    if (selectedFiles && selectedFiles.length > 0) {
+      const validFiles = validateFiles(selectedFiles);
+      if (validFiles.length) {
+        setFiles((prev) => [...prev, ...validFiles]);
+        toast2({
+          title: "Files added",
+          description: `Added ${validFiles.length} file(s) to upload.`
+        });
+      }
+    }
+    e.target.value = "";
+  }, [toast2]);
+  const removeFile = reactExports.useCallback((index2) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index2));
+  }, []);
   const handleUpload = async () => {
     if (!files.length) {
       toast2({
@@ -38305,87 +38354,107 @@ const UploadInvoice = () => {
       setIsUploading(false);
     }
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "container mx-auto px-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-3xl mx-auto space-y-4", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "container mx-auto px-4 py-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-3xl mx-auto space-y-6", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center space-y-2", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-3xl font-bold", children: "Upload Invoice" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500", children: "Upload your invoice images for processing" })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "p-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "div",
-      {
-        className: `border-2 border-dashed rounded-lg p-8 text-center transition-colors duration-200 ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"}`,
-        onDragOver: (e) => {
-          e.preventDefault();
-          setIsDragging(true);
-        },
-        onDragLeave: (e) => {
-          e.preventDefault();
-          setIsDragging(false);
-        },
-        onDrop: handleDrop,
-        children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-4 rounded-full bg-blue-50", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-8 w-8 text-blue-500" }) }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-lg font-medium", children: "Drag and drop your invoice images here" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-gray-500", children: "or" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              Button,
-              {
-                variant: "outline",
-                onClick: () => {
-                  var _a;
-                  return (_a = document.getElementById("fileInput")) == null ? void 0 : _a.click();
-                },
-                className: "gap-2",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Image$1, { className: "h-4 w-4" }),
-                  "Browse Files"
-                ]
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "input",
-              {
-                id: "fileInput",
-                type: "file",
-                className: "hidden",
-                accept: ".png,.jpg,.jpeg",
-                multiple: true,
-                onChange: handleFileSelect
-              }
-            )
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-gray-500", children: "Supported formats: PNG, JPEG (max 10MB per file)" })
+    showAlert && /* @__PURE__ */ jsxRuntimeExports.jsxs(Alert, { className: "bg-gray-50 border-gray-200 relative", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-5 w-5 text-black mt-0.5" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDescription, { className: "text-sm text-gray-800", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-black", children: "Tip:" }),
+          " For best results, ensure your invoice images are clear, well-lit, and contain all necessary information."
         ] })
-      }
-    ) }),
-    showAlert && /* @__PURE__ */ jsxRuntimeExports.jsxs(Alert, { className: "bg-blue-50 border-blue-200 relative mb-4", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-4 w-4 text-blue-500" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(AlertDescription, { className: "text-sm text-blue-700 pr-8", children: "Make sure your invoice images are clear and readable. Remove any sensitive information before uploading." }),
+      ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
+        Button,
         {
+          variant: "ghost",
+          size: "sm",
+          className: "absolute right-2 top-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full p-1",
           onClick: () => setShowAlert(false),
-          className: "absolute right-4 top-4 text-blue-500 hover:text-blue-700 transition-colors",
           children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" })
         }
       )
     ] }),
-    files.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "p-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-xl font-semibold", children: "Selected Images" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-500", children: [
-          files.length,
-          " ",
-          files.length === 1 ? "image" : "images",
-          " selected"
-        ] })
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Card,
+      {
+        className: `p-8 border-2 border-dashed transition-colors duration-200 bg-white ${isDragging ? "border-black bg-gray-50" : "border-gray-300 group hover:border-gray-800 hover:bg-gray-50"}`,
+        onDragEnter: handleDragEnter,
+        onDragOver: handleDragOver,
+        onDragLeave: handleDragLeave,
+        onDrop: handleDrop,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center gap-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-full bg-gray-50 p-4", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-8 w-8 text-gray-500" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-lg font-medium text-gray-900", children: "Drag and drop your invoice images here" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-gray-600", children: "or click to browse your files" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-gray-500", children: "Supported formats: PNG, JPEG (max 10MB per file)" })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "input",
+            {
+              type: "file",
+              multiple: true,
+              accept: ".png,.jpg,.jpeg",
+              onChange: handleFileSelect,
+              className: "hidden",
+              id: "file-upload"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "label",
+            {
+              htmlFor: "file-upload",
+              className: "cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-11 px-6 shadow-sm hover:shadow-md",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-4 w-4 mr-2 text-gray-600" }),
+                "Browse Files"
+              ]
+            }
+          )
+        ] }) })
+      }
+    ),
+    files.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "p-6 relative bg-white", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between border-b pb-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-xl font-semibold text-gray-900", children: "Selected Images" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full border border-gray-200", children: [
+            files.length,
+            " ",
+            files.length === 1 ? "image" : "images",
+            " selected"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Button,
+          {
+            onClick: handleUpload,
+            disabled: isUploading,
+            className: "gap-2 bg-black hover:bg-gray-800 text-white shadow-sm hover:shadow-md transition-all px-5",
+            size: "sm",
+            children: isUploading ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium", children: "Processing..." }) }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-4 w-4" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-medium", children: [
+                "Upload ",
+                files.length,
+                " ",
+                files.length === 1 ? "Image" : "Images"
+              ] })
+            ] })
+          }
+        )
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-3", children: files.map((file, index2) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "border rounded-lg p-4 space-y-2 bg-white", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-3", children: files.map((file, index2) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "border border-gray-200 rounded-lg p-4 space-y-2 bg-white hover:bg-gray-50 transition-colors", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-3", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2 rounded-md bg-blue-50", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Image$1, { className: "h-5 w-5 text-blue-500" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2 rounded-md bg-gray-50", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-5 w-5 text-gray-500" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-sm", children: file.name }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-sm text-gray-900", children: file.name }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs text-gray-500", children: [
               (file.size / (1024 * 1024)).toFixed(2),
               " MB"
@@ -38397,25 +38466,12 @@ const UploadInvoice = () => {
           {
             variant: "ghost",
             size: "icon",
-            onClick: () => setFiles((prev) => prev.filter((_, i) => i !== index2)),
+            onClick: () => removeFile(index2),
             className: "h-8 w-8 hover:bg-red-50 hover:text-red-500",
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" })
           }
         )
-      ] }) }, index2)) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        Button,
-        {
-          onClick: handleUpload,
-          className: "w-full gap-2",
-          size: "lg",
-          disabled: isUploading,
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-4 w-4" }),
-            isUploading ? "Processing..." : `Upload ${files.length} ${files.length === 1 ? "Image" : "Images"}`
-          ]
-        }
-      )
+      ] }) }, `${file.name}-${index2}`)) })
     ] }) })
   ] }) });
 };
@@ -38485,7 +38541,11 @@ const InvoiceSuggestion = () => {
   const [isLoading, setIsLoading] = reactExports.useState(true);
   const [isSaving, setIsSaving] = reactExports.useState(false);
   const [editingId, setEditingId] = reactExports.useState(null);
-  const [editValues, setEditValues] = reactExports.useState({ debit: "", credit: "" });
+  const [editValues, setEditValues] = reactExports.useState({
+    debit: "",
+    credit: "",
+    amount: ""
+  });
   const [isModalOpen, setIsModalOpen] = reactExports.useState(false);
   const [currentPage, setCurrentPage] = reactExports.useState(1);
   const [totalItems, setTotalItems] = reactExports.useState(0);
@@ -38542,10 +38602,12 @@ const InvoiceSuggestion = () => {
     }
   };
   const handleRowClick = (suggestion) => {
+    var _a;
     setEditingId(suggestion.id);
     setEditValues({
       debit: suggestion.deepseek_response.debitAccount,
-      credit: suggestion.deepseek_response.creditAccount
+      credit: suggestion.deepseek_response.creditAccount,
+      amount: ((_a = suggestion.deepseek_response.amount) == null ? void 0 : _a.toString()) || ""
     });
     setIsModalOpen(true);
     fetchLineItems(suggestion.id);
@@ -38572,7 +38634,8 @@ const InvoiceSuggestion = () => {
       const updatedDeepseekResponse = {
         ...suggestion.deepseek_response,
         debitAccount: editValues.debit,
-        creditAccount: editValues.credit
+        creditAccount: editValues.credit,
+        amount: parseFloat(editValues.amount) || suggestion.deepseek_response.amount
       };
       const { error } = await updateInvoiceSuggestion(id, updatedDeepseekResponse);
       if (error) throw error;
@@ -38598,10 +38661,21 @@ const InvoiceSuggestion = () => {
     setEditingId(null);
     setIsModalOpen(false);
   };
-  const handlePreview = (suggestion) => {
-    const url = getFileUrl(suggestion.file.path);
-    setPreviewUrl(url);
-    setIsPreviewOpen(true);
+  const handlePreview = async (suggestion) => {
+    try {
+      const url = await getFileUrl(suggestion.file.path);
+      if (url) {
+        setPreviewUrl(url);
+        setIsPreviewOpen(true);
+      }
+    } catch (error) {
+      console.error("Error generating preview URL:", error);
+      toast2({
+        title: "Error",
+        description: "Failed to generate preview URL. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   const LineItemsView = ({ lineItems }) => {
     if (lineItems.length === 0) return null;
@@ -38635,7 +38709,44 @@ const InvoiceSuggestion = () => {
       /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-3xl font-bold", children: "Invoice Suggestions" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500 mt-2", children: "Review and approve AI-generated suggestions for your uploaded invoices." })
     ] }) }),
-    isLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx(PageSkeleton, { showHeader: false, showCards: false }) : suggestions.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center py-10 bg-white rounded-lg border", children: [
+    isLoading ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-between", children: /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-lg font-semibold text-gray-900", children: "Invoices" }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bg-white rounded-lg border overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Table, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TableHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Date" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: "File Name" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Preview" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Description" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Debit Account" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Credit Account" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Amount" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Confidence" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[150px]", children: "Actions" })
+        ] }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: Array.from({ length: ITEMS_PER_PAGE }).map((_, index2) => /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-8" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-64" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-24" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-16" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-8" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-8" })
+          ] }) })
+        ] }, index2)) })
+      ] }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-4 flex items-center justify-between px-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-48" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-8" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-24" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-8" })
+        ] })
+      ] })
+    ] }) : suggestions.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center py-10 bg-white rounded-lg border", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-12 w-12 text-gray-400 mx-auto mb-4" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-xl font-semibold mb-2", children: "No Invoice Suggestions Yet" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500", children: "Upload an invoice, and AI suggestions will appear here." })
@@ -38647,19 +38758,24 @@ const InvoiceSuggestion = () => {
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bg-white rounded-lg border overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Table, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[200px]", children: "File Name" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Image" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Date" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: "File Name" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Preview" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Description" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Debit Account" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Credit Account" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Amount" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Confidence" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[300px]", children: "Explanation" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[150px]", children: "Actions" })
           ] }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: suggestions.map((suggestion) => {
             var _a;
             return /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "font-medium truncate", title: suggestion.file.name, children: suggestion.file.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: new Date(suggestion.created_at).toLocaleDateString() }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "truncate cursor-help", children: suggestion.file.name }) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: suggestion.file.name }) })
+              ] }) }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
                   Button,
@@ -38673,20 +38789,20 @@ const InvoiceSuggestion = () => {
                 ) }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Preview invoice" }) })
               ] }) }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-md truncate cursor-help", children: suggestion.deepseek_response.explanation }) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "max-w-md whitespace-normal", children: suggestion.deepseek_response.explanation }) })
+              ] }) }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: suggestion.deepseek_response.debitAccount }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: suggestion.deepseek_response.creditAccount }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { children: [
-                "$",
+                "PKR ",
                 (_a = suggestion.deepseek_response.amount) == null ? void 0 : _a.toFixed(2)
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { children: [
                 (suggestion.deepseek_response.confidence * 100).toFixed(0),
                 "%"
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-md truncate cursor-help", children: suggestion.deepseek_response.explanation }) }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "View full description" }) })
-              ] }) }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -38781,6 +38897,19 @@ const InvoiceSuggestion = () => {
                 id: "credit",
                 value: editValues.credit,
                 onChange: (e) => setEditValues((prev) => ({ ...prev, credit: e.target.value }))
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "amount", children: "Amount" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Input,
+              {
+                id: "amount",
+                type: "number",
+                step: "0.01",
+                value: editValues.amount,
+                onChange: (e) => setEditValues((prev) => ({ ...prev, amount: e.target.value }))
               }
             )
           ] })
@@ -39564,4 +39693,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) })
 );
-//# sourceMappingURL=index-n_y_XtPq.js.map
+//# sourceMappingURL=index-Lzv6fExp.js.map
