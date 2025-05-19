@@ -1,16 +1,19 @@
-import { supabase } from '../lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { getCurrentUser } from '@/lib/supabase/auth';
-
-export const processInvoiceFunction = async () => {
+export const processInvoice = async () => {
   try {
-    const user = await getCurrentUser();    
-    if (!user) {
-      throw new Error('User not authenticated');
+    const user = await getCurrentUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('No active session found');
     }
 
-    // Fire and forget - don't wait for response
     supabase.functions.invoke('process-invoice', {
-      body: { user_id: user.id }
+      body: { user_id: user.id },
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
     }).catch(error => {
       console.error('Background invoice processing error:', error);
     });

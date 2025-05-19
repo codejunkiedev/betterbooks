@@ -72,7 +72,20 @@ if (!supabaseUrl || !supabaseKey || !mistralApiKey || !openRouterApiKey) {
   throw new Error('Missing required environment variables: SUPABASE_URL, SUPABASE_ANON_KEY, MISTRAL_API_KEY, or OPENROUTER_API_KEY');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Create two Supabase clients - one for admin operations and one for user operations
+const adminClient = createClient(supabaseUrl, supabaseKey);
+let userClient: ReturnType<typeof createClient> | null = null;
+
+// Function to initialize user client with JWT
+function initUserClient(jwt: string) {
+  userClient = createClient(supabaseUrl, supabaseKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${jwt}`
+      }
+    }
+  });
+}
 
 /**
  * HTTP Response helper functions
@@ -133,14 +146,14 @@ async function isUrlAccessible(url: string): Promise<boolean> {
  */
 async function getAccessibleFileUrl(filePath: string): Promise<{ url: string; isAccessible: boolean; publicUrl: string }> {
   // Generate the public URL
-  const { data: { publicUrl } } = supabase.storage.from('invoices').getPublicUrl(filePath);
+  const { data: { publicUrl } } = adminClient.storage.from('invoices').getPublicUrl(filePath);
   
   if (!publicUrl) {
     throw new Error(`Failed to generate public URL for file: ${filePath}`);
   }
 
   // Create a signed URL with 1-week expiration
-  const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+  const { data: signedUrlData, error: signedUrlError } = await adminClient.storage
     .from('invoices')
     .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 1 week expiration
     
@@ -218,7 +231,7 @@ async function processImageWithMistralOCR(imageUrl: string): Promise<MistralOCRR
  */
 async function updateInvoiceStatus(id: string, status: string): Promise<boolean> {
   try {
-    const { error } = await supabase
+    const { error } = await adminClient
       .from('invoices')
       .update({ status })
       .eq('id', id);
@@ -248,7 +261,7 @@ async function updateInvoiceStatus(id: string, status: string): Promise<boolean>
  */
 async function updateInvoiceWithOCRResponse(invoiceId: string, response: MistralOCRResponse): Promise<void> {
   try {
-    const { error } = await supabase
+    const { error } = await adminClient
       .from('invoices')
       .update({
         ocr_response: response,
@@ -293,7 +306,7 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
     - Tax information
     - Currency symbols and amounts
     
-    Return the response in JSON format with the following structure:
+    Return ONLY the JSON response with the following structure, without any additional text or explanation:
     {
       "debitAccount": "string (e.g., 'Office Supplies', 'Rent Expense', etc.)",
       "creditAccount": "string (e.g., 'Accounts Payable', 'Cash', etc.)",
@@ -329,7 +342,7 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert accountant fluent in both English and Urdu. Analyze invoice text in either language and provide accounting entries in English. Translate and interpret Urdu content to English before analysis. Identify line items that represent assets (non-perishable items with useful life > 1 year). Always respond in valid JSON format without any markdown formatting or code blocks.'
+            content: 'You are an expert accountant fluent in both English and Urdu. Analyze invoice text in either language and provide accounting entries in English. Translate and interpret Urdu content to English before analysis. Identify line items that represent assets (non-perishable items with useful life > 1 year). Return ONLY the JSON response without any additional text, markdown formatting, or code blocks.'
           },
           {
             role: 'user',
@@ -347,13 +360,18 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
     }
 
     const result = await response.json();
-    let content = result.choices[0].message.content;
+    const content = result.choices[0].message.content;
     
     try {
-      // Remove markdown code block formatting if present
-      content = content.replace(/```json\n?|\n?```/g, '').trim();
+      // Extract JSON from the response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON object found in response');
+      }
       
-      const parsedResponse = JSON.parse(content);
+      const jsonStr = jsonMatch[0];
+      const parsedResponse = JSON.parse(jsonStr);
+      
       const response: DeepSeekResponse = {
         debitAccount: parsedResponse.debitAccount,
         creditAccount: parsedResponse.creditAccount,
@@ -386,8 +404,8 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
  */
 async function updateInvoiceWithDeepSeekAnalysis(invoiceId: string, analysis: DeepSeekResponse): Promise<void> {
   try {
-    // First update the invoice with the analysis
-    const { error: updateError } = await supabase
+    // First update the invoice with the analysis using admin client
+    const { error: updateError } = await adminClient
       .from('invoices')
       .update({
         deepseek_response: analysis,
@@ -402,12 +420,16 @@ async function updateInvoiceWithDeepSeekAnalysis(invoiceId: string, analysis: De
       );
     }
 
-    // If there are line items and they are assets, save them
+    // If there are line items and they are assets, save them using user client
     if (analysis.line_items && Array.isArray(analysis.line_items)) {
       const assetLineItems = analysis.line_items.filter(item => item.is_asset);
       
       if (assetLineItems.length > 0) {
-        const { error: lineItemsError } = await supabase
+        if (!userClient) {
+          throw new Error('User client not initialized');
+        }
+
+        const { error: lineItemsError } = await userClient
           .from('line_items')
           .insert(
             assetLineItems.map(item => ({
@@ -585,6 +607,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Get the JWT from the Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return createResponse(
+        { error: 'Missing Authorization header' },
+        401
+      );
+    }
+
+    const jwt = authHeader.replace('Bearer ', '');
+    initUserClient(jwt);
+
     // Parse and validate request body
     const body: ProcessInvoiceRequest = await req.json();
     
@@ -596,7 +630,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch pending invoices for the user
-    const { data: invoices, error } = await supabase
+    const { data: invoices, error } = await adminClient
       .from('invoices')
       .select('*')
       .eq('user_id', body.user_id)

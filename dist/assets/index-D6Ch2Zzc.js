@@ -35853,14 +35853,18 @@ const uploadFiles = async (files, folder = "invoices") => {
     return { data: null, error };
   }
 };
-const processInvoiceFunction = async () => {
+const processInvoice = async () => {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      throw new Error("User not authenticated");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!(session == null ? void 0 : session.access_token)) {
+      throw new Error("No active session found");
     }
     supabase.functions.invoke("process-invoice", {
-      body: { user_id: user.id }
+      body: { user_id: user.id },
+      headers: {
+        "Authorization": `Bearer ${session.access_token}`
+      }
     }).catch((error) => {
       console.error("Background invoice processing error:", error);
     });
@@ -35931,7 +35935,7 @@ const UploadInvoice = () => {
       if (invoiceError) {
         throw invoiceError;
       }
-      await processInvoiceFunction();
+      await processInvoice();
       toast2({
         title: "Upload complete",
         description: "Your images have been successfully uploaded."
@@ -36690,10 +36694,10 @@ const fetchInvoiceSuggestions = async (page = 1, pageSize = 10) => {
 };
 const updateInvoiceSuggestion = async (id, deepseekResponse) => {
   try {
-    const { error } = await supabase.rpc("update_invoice_with_line_items", {
-      p_invoice_id: id,
-      p_deepseek_response: deepseekResponse
-    });
+    const { error } = await supabase.from("invoices").update({
+      status: "approved",
+      data: deepseekResponse
+    }).eq("id", id);
     if (error) throw error;
     return { error: null };
   } catch (error) {
@@ -37779,4 +37783,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) })
 );
-//# sourceMappingURL=index-Cf6ygc4o.js.map
+//# sourceMappingURL=index-D6Ch2Zzc.js.map

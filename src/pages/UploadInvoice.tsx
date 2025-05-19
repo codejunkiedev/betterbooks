@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { uploadFiles } from "@/lib/supabase/storage";
 import { uploadInvoice } from "@/lib/supabase/invoice";
 import { UploadedFile } from "@/interfaces/storage";
-import { processInvoiceFunction } from "@/api/processInvoice";
+import { processInvoice } from "@/api/processInvoice";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg'];
@@ -81,11 +81,11 @@ const UploadInvoice = () => {
         throw invoiceError;
       }
 
-     await processInvoiceFunction();
+     await processInvoice();
 
       toast({
-        title: "Upload complete",
-        description: "Your images have been successfully uploaded.",
+        title: "Upload completed",
+        description: "Images uploaded successfully for processing.",
       });
 
       setFiles([]);
