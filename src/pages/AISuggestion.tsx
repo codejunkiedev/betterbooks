@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Loader2, FileText, Check, Edit2, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, Check, Edit2, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -26,12 +26,15 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { InvoiceSuggestionType } from "@/interfaces/suggestion";
-import { 
-  fetchInvoiceSuggestions,  
-  updateInvoiceSuggestion 
+import {
+  fetchInvoiceSuggestions,
+  updateInvoiceSuggestion
 } from "@/lib/supabase/suggestion";
 import { getInvoiceLineItems } from '../lib/supabase/line-item';
 import { LineItem } from '../interfaces/line-item';
+import { getFileUrl } from "@/lib/supabase/storage";
+import { LoadingSpinner, Skeleton } from "@/components/ui/loading";
+import { InvoicePreview } from "@/components/shared/InvoicePreview";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -40,13 +43,19 @@ const InvoiceSuggestion = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ debit: string; credit: string }>({ debit: "", credit: "" });
+  const [editValues, setEditValues] = useState<{ debit: string; credit: string; amount: string }>({
+    debit: "",
+    credit: "",
+    amount: ""
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const { toast } = useToast();
   const [selectedLineItems, setSelectedLineItems] = useState<LineItem[]>([]);
   const [showLineItems, setShowLineItems] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     loadSuggestions();
@@ -108,6 +117,7 @@ const InvoiceSuggestion = () => {
     setEditValues({
       debit: suggestion.deepseek_response.debitAccount,
       credit: suggestion.deepseek_response.creditAccount,
+      amount: suggestion.deepseek_response.amount?.toString() || ""
     });
     setIsModalOpen(true);
     fetchLineItems(suggestion.id);
@@ -138,6 +148,7 @@ const InvoiceSuggestion = () => {
         ...suggestion.deepseek_response,
         debitAccount: editValues.debit,
         creditAccount: editValues.credit,
+        amount: parseFloat(editValues.amount) || suggestion.deepseek_response.amount
       };
 
       const { error } = await updateInvoiceSuggestion(id, updatedDeepseekResponse);
@@ -168,9 +179,26 @@ const InvoiceSuggestion = () => {
     setIsModalOpen(false);
   };
 
+  const handlePreview = async (suggestion: InvoiceSuggestionType) => {
+    try {
+      const url = await getFileUrl(suggestion.file.path);
+      if (url) {
+        setPreviewUrl(url);
+        setIsPreviewOpen(true);
+      }
+    } catch (error) {
+      console.error('Error generating preview URL:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate preview URL. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const LineItemsView = ({ lineItems }: { lineItems: LineItem[] }) => {
     if (lineItems.length === 0) return null;
-    
+
     return (
       <div className="mt-4 border p-4 rounded-lg">
         <h3 className="font-medium text-lg mb-2">Asset Line Items</h3>
@@ -217,97 +245,191 @@ const InvoiceSuggestion = () => {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 text-gray-500 animate-spin" />
-            <p className="ml-2 text-gray-500">Loading suggestions...</p>
-          </div>
-        ) : suggestions.length === 0 ? (
-          <div className="text-center py-10 bg-white rounded-lg border">
-             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No Invoice Suggestions Yet</h3>
-            <p className="text-gray-500">Upload an invoice, and AI suggestions will appear here.</p>
-          </div>
-        ) : (
-          <>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Invoices</h2>
+            </div>
+
             <div className="bg-white rounded-lg border overflow-hidden">
-              <div className="flex items-center justify-between p-4 pb-2">
-                <div className="text-lg font-semibold text-black flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-blue-500" /> Invoices
-                </div>
-                {isLoading && (
-                  <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
-                )}
-              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[200px]">File Name</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="w-[200px] min-w-[200px] max-w-[200px]">File Name</TableHead>
+                    <TableHead>Preview</TableHead>
+                    <TableHead>Description</TableHead>
                     <TableHead>Debit Account</TableHead>
                     <TableHead>Credit Account</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Confidence</TableHead>
-                    <TableHead className="w-[300px]">Explanation</TableHead>
                     <TableHead className="w-[150px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {suggestions.map((suggestion) => (
-                    <TableRow key={suggestion.id}>
-                      <TableCell className="font-medium truncate" title={suggestion.file.name}>
-                        {suggestion.file.name}
-                      </TableCell>
-                      <TableCell>{suggestion.deepseek_response.debitAccount}</TableCell>
-                      <TableCell>{suggestion.deepseek_response.creditAccount}</TableCell>
-                      <TableCell>${suggestion.deepseek_response.amount?.toFixed(2)}</TableCell>
-                      <TableCell>
-                        {(suggestion.deepseek_response.confidence * 100).toFixed(0)}%
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {suggestion.deepseek_response.explanation}
-                      </TableCell>
+                  {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell className="w-[200px] min-w-[200px] max-w-[200px]"><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-64" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleRowClick(suggestion)}
-                                  className="h-8"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Edit accounting entry</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          {suggestion.status !== "approved" && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleApprove(suggestion.id)}
-                                    className="h-8"
-                                  >
-                                    <Check className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Approve this entry</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
+                          <Skeleton className="h-8 w-8" />
+                          <Skeleton className="h-8 w-8" />
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Pagination Controls Skeleton */}
+            <div className="mt-4 flex items-center justify-between px-2">
+              <Skeleton className="h-4 w-48" />
+              <div className="flex items-center space-x-2">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-8" />
+              </div>
+            </div>
+          </div>
+        ) : suggestions.length === 0 ? (
+          <div className="text-center py-10 bg-white rounded-lg border">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No Invoice Suggestions Yet</h3>
+            <p className="text-gray-500">Upload an invoice, and AI suggestions will appear here.</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Invoices</h2>
+                {isLoading && (
+                  <LoadingSpinner size="sm" />
+                )}
+              </div>
+
+              <div className="bg-white rounded-lg border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="w-[200px] min-w-[200px] max-w-[200px]">File Name</TableHead>
+                      <TableHead>Preview</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Debit Account</TableHead>
+                      <TableHead>Credit Account</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Confidence</TableHead>
+                      <TableHead className="w-[150px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {suggestions.map((suggestion) => (
+                      <TableRow key={suggestion.id}>
+                        <TableCell>{new Date(suggestion.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="w-[200px] min-w-[200px] max-w-[200px]">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="truncate cursor-help">
+                                  {suggestion.file.name}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{suggestion.file.name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
+                        <TableCell>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handlePreview(suggestion)}
+                                  className="h-8"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Preview invoice</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
+                        <TableCell>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="max-w-md truncate cursor-help">
+                                  {suggestion.deepseek_response.explanation}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-md whitespace-normal">{suggestion.deepseek_response.explanation}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
+                        <TableCell>{suggestion.deepseek_response.debitAccount}</TableCell>
+                        <TableCell>{suggestion.deepseek_response.creditAccount}</TableCell>
+                        <TableCell>PKR {suggestion.deepseek_response.amount?.toFixed(2)}</TableCell>
+                        <TableCell>
+                          {(suggestion.deepseek_response.confidence * 100).toFixed(0)}%
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleRowClick(suggestion)}
+                                    className="h-8"
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit accounting entry</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            {suggestion.status !== "approved" && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleApprove(suggestion.id)}
+                                      className="h-8"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Approve this entry</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
             {/* Pagination Controls */}
@@ -362,6 +484,16 @@ const InvoiceSuggestion = () => {
                   onChange={(e) => setEditValues(prev => ({ ...prev, credit: e.target.value }))}
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="amount">Amount</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  value={editValues.amount}
+                  onChange={(e) => setEditValues(prev => ({ ...prev, amount: e.target.value }))}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
@@ -369,10 +501,7 @@ const InvoiceSuggestion = () => {
               </Button>
               <Button onClick={() => handleSave(editingId!)} disabled={isSaving}>
                 {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
+                  <LoadingSpinner size="sm" text="Saving..." />
                 ) : (
                   "Save Changes"
                 )}
@@ -381,6 +510,12 @@ const InvoiceSuggestion = () => {
           </DialogContent>
           {showLineItems && <LineItemsView lineItems={selectedLineItems} />}
         </Dialog>
+
+        <InvoicePreview
+          isOpen={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+          previewUrl={previewUrl}
+        />
 
         <div className="mt-12 bg-gray-50 rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">How It Works</h2>

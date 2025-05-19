@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { X, Image as ImageIcon, Upload, AlertCircle } from "lucide-react";
+import { X, Upload, AlertCircle, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { uploadFiles } from "@/lib/supabase/storage";
@@ -43,20 +43,63 @@ const UploadInvoice = () => {
     });
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(false);
-    const validFiles = validateFiles(e.dataTransfer.files);
-    if (validFiles.length) setFiles(prev => [...prev, ...validFiles]);
-  };
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = e.target.files;
-    if (selectedFiles) {
-      const validFiles = validateFiles(selectedFiles);
-      if (validFiles.length) setFiles(prev => [...prev, ...validFiles]);
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) {
+      setIsDragging(true);
     }
-  };
+  }, [isDragging]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
+      const validFiles = validateFiles(droppedFiles);
+      if (validFiles.length) {
+        setFiles(prev => [...prev, ...validFiles]);
+        toast({
+          title: "Files added",
+          description: `Added ${validFiles.length} file(s) to upload.`,
+        });
+      }
+    }
+  }, [toast]);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (selectedFiles && selectedFiles.length > 0) {
+      const validFiles = validateFiles(selectedFiles);
+      if (validFiles.length) {
+        setFiles(prev => [...prev, ...validFiles]);
+        toast({
+          title: "Files added",
+          description: `Added ${validFiles.length} file(s) to upload.`,
+        });
+      }
+    }
+    // Reset the input value so the same file can be selected again
+    e.target.value = '';
+  }, [toast]);
+
+  const removeFile = useCallback((index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
   const handleUpload = async () => {
     if (!files.length) {
@@ -76,12 +119,12 @@ const UploadInvoice = () => {
         throw error;
       }
 
-      const {error: invoiceError } = await uploadInvoice({ files: data as UploadedFile[] });
+      const { error: invoiceError } = await uploadInvoice({ files: data as UploadedFile[] });
       if (invoiceError) {
         throw invoiceError;
       }
 
-     await processInvoice();
+      await processInvoice();
 
       toast({
         title: "Upload completed",
@@ -102,90 +145,116 @@ const UploadInvoice = () => {
   };
 
   return (
-    <div className="container mx-auto px-4">
-      <div className="max-w-3xl mx-auto space-y-4">
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Upload Invoice</h1>
           <p className="text-gray-500">Upload your invoice images for processing</p>
         </div>
-        
-        <Card className="p-6">
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors duration-200 ${
-              isDragging 
-                ? "border-blue-500 bg-blue-50" 
-                : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
+
+        {showAlert && (
+          <Alert className="bg-gray-50 border-gray-200 relative">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-black mt-0.5" />
+              <AlertDescription className="text-sm text-gray-800">
+                <span className="font-semibold text-black">Tip:</span> For best results, ensure your invoice images are clear, well-lit, and contain all necessary information.
+              </AlertDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full p-1"
+              onClick={() => setShowAlert(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </Alert>
+        )}
+
+        <Card
+          className={`p-8 border-2 border-dashed transition-colors duration-200 bg-white ${isDragging
+            ? 'border-black bg-gray-50'
+            : 'border-gray-300 group hover:border-gray-800 hover:bg-gray-50'
             }`}
-            onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
-            onDragLeave={e => { e.preventDefault(); setIsDragging(false); }}
-            onDrop={handleDrop}
-          >
-            <div className="space-y-4">
-              <div className="flex justify-center">
-                <div className="p-4 rounded-full bg-blue-50">
-                  <Upload className="h-8 w-8 text-blue-500" />
-                </div>
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className="text-center">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="rounded-full bg-gray-50 p-4">
+                <Upload className="h-8 w-8 text-gray-500" />
               </div>
               <div className="space-y-2">
-                <p className="text-lg font-medium">Drag and drop your invoice images here</p>
-                <p className="text-sm text-gray-500">or</p>
-                <Button
-                  variant="outline"
-                  onClick={() => document.getElementById("fileInput")?.click()}
-                  className="gap-2"
-                >
-                  <ImageIcon className="h-4 w-4" />
-                  Browse Files
-                </Button>
-                <input
-                  id="fileInput"
-                  type="file"
-                  className="hidden"
-                  accept=".png,.jpg,.jpeg"
-                  multiple
-                  onChange={handleFileSelect}
-                />
+                <h3 className="text-lg font-medium text-gray-900">Drag and drop your invoice images here</h3>
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-600">
+                    or click to browse your files
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Supported formats: PNG, JPEG (max 10MB per file)
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-gray-500">
-                Supported formats: PNG, JPEG (max 10MB per file)
-              </p>
+              <input
+                type="file"
+                multiple
+                accept=".png,.jpg,.jpeg"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="file-upload"
+              />
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-11 px-6 shadow-sm hover:shadow-md"
+              >
+                <Upload className="h-4 w-4 mr-2 text-gray-600" />
+                Browse Files
+              </label>
             </div>
           </div>
         </Card>
 
-        {showAlert && (
-          <Alert className="bg-blue-50 border-blue-200 relative mb-4">
-            <AlertCircle className="h-4 w-4 text-blue-500" />
-            <AlertDescription className="text-sm text-blue-700 pr-8">
-              Make sure your invoice images are clear and readable. Remove any sensitive information before uploading.
-            </AlertDescription>
-            <button
-              onClick={() => setShowAlert(false)}
-              className="absolute right-4 top-4 text-blue-500 hover:text-blue-700 transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </Alert>
-        )}
-
         {files.length > 0 && (
-          <Card className="p-6">
+          <Card className="p-6 relative bg-white">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Selected Images</h2>
-                <span className="text-sm text-gray-500">{files.length} {files.length === 1 ? 'image' : 'images'} selected</span>
+              <div className="flex items-center justify-between border-b pb-3">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-semibold text-gray-900">Selected Images</h2>
+                  <span className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
+                    {files.length} {files.length === 1 ? 'image' : 'images'} selected
+                  </span>
+                </div>
+                <Button
+                  onClick={handleUpload}
+                  disabled={isUploading}
+                  className="gap-2 bg-black hover:bg-gray-800 text-white shadow-sm hover:shadow-md transition-all px-5"
+                  size="sm"
+                >
+                  {isUploading ? (
+                    <>
+                      <span className="font-medium">Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      <span className="font-medium">Upload {files.length} {files.length === 1 ? 'Image' : 'Images'}</span>
+                    </>
+                  )}
+                </Button>
               </div>
-              
+
               <div className="space-y-3">
                 {files.map((file, index) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-2 bg-white">
+                  <div key={`${file.name}-${index}`} className="border border-gray-200 rounded-lg p-4 space-y-2 bg-white hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 rounded-md bg-blue-50">
-                          <ImageIcon className="h-5 w-5 text-blue-500" />
+                        <div className="p-2 rounded-md bg-gray-50">
+                          <FileText className="h-5 w-5 text-gray-500" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-medium text-sm">{file.name}</span>
+                          <span className="font-medium text-sm text-gray-900">{file.name}</span>
                           <span className="text-xs text-gray-500">
                             {(file.size / (1024 * 1024)).toFixed(2)} MB
                           </span>
@@ -194,7 +263,7 @@ const UploadInvoice = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setFiles(prev => prev.filter((_, i) => i !== index))}
+                        onClick={() => removeFile(index)}
                         className="h-8 w-8 hover:bg-red-50 hover:text-red-500"
                       >
                         <X className="h-4 w-4" />
@@ -203,16 +272,6 @@ const UploadInvoice = () => {
                   </div>
                 ))}
               </div>
-
-              <Button 
-                onClick={handleUpload} 
-                className="w-full gap-2"
-                size="lg"
-                disabled={isUploading}
-              >
-                <Upload className="h-4 w-4" />
-                {isUploading ? 'Processing...' : `Upload ${files.length} ${files.length === 1 ? 'Image' : 'Images'}`}
-              </Button>
             </div>
           </Card>
         )}

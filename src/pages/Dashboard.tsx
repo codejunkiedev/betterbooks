@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-// import { fetchDashboardStats, DashboardStats } from "@/lib/supabase/suggestion";
+import { useEffect, useState } from "react";
+import { AccountingSummary } from "@/components/accounting/AccountingSummary";
+import { AccountingEntriesTable } from "@/components/accounting/AccountingEntriesTable";
 import StatsGrid from "@/components/dashboard/StatsGrid";
-import RecentInvoicesTable from "@/components/dashboard/RecentInvoicesTable";
 import { DashboardStats } from "@/interfaces/dashboard";
 import { fetchDashboardStats } from "@/lib/supabase/dashboard";
+import { PageSkeleton } from "@/components/ui/loading";
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -28,13 +29,23 @@ const Dashboard = () => {
     loadStats();
   }, []);
 
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-        <StatsGrid stats={stats} isLoading={isLoading} />
-        <RecentInvoicesTable />
+        {isLoading ? (
+          <PageSkeleton />
+        ) : (
+          <>
+            <AccountingSummary />
+            <div className="mt-8">
+              <StatsGrid stats={stats} isLoading={false} />
+            </div>
+            <div className="mt-8">
+              <AccountingEntriesTable />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
