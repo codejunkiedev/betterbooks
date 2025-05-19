@@ -16,13 +16,13 @@ const StatsCard = ({ icon, label, value, isLoading = false }: StatsCardProps) =>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-600 truncate">{label}</p>
-          <p className="text-xl font-semibold text-gray-900 mt-1">
+          <div className="text-xl font-semibold text-gray-900 mt-1">
             {isLoading ? (
               <div className="h-6 w-20 bg-gray-100 rounded animate-pulse" />
             ) : (
               value.toLocaleString()
             )}
-          </p>
+          </div>
         </div>
       </div>
     </div>
