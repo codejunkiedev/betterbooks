@@ -219,8 +219,8 @@ const InvoiceSuggestion = () => {
                 <TableRow key={item.id}>
                   <TableCell>{item.description}</TableCell>
                   <TableCell>{item.quantity}</TableCell>
-                  <TableCell>{item.unit_price ? `$${item.unit_price.toFixed(2)}` : 'N/A'}</TableCell>
-                  <TableCell>${item.amount.toFixed(2)}</TableCell>
+                  <TableCell>{item.unit_price ? `PKR ${item.unit_price.toFixed(2)}` : 'N/A'}</TableCell>
+                  <TableCell>PKR {item.amount.toFixed(2)}</TableCell>
                   <TableCell>{item.asset_type || 'N/A'}</TableCell>
                   <TableCell>{item.asset_life_months || 'N/A'}</TableCell>
                 </TableRow>

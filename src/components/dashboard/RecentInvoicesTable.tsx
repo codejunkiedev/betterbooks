@@ -73,10 +73,10 @@ const RecentInvoicesTable = () => {
                   <TableCell>{s.file?.name}</TableCell>
                   <TableCell>{s.deepseek_response?.debitAccount}</TableCell>
                   <TableCell>{s.deepseek_response?.creditAccount}</TableCell>
-                  <TableCell>${s.deepseek_response?.amount?.toFixed(2)}</TableCell>
+                  <TableCell>PKR {s.deepseek_response?.amount?.toFixed(2)}</TableCell>
                   <TableCell>
-                    {s.deepseek_response?.confidence 
-                      ? `${(s.deepseek_response.confidence * 100).toFixed(0)}%` 
+                    {s.deepseek_response?.confidence
+                      ? `${(s.deepseek_response.confidence * 100).toFixed(0)}%`
                       : "-"}
                   </TableCell>
                 </TableRow>
