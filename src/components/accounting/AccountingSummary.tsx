@@ -5,42 +5,42 @@ import { AccountingSummaryType } from "@/interfaces/accounting";
 import { fetchAccountingSummary } from "@/lib/supabase/accounting";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/loading";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function AccountingSummary() {
   const [summary, setSummary] = useState<AccountingSummaryType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const loadSummary = async () => {
-      try {
-        const { data, error } = await fetchAccountingSummary();
-        if (error) throw error;
-        setSummary(data);
-      } catch (error: unknown) {
-        console.error("Error fetching accounting summary:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load accounting summary. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadSummary = async () => {
+    try {
+      const { data, error } = await fetchAccountingSummary();
+      if (error) throw error;
+      setSummary(data);
+    } catch (error: unknown) {
+      console.error("Error fetching accounting summary:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load accounting summary. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadSummary();
-  }, [toast]);
+  }, []);
 
   const getPeriodLabel = () => {
-    if (!summary?.period?.start) return "Current Period";
-    try {
-      const periodStart = new Date(summary.period.start);
-      if (isNaN(periodStart.getTime())) return "Current Period";
-      return format(periodStart, "MMMM yyyy");
-    } catch {
-      return "Current Period";
-    }
+    const now = new Date();
+    return format(now, "MMMM yyyy");
   };
 
   const stats = [
@@ -48,19 +48,22 @@ export function AccountingSummary() {
       icon: <TrendingDown className="h-6 w-6 text-black" />,
       label: "Total Debits",
       value: summary?.totalDebits || 0,
-      color: "text-gray-900"
+      color: "text-gray-900",
+      tooltip: "Total amount of money coming into your account"
     },
     {
       icon: <TrendingUp className="h-6 w-6 text-black" />,
       label: "Total Credits",
       value: summary?.totalCredits || 0,
-      color: "text-gray-900"
+      color: "text-gray-900",
+      tooltip: "Total amount of money going out of your account"
     },
     {
       icon: <Scale className="h-6 w-6 text-black" />,
       label: "Net Balance",
       value: summary?.netBalance || 0,
-      color: (summary?.netBalance ?? 0) >= 0 ? "text-green-600" : "text-red-600"
+      color: (summary?.netBalance ?? 0) >= 0 ? "text-green-600" : "text-red-600",
+      tooltip: "Current balance in your account"
     }
   ];
 
@@ -68,25 +71,36 @@ export function AccountingSummary() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Accounting Summary</h2>
-        <span className="text-sm text-gray-500">{getPeriodLabel()}</span>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-500 font-bold">{getPeriodLabel()}</span>
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white p-6 rounded-lg border">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {stat.icon}
-                <span className="text-sm font-medium text-gray-500">{stat.label}</span>
-              </div>
-            </div>
-            <div className={`mt-2 text-2xl font-bold ${stat.color}`}>
-              {isLoading ? (
-                <Skeleton className="h-8 w-32" />
-              ) : (
-                `$${stat.value.toFixed(2)}`
-              )}
-            </div>
-          </div>
+          <TooltipProvider key={stat.label}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="bg-white p-6 rounded-lg border hover:shadow-md transition-shadow duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      {stat.icon}
+                      <span className="text-sm font-medium text-gray-500">{stat.label}</span>
+                    </div>
+                  </div>
+                  <div className={`mt-2 text-2xl font-bold ${stat.color} transition-colors duration-200`}>
+                    {isLoading ? (
+                      <Skeleton className="h-8 w-32" />
+                    ) : (
+                      `PKR ${stat.value.toFixed(2)}`
+                    )}
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{stat.tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         ))}
       </div>
     </div>
