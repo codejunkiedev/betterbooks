@@ -71,8 +71,8 @@ export default function SignUp() {
     if (error) {
       toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Success", description: "Email has been sent to verify your account"});
-      navigate("/login");
+      toast({ title: "Success", description: "Email has been sent to verify your account" });
+      navigate("/profile");
     }
   };
 

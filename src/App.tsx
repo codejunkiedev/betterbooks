@@ -8,6 +8,7 @@ import Dashboard from "@/pages/Dashboard";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import UploadDocument from "@/pages/UploadInvoice";
 import InvoiceSuggestion from "@/pages/AISuggestion";
+import Profile from "@/pages/Profile";
 
 export default function App() {
   const routes = useRoutes([
@@ -18,7 +19,7 @@ export default function App() {
         { path: "", element: <Dashboard /> },
         { path: "upload", element: <UploadDocument /> },
         { path: "ai-suggestion", element: <InvoiceSuggestion /> },
-        { path: "profile", element: <div>Profile Page</div> },
+        { path: "profile", element: <Profile /> },
       ],
     },
     { path: "/signup", element: <SignUp /> },
