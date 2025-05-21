@@ -13,9 +13,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
 import { Menu, Home, Upload, Sparkles, User, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getSession, signOut } from "@/lib/supabase/auth";
+import { getCurrentUser, getSession, signOut } from "@/lib/supabase/auth";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
+import { getCompanyByUserId } from "@/lib/supabase/company";
+import { setUser } from "@/store/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store";
 
 const DashboardLayout = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,30 +28,38 @@ const DashboardLayout = () => {
   const location = useLocation();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const company = useSelector((state: RootState) => state.user.company);
 
   useEffect(() => {
-    checkUser();
+    fetchUserDetails();
   }, []);
 
-  const checkUser = async () => {
+  const fetchUserDetails = async () => {
     try {
-      const { session, error } = await getSession();
-      
-      if (error) {
-        throw error;
-      }
+      const [{ session }, user] = await Promise.all([
+        getSession(),
+        getCurrentUser()
+      ]);
 
-      if (!session) {
+      if (!session || !user) {
         navigate("/login", { replace: true });
         return;
       }
 
+      const company = await getCompanyByUserId(user.id);
+
+      dispatch(setUser({ user, session, company }));
       setIsLoading(false);
+      if (!company) {
+        navigate("/profile");
+        return;
+      }
     } catch (error) {
       console.error("Error checking authentication:", error);
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: "Authentication failed. Please log in again.",
         variant: "destructive",
       });
       navigate("/login", { replace: true });
@@ -104,6 +116,16 @@ const DashboardLayout = () => {
           </Sheet>
           <img src={logo} alt="Logo" className="h-28 w-28" />
         </div>
+        {!company && (
+          <div className="fixed top-5 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-md hidden md:flex items-center z-50 shadow-sm">
+            <p className="text-sm text-red-400 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Please complete your company profile
+            </p>
+          </div>
+        )}
         <div className="flex items-center gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -128,8 +150,8 @@ const DashboardLayout = () => {
                   <span className="text-gray-700">Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={handleLogout} 
+              <DropdownMenuItem
+                onClick={handleLogout}
                 className="p-2 cursor-pointer rounded-md hover:bg-red-50 focus:bg-red-50 text-red-600 focus:text-red-600"
               >
                 <div className="flex items-center">
@@ -175,36 +197,51 @@ type SidebarContentProps = {
   isCollapsed?: boolean;
   isDark?: boolean;
 };
-function SidebarContent({ isActive, onNavigate = () => {}, isCollapsed = false, isDark = false }: SidebarContentProps) {
+function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false }: SidebarContentProps) {
+  const company = useSelector((state: RootState) => state.user.company);
+  const { toast } = useToast();
+
+  const handleNavigation = (path: string) => {
+    if (!company && path !== '/profile') {
+      toast({
+        title: "Action Required",
+        description: "Please complete your company profile first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    onNavigate();
+  };
+
   return (
     <nav className="flex flex-col h-full w-full">
       <div className="flex-1 pt-6 pb-2 px-4 space-y-2">
-        <SidebarLink 
-          to="/" 
-          icon={<Home className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />} 
-          label="Home" 
-          active={isActive("/")} 
-          onNavigate={onNavigate} 
-          isCollapsed={isCollapsed} 
-          isDark={isDark} 
+        <SidebarLink
+          to="/"
+          icon={<Home className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+          label="Home"
+          active={isActive("/")}
+          onNavigate={() => handleNavigation('/')}
+          isCollapsed={isCollapsed}
+          isDark={isDark}
         />
-        <SidebarLink 
-          to="/upload" 
-          icon={<Upload className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />} 
-          label="Upload Invoice" 
-          active={isActive("/upload")} 
-          onNavigate={onNavigate} 
-          isCollapsed={isCollapsed} 
-          isDark={isDark} 
+        <SidebarLink
+          to="/upload"
+          icon={<Upload className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+          label="Upload Invoice"
+          active={isActive("/upload")}
+          onNavigate={() => handleNavigation('/upload')}
+          isCollapsed={isCollapsed}
+          isDark={isDark}
         />
-        <SidebarLink 
-          to="/ai-suggestion" 
-          icon={<Sparkles className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />} 
-          label="AI Suggestion" 
-          active={isActive("/ai-suggestion")} 
-          onNavigate={onNavigate} 
-          isCollapsed={isCollapsed} 
-          isDark={isDark} 
+        <SidebarLink
+          to="/ai-suggestion"
+          icon={<Sparkles className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+          label="AI Suggestion"
+          active={isActive("/ai-suggestion")}
+          onNavigate={() => handleNavigation('/ai-suggestion')}
+          isCollapsed={isCollapsed}
+          isDark={isDark}
         />
       </div>
     </nav>
@@ -221,15 +258,25 @@ type SidebarLinkProps = {
   isDark?: boolean;
 };
 function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false, isDark = false }: SidebarLinkProps) {
+  const company = useSelector((state: RootState) => state.user.company);
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (!company && to !== '/profile') {
+      e.preventDefault();
+      return;
+    }
+    onNavigate();
+  };
+
   return (
     <Link
       to={to}
-      onClick={onNavigate}
-      className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-        active 
-          ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black') 
-          : (isDark ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-black')
-      } ${isCollapsed ? 'justify-center px-0' : ''}`}
+      onClick={handleClick}
+      className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${active
+        ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black')
+        : (isDark ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-black')
+        } ${isCollapsed ? 'justify-center px-0' : ''} ${!company && to !== '/profile' ? 'opacity-50 cursor-not-allowed' : ''
+        }`}
       style={isCollapsed ? { width: '100%', justifyContent: 'center' } : {}}
     >
       {icon}

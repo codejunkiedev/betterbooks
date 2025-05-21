@@ -1,0 +1,66 @@
+import { supabase } from "@/lib/supabase/client";
+
+// Get the company for a user by user ID
+export async function getCompanyByUserId(userId: string) {
+  const { data, error } = await supabase
+    .from("company")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    if (error.code === 'PGRST116') { // Record not found
+      return null;
+    }
+    console.error("Error fetching company:", error);
+    throw error;
+  }
+  return data;
+}
+
+// Create a new company
+export async function createCompany({
+  user_id,
+  company_name,
+  account_balance,
+}: {
+  user_id: string;
+  company_name: string;
+  account_balance: number;
+}) {
+  const { data, error } = await supabase
+    .from("company")
+    .insert({
+      user_id,
+      company_name,
+      account_balance,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating company:", error);
+    throw error;
+  }
+  return data;
+}
+
+// Update an existing company
+export async function updateCompany(
+  companyId: string,
+  updates: Partial<{
+    company_name: string;
+    account_balance: number;
+  }>
+) {
+  const { data, error } = await supabase
+    .from("company")
+    .update(updates)
+    .eq("id", companyId);
+
+  if (error) {
+    console.error("Error updating company:", error);
+    throw error;
+  }
+  return data;
+} 
