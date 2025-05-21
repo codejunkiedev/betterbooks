@@ -2,27 +2,29 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Company } from "@/interfaces/profile";
 
-
 export default function Profile() {
+    // Company Information State
     const [companyName, setCompanyName] = useState("");
-    const [openingBalance, setOpeningBalance] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [currentBalance, setCurrentBalance] = useState("");
+    const [companyLoading, setCompanyLoading] = useState(false);
     const [company, setCompany] = useState<Company | null>(null);
+
     const { user } = useAuth();
     const navigate = useNavigate();
     const { toast } = useToast();
 
     useEffect(() => {
-        if (user) {
-            fetchCompany();
-        }
-    }, [user]);
+        // if (!user) {
+        //     navigate("/login");
+        //     return;
+        // }
+        fetchCompany();
+    }, [user, navigate]);
 
     const fetchCompany = async () => {
         try {
@@ -32,67 +34,72 @@ export default function Profile() {
                 .eq("user_id", user?.id)
                 .single();
 
-            if (error) throw error;
-
-            if (data) {
-                setCompany(data);
-                setCompanyName(data.company_name);
-                setOpeningBalance(data.opening_balance.toString());
+            if (error) {
+                if (error.code !== "PGRST116") {
+                    console.error("Error fetching company:", error);
+                }
+                return;
             }
+
+            // if (data) {
+            //     // If company exists, redirect to dashboard
+            //     navigate("/");
+            //     return;
+            // }
+
+            setCompany(data);
+            setCompanyName(data?.company_name || "");
+            setCurrentBalance(data?.account_balance?.toString() || "");
         } catch (error) {
             console.error("Error fetching company:", error);
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleCompanySubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!companyName || !openingBalance) {
+        if (!user) {
             toast({
                 title: "Error",
-                description: "All fields are required.",
+                description: "You must be logged in to create a company.",
+                variant: "destructive",
+            });
+            navigate("/login");
+            return;
+        }
+
+        if (!companyName || !currentBalance) {
+            toast({
+                title: "Error",
+                description: "All company fields are required.",
                 variant: "destructive",
             });
             return;
         }
 
-        const balance = parseFloat(openingBalance);
+        const balance = parseFloat(currentBalance);
         if (isNaN(balance)) {
             toast({
                 title: "Error",
-                description: "Opening balance must be a valid number.",
+                description: "Current balance must be a valid number.",
                 variant: "destructive",
             });
             return;
         }
 
-        setLoading(true);
+        setCompanyLoading(true);
 
         try {
-            if (company) {
-                // Update existing company
-                const { error } = await supabase
-                    .from("company")
-                    .update({
-                        company_name: companyName,
-                        opening_balance: balance,
-                        account_balance: balance,
-                        closing_balance: balance,
-                    })
-                    .eq("id", company.id);
+            // Create new company
+            const { error } = await supabase.from("company").insert({
+                user_id: user.id,
+                company_name: companyName,
+                account_balance: balance,
+                opening_balance: balance,
+                closing_balance: balance,
+            });
 
-                if (error) throw error;
-            } else {
-                // Create new company
-                const { error } = await supabase.from("company").insert({
-                    company_name: companyName,
-                    opening_balance: balance,
-                    account_balance: balance,
-                    closing_balance: balance,
-                });
-
-                if (error) throw error;
-            }
+            if (error) throw error;
 
             toast({
                 title: "Success",
@@ -107,21 +114,27 @@ export default function Profile() {
                 variant: "destructive",
             });
         } finally {
-            setLoading(false);
+            setCompanyLoading(false);
         }
     };
 
+    // If company exists, don't render the form
+    if (company) {
+        return null;
+    }
+
     return (
-        <div className="flex min-h-screen items-center justify-center bg-muted">
-            <Card className="w-full max-w-md shadow-lg border-0 rounded-xl">
-                <CardHeader>
-                    <CardTitle className="text-center">Company Profile</CardTitle>
-                    <CardDescription className="text-center">
-                        {company ? "Update your company information" : "Set up your company information"}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="container mx-auto py-8 px-4">
+            <div className="max-w-2xl mx-auto">
+                {/* Company Information Section */}
+                <div className="space-y-6">
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-2">Company Information</h2>
+                        <p className="text-gray-500">
+                            Set up your company information
+                        </p>
+                    </div>
+                    <form onSubmit={handleCompanySubmit} className="space-y-4">
                         <div className="space-y-2">
                             <label htmlFor="companyName" className="text-sm font-medium">
                                 Company Name
@@ -135,25 +148,25 @@ export default function Profile() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label htmlFor="openingBalance" className="text-sm font-medium">
-                                Opening Balance
+                            <label htmlFor="currentBalance" className="text-sm font-medium">
+                                Current Balance
                             </label>
                             <Input
-                                id="openingBalance"
+                                id="currentBalance"
                                 type="number"
                                 step="0.01"
-                                placeholder="Enter opening balance"
-                                value={openingBalance}
-                                onChange={(e) => setOpeningBalance(e.target.value)}
+                                placeholder="Enter current balance"
+                                value={currentBalance}
+                                onChange={(e) => setCurrentBalance(e.target.value)}
                                 required
                             />
                         </div>
-                        <Button type="submit" disabled={loading} className="w-full">
-                            {loading ? "Saving..." : company ? "Update Company" : "Create Company"}
+                        <Button type="submit" disabled={companyLoading} className="w-full">
+                            {companyLoading ? "Saving..." : "Create Company"}
                         </Button>
                     </form>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 } 
