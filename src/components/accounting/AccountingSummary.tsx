@@ -39,8 +39,7 @@ export function AccountingSummary() {
   }, []);
 
   const getPeriodLabel = () => {
-    const now = new Date();
-    return format(now, "MMMM yyyy");
+    return format(new Date(), "MMMM yyyy");
   };
 
   const stats = [
