@@ -40348,6 +40348,7 @@ function createSelectorHook(context = ReactReduxContext) {
 }
 var useSelector = /* @__PURE__ */ createSelectorHook();
 const DashboardLayout = () => {
+  var _a;
   const [isOpen, setIsOpen] = reactExports.useState(false);
   const [isCollapsed, setIsCollapsed] = reactExports.useState(false);
   const [isLoading, setIsLoading] = reactExports.useState(true);
@@ -40355,7 +40356,7 @@ const DashboardLayout = () => {
   const { toast: toast2 } = useToast();
   const navigate = useNavigate();
   const dispatch2 = useDispatch();
-  const company = useSelector((state) => state.user.company);
+  const userState = useSelector((state) => state.user);
   reactExports.useEffect(() => {
     fetchUserDetails();
   }, []);
@@ -40369,10 +40370,10 @@ const DashboardLayout = () => {
         navigate("/login", { replace: true });
         return;
       }
-      const company2 = await getCompanyByUserId(user.id);
-      dispatch2(setUser({ user, session, company: company2 }));
+      const company = await getCompanyByUserId(user.id);
+      dispatch2(setUser({ user, session, company }));
       setIsLoading(false);
-      if (!company2) {
+      if (!company) {
         navigate("/profile");
         return;
       }
@@ -40421,7 +40422,7 @@ const DashboardLayout = () => {
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: logo, alt: "Logo", className: "h-28 w-28" })
       ] }),
-      !company && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "fixed top-5 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-md hidden md:flex items-center z-50 shadow-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-sm text-red-400 flex items-center gap-2", children: [
+      !userState.company && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "fixed top-5 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-md hidden md:flex items-center z-50 shadow-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-sm text-red-400 flex items-center gap-2", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("svg", { className: "w-4 h-4", fill: "none", stroke: "currentColor", viewBox: "0 0 24 24", children: /* @__PURE__ */ jsxRuntimeExports.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "2", d: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" }) }),
         "Please complete your company profile"
       ] }) }),
@@ -40432,8 +40433,8 @@ const DashboardLayout = () => {
         ] }) }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(DropdownMenuContent, { className: "w-64 p-2", align: "end", forceMount: true, children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(DropdownMenuLabel, { className: "font-normal p-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col space-y-1", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-medium leading-none text-gray-900", children: "User" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs leading-none text-gray-500", children: "user@example.com" })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm font-medium leading-none text-gray-900" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs leading-none text-gray-500", children: (_a = userState.user) == null ? void 0 : _a.email })
           ] }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(DropdownMenuSeparator, { className: "my-2" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(DropdownMenuItem, { asChild: true, className: "p-2 cursor-pointer rounded-md hover:bg-gray-100 focus:bg-gray-100", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Link, { to: "/profile", className: "flex items-center", children: [
@@ -40475,10 +40476,10 @@ const DashboardLayout = () => {
 };
 function SidebarContent({ isActive, onNavigate = () => {
 }, isCollapsed = false, isDark = false }) {
-  const company = useSelector((state) => state.user.company);
+  const userState = useSelector((state) => state.user);
   const { toast: toast2 } = useToast();
   const handleNavigation = (path) => {
-    if (!company && path !== "/profile") {
+    if (!userState.company && path !== "/profile") {
       toast2({
         title: "Action Required",
         description: "Please complete your company profile first.",
@@ -40528,9 +40529,9 @@ function SidebarContent({ isActive, onNavigate = () => {
   ] }) });
 }
 function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false, isDark = false }) {
-  const company = useSelector((state) => state.user.company);
+  const userState = useSelector((state) => state.user);
   const handleClick = (e) => {
-    if (!company && to !== "/profile") {
+    if (!userState.company && to !== "/profile") {
       e.preventDefault();
       return;
     }
@@ -40541,7 +40542,7 @@ function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false,
     {
       to,
       onClick: handleClick,
-      className: `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${active ? isDark ? "bg-gray-800 text-white" : "bg-gray-100 text-black" : isDark ? "text-gray-400 hover:bg-gray-800 hover:text-white" : "text-gray-600 hover:bg-gray-100 hover:text-black"} ${isCollapsed ? "justify-center px-0" : ""} ${!company && to !== "/profile" ? "opacity-50 cursor-not-allowed" : ""}`,
+      className: `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${active ? isDark ? "bg-gray-800 text-white" : "bg-gray-100 text-black" : isDark ? "text-gray-400 hover:bg-gray-800 hover:text-white" : "text-gray-600 hover:bg-gray-100 hover:text-black"} ${isCollapsed ? "justify-center px-0" : ""} ${!userState.company && to !== "/profile" ? "opacity-50 cursor-not-allowed" : ""}`,
       style: isCollapsed ? { width: "100%", justifyContent: "center" } : {},
       children: [
         icon,
@@ -42238,4 +42239,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) }) })
 );
-//# sourceMappingURL=index-C5XVQSJW.js.map
+//# sourceMappingURL=index-B6fz_dKZ.js.map
