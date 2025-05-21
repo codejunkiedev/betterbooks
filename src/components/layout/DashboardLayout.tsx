@@ -29,7 +29,7 @@ const DashboardLayout = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const company = useSelector((state: RootState) => state.user.company);
+  const userState = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     fetchUserDetails();
@@ -116,7 +116,7 @@ const DashboardLayout = () => {
           </Sheet>
           <img src={logo} alt="Logo" className="h-28 w-28" />
         </div>
-        {!company && (
+        {!userState.company && (
           <div className="fixed top-5 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-md hidden md:flex items-center z-50 shadow-sm">
             <p className="text-sm text-red-400 flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,8 +139,8 @@ const DashboardLayout = () => {
             <DropdownMenuContent className="w-64 p-2" align="end" forceMount>
               <DropdownMenuLabel className="font-normal p-2">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none text-gray-900">User</p>
-                  <p className="text-xs leading-none text-gray-500">user@example.com</p>
+                  <p className="text-sm font-medium leading-none text-gray-900">{ }</p>
+                  <p className="text-xs leading-none text-gray-500">{userState.user?.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="my-2" />
@@ -198,11 +198,11 @@ type SidebarContentProps = {
   isDark?: boolean;
 };
 function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false }: SidebarContentProps) {
-  const company = useSelector((state: RootState) => state.user.company);
+  const userState = useSelector((state: RootState) => state.user);
   const { toast } = useToast();
 
   const handleNavigation = (path: string) => {
-    if (!company && path !== '/profile') {
+    if (!userState.company && path !== '/profile') {
       toast({
         title: "Action Required",
         description: "Please complete your company profile first.",
@@ -258,10 +258,10 @@ type SidebarLinkProps = {
   isDark?: boolean;
 };
 function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false, isDark = false }: SidebarLinkProps) {
-  const company = useSelector((state: RootState) => state.user.company);
+  const userState = useSelector((state: RootState) => state.user);
 
   const handleClick = (e: React.MouseEvent) => {
-    if (!company && to !== '/profile') {
+    if (!userState.company && to !== '/profile') {
       e.preventDefault();
       return;
     }
@@ -275,7 +275,7 @@ function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false,
       className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${active
         ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black')
         : (isDark ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-black')
-        } ${isCollapsed ? 'justify-center px-0' : ''} ${!company && to !== '/profile' ? 'opacity-50 cursor-not-allowed' : ''
+        } ${isCollapsed ? 'justify-center px-0' : ''} ${!userState.company && to !== '/profile' ? 'opacity-50 cursor-not-allowed' : ''
         }`}
       style={isCollapsed ? { width: '100%', justifyContent: 'center' } : {}}
     >
