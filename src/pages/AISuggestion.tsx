@@ -28,7 +28,6 @@ import { Label } from "@/components/ui/label";
 import { InvoiceSuggestionType } from "@/interfaces/suggestion";
 import {
   fetchInvoiceSuggestions,
-  updateInvoiceSuggestion,
   approveInvoiceSuggestion
 } from "@/lib/supabase/suggestion";
 import { getInvoiceLineItems } from '../lib/supabase/line-item';
@@ -47,7 +46,7 @@ const InvoiceSuggestion = () => {
   const [editValues, setEditValues] = useState<{ debit: string; credit: string; amount: string }>({
     debit: "",
     credit: "",
-    amount: ""
+    amount: "0"
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -116,9 +115,9 @@ const InvoiceSuggestion = () => {
   const handleRowClick = (suggestion: InvoiceSuggestionType) => {
     setEditingId(suggestion.id);
     setEditValues({
-      debit: suggestion.deepseek_response.debitAccount,
-      credit: suggestion.deepseek_response.creditAccount,
-      amount: suggestion.deepseek_response.amount?.toString() || ""
+      debit: suggestion.deepseek_response.debitAccount || "",
+      credit: suggestion.deepseek_response.creditAccount || "",
+      amount: suggestion.deepseek_response.amount?.toString() || "0"
     });
     setIsModalOpen(true);
     fetchLineItems(suggestion.id);
@@ -145,14 +144,17 @@ const InvoiceSuggestion = () => {
       const suggestion = suggestions.find(s => s.id === id);
       if (!suggestion) throw new Error("Suggestion not found");
 
-      const updatedDeepseekResponse = {
-        ...suggestion.deepseek_response,
-        debitAccount: editValues.debit,
-        creditAccount: editValues.credit,
-        amount: parseFloat(editValues.amount) || suggestion.deepseek_response.amount
+      const updatedSuggestion = {
+        ...suggestion,
+        deepseek_response: {
+          ...suggestion.deepseek_response,
+          debitAccount: editValues.debit,
+          creditAccount: editValues.credit,
+          amount: parseFloat(editValues.amount) || suggestion.deepseek_response.amount
+        }
       };
 
-      const { error } = await updateInvoiceSuggestion(id, updatedDeepseekResponse);
+      const { error } = await approveInvoiceSuggestion(id, updatedSuggestion);
       if (error) throw error;
 
       setSuggestions(prev => prev.filter(s => s.id !== id));

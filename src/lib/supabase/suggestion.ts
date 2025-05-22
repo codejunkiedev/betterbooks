@@ -78,38 +78,43 @@ export const approveInvoiceSuggestion = async (
     if (companyError) throw companyError;
     if (!companyData) throw new Error("Company data not found");
 
+    console.log({companyData, suggestion});
+    // Calculate new balances
     const currentBalance = companyData.account_balance;
-    const amount = suggestion.deepseek_response.amount || 0;
-
-    // Calculate new balances based on transaction type
+    const amount = suggestion.deepseek_response.amount;
     const newOpeningBalance = currentBalance;
-    const newClosingBalance = suggestion.type === 'debit' 
-      ? currentBalance + amount 
-      :  suggestion.type === 'credit' 
-      ? currentBalance - amount : currentBalance  ;
+    const newClosingBalance = newOpeningBalance + (suggestion.type === 'debit' ? amount : -amount);
+    const newAccountBalance = newClosingBalance;
 
     // Update invoice with new balances
     const { error: invoiceError } = await supabase
-      .from("invoices")
+      .from('invoices')
       .update({
+        status: "approved",
         opening_balance: newOpeningBalance,
         closing_balance: newClosingBalance,
-        data: suggestion.deepseek_response,
-        status: "approved"
+        data: suggestion.deepseek_response
       })
-      .eq("id", id)
-      .eq("user_id", user.id);
+      .eq('id', id)
+      .eq('user_id', user.id);
 
-    if (invoiceError) throw invoiceError;
+    if (invoiceError) {
+      console.error('Error updating invoice:', invoiceError);
+      throw new Error('Failed to update invoice');
+    }
 
     // Update company account balance
     const { error: updateCompanyError } = await supabase
-      .from("companies")
-      .update({
-        account_balance: newClosingBalance
-      })
-      .eq("id", companyData.id)
-      .eq("user_id", user.id);
+      .from('companies')
+      .update({ 
+        account_balance: newAccountBalance,
+        opening_balance: newOpeningBalance,
+        closing_balance: newClosingBalance,
+        ...(suggestion.type === 'debit' && { total_debit: companyData?.total_debit + amount }),
+        ...(suggestion.type === 'credit' && { total_credit: companyData?.total_credit + amount }),
+       })
+      .eq('id', companyData.id)
+      .eq('user_id', user.id);
 
     if (updateCompanyError) throw updateCompanyError;
 
