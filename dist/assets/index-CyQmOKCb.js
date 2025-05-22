@@ -36094,14 +36094,14 @@ const AccountingEntriesTable = () => {
             /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Preview invoice" }) })
           ] }) }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-md truncate cursor-help", children: entry.deepseek_response.explanation }) }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "max-w-md whitespace-normal", children: entry.deepseek_response.explanation }) })
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-md truncate cursor-help", children: entry.data.explanation }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "max-w-md whitespace-normal", children: entry.data.explanation }) })
           ] }) }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: entry.deepseek_response.debitAccount }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: entry.deepseek_response.creditAccount }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: entry.data.debitAccount }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: entry.data.creditAccount }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { className: "text-right", children: [
             "PKR ",
-            (_a = entry.deepseek_response.amount) == null ? void 0 : _a.toFixed(2)
+            (_a = entry.data.amount) == null ? void 0 : _a.toFixed(2)
           ] })
         ] }, entry.id);
       }) })
@@ -42783,4 +42783,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) }) })
 );
-//# sourceMappingURL=index-Bbbhsx1C.js.map
+//# sourceMappingURL=index-CyQmOKCb.js.map
