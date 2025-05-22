@@ -32930,18 +32930,26 @@ function cleanEscapedString(input) {
   return matched[1].replace(doubleQuoteRegExp, "'");
 }
 const fetchAccountingSummary = async () => {
-  return {
-    data: {
-      totalDebits: 0,
-      totalCredits: 0,
-      netBalance: 0,
-      period: {
-        start: (/* @__PURE__ */ new Date()).toISOString(),
-        end: (/* @__PURE__ */ new Date()).toISOString()
-      }
-    },
-    error: null
-  };
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase.from("companies").select("*").eq("user_id", user == null ? void 0 : user.id).maybeSingle();
+    if (error) throw error;
+    return {
+      data: {
+        totalDebits: (data == null ? void 0 : data.total_debit) || 0,
+        totalCredits: (data == null ? void 0 : data.total_credit) || 0,
+        netBalance: (data == null ? void 0 : data.account_balance) || 0,
+        period: {
+          start: (/* @__PURE__ */ new Date()).toISOString(),
+          end: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      },
+      error: null
+    };
+  } catch (error) {
+    console.error("Error fetching accounting summary:", error);
+    return { data: null, error };
+  }
 };
 const fetchAccountingEntries = async (page = 1, pageSize = 10, filter) => {
   try {
@@ -37974,7 +37982,7 @@ SheetDescription.displayName = Description$1.displayName;
 const logo = "/assets/logo-Z-1WcB-H.png";
 const userAvatar = "/assets/user-avatar-CUHjUc9w.jpeg";
 async function getCompanyByUserId(userId) {
-  const { data, error } = await supabase.from("company").select("*").eq("user_id", userId).maybeSingle();
+  const { data, error } = await supabase.from("companies").select("*").eq("user_id", userId).maybeSingle();
   if (error) {
     if (error.code === "PGRST116") {
       return null;
@@ -37989,7 +37997,7 @@ async function createCompany({
   company_name,
   account_balance
 }) {
-  const { data, error } = await supabase.from("company").insert({
+  const { data, error } = await supabase.from("companies").insert({
     user_id,
     company_name,
     account_balance
@@ -38001,7 +38009,7 @@ async function createCompany({
   return data;
 }
 async function updateCompany(companyId, updates) {
-  const { data, error } = await supabase.from("company").update(updates).eq("id", companyId);
+  const { data, error } = await supabase.from("companies").update(updates).eq("id", companyId);
   if (error) {
     console.error("Error updating company:", error);
     throw error;
@@ -41435,6 +41443,34 @@ const updateInvoiceSuggestion = async (id, deepseekResponse) => {
     return { error };
   }
 };
+const approveInvoiceSuggestion = async (id, suggestion) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+    const { data: companyData, error: companyError } = await supabase.from("companies").select("*").eq("user_id", user.id).single();
+    if (companyError) throw companyError;
+    if (!companyData) throw new Error("Company data not found");
+    const currentBalance = companyData.account_balance;
+    const amount = suggestion.deepseek_response.amount || 0;
+    const newOpeningBalance = currentBalance;
+    const newClosingBalance = suggestion.type === "debit" ? currentBalance + amount : suggestion.type === "credit" ? currentBalance - amount : currentBalance;
+    const { error: invoiceError } = await supabase.from("invoices").update({
+      opening_balance: newOpeningBalance,
+      closing_balance: newClosingBalance,
+      data: suggestion.deepseek_response,
+      status: "approved"
+    }).eq("id", id).eq("user_id", user.id);
+    if (invoiceError) throw invoiceError;
+    const { error: updateCompanyError } = await supabase.from("companies").update({
+      account_balance: newClosingBalance
+    }).eq("id", companyData.id).eq("user_id", user.id);
+    if (updateCompanyError) throw updateCompanyError;
+    return { error: null };
+  } catch (error) {
+    console.error("Error approving invoice suggestion:", error);
+    return { error };
+  }
+};
 const getInvoiceLineItems = async (invoiceId) => {
   try {
     const { data: lineItems, error } = await supabase.from("line_items").select("*").eq("invoice_id", invoiceId);
@@ -41501,7 +41537,7 @@ const InvoiceSuggestion = () => {
     try {
       const suggestion = suggestions.find((s) => s.id === id);
       if (!suggestion) throw new Error("Suggestion not found");
-      const { error } = await updateInvoiceSuggestion(id, suggestion.deepseek_response);
+      const { error } = await approveInvoiceSuggestion(id, suggestion);
       if (error) throw error;
       setSuggestions((prev) => prev.filter((s) => s.id !== id));
       toast2({
@@ -42748,4 +42784,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) }) })
 );
-//# sourceMappingURL=index-DiCVlPGE.js.map
+//# sourceMappingURL=index-_JJb1tyH.js.map

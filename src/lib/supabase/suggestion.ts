@@ -59,3 +59,63 @@ export const updateInvoiceSuggestion = async (id: string, deepseekResponse: Invo
     return { error };
   }
 };
+
+export const approveInvoiceSuggestion = async (
+  id: string,
+  suggestion: InvoiceSuggestionType
+): Promise<{ error: PostgrestError | null }> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    // Get current company data
+    const { data: companyData, error: companyError } = await supabase
+      .from("companies")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (companyError) throw companyError;
+    if (!companyData) throw new Error("Company data not found");
+
+    const currentBalance = companyData.account_balance;
+    const amount = suggestion.deepseek_response.amount || 0;
+
+    // Calculate new balances based on transaction type
+    const newOpeningBalance = currentBalance;
+    const newClosingBalance = suggestion.type === 'debit' 
+      ? currentBalance + amount 
+      :  suggestion.type === 'credit' 
+      ? currentBalance - amount : currentBalance  ;
+
+    // Update invoice with new balances
+    const { error: invoiceError } = await supabase
+      .from("invoices")
+      .update({
+        opening_balance: newOpeningBalance,
+        closing_balance: newClosingBalance,
+        data: suggestion.deepseek_response,
+        status: "approved"
+      })
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (invoiceError) throw invoiceError;
+
+    // Update company account balance
+    const { error: updateCompanyError } = await supabase
+      .from("companies")
+      .update({
+        account_balance: newClosingBalance
+      })
+      .eq("id", companyData.id)
+      .eq("user_id", user.id);
+
+    if (updateCompanyError) throw updateCompanyError;
+
+    return { error: null };
+  } catch (error) {
+    console.error("Error approving invoice suggestion:", error);
+    return { error: error as PostgrestError };
+  }
+};

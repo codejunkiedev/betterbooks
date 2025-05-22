@@ -32,12 +32,15 @@ interface AccountingEntriesFilter {
 }
 
 export const fetchAccountingSummary = async (): Promise<{ data: AccountingSummary | null; error: PostgrestError | null }> => {
-  // Return dummy data
-  return {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase.from("companies").select("*").eq("user_id", user?.id).maybeSingle();
+    if (error) throw error;
+    return {
     data: {
-      totalDebits: 0.00,
-      totalCredits: 0.00,
-      netBalance: 0.00,
+      totalDebits: data?.total_debit || 0,
+      totalCredits: data?.total_credit || 0,
+      netBalance: data?.account_balance || 0,
       period: {
         start: new Date().toISOString(),
         end: new Date().toISOString()
@@ -45,6 +48,10 @@ export const fetchAccountingSummary = async (): Promise<{ data: AccountingSummar
     },
     error: null
   };
+  } catch (error) {
+    console.error("Error fetching accounting summary:", error);
+    return { data: null, error: error as PostgrestError };
+  }
 };
 
 export const fetchAccountingEntries = async (
