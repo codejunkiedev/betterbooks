@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase/client";
 // Get the company for a user by user ID
 export async function getCompanyByUserId(userId: string) {
   const { data, error } = await supabase
-    .from("company")
+    .from("companies")
     .select("*")
     .eq("user_id", userId)
     .maybeSingle();
@@ -29,7 +29,7 @@ export async function createCompany({
   account_balance: number;
 }) {
   const { data, error } = await supabase
-    .from("company")
+    .from("companies")
     .insert({
       user_id,
       company_name,
@@ -54,7 +54,7 @@ export async function updateCompany(
   }>
 ) {
   const { data, error } = await supabase
-    .from("company")
+    .from("companies")
     .update(updates)
     .eq("id", companyId);
 

@@ -28,7 +28,8 @@ import { Label } from "@/components/ui/label";
 import { InvoiceSuggestionType } from "@/interfaces/suggestion";
 import {
   fetchInvoiceSuggestions,
-  updateInvoiceSuggestion
+  updateInvoiceSuggestion,
+  approveInvoiceSuggestion
 } from "@/lib/supabase/suggestion";
 import { getInvoiceLineItems } from '../lib/supabase/line-item';
 import { LineItem } from '../interfaces/line-item';
@@ -93,7 +94,7 @@ const InvoiceSuggestion = () => {
       const suggestion = suggestions.find(s => s.id === id);
       if (!suggestion) throw new Error("Suggestion not found");
 
-      const { error } = await updateInvoiceSuggestion(id, suggestion.deepseek_response);
+      const { error } = await approveInvoiceSuggestion(id, suggestion);
       if (error) throw error;
 
       setSuggestions(prev => prev.filter(s => s.id !== id));
