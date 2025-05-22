@@ -41460,10 +41460,7 @@ const InvoiceSuggestion = () => {
   const [editValues, setEditValues] = reactExports.useState({
     debit: "",
     credit: "",
-    amount: "",
-    type: "debit",
-    opening_balance: "0.00",
-    closing_balance: "0.00"
+    amount: ""
   });
   const [isModalOpen, setIsModalOpen] = reactExports.useState(false);
   const [currentPage, setCurrentPage] = reactExports.useState(1);
@@ -41521,14 +41518,12 @@ const InvoiceSuggestion = () => {
     }
   };
   const handleRowClick = (suggestion) => {
+    var _a;
     setEditingId(suggestion.id);
     setEditValues({
       debit: suggestion.deepseek_response.debitAccount,
       credit: suggestion.deepseek_response.creditAccount,
-      amount: suggestion.deepseek_response.amount.toString(),
-      type: suggestion.type,
-      opening_balance: suggestion.opening_balance.toString(),
-      closing_balance: suggestion.closing_balance.toString()
+      amount: ((_a = suggestion.deepseek_response.amount) == null ? void 0 : _a.toString()) || ""
     });
     setIsModalOpen(true);
     fetchLineItems(suggestion.id);
@@ -41547,41 +41542,26 @@ const InvoiceSuggestion = () => {
     setSelectedLineItems(data || []);
     setShowLineItems(data ? data.length > 0 : false);
   };
-  const handleSave = async () => {
-    if (!editingId) return;
+  const handleSave = async (id) => {
     setIsSaving(true);
     try {
-      const suggestion = suggestions.find((s) => s.id === editingId);
+      const suggestion = suggestions.find((s) => s.id === id);
       if (!suggestion) throw new Error("Suggestion not found");
-      const updatedResponse = {
+      const updatedDeepseekResponse = {
         ...suggestion.deepseek_response,
         debitAccount: editValues.debit,
         creditAccount: editValues.credit,
-        amount: parseFloat(editValues.amount)
+        amount: parseFloat(editValues.amount) || suggestion.deepseek_response.amount
       };
-      const { error } = await updateInvoiceSuggestion(editingId, {
-        ...updatedResponse,
-        type: editValues.type,
-        opening_balance: parseFloat(editValues.opening_balance),
-        closing_balance: parseFloat(editValues.closing_balance)
-      });
+      const { error } = await updateInvoiceSuggestion(id, updatedDeepseekResponse);
       if (error) throw error;
-      setSuggestions(
-        (prev) => prev.map(
-          (s) => s.id === editingId ? {
-            ...s,
-            type: editValues.type,
-            opening_balance: parseFloat(editValues.opening_balance),
-            closing_balance: parseFloat(editValues.closing_balance),
-            deepseek_response: updatedResponse
-          } : s
-        )
-      );
-      toast2({
-        title: "Changes saved",
-        description: "The invoice details have been updated successfully."
-      });
+      setSuggestions((prev) => prev.filter((s) => s.id !== id));
+      setEditingId(null);
       setIsModalOpen(false);
+      toast2({
+        title: "Changes Saved",
+        description: "The accounting entry has been updated and approved successfully."
+      });
     } catch (error) {
       console.error("Error saving changes:", error);
       toast2({
@@ -41592,6 +41572,10 @@ const InvoiceSuggestion = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+  const handleCancel = () => {
+    setEditingId(null);
+    setIsModalOpen(false);
   };
   const handlePreview = async (suggestion) => {
     try {
@@ -41649,8 +41633,6 @@ const InvoiceSuggestion = () => {
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: "File Name" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Preview" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Type" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Opening Balance" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Closing Balance" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Description" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Debit Account" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Credit Account" }),
@@ -41665,10 +41647,8 @@ const InvoiceSuggestion = () => {
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-64" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-64" }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-24" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-16" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-8" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-8" })
@@ -41699,8 +41679,6 @@ const InvoiceSuggestion = () => {
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: "File Name" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Preview" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Type" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Opening Balance" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Closing Balance" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Description" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Debit Account" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Credit Account" }),
@@ -41709,7 +41687,7 @@ const InvoiceSuggestion = () => {
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[150px]", children: "Actions" })
           ] }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: suggestions.map((suggestion) => {
-            var _a, _b, _c, _d, _e, _f, _g, _h;
+            var _a;
             return /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: new Date(suggestion.created_at).toLocaleDateString() }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
@@ -41729,42 +41707,47 @@ const InvoiceSuggestion = () => {
                 ) }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Preview invoice" }) })
               ] }) }) }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "w-24", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `inline-flex items-center justify-center w-full px-2.5 py-1 rounded-md text-xs font-semibold tracking-wide ${!suggestion.type ? "bg-gray-50/50 text-gray-400 border border-gray-100 shadow-sm" : suggestion.type === "debit" ? "bg-green-50/80 text-green-700 border border-green-100 shadow-sm hover:bg-green-50" : "bg-red-50/80 text-red-700 border border-red-100 shadow-sm hover:bg-red-50"}`, children: !suggestion.type ? "N/A" : suggestion.type === "debit" ? "DEBIT" : "CREDIT" }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `inline-flex items-center justify-center w-full px-2.5 py-1 rounded-md text-xs font-semibold tracking-wide ${!suggestion.type ? "bg-gray-50/50 text-gray-400 border border-gray-100 shadow-sm" : suggestion.type === "debit" ? "bg-green-50/80 text-green-700 border border-green-100 shadow-sm hover:bg-green-50" : "bg-red-50/80 text-red-700 border border-red-100 shadow-sm hover:bg-red-50"}`, children: !suggestion.type ? "N/A" : suggestion.type === "debit" ? "DEBIT" : "CREDIT" }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-md truncate cursor-help", children: suggestion.deepseek_response.explanation }) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "max-w-md whitespace-normal", children: suggestion.deepseek_response.explanation }) })
+              ] }) }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: suggestion.deepseek_response.debitAccount }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: suggestion.deepseek_response.creditAccount }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { children: [
                 "PKR ",
-                (_a = suggestion.opening_balance) == null ? void 0 : _a.toFixed(2)
+                (_a = suggestion.deepseek_response.amount) == null ? void 0 : _a.toFixed(2)
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { children: [
-                "PKR ",
-                (_b = suggestion.closing_balance) == null ? void 0 : _b.toFixed(2)
+                (suggestion.deepseek_response.confidence * 100).toFixed(0),
+                "%"
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: (_c = suggestion.deepseek_response) == null ? void 0 : _c.description }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: (_d = suggestion.deepseek_response) == null ? void 0 : _d.debitAccount }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: (_e = suggestion.deepseek_response) == null ? void 0 : _e.creditAccount }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { children: [
-                "PKR ",
-                (_g = (_f = suggestion.deepseek_response) == null ? void 0 : _f.amount) == null ? void 0 : _g.toFixed(2)
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: ((_h = suggestion.deepseek_response) == null ? void 0 : _h.confidence) ? `${(suggestion.deepseek_response.confidence * 100).toFixed(0)}%` : "-" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  Button,
-                  {
-                    size: "sm",
-                    variant: "outline",
-                    onClick: () => handleRowClick(suggestion),
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Pen, { className: "h-4 w-4" })
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  Button,
-                  {
-                    size: "sm",
-                    variant: "outline",
-                    onClick: () => handleApprove(suggestion.id),
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "h-4 w-4" })
-                  }
-                )
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    Button,
+                    {
+                      size: "sm",
+                      variant: "outline",
+                      onClick: () => handleRowClick(suggestion),
+                      className: "h-8",
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Pen, { className: "h-4 w-4" })
+                    }
+                  ) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Edit accounting entry" }) })
+                ] }) }),
+                suggestion.status !== "approved" && /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    Button,
+                    {
+                      size: "sm",
+                      onClick: () => handleApprove(suggestion.id),
+                      className: "h-8",
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "h-4 w-4" })
+                    }
+                  ) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Approve this entry" }) })
+                ] }) })
               ] }) })
             ] }, suggestion.id);
           }) })
@@ -41811,85 +41794,32 @@ const InvoiceSuggestion = () => {
       ] })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(Dialog, { open: isModalOpen, onOpenChange: setIsModalOpen, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "sm:max-w-[600px]", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: "Edit Invoice Details" }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: "Edit Accounting Entry" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-4 py-4", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 gap-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "type", children: "Invoice Type" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              RadioGroup,
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "debit", children: "Debit Account" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Input,
               {
-                value: editValues.type,
-                onValueChange: (value) => setEditValues((prev) => ({ ...prev, type: value })),
-                className: "flex gap-4",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-2", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroupItem, { value: "debit", id: "debit" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "debit", children: "Debit" })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-2", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroupItem, { value: "credit", id: "credit" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "credit", children: "Credit" })
-                  ] })
-                ]
+                id: "debit",
+                value: editValues.debit,
+                onChange: (e) => setEditValues((prev) => ({ ...prev, debit: e.target.value }))
               }
             )
-          ] }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "opening-balance", children: "Opening Balance" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                Input,
-                {
-                  id: "opening-balance",
-                  type: "number",
-                  step: "0.01",
-                  value: editValues.opening_balance,
-                  onChange: (e) => setEditValues((prev) => ({ ...prev, opening_balance: e.target.value })),
-                  placeholder: "0.00"
-                }
-              )
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "closing-balance", children: "Closing Balance" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                Input,
-                {
-                  id: "closing-balance",
-                  type: "number",
-                  step: "0.01",
-                  value: editValues.closing_balance,
-                  onChange: (e) => setEditValues((prev) => ({ ...prev, closing_balance: e.target.value })),
-                  placeholder: "0.00"
-                }
-              )
-            ] })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "debit", children: "Debit Account" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                Input,
-                {
-                  id: "debit",
-                  value: editValues.debit,
-                  onChange: (e) => setEditValues((prev) => ({ ...prev, debit: e.target.value }))
-                }
-              )
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "credit", children: "Credit Account" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                Input,
-                {
-                  id: "credit",
-                  value: editValues.credit,
-                  onChange: (e) => setEditValues((prev) => ({ ...prev, credit: e.target.value }))
-                }
-              )
-            ] })
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "credit", children: "Credit Account" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Input,
+              {
+                id: "credit",
+                value: editValues.credit,
+                onChange: (e) => setEditValues((prev) => ({ ...prev, credit: e.target.value }))
+              }
+            )
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "amount", children: "Amount" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               Input,
@@ -41904,8 +41834,8 @@ const InvoiceSuggestion = () => {
           ] })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogFooter, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: () => setIsModalOpen(false), children: "Cancel" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: handleSave, disabled: isSaving, children: isSaving ? "Saving..." : "Save Changes" })
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: handleCancel, disabled: isSaving, children: "Cancel" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: () => handleSave(editingId), disabled: isSaving, children: isSaving ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingSpinner, { size: "sm", text: "Saving..." }) : "Save Changes" })
         ] })
       ] }),
       showLineItems && /* @__PURE__ */ jsxRuntimeExports.jsx(LineItemsView, { lineItems: selectedLineItems })
@@ -42818,4 +42748,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) }) })
 );
-//# sourceMappingURL=index-AeZ0Y9z1.js.map
+//# sourceMappingURL=index-DiCVlPGE.js.map
