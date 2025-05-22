@@ -175,19 +175,19 @@ const AccountingEntriesTable = () => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="max-w-md truncate cursor-help">
-                            {entry.deepseek_response.explanation}
+                            {entry.data.explanation}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p className="max-w-md whitespace-normal">{entry.deepseek_response.explanation}</p>
+                          <p className="max-w-md whitespace-normal">{entry.data.explanation}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </TableCell>
-                  <TableCell>{entry.deepseek_response.debitAccount}</TableCell>
-                  <TableCell>{entry.deepseek_response.creditAccount}</TableCell>
+                  <TableCell>{entry.data.debitAccount}</TableCell>
+                  <TableCell>{entry.data.creditAccount}</TableCell>
                   <TableCell className="text-right">
-                    PKR {entry.deepseek_response.amount?.toFixed(2)}
+                    PKR {entry.data.amount?.toFixed(2)}
                   </TableCell>
                 </TableRow>
               ))}

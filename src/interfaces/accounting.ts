@@ -9,7 +9,7 @@ export interface AccountingEntriesFilter {
 export interface AccountingEntry {
   id: string;
   created_at: string;
-  deepseek_response: {
+  data: {
     debitAccount: string;
     creditAccount: string;
     amount: number;
