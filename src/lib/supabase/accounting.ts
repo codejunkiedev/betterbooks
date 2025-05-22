@@ -14,7 +14,7 @@ interface AccountingSummary {
 interface AccountingEntry {
   id: string;
   created_at: string;
-  deepseek_response: {
+  data: {
     debitAccount: string;
     creditAccount: string;
     amount: number;
@@ -139,7 +139,7 @@ export const fetchAccountingEntries = async (
 
 export const updateAccountingEntry = async (
   id: string,
-  deepseekResponse: AccountingEntry['deepseek_response']
+  data: AccountingEntry['data']
 ): Promise<{ error: PostgrestError | null }> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -147,7 +147,7 @@ export const updateAccountingEntry = async (
     const { error } = await supabase
       .from("invoices")
       .update({
-        deepseek_response: deepseekResponse,
+        data: data,
         status: "approved"
       })
       .eq("id", id)
