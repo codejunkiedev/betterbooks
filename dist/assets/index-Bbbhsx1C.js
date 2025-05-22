@@ -41430,19 +41430,6 @@ const fetchInvoiceSuggestions = async (page = 1, pageSize = 10) => {
     return { data: null, error };
   }
 };
-const updateInvoiceSuggestion = async (id, deepseekResponse) => {
-  try {
-    const { error } = await supabase.from("invoices").update({
-      status: "approved",
-      data: deepseekResponse
-    }).eq("id", id);
-    if (error) throw error;
-    return { error: null };
-  } catch (error) {
-    console.error("Error saving changes:", error);
-    return { error };
-  }
-};
 const approveInvoiceSuggestion = async (id, suggestion) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -41450,19 +41437,28 @@ const approveInvoiceSuggestion = async (id, suggestion) => {
     const { data: companyData, error: companyError } = await supabase.from("companies").select("*").eq("user_id", user.id).single();
     if (companyError) throw companyError;
     if (!companyData) throw new Error("Company data not found");
+    console.log({ companyData, suggestion });
     const currentBalance = companyData.account_balance;
-    const amount = suggestion.deepseek_response.amount || 0;
+    const amount = suggestion.deepseek_response.amount;
     const newOpeningBalance = currentBalance;
-    const newClosingBalance = suggestion.type === "debit" ? currentBalance + amount : suggestion.type === "credit" ? currentBalance - amount : currentBalance;
+    const newClosingBalance = newOpeningBalance + (suggestion.type === "debit" ? amount : -amount);
+    const newAccountBalance = newClosingBalance;
     const { error: invoiceError } = await supabase.from("invoices").update({
+      status: "approved",
       opening_balance: newOpeningBalance,
       closing_balance: newClosingBalance,
-      data: suggestion.deepseek_response,
-      status: "approved"
+      data: suggestion.deepseek_response
     }).eq("id", id).eq("user_id", user.id);
-    if (invoiceError) throw invoiceError;
+    if (invoiceError) {
+      console.error("Error updating invoice:", invoiceError);
+      throw new Error("Failed to update invoice");
+    }
     const { error: updateCompanyError } = await supabase.from("companies").update({
-      account_balance: newClosingBalance
+      account_balance: newAccountBalance,
+      opening_balance: newOpeningBalance,
+      closing_balance: newClosingBalance,
+      ...suggestion.type === "debit" && { total_debit: (companyData == null ? void 0 : companyData.total_debit) + amount },
+      ...suggestion.type === "credit" && { total_credit: (companyData == null ? void 0 : companyData.total_credit) + amount }
     }).eq("id", companyData.id).eq("user_id", user.id);
     if (updateCompanyError) throw updateCompanyError;
     return { error: null };
@@ -41496,7 +41492,7 @@ const InvoiceSuggestion = () => {
   const [editValues, setEditValues] = reactExports.useState({
     debit: "",
     credit: "",
-    amount: ""
+    amount: "0"
   });
   const [isModalOpen, setIsModalOpen] = reactExports.useState(false);
   const [currentPage, setCurrentPage] = reactExports.useState(1);
@@ -41557,9 +41553,9 @@ const InvoiceSuggestion = () => {
     var _a;
     setEditingId(suggestion.id);
     setEditValues({
-      debit: suggestion.deepseek_response.debitAccount,
-      credit: suggestion.deepseek_response.creditAccount,
-      amount: ((_a = suggestion.deepseek_response.amount) == null ? void 0 : _a.toString()) || ""
+      debit: suggestion.deepseek_response.debitAccount || "",
+      credit: suggestion.deepseek_response.creditAccount || "",
+      amount: ((_a = suggestion.deepseek_response.amount) == null ? void 0 : _a.toString()) || "0"
     });
     setIsModalOpen(true);
     fetchLineItems(suggestion.id);
@@ -41583,13 +41579,16 @@ const InvoiceSuggestion = () => {
     try {
       const suggestion = suggestions.find((s) => s.id === id);
       if (!suggestion) throw new Error("Suggestion not found");
-      const updatedDeepseekResponse = {
-        ...suggestion.deepseek_response,
-        debitAccount: editValues.debit,
-        creditAccount: editValues.credit,
-        amount: parseFloat(editValues.amount) || suggestion.deepseek_response.amount
+      const updatedSuggestion = {
+        ...suggestion,
+        deepseek_response: {
+          ...suggestion.deepseek_response,
+          debitAccount: editValues.debit,
+          creditAccount: editValues.credit,
+          amount: parseFloat(editValues.amount) || suggestion.deepseek_response.amount
+        }
       };
-      const { error } = await updateInvoiceSuggestion(id, updatedDeepseekResponse);
+      const { error } = await approveInvoiceSuggestion(id, updatedSuggestion);
       if (error) throw error;
       setSuggestions((prev) => prev.filter((s) => s.id !== id));
       setEditingId(null);
@@ -42784,4 +42783,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) }) })
 );
-//# sourceMappingURL=index-_JJb1tyH.js.map
+//# sourceMappingURL=index-Bbbhsx1C.js.map
