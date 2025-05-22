@@ -28,10 +28,11 @@ export interface FileInfo {
     id: string;
     user_id: string;
     file: FileInfo;
-    status: "pending" | "processing" | "completed" | "failed" | "approved";
+    status: "pending" | "processing" | "completed" | "failed" | "approved" | "rejected";
     created_at: string;
     updated_at: string;
     deepseek_response: DeepSeekResponse;
+    type?: 'debit' | 'credit';
   }
 
   export interface PaginatedResponse {

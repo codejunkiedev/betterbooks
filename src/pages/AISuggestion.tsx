@@ -257,6 +257,7 @@ const InvoiceSuggestion = () => {
                     <TableHead>Date</TableHead>
                     <TableHead className="w-[200px] min-w-[200px] max-w-[200px]">File Name</TableHead>
                     <TableHead>Preview</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Debit Account</TableHead>
                     <TableHead>Credit Account</TableHead>
@@ -321,6 +322,7 @@ const InvoiceSuggestion = () => {
                       <TableHead>Date</TableHead>
                       <TableHead className="w-[200px] min-w-[200px] max-w-[200px]">File Name</TableHead>
                       <TableHead>Preview</TableHead>
+                      <TableHead>Type</TableHead>
                       <TableHead>Description</TableHead>
                       <TableHead>Debit Account</TableHead>
                       <TableHead>Credit Account</TableHead>
@@ -365,6 +367,16 @@ const InvoiceSuggestion = () => {
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center justify-center w-full px-2.5 py-1 rounded-md text-xs font-semibold tracking-wide ${!suggestion.type
+                            ? 'bg-gray-50/50 text-gray-400 border border-gray-100 shadow-sm'
+                            : suggestion.type === 'debit'
+                              ? 'bg-green-50/80 text-green-700 border border-green-100 shadow-sm hover:bg-green-50'
+                              : 'bg-red-50/80 text-red-700 border border-red-100 shadow-sm hover:bg-red-50'
+                            }`}>
+                            {!suggestion.type ? 'N/A' : suggestion.type === 'debit' ? 'DEBIT' : 'CREDIT'}
+                          </span>
                         </TableCell>
                         <TableCell>
                           <TooltipProvider>

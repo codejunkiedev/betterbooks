@@ -1,5 +1,5 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/browser-CkjTflrh.js","assets/vendor-75o5KjsB.js"])))=>i.map(i=>d[i]);
-import { r as reactExports, j as jsxRuntimeExports, S as Slot$1, a as reactDomExports, P as Primitive, u as useLayoutEffect2, c as createContextScope, b as useComposedRefs, d as useCallbackRef, e as Presence, D as DismissableLayer, f as createSlottable, g as composeEventHandlers$1, h as useId, i as useControllableState, O as Overlay, k as Portal$1, C as Content$1, l as Close$1, T as Title$1, m as Description$1, R as Root$4, n as React, o as createSlot, p as composeRefs, q as Portal$2, s as useFocusGuards, t as ReactRemoveScroll, F as FocusScope, v as hideOthers, w as dispatchDiscreteCustomEvent, x as Trigger$2, y as Root$5, B as Branch, z as Root$6 } from "./ui-DPNJlV1q.js";
+import { r as reactExports, j as jsxRuntimeExports, S as Slot$1, a as reactDomExports, P as Primitive, u as useLayoutEffect2, c as createContextScope, b as useComposedRefs, d as useCallbackRef, e as Presence, D as DismissableLayer, f as createSlottable, g as composeEventHandlers$1, h as useId, i as useControllableState, O as Overlay, k as Portal$1, C as Content$1, l as Close$1, T as Title$1, m as Description$1, R as Root$5, n as React, o as createSlot, p as composeRefs, q as Portal$2, s as useFocusGuards, t as ReactRemoveScroll, F as FocusScope, v as hideOthers, w as dispatchDiscreteCustomEvent, x as Trigger$2, y as Root$6, B as Branch, z as Root$7 } from "./ui-DPNJlV1q.js";
 import { r as requireReact, a as requireReactDom, g as getDefaultExportFromCjs, b as getAugmentedNamespace } from "./vendor-75o5KjsB.js";
 (function polyfill() {
   const relList = document.createElement("link").relList;
@@ -20688,9 +20688,9 @@ const colorFunctionRegex = /^(rgba?|hsla?|hwb|(ok)?(lab|lch))\(.+\)$/;
 const shadowRegex = /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
 const imageRegex = /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
 const isFraction = (value) => fractionRegex.test(value);
-const isNumber = (value) => !!value && !Number.isNaN(Number(value));
+const isNumber$1 = (value) => !!value && !Number.isNaN(Number(value));
 const isInteger = (value) => !!value && Number.isInteger(Number(value));
-const isPercent = (value) => value.endsWith("%") && isNumber(value.slice(0, -1));
+const isPercent = (value) => value.endsWith("%") && isNumber$1(value.slice(0, -1));
 const isTshirtSize = (value) => tshirtUnitRegex.test(value);
 const isAny = () => true;
 const isLengthOnly = (value) => (
@@ -20706,7 +20706,7 @@ const isAnyNonArbitrary = (value) => !isArbitraryValue(value) && !isArbitraryVar
 const isArbitrarySize = (value) => getIsArbitraryValue(value, isLabelSize, isNever);
 const isArbitraryValue = (value) => arbitraryValueRegex.test(value);
 const isArbitraryLength = (value) => getIsArbitraryValue(value, isLabelLength, isLengthOnly);
-const isArbitraryNumber = (value) => getIsArbitraryValue(value, isLabelNumber, isNumber);
+const isArbitraryNumber = (value) => getIsArbitraryValue(value, isLabelNumber, isNumber$1);
 const isArbitraryPosition = (value) => getIsArbitraryValue(value, isLabelPosition, isNever);
 const isArbitraryImage = (value) => getIsArbitraryValue(value, isLabelImage, isImage);
 const isArbitraryShadow = (value) => getIsArbitraryValue(value, isLabelShadow, isShadow);
@@ -20819,10 +20819,10 @@ const getDefaultConfig = () => {
     isArbitraryVariable,
     isArbitraryValue
   ];
-  const scaleBorderWidth = () => ["", isNumber, isArbitraryVariableLength, isArbitraryLength];
+  const scaleBorderWidth = () => ["", isNumber$1, isArbitraryVariableLength, isArbitraryLength];
   const scaleLineStyle = () => ["solid", "dashed", "dotted", "double"];
   const scaleBlendMode = () => ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"];
-  const scaleMaskImagePosition = () => [isNumber, isPercent, isArbitraryVariablePosition, isArbitraryPosition];
+  const scaleMaskImagePosition = () => [isNumber$1, isPercent, isArbitraryVariablePosition, isArbitraryPosition];
   const scaleBlur = () => [
     // Deprecated since Tailwind CSS v4.0.0
     "",
@@ -20831,9 +20831,9 @@ const getDefaultConfig = () => {
     isArbitraryVariable,
     isArbitraryValue
   ];
-  const scaleRotate = () => ["none", isNumber, isArbitraryVariable, isArbitraryValue];
-  const scaleScale = () => ["none", isNumber, isArbitraryVariable, isArbitraryValue];
-  const scaleSkew = () => [isNumber, isArbitraryVariable, isArbitraryValue];
+  const scaleRotate = () => ["none", isNumber$1, isArbitraryVariable, isArbitraryValue];
+  const scaleScale = () => ["none", isNumber$1, isArbitraryVariable, isArbitraryValue];
+  const scaleSkew = () => [isNumber$1, isArbitraryVariable, isArbitraryValue];
   const scaleTranslate = () => [isFraction, "full", ...scaleUnambiguousSpacing()];
   return {
     cacheSize: 500,
@@ -20853,7 +20853,7 @@ const getDefaultConfig = () => {
       perspective: ["dramatic", "near", "normal", "midrange", "distant", "none"],
       radius: [isTshirtSize],
       shadow: [isTshirtSize],
-      spacing: ["px", isNumber],
+      spacing: ["px", isNumber$1],
       text: [isTshirtSize],
       "text-shadow": [isTshirtSize],
       tracking: ["tighter", "tight", "normal", "wide", "wider", "widest"]
@@ -20880,7 +20880,7 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/columns
        */
       columns: [{
-        columns: [isNumber, isArbitraryValue, isArbitraryVariable, themeContainer]
+        columns: [isNumber$1, isArbitraryValue, isArbitraryVariable, themeContainer]
       }],
       /**
        * Break After
@@ -21111,21 +21111,21 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/flex
        */
       flex: [{
-        flex: [isNumber, isFraction, "auto", "initial", "none", isArbitraryValue]
+        flex: [isNumber$1, isFraction, "auto", "initial", "none", isArbitraryValue]
       }],
       /**
        * Flex Grow
        * @see https://tailwindcss.com/docs/flex-grow
        */
       grow: [{
-        grow: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+        grow: ["", isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Flex Shrink
        * @see https://tailwindcss.com/docs/flex-shrink
        */
       shrink: [{
-        shrink: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+        shrink: ["", isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Order
@@ -21602,7 +21602,7 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/line-clamp
        */
       "line-clamp": [{
-        "line-clamp": [isNumber, "none", isArbitraryVariable, isArbitraryNumber]
+        "line-clamp": [isNumber$1, "none", isArbitraryVariable, isArbitraryNumber]
       }],
       /**
        * Line Height
@@ -21675,7 +21675,7 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/text-decoration-thickness
        */
       "text-decoration-thickness": [{
-        decoration: [isNumber, "from-font", "auto", isArbitraryVariable, isArbitraryLength]
+        decoration: [isNumber$1, "from-font", "auto", isArbitraryVariable, isArbitraryLength]
       }],
       /**
        * Text Decoration Color
@@ -21689,7 +21689,7 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/text-underline-offset
        */
       "underline-offset": [{
-        "underline-offset": [isNumber, "auto", isArbitraryVariable, isArbitraryValue]
+        "underline-offset": [isNumber$1, "auto", isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Text Transform
@@ -22155,14 +22155,14 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/outline-offset
        */
       "outline-offset": [{
-        "outline-offset": [isNumber, isArbitraryVariable, isArbitraryValue]
+        "outline-offset": [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Outline Width
        * @see https://tailwindcss.com/docs/outline-width
        */
       "outline-w": [{
-        outline: ["", isNumber, isArbitraryVariableLength, isArbitraryLength]
+        outline: ["", isNumber$1, isArbitraryVariableLength, isArbitraryLength]
       }],
       /**
        * Outline Color
@@ -22237,7 +22237,7 @@ const getDefaultConfig = () => {
        * @see https://github.com/tailwindlabs/tailwindcss/blob/v4.0.0/packages/tailwindcss/src/utilities.ts#L4158
        */
       "ring-offset-w": [{
-        "ring-offset": [isNumber, isArbitraryLength]
+        "ring-offset": [isNumber$1, isArbitraryLength]
       }],
       /**
        * Ring Offset Color
@@ -22281,7 +22281,7 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/opacity
        */
       opacity: [{
-        opacity: [isNumber, isArbitraryVariable, isArbitraryValue]
+        opacity: [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Mix Blend Mode
@@ -22316,7 +22316,7 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/mask-image
        */
       "mask-image-linear-pos": [{
-        "mask-linear": [isNumber]
+        "mask-linear": [isNumber$1]
       }],
       "mask-image-linear-from-pos": [{
         "mask-linear-from": scaleMaskImagePosition()
@@ -22430,7 +22430,7 @@ const getDefaultConfig = () => {
         "mask-radial-at": scalePosition()
       }],
       "mask-image-conic-pos": [{
-        "mask-conic": [isNumber]
+        "mask-conic": [isNumber$1]
       }],
       "mask-image-conic-from-pos": [{
         "mask-conic-from": scaleMaskImagePosition()
@@ -22521,14 +22521,14 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/brightness
        */
       brightness: [{
-        brightness: [isNumber, isArbitraryVariable, isArbitraryValue]
+        brightness: [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Contrast
        * @see https://tailwindcss.com/docs/contrast
        */
       contrast: [{
-        contrast: [isNumber, isArbitraryVariable, isArbitraryValue]
+        contrast: [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Drop Shadow
@@ -22556,35 +22556,35 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/grayscale
        */
       grayscale: [{
-        grayscale: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+        grayscale: ["", isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Hue Rotate
        * @see https://tailwindcss.com/docs/hue-rotate
        */
       "hue-rotate": [{
-        "hue-rotate": [isNumber, isArbitraryVariable, isArbitraryValue]
+        "hue-rotate": [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Invert
        * @see https://tailwindcss.com/docs/invert
        */
       invert: [{
-        invert: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+        invert: ["", isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Saturate
        * @see https://tailwindcss.com/docs/saturate
        */
       saturate: [{
-        saturate: [isNumber, isArbitraryVariable, isArbitraryValue]
+        saturate: [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Sepia
        * @see https://tailwindcss.com/docs/sepia
        */
       sepia: [{
-        sepia: ["", isNumber, isArbitraryVariable, isArbitraryValue]
+        sepia: ["", isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Backdrop Filter
@@ -22611,56 +22611,56 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/backdrop-brightness
        */
       "backdrop-brightness": [{
-        "backdrop-brightness": [isNumber, isArbitraryVariable, isArbitraryValue]
+        "backdrop-brightness": [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Backdrop Contrast
        * @see https://tailwindcss.com/docs/backdrop-contrast
        */
       "backdrop-contrast": [{
-        "backdrop-contrast": [isNumber, isArbitraryVariable, isArbitraryValue]
+        "backdrop-contrast": [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Backdrop Grayscale
        * @see https://tailwindcss.com/docs/backdrop-grayscale
        */
       "backdrop-grayscale": [{
-        "backdrop-grayscale": ["", isNumber, isArbitraryVariable, isArbitraryValue]
+        "backdrop-grayscale": ["", isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Backdrop Hue Rotate
        * @see https://tailwindcss.com/docs/backdrop-hue-rotate
        */
       "backdrop-hue-rotate": [{
-        "backdrop-hue-rotate": [isNumber, isArbitraryVariable, isArbitraryValue]
+        "backdrop-hue-rotate": [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Backdrop Invert
        * @see https://tailwindcss.com/docs/backdrop-invert
        */
       "backdrop-invert": [{
-        "backdrop-invert": ["", isNumber, isArbitraryVariable, isArbitraryValue]
+        "backdrop-invert": ["", isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Backdrop Opacity
        * @see https://tailwindcss.com/docs/backdrop-opacity
        */
       "backdrop-opacity": [{
-        "backdrop-opacity": [isNumber, isArbitraryVariable, isArbitraryValue]
+        "backdrop-opacity": [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Backdrop Saturate
        * @see https://tailwindcss.com/docs/backdrop-saturate
        */
       "backdrop-saturate": [{
-        "backdrop-saturate": [isNumber, isArbitraryVariable, isArbitraryValue]
+        "backdrop-saturate": [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Backdrop Sepia
        * @see https://tailwindcss.com/docs/backdrop-sepia
        */
       "backdrop-sepia": [{
-        "backdrop-sepia": ["", isNumber, isArbitraryVariable, isArbitraryValue]
+        "backdrop-sepia": ["", isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       // --------------
       // --- Tables ---
@@ -22729,7 +22729,7 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/transition-duration
        */
       duration: [{
-        duration: [isNumber, "initial", isArbitraryVariable, isArbitraryValue]
+        duration: [isNumber$1, "initial", isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Transition Timing Function
@@ -22743,7 +22743,7 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/transition-delay
        */
       delay: [{
-        delay: [isNumber, isArbitraryVariable, isArbitraryValue]
+        delay: [isNumber$1, isArbitraryVariable, isArbitraryValue]
       }],
       /**
        * Animation
@@ -23187,7 +23187,7 @@ const getDefaultConfig = () => {
        * @see https://tailwindcss.com/docs/stroke-width
        */
       "stroke-w": [{
-        stroke: [isNumber, isArbitraryVariableLength, isArbitraryLength, isArbitraryNumber]
+        stroke: [isNumber$1, isArbitraryVariableLength, isArbitraryLength, isArbitraryNumber]
       }],
       /**
        * Stroke
@@ -31205,6 +31205,17 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const __iconNode$j = [
+  ["path", { d: "M7 7h10v10", key: "1tivn9" }],
+  ["path", { d: "M7 17 17 7", key: "1vkiza" }]
+];
+const ArrowUpRight = createLucideIcon("arrow-up-right", __iconNode$j);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const __iconNode$i = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
 const Check = createLucideIcon("check", __iconNode$i);
 /**
@@ -34878,7 +34889,7 @@ var Arrow$1 = reactExports.forwardRef((props, forwardedRef) => {
   );
 });
 Arrow$1.displayName = NAME$1;
-var Root$3 = Arrow$1;
+var Root$4 = Arrow$1;
 function useSize(element) {
   const [size2, setSize] = reactExports.useState(void 0);
   useLayoutEffect2(() => {
@@ -35120,7 +35131,7 @@ var PopperArrow = reactExports.forwardRef(function PopperArrow2(props, forwarded
           visibility: contentContext.shouldHideArrow ? "hidden" : void 0
         },
         children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-          Root$3,
+          Root$4,
           {
             ...arrowProps,
             ref: forwardedRef,
@@ -35175,7 +35186,7 @@ function getSideAndAlignFromPlacement(placement) {
   const [side, align = "center"] = placement.split("-");
   return [side, align];
 }
-var Root2$2 = Popper;
+var Root2$3 = Popper;
 var Anchor = PopperAnchor;
 var Content = PopperContent;
 var Arrow = PopperArrow;
@@ -35206,7 +35217,7 @@ var VisuallyHidden = reactExports.forwardRef(
   }
 );
 VisuallyHidden.displayName = NAME;
-var Root$2 = VisuallyHidden;
+var Root$3 = VisuallyHidden;
 var [createTooltipContext, createTooltipScope] = createContextScope("Tooltip", [
   createPopperScope
 ]);
@@ -35321,7 +35332,7 @@ var Tooltip$1 = (props) => {
       }
     };
   }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$2, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$3, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
     TooltipContextProvider,
     {
       scope: __scopeTooltip,
@@ -35532,7 +35543,7 @@ var TooltipContentImpl = reactExports.forwardRef(
             },
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Slottable, { children }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(VisuallyHiddenContentContextProvider, { scope: __scopeTooltip, isInside: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Root$2, { id: context.contentId, role: "tooltip", children: ariaLabel || children }) })
+              /* @__PURE__ */ jsxRuntimeExports.jsx(VisuallyHiddenContentContextProvider, { scope: __scopeTooltip, isInside: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Root$3, { id: context.contentId, role: "tooltip", children: ariaLabel || children }) })
             ]
           }
         )
@@ -35829,7 +35840,7 @@ const TableCaption = reactExports.forwardRef(({ className, ...props }, ref) => /
   }
 ));
 TableCaption.displayName = "TableCaption";
-const Dialog = Root$4;
+const Dialog = Root$5;
 const DialogPortal = Portal$1;
 const DialogOverlay = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Overlay,
@@ -36408,7 +36419,7 @@ var RovingFocusGroupImpl = reactExports.forwardRef((props, forwardedRef) => {
     }
   );
 });
-var ITEM_NAME$2 = "RovingFocusGroupItem";
+var ITEM_NAME$3 = "RovingFocusGroupItem";
 var RovingFocusGroupItem = reactExports.forwardRef(
   (props, forwardedRef) => {
     const {
@@ -36421,7 +36432,7 @@ var RovingFocusGroupItem = reactExports.forwardRef(
     } = props;
     const autoId = useId();
     const id = tabStopId || autoId;
-    const context = useRovingFocusContext(ITEM_NAME$2, __scopeRovingFocusGroup);
+    const context = useRovingFocusContext(ITEM_NAME$3, __scopeRovingFocusGroup);
     const isCurrentTabStop = context.currentTabStopId === id;
     const getItems = useCollection$2(__scopeRovingFocusGroup);
     const { onFocusableItemAdd, onFocusableItemRemove, currentTabStopId } = context;
@@ -36478,7 +36489,7 @@ var RovingFocusGroupItem = reactExports.forwardRef(
     );
   }
 );
-RovingFocusGroupItem.displayName = ITEM_NAME$2;
+RovingFocusGroupItem.displayName = ITEM_NAME$3;
 var MAP_KEY_TO_FOCUS_INTENT = {
   ArrowLeft: "prev",
   ArrowUp: "prev",
@@ -36510,7 +36521,7 @@ function focusFirst$2(candidates, preventScroll = false) {
 function wrapArray$1(array, startIndex) {
   return array.map((_, index2) => array[(startIndex + index2) % array.length]);
 }
-var Root$1 = RovingFocusGroup;
+var Root$2 = RovingFocusGroup;
 var Item = RovingFocusGroupItem;
 var SELECTION_KEYS = ["Enter", " "];
 var FIRST_KEYS = ["ArrowDown", "PageUp", "Home"];
@@ -36532,7 +36543,7 @@ var [createMenuContext, createMenuScope] = createContextScope(MENU_NAME, [
   createRovingFocusGroupScope
 ]);
 var usePopperScope = createPopperScope();
-var useRovingFocusGroupScope = createRovingFocusGroupScope();
+var useRovingFocusGroupScope$1 = createRovingFocusGroupScope();
 var [MenuProvider, useMenuContext] = createMenuContext(MENU_NAME);
 var [MenuRootProvider, useMenuRootContext] = createMenuContext(MENU_NAME);
 var Menu = (props) => {
@@ -36556,7 +36567,7 @@ var Menu = (props) => {
       document.removeEventListener("pointermove", handlePointer, { capture: true });
     };
   }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$2, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$3, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
     MenuProvider,
     {
       scope: __scopeMenu,
@@ -36672,7 +36683,7 @@ var MenuContentImpl = reactExports.forwardRef(
     const context = useMenuContext(CONTENT_NAME$1, __scopeMenu);
     const rootContext = useMenuRootContext(CONTENT_NAME$1, __scopeMenu);
     const popperScope = usePopperScope(__scopeMenu);
-    const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeMenu);
+    const rovingFocusGroupScope = useRovingFocusGroupScope$1(__scopeMenu);
     const getItems = useCollection$1(__scopeMenu);
     const [currentItemId, setCurrentItemId] = reactExports.useState(null);
     const contentRef = reactExports.useRef(null);
@@ -36764,7 +36775,7 @@ var MenuContentImpl = reactExports.forwardRef(
                 onInteractOutside,
                 onDismiss,
                 children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  Root$1,
+                  Root$2,
                   {
                     asChild: true,
                     ...rovingFocusGroupScope,
@@ -36854,14 +36865,14 @@ var MenuLabel = reactExports.forwardRef(
   }
 );
 MenuLabel.displayName = LABEL_NAME$1;
-var ITEM_NAME$1 = "MenuItem";
+var ITEM_NAME$2 = "MenuItem";
 var ITEM_SELECT = "menu.itemSelect";
 var MenuItem = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { disabled = false, onSelect, ...itemProps } = props;
     const ref = reactExports.useRef(null);
-    const rootContext = useMenuRootContext(ITEM_NAME$1, props.__scopeMenu);
-    const contentContext = useMenuContentContext(ITEM_NAME$1, props.__scopeMenu);
+    const rootContext = useMenuRootContext(ITEM_NAME$2, props.__scopeMenu);
+    const contentContext = useMenuContentContext(ITEM_NAME$2, props.__scopeMenu);
     const composedRefs = useComposedRefs(forwardedRef, ref);
     const isPointerDownRef = reactExports.useRef(false);
     const handleSelect = () => {
@@ -36905,12 +36916,12 @@ var MenuItem = reactExports.forwardRef(
     );
   }
 );
-MenuItem.displayName = ITEM_NAME$1;
+MenuItem.displayName = ITEM_NAME$2;
 var MenuItemImpl = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeMenu, disabled = false, textValue, ...itemProps } = props;
-    const contentContext = useMenuContentContext(ITEM_NAME$1, __scopeMenu);
-    const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeMenu);
+    const contentContext = useMenuContentContext(ITEM_NAME$2, __scopeMenu);
+    const rovingFocusGroupScope = useRovingFocusGroupScope$1(__scopeMenu);
     const ref = reactExports.useRef(null);
     const composedRefs = useComposedRefs(forwardedRef, ref);
     const [isFocused, setIsFocused] = reactExports.useState(false);
@@ -36984,9 +36995,9 @@ var MenuCheckboxItem = reactExports.forwardRef(
   }
 );
 MenuCheckboxItem.displayName = CHECKBOX_ITEM_NAME$1;
-var RADIO_GROUP_NAME$1 = "MenuRadioGroup";
-var [RadioGroupProvider, useRadioGroupContext] = createMenuContext(
-  RADIO_GROUP_NAME$1,
+var RADIO_GROUP_NAME$2 = "MenuRadioGroup";
+var [RadioGroupProvider$1, useRadioGroupContext$1] = createMenuContext(
+  RADIO_GROUP_NAME$2,
   { value: void 0, onValueChange: () => {
   } }
 );
@@ -36994,15 +37005,15 @@ var MenuRadioGroup = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { value, onValueChange, ...groupProps } = props;
     const handleValueChange = useCallbackRef(onValueChange);
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroupProvider, { scope: props.__scopeMenu, value, onValueChange: handleValueChange, children: /* @__PURE__ */ jsxRuntimeExports.jsx(MenuGroup, { ...groupProps, ref: forwardedRef }) });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroupProvider$1, { scope: props.__scopeMenu, value, onValueChange: handleValueChange, children: /* @__PURE__ */ jsxRuntimeExports.jsx(MenuGroup, { ...groupProps, ref: forwardedRef }) });
   }
 );
-MenuRadioGroup.displayName = RADIO_GROUP_NAME$1;
+MenuRadioGroup.displayName = RADIO_GROUP_NAME$2;
 var RADIO_ITEM_NAME$1 = "MenuRadioItem";
 var MenuRadioItem = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { value, ...radioItemProps } = props;
-    const context = useRadioGroupContext(RADIO_ITEM_NAME$1, props.__scopeMenu);
+    const context = useRadioGroupContext$1(RADIO_ITEM_NAME$1, props.__scopeMenu);
     const checked = value === context.value;
     return /* @__PURE__ */ jsxRuntimeExports.jsx(ItemIndicatorProvider, { scope: props.__scopeMenu, checked, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
       MenuItem,
@@ -37293,9 +37304,9 @@ var Portal = MenuPortal;
 var Content2$1 = MenuContent;
 var Group = MenuGroup;
 var Label$1 = MenuLabel;
-var Item2$1 = MenuItem;
+var Item2$2 = MenuItem;
 var CheckboxItem = MenuCheckboxItem;
-var RadioGroup = MenuRadioGroup;
+var RadioGroup$2 = MenuRadioGroup;
 var RadioItem = MenuRadioItem;
 var ItemIndicator = MenuItemIndicator;
 var Separator = MenuSeparator;
@@ -37447,15 +37458,15 @@ var DropdownMenuLabel$1 = reactExports.forwardRef(
   }
 );
 DropdownMenuLabel$1.displayName = LABEL_NAME;
-var ITEM_NAME = "DropdownMenuItem";
+var ITEM_NAME$1 = "DropdownMenuItem";
 var DropdownMenuItem$1 = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDropdownMenu, ...itemProps } = props;
     const menuScope = useMenuScope(__scopeDropdownMenu);
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(Item2$1, { ...menuScope, ...itemProps, ref: forwardedRef });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Item2$2, { ...menuScope, ...itemProps, ref: forwardedRef });
   }
 );
-DropdownMenuItem$1.displayName = ITEM_NAME;
+DropdownMenuItem$1.displayName = ITEM_NAME$1;
 var CHECKBOX_ITEM_NAME = "DropdownMenuCheckboxItem";
 var DropdownMenuCheckboxItem$1 = reactExports.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...checkboxItemProps } = props;
@@ -37463,13 +37474,13 @@ var DropdownMenuCheckboxItem$1 = reactExports.forwardRef((props, forwardedRef) =
   return /* @__PURE__ */ jsxRuntimeExports.jsx(CheckboxItem, { ...menuScope, ...checkboxItemProps, ref: forwardedRef });
 });
 DropdownMenuCheckboxItem$1.displayName = CHECKBOX_ITEM_NAME;
-var RADIO_GROUP_NAME = "DropdownMenuRadioGroup";
+var RADIO_GROUP_NAME$1 = "DropdownMenuRadioGroup";
 var DropdownMenuRadioGroup = reactExports.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...radioGroupProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroup, { ...menuScope, ...radioGroupProps, ref: forwardedRef });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroup$2, { ...menuScope, ...radioGroupProps, ref: forwardedRef });
 });
-DropdownMenuRadioGroup.displayName = RADIO_GROUP_NAME;
+DropdownMenuRadioGroup.displayName = RADIO_GROUP_NAME$1;
 var RADIO_ITEM_NAME = "DropdownMenuRadioItem";
 var DropdownMenuRadioItem$1 = reactExports.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...radioItemProps } = props;
@@ -37477,13 +37488,13 @@ var DropdownMenuRadioItem$1 = reactExports.forwardRef((props, forwardedRef) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(RadioItem, { ...menuScope, ...radioItemProps, ref: forwardedRef });
 });
 DropdownMenuRadioItem$1.displayName = RADIO_ITEM_NAME;
-var INDICATOR_NAME = "DropdownMenuItemIndicator";
+var INDICATOR_NAME$2 = "DropdownMenuItemIndicator";
 var DropdownMenuItemIndicator = reactExports.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...itemIndicatorProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(ItemIndicator, { ...menuScope, ...itemIndicatorProps, ref: forwardedRef });
 });
-DropdownMenuItemIndicator.displayName = INDICATOR_NAME;
+DropdownMenuItemIndicator.displayName = INDICATOR_NAME$2;
 var SEPARATOR_NAME = "DropdownMenuSeparator";
 var DropdownMenuSeparator$1 = reactExports.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...separatorProps } = props;
@@ -37532,19 +37543,19 @@ var DropdownMenuSubContent$1 = reactExports.forwardRef((props, forwardedRef) => 
   );
 });
 DropdownMenuSubContent$1.displayName = SUB_CONTENT_NAME;
-var Root2$1 = DropdownMenu$1;
+var Root2$2 = DropdownMenu$1;
 var Trigger = DropdownMenuTrigger$1;
 var Portal2 = DropdownMenuPortal;
 var Content2 = DropdownMenuContent$1;
 var Label2 = DropdownMenuLabel$1;
-var Item2 = DropdownMenuItem$1;
+var Item2$1 = DropdownMenuItem$1;
 var CheckboxItem2 = DropdownMenuCheckboxItem$1;
 var RadioItem2 = DropdownMenuRadioItem$1;
 var ItemIndicator2 = DropdownMenuItemIndicator;
 var Separator2 = DropdownMenuSeparator$1;
 var SubTrigger2 = DropdownMenuSubTrigger$1;
 var SubContent2 = DropdownMenuSubContent$1;
-const DropdownMenu = Root2$1;
+const DropdownMenu = Root2$2;
 const DropdownMenuTrigger = Trigger;
 const DropdownMenuSubTrigger = reactExports.forwardRef(({ className, inset, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
   SubTrigger2,
@@ -37589,7 +37600,7 @@ const DropdownMenuContent = reactExports.forwardRef(({ className, sideOffset = 4
 ) }));
 DropdownMenuContent.displayName = Content2.displayName;
 const DropdownMenuItem = reactExports.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-  Item2,
+  Item2$1,
   {
     ref,
     className: cn(
@@ -37600,7 +37611,7 @@ const DropdownMenuItem = reactExports.forwardRef(({ className, inset, ...props }
     ...props
   }
 ));
-DropdownMenuItem.displayName = Item2.displayName;
+DropdownMenuItem.displayName = Item2$1.displayName;
 const DropdownMenuCheckboxItem = reactExports.forwardRef(({ className, children, checked, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
   CheckboxItem2,
   {
@@ -37856,11 +37867,11 @@ function useImageLoadingStatus(src, { referrerPolicy, crossOrigin }) {
   }, [image, crossOrigin, referrerPolicy]);
   return loadingStatus;
 }
-var Root = Avatar$1;
+var Root$1 = Avatar$1;
 var Image = AvatarImage$1;
 var Fallback = AvatarFallback$1;
 const Avatar = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-  Root,
+  Root$1,
   {
     ref,
     className: cn(
@@ -37870,7 +37881,7 @@ const Avatar = reactExports.forwardRef(({ className, ...props }, ref) => /* @__P
     ...props
   }
 ));
-Avatar.displayName = Root.displayName;
+Avatar.displayName = Root$1.displayName;
 const AvatarImage = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Image,
   {
@@ -37892,7 +37903,7 @@ const AvatarFallback = reactExports.forwardRef(({ className, ...props }, ref) =>
   }
 ));
 AvatarFallback.displayName = Fallback.displayName;
-const Sheet = Root$4;
+const Sheet = Root$5;
 const SheetTrigger = Trigger$2;
 const SheetPortal = Portal$1;
 const SheetOverlay = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -38097,7 +38108,7 @@ function createStore(reducer2, preloadedState, enhancer) {
       });
     }
   }
-  function getState() {
+  function getState2() {
     if (isDispatching) {
       throw new Error("You may not call store.getState() while the reducer is executing. The reducer has already received the state as an argument. Pass it down from the top reducer instead of reading it from the store.");
     }
@@ -38179,7 +38190,7 @@ function createStore(reducer2, preloadedState, enhancer) {
         function observeState() {
           const observerAsObserver = observer;
           if (observerAsObserver.next) {
-            observerAsObserver.next(getState());
+            observerAsObserver.next(getState2());
           }
         }
         observeState();
@@ -38199,7 +38210,7 @@ function createStore(reducer2, preloadedState, enhancer) {
   const store2 = {
     dispatch: dispatch2,
     subscribe: subscribe2,
-    getState,
+    getState: getState2,
     replaceReducer,
     [symbol_observable_default]: observable
   };
@@ -38999,9 +39010,9 @@ immer.applyPatches.bind(immer);
 immer.createDraft.bind(immer);
 immer.finishDraft.bind(immer);
 function createThunkMiddleware(extraArgument) {
-  const middleware = ({ dispatch: dispatch2, getState }) => (next) => (action) => {
+  const middleware = ({ dispatch: dispatch2, getState: getState2 }) => (next) => (action) => {
     if (typeof action === "function") {
-      return action(dispatch2, getState, extraArgument);
+      return action(dispatch2, getState2, extraArgument);
     }
     return next(action);
   };
@@ -39212,15 +39223,15 @@ function createImmutableStateInvariantMiddleware(options = {}) {
     } = options;
     const track = trackForMutations.bind(null, isImmutable, ignoredPaths);
     return ({
-      getState
+      getState: getState2
     }) => {
-      let state = getState();
+      let state = getState2();
       let tracker = track(state);
       let result;
       return (next) => (action) => {
         const measureUtils = getTimeMeasureUtils(warnAfter, "ImmutableStateInvariantMiddleware");
         measureUtils.measureTime(() => {
-          state = getState();
+          state = getState2();
           result = tracker.detectMutations();
           tracker = track(state);
           if (result.wasMutated) {
@@ -39229,7 +39240,7 @@ function createImmutableStateInvariantMiddleware(options = {}) {
         });
         const dispatchedAction = next(action);
         measureUtils.measureTime(() => {
-          state = getState();
+          state = getState2();
           result = tracker.detectMutations();
           tracker = track(state);
           if (result.wasMutated) {
@@ -40604,7 +40615,10 @@ const uploadInvoice = async (data) => {
         data: {},
         ocr_response: {},
         deepseek_response: {},
-        status: "pending"
+        status: "pending",
+        type: data.type,
+        opening_balance: 0,
+        closing_balance: 0
       }).select().single()
     );
     const results = await Promise.all(invoicePromises || []);
@@ -40649,6 +40663,427 @@ const processInvoice = async () => {
     throw error;
   }
 };
+function usePrevious(value) {
+  const ref = reactExports.useRef({ value, previous: value });
+  return reactExports.useMemo(() => {
+    if (ref.current.value !== value) {
+      ref.current.previous = ref.current.value;
+      ref.current.value = value;
+    }
+    return ref.current.previous;
+  }, [value]);
+}
+var RADIO_NAME = "Radio";
+var [createRadioContext, createRadioScope] = createContextScope(RADIO_NAME);
+var [RadioProvider, useRadioContext] = createRadioContext(RADIO_NAME);
+var Radio = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeRadio,
+      name,
+      checked = false,
+      required,
+      disabled,
+      value = "on",
+      onCheck,
+      form,
+      ...radioProps
+    } = props;
+    const [button, setButton] = reactExports.useState(null);
+    const composedRefs = useComposedRefs(forwardedRef, (node) => setButton(node));
+    const hasConsumerStoppedPropagationRef = reactExports.useRef(false);
+    const isFormControl = button ? form || !!button.closest("form") : true;
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(RadioProvider, { scope: __scopeRadio, checked, disabled, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Primitive.button,
+        {
+          type: "button",
+          role: "radio",
+          "aria-checked": checked,
+          "data-state": getState(checked),
+          "data-disabled": disabled ? "" : void 0,
+          disabled,
+          value,
+          ...radioProps,
+          ref: composedRefs,
+          onClick: composeEventHandlers$1(props.onClick, (event) => {
+            if (!checked) onCheck == null ? void 0 : onCheck();
+            if (isFormControl) {
+              hasConsumerStoppedPropagationRef.current = event.isPropagationStopped();
+              if (!hasConsumerStoppedPropagationRef.current) event.stopPropagation();
+            }
+          })
+        }
+      ),
+      isFormControl && /* @__PURE__ */ jsxRuntimeExports.jsx(
+        RadioBubbleInput,
+        {
+          control: button,
+          bubbles: !hasConsumerStoppedPropagationRef.current,
+          name,
+          value,
+          checked,
+          required,
+          disabled,
+          form,
+          style: { transform: "translateX(-100%)" }
+        }
+      )
+    ] });
+  }
+);
+Radio.displayName = RADIO_NAME;
+var INDICATOR_NAME$1 = "RadioIndicator";
+var RadioIndicator = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeRadio, forceMount, ...indicatorProps } = props;
+    const context = useRadioContext(INDICATOR_NAME$1, __scopeRadio);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.checked, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Primitive.span,
+      {
+        "data-state": getState(context.checked),
+        "data-disabled": context.disabled ? "" : void 0,
+        ...indicatorProps,
+        ref: forwardedRef
+      }
+    ) });
+  }
+);
+RadioIndicator.displayName = INDICATOR_NAME$1;
+var BUBBLE_INPUT_NAME = "RadioBubbleInput";
+var RadioBubbleInput = reactExports.forwardRef(
+  ({
+    __scopeRadio,
+    control,
+    checked,
+    bubbles = true,
+    ...props
+  }, forwardedRef) => {
+    const ref = reactExports.useRef(null);
+    const composedRefs = useComposedRefs(ref, forwardedRef);
+    const prevChecked = usePrevious(checked);
+    const controlSize = useSize(control);
+    reactExports.useEffect(() => {
+      const input = ref.current;
+      if (!input) return;
+      const inputProto = window.HTMLInputElement.prototype;
+      const descriptor = Object.getOwnPropertyDescriptor(
+        inputProto,
+        "checked"
+      );
+      const setChecked = descriptor.set;
+      if (prevChecked !== checked && setChecked) {
+        const event = new Event("click", { bubbles });
+        setChecked.call(input, checked);
+        input.dispatchEvent(event);
+      }
+    }, [prevChecked, checked, bubbles]);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Primitive.input,
+      {
+        type: "radio",
+        "aria-hidden": true,
+        defaultChecked: checked,
+        ...props,
+        tabIndex: -1,
+        ref: composedRefs,
+        style: {
+          ...props.style,
+          ...controlSize,
+          position: "absolute",
+          pointerEvents: "none",
+          opacity: 0,
+          margin: 0
+        }
+      }
+    );
+  }
+);
+RadioBubbleInput.displayName = BUBBLE_INPUT_NAME;
+function getState(checked) {
+  return checked ? "checked" : "unchecked";
+}
+var ARROW_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+var RADIO_GROUP_NAME = "RadioGroup";
+var [createRadioGroupContext, createRadioGroupScope] = createContextScope(RADIO_GROUP_NAME, [
+  createRovingFocusGroupScope,
+  createRadioScope
+]);
+var useRovingFocusGroupScope = createRovingFocusGroupScope();
+var useRadioScope = createRadioScope();
+var [RadioGroupProvider, useRadioGroupContext] = createRadioGroupContext(RADIO_GROUP_NAME);
+var RadioGroup$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeRadioGroup,
+      name,
+      defaultValue,
+      value: valueProp,
+      required = false,
+      disabled = false,
+      orientation,
+      dir,
+      loop = true,
+      onValueChange,
+      ...groupProps
+    } = props;
+    const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeRadioGroup);
+    const direction = useDirection(dir);
+    const [value, setValue] = useControllableState({
+      prop: valueProp,
+      defaultProp: defaultValue ?? null,
+      onChange: onValueChange,
+      caller: RADIO_GROUP_NAME
+    });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      RadioGroupProvider,
+      {
+        scope: __scopeRadioGroup,
+        name,
+        required,
+        disabled,
+        value,
+        onValueChange: setValue,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Root$2,
+          {
+            asChild: true,
+            ...rovingFocusGroupScope,
+            orientation,
+            dir: direction,
+            loop,
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Primitive.div,
+              {
+                role: "radiogroup",
+                "aria-required": required,
+                "aria-orientation": orientation,
+                "data-disabled": disabled ? "" : void 0,
+                dir: direction,
+                ...groupProps,
+                ref: forwardedRef
+              }
+            )
+          }
+        )
+      }
+    );
+  }
+);
+RadioGroup$1.displayName = RADIO_GROUP_NAME;
+var ITEM_NAME = "RadioGroupItem";
+var RadioGroupItem$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeRadioGroup, disabled, ...itemProps } = props;
+    const context = useRadioGroupContext(ITEM_NAME, __scopeRadioGroup);
+    const isDisabled = context.disabled || disabled;
+    const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeRadioGroup);
+    const radioScope = useRadioScope(__scopeRadioGroup);
+    const ref = reactExports.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, ref);
+    const checked = context.value === itemProps.value;
+    const isArrowKeyPressedRef = reactExports.useRef(false);
+    reactExports.useEffect(() => {
+      const handleKeyDown = (event) => {
+        if (ARROW_KEYS.includes(event.key)) {
+          isArrowKeyPressedRef.current = true;
+        }
+      };
+      const handleKeyUp = () => isArrowKeyPressedRef.current = false;
+      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("keyup", handleKeyUp);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("keyup", handleKeyUp);
+      };
+    }, []);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Item,
+      {
+        asChild: true,
+        ...rovingFocusGroupScope,
+        focusable: !isDisabled,
+        active: checked,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Radio,
+          {
+            disabled: isDisabled,
+            required: context.required,
+            checked,
+            ...radioScope,
+            ...itemProps,
+            name: context.name,
+            ref: composedRefs,
+            onCheck: () => context.onValueChange(itemProps.value),
+            onKeyDown: composeEventHandlers$1((event) => {
+              if (event.key === "Enter") event.preventDefault();
+            }),
+            onFocus: composeEventHandlers$1(itemProps.onFocus, () => {
+              var _a;
+              if (isArrowKeyPressedRef.current) (_a = ref.current) == null ? void 0 : _a.click();
+            })
+          }
+        )
+      }
+    );
+  }
+);
+RadioGroupItem$1.displayName = ITEM_NAME;
+var INDICATOR_NAME2 = "RadioGroupIndicator";
+var RadioGroupIndicator = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeRadioGroup, ...indicatorProps } = props;
+    const radioScope = useRadioScope(__scopeRadioGroup);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(RadioIndicator, { ...radioScope, ...indicatorProps, ref: forwardedRef });
+  }
+);
+RadioGroupIndicator.displayName = INDICATOR_NAME2;
+var Root2$1 = RadioGroup$1;
+var Item2 = RadioGroupItem$1;
+var Indicator$1 = RadioGroupIndicator;
+const RadioGroup = reactExports.forwardRef(({ className, ...props }, ref) => {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    Root2$1,
+    {
+      className: cn("grid gap-2", className),
+      ...props,
+      ref
+    }
+  );
+});
+RadioGroup.displayName = Root2$1.displayName;
+const RadioGroupItem = reactExports.forwardRef(({ className, ...props }, ref) => {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    Item2,
+    {
+      ref,
+      className: cn(
+        "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      ),
+      ...props,
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Indicator$1, { className: "flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Circle, { className: "h-2.5 w-2.5 fill-current text-current" }) })
+    }
+  );
+});
+RadioGroupItem.displayName = Item2.displayName;
+const labelVariants = cva(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+);
+const Label = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  Root$6,
+  {
+    ref,
+    className: cn(labelVariants(), className),
+    ...props
+  }
+));
+Label.displayName = Root$6.displayName;
+var PROGRESS_NAME = "Progress";
+var DEFAULT_MAX = 100;
+var [createProgressContext, createProgressScope] = createContextScope(PROGRESS_NAME);
+var [ProgressProvider, useProgressContext] = createProgressContext(PROGRESS_NAME);
+var Progress$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeProgress,
+      value: valueProp = null,
+      max: maxProp,
+      getValueLabel = defaultGetValueLabel,
+      ...progressProps
+    } = props;
+    if ((maxProp || maxProp === 0) && !isValidMaxNumber(maxProp)) {
+      console.error(getInvalidMaxError(`${maxProp}`, "Progress"));
+    }
+    const max2 = isValidMaxNumber(maxProp) ? maxProp : DEFAULT_MAX;
+    if (valueProp !== null && !isValidValueNumber(valueProp, max2)) {
+      console.error(getInvalidValueError(`${valueProp}`, "Progress"));
+    }
+    const value = isValidValueNumber(valueProp, max2) ? valueProp : null;
+    const valueLabel = isNumber(value) ? getValueLabel(value, max2) : void 0;
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(ProgressProvider, { scope: __scopeProgress, value, max: max2, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Primitive.div,
+      {
+        "aria-valuemax": max2,
+        "aria-valuemin": 0,
+        "aria-valuenow": isNumber(value) ? value : void 0,
+        "aria-valuetext": valueLabel,
+        role: "progressbar",
+        "data-state": getProgressState(value, max2),
+        "data-value": value ?? void 0,
+        "data-max": max2,
+        ...progressProps,
+        ref: forwardedRef
+      }
+    ) });
+  }
+);
+Progress$1.displayName = PROGRESS_NAME;
+var INDICATOR_NAME = "ProgressIndicator";
+var ProgressIndicator = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeProgress, ...indicatorProps } = props;
+    const context = useProgressContext(INDICATOR_NAME, __scopeProgress);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Primitive.div,
+      {
+        "data-state": getProgressState(context.value, context.max),
+        "data-value": context.value ?? void 0,
+        "data-max": context.max,
+        ...indicatorProps,
+        ref: forwardedRef
+      }
+    );
+  }
+);
+ProgressIndicator.displayName = INDICATOR_NAME;
+function defaultGetValueLabel(value, max2) {
+  return `${Math.round(value / max2 * 100)}%`;
+}
+function getProgressState(value, maxValue) {
+  return value == null ? "indeterminate" : value === maxValue ? "complete" : "loading";
+}
+function isNumber(value) {
+  return typeof value === "number";
+}
+function isValidMaxNumber(max2) {
+  return isNumber(max2) && !isNaN(max2) && max2 > 0;
+}
+function isValidValueNumber(value, max2) {
+  return isNumber(value) && !isNaN(value) && value <= max2 && value >= 0;
+}
+function getInvalidMaxError(propValue, componentName) {
+  return `Invalid prop \`max\` of value \`${propValue}\` supplied to \`${componentName}\`. Only numbers greater than 0 are valid max values. Defaulting to \`${DEFAULT_MAX}\`.`;
+}
+function getInvalidValueError(propValue, componentName) {
+  return `Invalid prop \`value\` of value \`${propValue}\` supplied to \`${componentName}\`. The \`value\` prop must be:
+  - a positive number
+  - less than the value passed to \`max\` (or ${DEFAULT_MAX} if no \`max\` prop is set)
+  - \`null\` or \`undefined\` if the progress is indeterminate.
+
+Defaulting to \`null\`.`;
+}
+var Root = Progress$1;
+var Indicator = ProgressIndicator;
+const Progress = reactExports.forwardRef(({ className, value, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  Root,
+  {
+    ref,
+    className: cn(
+      "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
+      className
+    ),
+    ...props,
+    children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Indicator,
+      {
+        className: "h-full w-full flex-1 bg-primary transition-all",
+        style: { transform: `translateX(-${100 - (value || 0)}%)` }
+      }
+    )
+  }
+));
+Progress.displayName = Root.displayName;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg"];
 const UploadInvoice = () => {
@@ -40656,6 +41091,8 @@ const UploadInvoice = () => {
   const [isDragging, setIsDragging] = reactExports.useState(false);
   const [showAlert, setShowAlert] = reactExports.useState(true);
   const [isUploading, setIsUploading] = reactExports.useState(false);
+  const [uploadProgress, setUploadProgress] = reactExports.useState(0);
+  const [invoiceType, setInvoiceType] = reactExports.useState("debit");
   const { toast: toast2 } = useToast();
   const validateFiles = (fileList) => {
     return Array.from(fileList).filter((file) => {
@@ -40738,16 +41175,23 @@ const UploadInvoice = () => {
       return;
     }
     setIsUploading(true);
+    setUploadProgress(0);
     try {
       const { data, error } = await uploadFiles(files);
       if (error) {
         throw error;
       }
-      const { error: invoiceError } = await uploadInvoice({ files: data });
+      setUploadProgress(50);
+      const { error: invoiceError } = await uploadInvoice({
+        files: data,
+        type: invoiceType
+      });
       if (invoiceError) {
         throw invoiceError;
       }
+      setUploadProgress(75);
       await processInvoice();
+      setUploadProgress(100);
       toast2({
         title: "Upload completed",
         description: "Images uploaded successfully for processing."
@@ -40762,18 +41206,19 @@ const UploadInvoice = () => {
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "container mx-auto px-4 py-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-3xl mx-auto space-y-6", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center space-y-2", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-3xl font-bold", children: "Upload Invoice" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500", children: "Upload your invoice images for processing" })
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "container mx-auto px-4 py-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-3xl mx-auto space-y-8", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center space-y-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-3xl font-bold tracking-tight", children: "Upload Invoice" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500 text-lg", children: "Upload your invoice images for processing" })
     ] }),
-    showAlert && /* @__PURE__ */ jsxRuntimeExports.jsxs(Alert, { className: "bg-gray-50 border-gray-200 relative", children: [
+    showAlert && /* @__PURE__ */ jsxRuntimeExports.jsxs(Alert, { className: "bg-blue-50/50 border-blue-200 relative", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-5 w-5 text-black mt-0.5" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDescription, { className: "text-sm text-gray-800", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-black", children: "Tip:" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-5 w-5 text-blue-600 mt-0.5" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDescription, { className: "text-sm text-blue-800", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-blue-900", children: "Tip:" }),
           " For best results, ensure your invoice images are clear, well-lit, and contain all necessary information."
         ] })
       ] }),
@@ -40782,59 +41227,122 @@ const UploadInvoice = () => {
         {
           variant: "ghost",
           size: "sm",
-          className: "absolute right-2 top-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full p-1",
+          className: "absolute right-2 top-2 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full p-1",
           onClick: () => setShowAlert(false),
           children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" })
         }
       )
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      Card,
-      {
-        className: `p-8 border-2 border-dashed transition-colors duration-200 bg-white ${isDragging ? "border-black bg-gray-50" : "border-gray-300 group hover:border-gray-800 hover:bg-gray-50"}`,
-        onDragEnter: handleDragEnter,
-        onDragOver: handleDragOver,
-        onDragLeave: handleDragLeave,
-        onDrop: handleDrop,
-        children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center gap-4", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-full bg-gray-50 p-4", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-8 w-8 text-gray-500" }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-lg font-medium text-gray-900", children: "Drag and drop your invoice images here" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-gray-600", children: "or click to browse your files" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-gray-500", children: "Supported formats: PNG, JPEG (max 10MB per file)" })
-            ] })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "input",
-            {
-              type: "file",
-              multiple: true,
-              accept: ".png,.jpg,.jpeg",
-              onChange: handleFileSelect,
-              className: "hidden",
-              id: "file-upload"
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "label",
-            {
-              htmlFor: "file-upload",
-              className: "cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-11 px-6 shadow-sm hover:shadow-md",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-4 w-4 mr-2 text-gray-600" }),
-                "Browse Files"
-              ]
-            }
-          )
-        ] }) })
-      }
-    ),
-    files.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "p-6 relative bg-white", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between border-b pb-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "p-8 space-y-8", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "text-sm font-bold mb-2 block text-gray-900", children: "Select Invoice Type" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          RadioGroup,
+          {
+            value: invoiceType,
+            onValueChange: (value) => setInvoiceType(value),
+            className: "grid grid-cols-2 gap-2",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  RadioGroupItem,
+                  {
+                    value: "debit",
+                    id: "debit",
+                    className: "peer sr-only"
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  Label,
+                  {
+                    htmlFor: "debit",
+                    className: "flex items-center justify-between rounded-md border-2 border-muted bg-white px-3 py-2 hover:bg-gray-50 peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowUpRight, { className: "h-2 w-2 text-white rotate-180" }) }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-gray-900 text-sm", children: "Debit" })
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-medium text-gray-500", children: "Money coming in" })
+                    ]
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  RadioGroupItem,
+                  {
+                    value: "credit",
+                    id: "credit",
+                    className: "peer sr-only"
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  Label,
+                  {
+                    htmlFor: "credit",
+                    className: "flex items-center justify-between rounded-md border-2 border-muted bg-white px-3 py-2 hover:bg-gray-50 peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowUpRight, { className: "h-2 w-2 text-white" }) }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-gray-900 text-sm", children: "Credit" })
+                      ] }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-medium text-gray-500", children: "Money going out" })
+                    ]
+                  }
+                )
+              ] })
+            ]
+          }
+        )
+      ] }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "div",
+        {
+          className: `p-10 border-2 border-dashed transition-all duration-200 bg-white rounded-xl ${isDragging ? "border-primary bg-primary/5" : "border-gray-300 group hover:border-gray-800 hover:bg-gray-50"}`,
+          onDragEnter: handleDragEnter,
+          onDragOver: handleDragOver,
+          onDragLeave: handleDragLeave,
+          onDrop: handleDrop,
+          children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center gap-6", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `rounded-full p-5 transition-colors duration-200 ${isDragging ? "bg-primary/10" : "bg-gray-50"}`, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: `h-10 w-10 transition-colors duration-200 ${isDragging ? "text-primary" : "text-gray-500"}` }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-xl font-medium text-gray-900", children: "Drag and drop your invoice images here" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-base text-gray-600", children: "or click to browse your files" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-gray-500", children: "Supported formats: PNG, JPEG (max 10MB per file)" })
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                type: "file",
+                multiple: true,
+                accept: ".png,.jpg,.jpeg",
+                onChange: handleFileSelect,
+                className: "hidden",
+                id: "file-upload"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "label",
+              {
+                htmlFor: "file-upload",
+                className: "cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-12 px-8 shadow-sm hover:shadow-md",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-4 w-4 mr-2 text-gray-600" }),
+                  "Browse Files"
+                ]
+              }
+            )
+          ] }) })
+        }
+      )
+    ] }),
+    files.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "p-8 relative bg-white", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-6", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between border-b pb-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-xl font-semibold text-gray-900", children: "Selected Images" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full border border-gray-200", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-600 bg-gray-50 px-4 py-1.5 rounded-full border border-gray-200", children: [
             files.length,
             " ",
             files.length === 1 ? "image" : "images",
@@ -40860,12 +41368,22 @@ const UploadInvoice = () => {
           }
         )
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-3", children: files.map((file, index2) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "border border-gray-200 rounded-lg p-4 space-y-2 bg-white hover:bg-gray-50 transition-colors", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-3", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2 rounded-md bg-gray-50", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-5 w-5 text-gray-500" }) }),
+      isUploading && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-sm text-gray-600", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Uploading files..." }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+            uploadProgress,
+            "%"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Progress, { value: uploadProgress, className: "h-2" })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-4", children: files.map((file, index2) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "border border-gray-200 rounded-xl p-5 space-y-2 bg-white hover:bg-gray-50 transition-all duration-200", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-3 rounded-lg bg-gray-50", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-6 w-6 text-gray-500" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-sm text-gray-900", children: file.name }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs text-gray-500", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-gray-900", children: file.name }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-500", children: [
               (file.size / (1024 * 1024)).toFixed(2),
               " MB"
             ] })
@@ -40877,7 +41395,7 @@ const UploadInvoice = () => {
             variant: "ghost",
             size: "icon",
             onClick: () => removeFile(index2),
-            className: "h-8 w-8 hover:bg-red-50 hover:text-red-500",
+            className: "h-9 w-9 hover:bg-red-50 hover:text-red-500 transition-colors duration-200",
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" })
           }
         )
@@ -40885,18 +41403,6 @@ const UploadInvoice = () => {
     ] }) })
   ] }) });
 };
-const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-);
-const Label = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-  Root$5,
-  {
-    ref,
-    className: cn(labelVariants(), className),
-    ...props
-  }
-));
-Label.displayName = Root$5.displayName;
 const fetchInvoiceSuggestions = async (page = 1, pageSize = 10) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -40954,7 +41460,10 @@ const InvoiceSuggestion = () => {
   const [editValues, setEditValues] = reactExports.useState({
     debit: "",
     credit: "",
-    amount: ""
+    amount: "",
+    type: "debit",
+    opening_balance: "0.00",
+    closing_balance: "0.00"
   });
   const [isModalOpen, setIsModalOpen] = reactExports.useState(false);
   const [currentPage, setCurrentPage] = reactExports.useState(1);
@@ -41012,12 +41521,14 @@ const InvoiceSuggestion = () => {
     }
   };
   const handleRowClick = (suggestion) => {
-    var _a;
     setEditingId(suggestion.id);
     setEditValues({
       debit: suggestion.deepseek_response.debitAccount,
       credit: suggestion.deepseek_response.creditAccount,
-      amount: ((_a = suggestion.deepseek_response.amount) == null ? void 0 : _a.toString()) || ""
+      amount: suggestion.deepseek_response.amount.toString(),
+      type: suggestion.type,
+      opening_balance: suggestion.opening_balance.toString(),
+      closing_balance: suggestion.closing_balance.toString()
     });
     setIsModalOpen(true);
     fetchLineItems(suggestion.id);
@@ -41036,26 +41547,41 @@ const InvoiceSuggestion = () => {
     setSelectedLineItems(data || []);
     setShowLineItems(data ? data.length > 0 : false);
   };
-  const handleSave = async (id) => {
+  const handleSave = async () => {
+    if (!editingId) return;
     setIsSaving(true);
     try {
-      const suggestion = suggestions.find((s) => s.id === id);
+      const suggestion = suggestions.find((s) => s.id === editingId);
       if (!suggestion) throw new Error("Suggestion not found");
-      const updatedDeepseekResponse = {
+      const updatedResponse = {
         ...suggestion.deepseek_response,
         debitAccount: editValues.debit,
         creditAccount: editValues.credit,
-        amount: parseFloat(editValues.amount) || suggestion.deepseek_response.amount
+        amount: parseFloat(editValues.amount)
       };
-      const { error } = await updateInvoiceSuggestion(id, updatedDeepseekResponse);
-      if (error) throw error;
-      setSuggestions((prev) => prev.filter((s) => s.id !== id));
-      setEditingId(null);
-      setIsModalOpen(false);
-      toast2({
-        title: "Changes Saved",
-        description: "The accounting entry has been updated and approved successfully."
+      const { error } = await updateInvoiceSuggestion(editingId, {
+        ...updatedResponse,
+        type: editValues.type,
+        opening_balance: parseFloat(editValues.opening_balance),
+        closing_balance: parseFloat(editValues.closing_balance)
       });
+      if (error) throw error;
+      setSuggestions(
+        (prev) => prev.map(
+          (s) => s.id === editingId ? {
+            ...s,
+            type: editValues.type,
+            opening_balance: parseFloat(editValues.opening_balance),
+            closing_balance: parseFloat(editValues.closing_balance),
+            deepseek_response: updatedResponse
+          } : s
+        )
+      );
+      toast2({
+        title: "Changes saved",
+        description: "The invoice details have been updated successfully."
+      });
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Error saving changes:", error);
       toast2({
@@ -41066,10 +41592,6 @@ const InvoiceSuggestion = () => {
     } finally {
       setIsSaving(false);
     }
-  };
-  const handleCancel = () => {
-    setEditingId(null);
-    setIsModalOpen(false);
   };
   const handlePreview = async (suggestion) => {
     try {
@@ -41126,6 +41648,9 @@ const InvoiceSuggestion = () => {
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Date" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: "File Name" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Preview" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Type" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Opening Balance" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Closing Balance" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Description" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Debit Account" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Credit Account" }),
@@ -41140,8 +41665,10 @@ const InvoiceSuggestion = () => {
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-64" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-64" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-24" }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-16" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-8" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-8 w-8" })
@@ -41171,6 +41698,9 @@ const InvoiceSuggestion = () => {
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Date" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: "File Name" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Preview" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Type" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Opening Balance" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Closing Balance" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Description" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Debit Account" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Credit Account" }),
@@ -41179,7 +41709,7 @@ const InvoiceSuggestion = () => {
             /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "w-[150px]", children: "Actions" })
           ] }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: suggestions.map((suggestion) => {
-            var _a;
+            var _a, _b, _c, _d, _e, _f, _g, _h;
             return /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: new Date(suggestion.created_at).toLocaleDateString() }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
@@ -41199,46 +41729,42 @@ const InvoiceSuggestion = () => {
                 ) }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Preview invoice" }) })
               ] }) }) }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-w-md truncate cursor-help", children: suggestion.deepseek_response.explanation }) }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "max-w-md whitespace-normal", children: suggestion.deepseek_response.explanation }) })
-              ] }) }) }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: suggestion.deepseek_response.debitAccount }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: suggestion.deepseek_response.creditAccount }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "w-24", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `inline-flex items-center justify-center w-full px-2.5 py-1 rounded-md text-xs font-semibold tracking-wide ${!suggestion.type ? "bg-gray-50/50 text-gray-400 border border-gray-100 shadow-sm" : suggestion.type === "debit" ? "bg-green-50/80 text-green-700 border border-green-100 shadow-sm hover:bg-green-50" : "bg-red-50/80 text-red-700 border border-red-100 shadow-sm hover:bg-red-50"}`, children: !suggestion.type ? "N/A" : suggestion.type === "debit" ? "DEBIT" : "CREDIT" }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { children: [
                 "PKR ",
-                (_a = suggestion.deepseek_response.amount) == null ? void 0 : _a.toFixed(2)
+                (_a = suggestion.opening_balance) == null ? void 0 : _a.toFixed(2)
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { children: [
-                (suggestion.deepseek_response.confidence * 100).toFixed(0),
-                "%"
+                "PKR ",
+                (_b = suggestion.closing_balance) == null ? void 0 : _b.toFixed(2)
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    Button,
-                    {
-                      size: "sm",
-                      variant: "outline",
-                      onClick: () => handleRowClick(suggestion),
-                      className: "h-8",
-                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Pen, { className: "h-4 w-4" })
-                    }
-                  ) }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Edit accounting entry" }) })
-                ] }) }),
-                suggestion.status !== "approved" && /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipProvider, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tooltip, { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    Button,
-                    {
-                      size: "sm",
-                      onClick: () => handleApprove(suggestion.id),
-                      className: "h-8",
-                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "h-4 w-4" })
-                    }
-                  ) }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContent, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { children: "Approve this entry" }) })
-                ] }) })
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: (_c = suggestion.deepseek_response) == null ? void 0 : _c.description }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: (_d = suggestion.deepseek_response) == null ? void 0 : _d.debitAccount }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: (_e = suggestion.deepseek_response) == null ? void 0 : _e.creditAccount }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(TableCell, { children: [
+                "PKR ",
+                (_g = (_f = suggestion.deepseek_response) == null ? void 0 : _f.amount) == null ? void 0 : _g.toFixed(2)
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: ((_h = suggestion.deepseek_response) == null ? void 0 : _h.confidence) ? `${(suggestion.deepseek_response.confidence * 100).toFixed(0)}%` : "-" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  Button,
+                  {
+                    size: "sm",
+                    variant: "outline",
+                    onClick: () => handleRowClick(suggestion),
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Pen, { className: "h-4 w-4" })
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  Button,
+                  {
+                    size: "sm",
+                    variant: "outline",
+                    onClick: () => handleApprove(suggestion.id),
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "h-4 w-4" })
+                  }
+                )
               ] }) })
             ] }, suggestion.id);
           }) })
@@ -41285,32 +41811,85 @@ const InvoiceSuggestion = () => {
       ] })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(Dialog, { open: isModalOpen, onOpenChange: setIsModalOpen, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: "Edit Accounting Entry" }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "sm:max-w-[600px]", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: "Edit Invoice Details" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-4 py-4", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "debit", children: "Debit Account" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              Input,
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 gap-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "type", children: "Invoice Type" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              RadioGroup,
               {
-                id: "debit",
-                value: editValues.debit,
-                onChange: (e) => setEditValues((prev) => ({ ...prev, debit: e.target.value }))
+                value: editValues.type,
+                onValueChange: (value) => setEditValues((prev) => ({ ...prev, type: value })),
+                className: "flex gap-4",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-2", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroupItem, { value: "debit", id: "debit" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "debit", children: "Debit" })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-2", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(RadioGroupItem, { value: "credit", id: "credit" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "credit", children: "Credit" })
+                  ] })
+                ]
               }
             )
+          ] }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "opening-balance", children: "Opening Balance" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                Input,
+                {
+                  id: "opening-balance",
+                  type: "number",
+                  step: "0.01",
+                  value: editValues.opening_balance,
+                  onChange: (e) => setEditValues((prev) => ({ ...prev, opening_balance: e.target.value })),
+                  placeholder: "0.00"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "closing-balance", children: "Closing Balance" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                Input,
+                {
+                  id: "closing-balance",
+                  type: "number",
+                  step: "0.01",
+                  value: editValues.closing_balance,
+                  onChange: (e) => setEditValues((prev) => ({ ...prev, closing_balance: e.target.value })),
+                  placeholder: "0.00"
+                }
+              )
+            ] })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "credit", children: "Credit Account" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              Input,
-              {
-                id: "credit",
-                value: editValues.credit,
-                onChange: (e) => setEditValues((prev) => ({ ...prev, credit: e.target.value }))
-              }
-            )
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "debit", children: "Debit Account" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                Input,
+                {
+                  id: "debit",
+                  value: editValues.debit,
+                  onChange: (e) => setEditValues((prev) => ({ ...prev, debit: e.target.value }))
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "credit", children: "Credit Account" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                Input,
+                {
+                  id: "credit",
+                  value: editValues.credit,
+                  onChange: (e) => setEditValues((prev) => ({ ...prev, credit: e.target.value }))
+                }
+              )
+            ] })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "amount", children: "Amount" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               Input,
@@ -41325,8 +41904,8 @@ const InvoiceSuggestion = () => {
           ] })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogFooter, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: handleCancel, disabled: isSaving, children: "Cancel" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: () => handleSave(editingId), disabled: isSaving, children: isSaving ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingSpinner, { size: "sm", text: "Saving..." }) : "Save Changes" })
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: () => setIsModalOpen(false), children: "Cancel" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: handleSave, disabled: isSaving, children: isSaving ? "Saving..." : "Save Changes" })
         ] })
       ] }),
       showLineItems && /* @__PURE__ */ jsxRuntimeExports.jsx(LineItemsView, { lineItems: selectedLineItems })
@@ -41875,7 +42454,7 @@ var ToastImpl = reactExports.forwardRef(
       ),
       /* @__PURE__ */ jsxRuntimeExports.jsx(ToastInteractiveProvider, { scope: __scopeToast, onClose: handleClose, children: reactDomExports.createPortal(
         /* @__PURE__ */ jsxRuntimeExports.jsx(Collection.ItemSlot, { scope: __scopeToast, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-          Root$6,
+          Root$7,
           {
             asChild: true,
             onEscapeKeyDown: composeEventHandlers$1(onEscapeKeyDown, () => {
@@ -42239,4 +42818,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) }) })
 );
-//# sourceMappingURL=index-B6fz_dKZ.js.map
+//# sourceMappingURL=index-AeZ0Y9z1.js.map

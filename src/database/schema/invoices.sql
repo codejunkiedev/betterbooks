@@ -1,12 +1,18 @@
 -- Step 1: Create enum type named `status`
 CREATE TYPE status AS ENUM ('pending', 'processing', 'completed', 'failed', 'approved');
 
+-- Create enum type for invoice type
+CREATE TYPE invoice_type AS ENUM ('debit', 'credit');
+
 -- Step 2: Create the invoices table
 CREATE TABLE invoices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id),
     file JSONB NOT NULL CHECK (jsonb_typeof(file) = 'object'),
     status status NOT NULL DEFAULT 'pending',
+    type invoice_type,
+    opening_balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    closing_balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     data JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

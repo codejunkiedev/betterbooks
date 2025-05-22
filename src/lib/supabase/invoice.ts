@@ -27,7 +27,10 @@ export const uploadInvoice = async (
                     data: {},
                     ocr_response: {},
                     deepseek_response: {},
-                    status: 'pending'
+                    status: 'pending',
+                    type: data.type,
+                    opening_balance: 0,
+                    closing_balance: 0
                 })
                 .select()
                 .single()
