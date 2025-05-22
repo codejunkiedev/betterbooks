@@ -26,15 +26,7 @@ export interface ApiResponse<T = unknown> {
   message?: string;
 }
 
-// Add OCR response type definitions
-interface MistralOCRResponse {
-  pages: Array<{
-    index: number;
-    markdown: string;
-  }>;
-}
-
-// Add DeepSeek response type definitions
+// DeepSeek response type definitions
 interface LineItemSuggestion {
   description: string;
   amount: number;
@@ -65,11 +57,10 @@ const CORS_HEADERS = {
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
-const mistralApiKey =  'Gj38vvaAgl92OyNqC2HeMDSjSpeFt20z' //Deno.env.get('MISTRAL_API_KEY');
 const openRouterApiKey = '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' // Deno.env.get('OPENROUTER_API_KEY');
 
-if (!supabaseUrl || !supabaseKey || !mistralApiKey || !openRouterApiKey) {
-  throw new Error('Missing required environment variables: SUPABASE_URL, SUPABASE_ANON_KEY, MISTRAL_API_KEY, or OPENROUTER_API_KEY');
+if (!supabaseUrl || !supabaseKey || !openRouterApiKey) {
+  throw new Error('Missing required environment variables: SUPABASE_URL, SUPABASE_ANON_KEY, or OPENROUTER_API_KEY');
 }
 
 // Create two Supabase clients - one for admin operations and one for user operations
@@ -110,18 +101,6 @@ class InvoiceProcessingError extends Error {
   constructor(message: string, public invoiceId: string, public originalError?: Error) {
     super(message);
     this.name = 'InvoiceProcessingError';
-  }
-}
-
-class OCRProcessingError extends Error {
-  constructor(
-    message: string, 
-    public imageUrl: string, 
-    public originalError?: Error,
-    public urlInfo?: { url: string; isAccessible: boolean; publicUrl: string }
-  ) {
-    super(message);
-    this.name = 'OCRProcessingError';
   }
 }
 
@@ -177,54 +156,6 @@ async function getAccessibleFileUrl(filePath: string): Promise<{ url: string; is
     publicUrl
   };
 }
-/**
- * Process image with Mistral OCR
- */
-async function processImageWithMistralOCR(imageUrl: string): Promise<MistralOCRResponse> {
-  try {
-    console.log(`Sending OCR request to Mistral API for URL: ${imageUrl}`);
-    
-    const response = await fetch('https://api.mistral.ai/v1/ocr', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${mistralApiKey}`
-      },
-      body: JSON.stringify({
-        model: "mistral-ocr-latest",
-        document: {
-          type: "image_url",
-          image_url: imageUrl
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
-      console.error(`Mistral OCR API error response:`, errorData);
-      throw new OCRProcessingError(
-        `Mistral OCR API error: ${response.statusText}${errorData ? ` - ${JSON.stringify(errorData)}` : ''}`,
-        imageUrl
-      );
-    }
-
-    const result = await response.json();
-    if (!result || !result.pages) {
-      throw new OCRProcessingError('Invalid OCR response format', imageUrl);
-    }
-
-    return result;
-  } catch (error) {
-    if (error instanceof OCRProcessingError) {
-      throw error;
-    }
-    throw new OCRProcessingError(
-      `Failed to process image with OCR: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      imageUrl,
-      error instanceof Error ? error : undefined
-    );
-  }
-}
 
 /**
  * Updates the status of an invoice
@@ -257,78 +188,12 @@ async function updateInvoiceStatus(id: string, status: string): Promise<boolean>
 }
 
 /**
- * Updates invoice with OCR response
+ * Analyzes invoice using DeepSeek via OpenRouter
  */
-async function updateInvoiceWithOCRResponse(invoiceId: string, response: MistralOCRResponse): Promise<void> {
+async function analyzeWithDeepSeek(imageUrl: string): Promise<DeepSeekResponse> {
   try {
-    const { error } = await adminClient
-      .from('invoices')
-      .update({
-        ocr_response: response,
-        status: 'processing'
-      })
-      .eq('id', invoiceId);
-
-    if (error) {
-      throw new InvoiceProcessingError(
-        `Failed to save OCR response: ${error.message}`,
-        invoiceId
-      );
-    }
-  } catch (error) {
-    if (error instanceof InvoiceProcessingError) {
-      throw error;
-    }
-    throw new InvoiceProcessingError(
-      `Failed to save OCR response: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      invoiceId,
-      error instanceof Error ? error : undefined
-    );
-  }
-}
-
-/**
- * Analyzes invoice text using DeepSeek via OpenRouter
- */
-async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
-  try {
-    console.log('Sending text analysis request to DeepSeek via OpenRouter');
+    console.log('Sending invoice analysis request to DeepSeek via OpenRouter');
     
-    const prompt = `You are an expert accountant who can analyze invoices in both English and Urdu. 
-    The following invoice text may be in either English or Urdu (or both). 
-    Please analyze it and provide the accounting entry in English, regardless of the input language.
-    
-    For Urdu text, translate and interpret the content to English before analysis.
-    Pay special attention to:
-    - Numbers and amounts (which may be in either language)
-    - Dates (which may be in different formats)
-    - Line items and descriptions
-    - Tax information
-    - Currency symbols and amounts
-    
-    Return ONLY the JSON response with the following structure, without any additional text or explanation:
-    {
-      "debitAccount": "string (e.g., 'Office Supplies', 'Rent Expense', etc.)",
-      "creditAccount": "string (e.g., 'Accounts Payable', 'Cash', etc.)",
-      "amount": number,
-      "confidence": number (0-1),
-      "explanation": "string (brief explanation of the categorization in English)",
-      "line_items": [
-        {
-          "description": "string (description of the item in English)",
-          "amount": number (total price),
-          "quantity": number,
-          "unit_price": number (optional),
-          "is_asset": boolean (true if this is a non-perishable asset with useful life > 1 year),
-          "asset_type": "string (type of asset if is_asset is true, e.g., 'Equipment', 'Furniture', 'Computer', etc.)",
-          "asset_life_months": number (estimated useful life in months, if is_asset is true)
-        }
-      ]
-    }
-    
-    Invoice text:
-    ${text}`;
-
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -338,19 +203,30 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
         'X-Title': 'BetterBooks'
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat:free",
+        model: "mistralai/mistral-small-3.1-24b-instruct:free",
         messages: [
           {
             role: 'system',
-            content: 'You are an expert accountant fluent in both English and Urdu. Analyze invoice text in either language and provide accounting entries in English. Translate and interpret Urdu content to English before analysis. Identify line items that represent assets (non-perishable items with useful life > 1 year). Return ONLY the JSON response without any additional text, markdown formatting, or code blocks.'
+            content: "You are an AI accounting assistant. Your primary task is to process invoices by extracting relevant information, categorizing the invoice, and determining the appropriate accounting treatment for the items listed, including suggesting debit and credit accounts at both invoice and line item levels. You will encounter invoices in English and Urdu, but all your responses and recorded data must be in English only. Your entire response must be a single, valid JSON object.\n\nCore Accounting Principles for Item Classification:\n1.  Assets:\n    * These are resources owned by the company that are expected to provide future economic benefit for more than one year (one accounting period).\n    * Examples: Machinery, Office equipment (e.g., computers, printers, furniture if >1 year life and >$500), Vehicles, Buildings, Software licenses (long-term, >1 year).\n2.  Expenses (Fees or Perishable Items):\n    * These are costs incurred for goods or services that are consumed, or whose benefits are realized, within one year or less.\n    * Examples: Service fees, Subscription fees (short-term), Office supplies, Perishable goods, Utilities, Rent, Fuel, Minor tools.\n\nDecision Logic for Line Items:\n* Useful Life: Will the item provide benefits for more than one year? If yes, likely an 'Asset'. If no, it's an 'Expense'.\n* Materiality/Cost Threshold: For items with >1 year life, if cost is below a company-defined threshold (e.g., $500, assume this if not specified), it may be treated as an 'Expense'.\n\nBasic Accounting Guidance for Debit/Credit Accounts:\n* Line Item Level:\n    * Purchasing Assets: Debit specific Asset account (e.g., 'Office Equipment', 'Vehicles'), Credit 'Cash', 'Bank', or 'Accounts Payable'.\n    * Incurring Expenses: Debit specific Expense account (e.g., 'Fuel Expense', 'Office Supplies Expense', 'Rent Expense'), Credit 'Cash', 'Bank', or 'Accounts Payable'.\n* Invoice Level (for the total amount):\n    * `invoice_level_credit_account`: Typically 'Accounts Payable' if the invoice is a bill for future payment. If it represents an immediate payment (e.g., a cash fuel receipt), use 'Cash' or 'Bank'.\n    * `invoice_level_debit_account`: If the invoice predominantly covers a single category (e.g., all line items are 'Fuel Expense'), use that account (e.g., 'Fuel Expense'). If line items are diverse, use a summary term like 'Various Expenses', 'Multiple Categories', or the most significant category if discernible. This reflects what the total payment obligation is for.\n* If payment method is unclear for line items, align with the invoice-level assessment (e.g., if invoice is on credit, line items likely credit 'Accounts Payable' indirectly).\n\nInformation to Extract & Generate:\n1.  Invoice Header & Summary:\n    * `vendor_name`: Extracted vendor name.\n    * `invoice_number`: Extracted invoice number.\n    * `invoice_date`: Extracted invoice date.\n    * `due_date`: Extracted due date (if present, else null).\n    * `total_amount`: Extracted total invoice amount (numeric).\n    * `currency`: Extracted currency code (e.g., PKR, USD).\n    * `invoice_summary_description`: A brief (1-2 sentence) overall description you generate about the invoice's purpose.\n    * `overall_invoice_confidence_score`: A decimal value (0.0-1.0) you generate, representing your confidence in accurately processing the entire invoice.\n    * `invoice_level_debit_account`: Your suggested primary debit account for the invoice total, based on guidance.\n    * `invoice_level_credit_account`: Your suggested credit account for the invoice total, based on guidance (e.g., 'Accounts Payable', 'Cash').\n2.  Line Items (for each discernible line item on the invoice):\n    * `description`: Extracted line item description.\n    * `quantity`: Extracted quantity (numeric).\n    * `unit_price`: Extracted unit price (numeric, if available).\n    * `total_price`: Extracted total price for the line item (numeric).\n    * `classification`: Your classification as 'Asset' or 'Expense'.\n    * `justification`: Brief justification for the classification.\n    * `debit_account`: Your suggested debit account for this line item.\n    * `credit_account`: Your suggested credit account for this line item.\n    * `line_item_confidence_score`: A decimal value (0.0-1.0) you generate for this specific line item's processing accuracy.\n\nOutput Format:\nYour entire response MUST be a single, valid JSON object. No text outside this JSON. The JSON should include the invoice header & summary fields (including invoice-level debit/credit accounts) at the root. It must also include a `line_items` array containing objects for each processed line item. If no line items are found, `line_items` should be an empty array."
           },
           {
             role: 'user',
-            content: prompt
+            content: [
+              {
+                type: 'text',
+                text: "Hello AI Accountant. Please process the following invoice image strictly according to all instructions, accounting principles, and output specifications outlined in your system context.\n\n1.  **Analyze the provided invoice image.**\n2.  **Extract and Generate Key Invoice Information:** Extract vendor name, invoice number, invoice date, due date (if any), total amount, and currency. Also, generate a concise `invoice_summary_description`, an `overall_invoice_confidence_score` for your processing of this entire invoice, and determine the overall `invoice_level_debit_account` and `invoice_level_credit_account` for the invoice total based on its nature (e.g., bill vs. immediate payment) and content.\n3.  **Process Each Line Item:** For each discernible line item on the invoice (skip blank or irrelevant lines):\n    * Extract its `description`, `quantity`, `unit_price` (if available), and `total_price`.\n    * Classify the item as either 'Asset' or 'Expense' based on the principles provided, and provide a `justification`.\n    * Suggest appropriate `debit_account` and `credit_account` for the line item based on standard accounting practices and the guidance provided.\n    * Generate a `line_item_confidence_score` (0.0-1.0) reflecting your confidence in the accuracy of this specific line item's processing (extraction, classification, and D/C account suggestion).\n4.  **Language Handling:** If the invoice contains Urdu text, ensure all extracted information and generated descriptions in the final JSON output are in English.\n5.  **Response Format:** Respond ONLY with a single, complete, and valid JSON object as per the detailed structure specified in your system context. Ensure all monetary values are numbers. The `line_items` array should contain an object for each processed line item."
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageUrl
+                }
+              }
+            ]
           }
         ],
-        temperature: 0.1,
-        max_tokens: 1000
+        temperature: 0.2,
+        max_tokens: 5000
       })
     });
 
@@ -372,18 +248,23 @@ async function analyzeWithDeepSeek(text: string): Promise<DeepSeekResponse> {
       const jsonStr = jsonMatch[0];
       const parsedResponse = JSON.parse(jsonStr);
       
+      // Map the response to our expected format
       const response: DeepSeekResponse = {
-        debitAccount: parsedResponse.debitAccount,
-        creditAccount: parsedResponse.creditAccount,
-        amount: parsedResponse.amount,
-        confidence: parsedResponse.confidence,
-        explanation: parsedResponse.explanation
+        debitAccount: parsedResponse.invoice_level_debit_account,
+        creditAccount: parsedResponse.invoice_level_credit_account,
+        amount: parsedResponse.total_amount,
+        confidence: parsedResponse.overall_invoice_confidence_score,
+        explanation: parsedResponse.invoice_summary_description,
+        line_items: parsedResponse.line_items?.map(item => ({
+          description: item.description,
+          amount: item.total_price,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          is_asset: item.classification === 'Asset',
+          asset_type: item.debit_account,
+          asset_life_months: 12 // Default to 12 months for assets
+        }))
       };
-
-      // Add line items if present
-      if (parsedResponse.line_items && Array.isArray(parsedResponse.line_items)) {
-        response.line_items = parsedResponse.line_items;
-      }
 
       return response;
     } catch (parseError) {
@@ -422,7 +303,7 @@ async function updateInvoiceWithDeepSeekAnalysis(invoiceId: string, analysis: De
 
     // If there are line items and they are assets, save them using user client
     if (analysis.line_items && Array.isArray(analysis.line_items)) {
-      const assetLineItems = analysis.line_items.filter(item => item.is_asset);
+      const assetLineItems = analysis.line_items.filter(item => item.classification === 'Asset');
       
       if (assetLineItems.length > 0) {
         if (!userClient) {
@@ -435,12 +316,12 @@ async function updateInvoiceWithDeepSeekAnalysis(invoiceId: string, analysis: De
             assetLineItems.map(item => ({
               invoice_id: invoiceId,
               description: item.description,
-              amount: item.amount,
+              amount: item.total_price,
               quantity: item.quantity,
               unit_price: item.unit_price,
               is_asset: true,
-              asset_type: item.asset_type,
-              asset_life_months: item.asset_life_months
+              asset_type: item.debit_account,
+              asset_life_months: 12 // Default to 12 months for assets
             }))
           );
 
@@ -465,54 +346,7 @@ async function updateInvoiceWithDeepSeekAnalysis(invoiceId: string, analysis: De
 }
 
 /**
- * Processes and formats markdown text from OCR results
- */
-function processMarkdownText(pages: Array<{ index: number; markdown: string }>): string {
-  return pages.map(page => {
-    let text = page.markdown;
-    
-    // Clean up common OCR issues in tables and structure
-    text = text
-      // Clean up tables
-      .replace(/\|\s*\|\s*\|/g, '') // Remove empty table rows
-      .replace(/\|\s+\|/g, '| |') // Normalize whitespace in empty cells
-      .replace(/\|\s*:\s*\|/g, '|:') // Fix alignment markers
-      .replace(/\|\s*-\s*\|/g, '|-') // Fix alignment markers
-      
-      // Clean up headers
-      .replace(/^#+\s+/gm, '## ') // Normalize headers to level 2
-      .replace(/^#+\s*$/gm, '') // Remove empty headers
-      
-      // Clean up whitespace
-      .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
-      .replace(/\s+$/gm, '') // Remove trailing whitespace on each line
-      .replace(/^\s+/gm, '') // Remove leading whitespace on each line
-      
-      // Clean up common OCR artifacts
-      .replace(/[^\S\n]+/g, ' ') // Normalize horizontal whitespace
-      .replace(/\|\s*$/, '|') // Ensure table rows end with |
-      .replace(/^\s*\|/, '|') // Ensure table rows start with |
-      
-      // Clean up amounts and numbers
-      .replace(/\$(\d+(?:,\d{3})*(?:\.\d{2})?)/g, '$$$1') // Normalize currency format
-      .replace(/(\d+)\s*-\s*(\d+)/g, '$1-$2') // Normalize number ranges
-      
-      // Clean up dates
-      .replace(/(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/g, '$1/$2/$3') // Normalize date format
-      
-      // Clean up contact information
-      .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, ' $1 ') // Add space around emails
-      .replace(/(\d{3}[-.]?\d{3}[-.]?\d{4})/g, ' $1 ') // Add space around phone numbers
-      
-      // Final cleanup
-      .trim(); // Remove leading/trailing whitespace
-      
-    return text;
-  }).join('\n\n---\n\n'); // Separate pages with horizontal rule
-}
-
-/**
- * Processes a single invoice by fetching its image and processing with OCR
+ * Processes a single invoice by fetching its image and processing with DeepSeek
  */
 async function processInvoice(invoice: Invoice): Promise<{ url: string; isAccessible: boolean; publicUrl: string }> {
   try {
@@ -524,25 +358,15 @@ async function processInvoice(invoice: Invoice): Promise<{ url: string; isAccess
 
     console.log(`Processing invoice ${invoice.id} with URL: ${accessibleUrl}`);
     
-    // Process with OCR using the accessible URL
-    const ocrResult = await processImageWithMistralOCR(accessibleUrl);
-    
-    // Update invoice with OCR response
-    await updateInvoiceWithOCRResponse(invoice.id, ocrResult);
-
-    // Extract and format text from OCR result using the dedicated function
-    const extractedText = processMarkdownText(ocrResult.pages);
-
-    // Analyze text with DeepSeek
-    const accountingAnalysis = await analyzeWithDeepSeek(extractedText);
+    // Analyze with DeepSeek
+    const accountingAnalysis = await analyzeWithDeepSeek(accessibleUrl);
 
     // Update invoice with DeepSeek analysis
     await updateInvoiceWithDeepSeekAnalysis(invoice.id, accountingAnalysis);
 
     console.log(`Processing completed for invoice ${invoice.id}:`, {
       invoiceId: invoice.id,
-      pages: ocrResult.pages.length,
-      accountingAnalysis,
+      analysis: accountingAnalysis,
       timestamp: new Date().toISOString()
     });
 
@@ -570,16 +394,6 @@ async function processInvoice(invoice: Invoice): Promise<{ url: string; isAccess
         } : statusError,
         timestamp: new Date().toISOString()
       });
-    }
-
-    // If we have URL information from before the error, include it in the error
-    if (error instanceof OCRProcessingError) {
-      throw new OCRProcessingError(
-        error.message,
-        error.imageUrl,
-        error.originalError,
-        { url: error.imageUrl, isAccessible: true, publicUrl: error.imageUrl }
-      );
     }
 
     // Re-throw the original error for the caller to handle
@@ -679,10 +493,13 @@ Deno.serve(async (req) => {
           error: error instanceof Error ? {
             name: error.name,
             message: error.message,
-            ...(error instanceof OCRProcessingError && error.urlInfo ? {
-              url: error.urlInfo.url,
-              isAccessible: error.urlInfo.isAccessible,
-              publicUrl: error.urlInfo.publicUrl
+            ...(error instanceof InvoiceProcessingError && error.invoiceId ? {
+              invoiceId: error.invoiceId,
+              error: error.originalError ? {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+              } : error.originalError
             } : {})
           } : error
         }))
