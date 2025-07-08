@@ -1,0 +1,13 @@
+export enum CompanyType {
+  INDEPENDENT_WORKER = "INDEPENDENT_WORKER",
+  PROFESSIONAL_SERVICES = "PROFESSIONAL_SERVICES",
+  SMALL_BUSINESS = "SMALL_BUSINESS",
+}
+
+export const COMPANY_TYPES = [
+  CompanyType.INDEPENDENT_WORKER,
+  CompanyType.PROFESSIONAL_SERVICES,
+  CompanyType.SMALL_BUSINESS,
+] as const;
+
+export type CompanyTypeValue = typeof COMPANY_TYPES[number]; 

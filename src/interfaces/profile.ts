@@ -1,5 +1,5 @@
-export interface Company {
-    id: string;
-    company_name: string;
-    account_balance: number;
+export interface Profile {
+  userId: string;
+  full_name?: string;
+  avatar_url?: string;
 }

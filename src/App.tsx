@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import UploadDocument from "@/pages/UploadInvoice";
 import InvoiceSuggestion from "@/pages/AISuggestion";
 import Profile from "@/pages/Profile";
+import CompanySetup from "@/pages/CompanySetup";
 
 export default function App() {
   const routes = useRoutes([
@@ -26,6 +27,7 @@ export default function App() {
     { path: "/login", element: <Login /> },
     { path: "/forgot-password", element: <ForgotPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
+    { path: "/company-setup", element: <CompanySetup /> },
     { path: "*", element: <NotFound /> },
   ]);
   return <>{routes}</>;

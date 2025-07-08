@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { signIn, signUp } from "@/lib/supabase/auth";
+import { createProfile } from "@/lib/supabase/profile";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -65,15 +66,27 @@ export default function SignUp() {
     }
 
     // If not registered, proceed with sign up
-    const { error } = await signUp(email, password);
-    setLoading(false);
+    const { user, error } = await signUp(email, password);
 
     if (error) {
       toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: "Email has been sent to verify your account" });
-      navigate("/profile");
+      setLoading(false);
+      return;
     }
+
+    // Create the profile using the new user's ID
+    if (user?.id) {
+      const { error: profileError } = await createProfile({ userId: user.id });
+      if (profileError) {
+        toast({ title: "Profile Creation Failed", description: profileError.message, variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+    }
+
+    setLoading(false);
+    toast({ title: "Success", description: "Email has been sent to verify your account" });
+    navigate("/login");
   };
 
   return (

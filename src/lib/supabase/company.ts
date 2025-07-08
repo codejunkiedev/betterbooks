@@ -21,19 +21,19 @@ export async function getCompanyByUserId(userId: string) {
 // Create a new company
 export async function createCompany({
   user_id,
-  company_name,
-  account_balance,
+  name,
+  type,
 }: {
   user_id: string;
-  company_name: string;
-  account_balance: number;
+  name: string;
+  type: string;
 }) {
   const { data, error } = await supabase
     .from("companies")
     .insert({
       user_id,
-      company_name,
-      account_balance,
+      name,
+      type,
     })
     .select()
     .single();
@@ -42,6 +42,7 @@ export async function createCompany({
     console.error("Error creating company:", error);
     throw error;
   }
+
   return data;
 }
 
@@ -63,4 +64,18 @@ export async function updateCompany(
     throw error;
   }
   return data;
+}
+
+export async function deleteCompanyById(companyId: string) {
+  const { error } = await supabase
+    .from("companies")
+    .delete()
+    .eq("id", companyId);
+
+  if (error) {
+    console.error("Error deleting company:", error);
+    throw error;
+  }
+
+  return { success: true };
 } 

@@ -2,15 +2,11 @@
 CREATE TABLE companies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id),
-    company_name VARCHAR(255) NOT NULL,
-    account_balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    opening_balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    closing_balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    number_of_invoices INTEGER NOT NULL DEFAULT 0,
-    total_credit DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    total_debit DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    assigned_accountant_id UUID REFERENCES public.accountants(id) ON DELETE SET NULL,
+    name TEXT NOT NULL,
+    type company_type NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Create index on user_id

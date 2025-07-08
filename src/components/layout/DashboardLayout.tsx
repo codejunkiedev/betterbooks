@@ -52,7 +52,7 @@ const DashboardLayout = () => {
       dispatch(setUser({ user, session, company }));
       setIsLoading(false);
       if (!company) {
-        navigate("/profile");
+        navigate("/company-setup");
         return;
       }
     } catch (error) {
