@@ -34,7 +34,7 @@ export async function copyCOATemplateToCompany(companyId: string): Promise<{ dat
       account_id: template.account_id,
       account_name: template.account_name,
       account_type: template.account_type,
-      parent_id: null, // Set to null to avoid foreign key constraint issues
+      parent_id: template.parent_id,
       company_id: companyId,
       credit_balance: 0,
       debit_balance: 0
