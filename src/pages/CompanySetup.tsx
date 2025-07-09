@@ -11,6 +11,8 @@ import {
     NavigationButtons,
 } from "@/components/company-setup";
 import { copyCOATemplateToCompany } from "@/lib/supabase/coa";
+import { getCompanyByUserId } from "@/lib/supabase/company";
+import { useEffect } from "react";
 
 export default function CompanySetup() {
     const navigate = useNavigate();
@@ -31,6 +33,30 @@ export default function CompanySetup() {
         canProceed,
         submitForm,
     } = useCompanySetup();
+
+    // Check if company already exists
+    useEffect(() => {
+        const checkCompany = async () => {
+            if (!user) return;
+
+            try {
+                const company = await getCompanyByUserId(user.id);
+                if (company) {
+                    navigate("/", { replace: true });
+                }
+            } catch (error) {
+                console.error("Error checking company:", error);
+            }
+        };
+
+        checkCompany();
+    }, [user, navigate]);
+
+    // If user is not authenticated, redirect to login
+    if (!user) {
+        navigate("/login", { replace: true });
+        return null;
+    }
 
     const handleSubmit = async (data: CompanySetupData) => {
         if (!user) {
