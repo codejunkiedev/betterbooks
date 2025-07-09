@@ -50,8 +50,8 @@ export async function createCompany({
 export async function updateCompany(
   companyId: string,
   updates: Partial<{
-    company_name: string;
-    account_balance: number;
+    name: string;
+    type: string;
   }>
 ) {
   const { data, error } = await supabase

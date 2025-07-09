@@ -1,11 +1,19 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { createCompany, updateCompany } from "@/lib/supabase/company";
-import { useSelector, useDispatch } from "react-redux";
+import { createCompany, updateCompany, getCompanyByUserId } from "@/lib/supabase/company";
+import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { setUser } from "@/store/userSlice";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface Company {
+    id: string;
+    name: string;
+    type: string;
+    user_id: string;
+    is_active: boolean;
+    created_at: string;
+}
 
 const ProfileSkeleton = () => (
     <div className="space-y-4 animate-pulse">
@@ -16,35 +24,43 @@ const ProfileSkeleton = () => (
 );
 
 export default function Profile() {
-    const dispatch = useDispatch();
     const userState = useSelector((state: RootState) => state.user);
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [company, setCompany] = useState<Company | null>(null);
     const [formData, setFormData] = useState({
-        id: userState.company?.id ?? "",
-        company_name: userState.company?.company_name ?? "",
-        account_balance: userState.company?.account_balance?.toString() ?? ""
+        company_name: "",
     });
+
+    useEffect(() => {
+        const fetchCompany = async () => {
+            if (userState.user?.id) {
+                try {
+                    const companyData = await getCompanyByUserId(userState.user.id);
+                    if (companyData) {
+                        setCompany(companyData);
+                        setFormData({
+                            company_name: companyData.name || "",
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error fetching company:", error);
+                }
+            }
+        };
+
+        fetchCompany();
+    }, [userState.user?.id]);
 
     const handleCompanySubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
         try {
-            if (!formData.company_name || !formData.account_balance) {
+            if (!formData.company_name) {
                 toast({
                     title: "Error",
-                    description: "All company fields are required.",
-                    variant: "destructive",
-                });
-                return;
-            }
-
-            const balance = parseFloat(formData.account_balance);
-            if (isNaN(balance)) {
-                toast({
-                    title: "Error",
-                    description: "Current balance must be a valid number.",
+                    description: "Company name is required.",
                     variant: "destructive",
                 });
                 return;
@@ -59,40 +75,30 @@ export default function Profile() {
                 return;
             }
 
-            if (userState.company?.id) {
+            if (company?.id) {
                 // Update existing company
-                await updateCompany(userState.company.id, {
-                    company_name: formData.company_name,
-                    account_balance: balance,
+                await updateCompany(company.id, {
+                    name: formData.company_name,
                 });
+
+                // Refresh company data
+                const updatedCompany = await getCompanyByUserId(userState.user.id);
+                setCompany(updatedCompany);
             } else {
                 // Create new company
                 const newCompany = await createCompany({
                     user_id: userState.user.id,
-                    company_name: formData.company_name,
-                    account_balance: balance,
+                    name: formData.company_name,
+                    type: "business", // Default type
                 });
 
-                dispatch(setUser({
-                    ...userState,
-                    company: newCompany
-                }));
-
+                setCompany(newCompany);
                 toast({
                     title: "Success",
                     description: "Company profile created successfully.",
                 });
                 return;
             }
-
-            dispatch(setUser({
-                ...userState,
-                company: {
-                    id: userState.company.id,
-                    company_name: formData.company_name,
-                    account_balance: balance
-                }
-            }));
 
             toast({
                 title: "Success",
@@ -110,7 +116,7 @@ export default function Profile() {
         }
     };
 
-    if (!userState.company && !userState.user) {
+    if (!userState.user) {
         return <ProfileSkeleton />;
     }
 
@@ -136,23 +142,8 @@ export default function Profile() {
                                 disabled={isLoading}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label htmlFor="currentBalance" className="text-sm font-medium">
-                                Current Balance
-                            </label>
-                            <Input
-                                id="currentBalance"
-                                type="number"
-                                step="0.01"
-                                placeholder="Enter current balance"
-                                value={formData.account_balance}
-                                onChange={e => setFormData(prev => ({ ...prev, account_balance: e.target.value }))}
-                                required
-                                disabled={isLoading}
-                            />
-                        </div>
                         <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? "Saving..." : (userState.company?.id ? "Save Changes" : "Create Company Profile")}
+                            {isLoading ? "Saving..." : (company?.id ? "Save Changes" : "Create Company Profile")}
                         </Button>
                     </form>
                 </div>

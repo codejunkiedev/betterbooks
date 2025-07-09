@@ -28,7 +28,7 @@ const userSlice = createSlice({
         state.isAuthenticated = false;
       } else {
         state.user = action.payload.user;
-        state.session = action.payload.session; 
+        state.session = action.payload.session;
         state.isAuthenticated = !!action.payload.session;
       }
       state.error = null;

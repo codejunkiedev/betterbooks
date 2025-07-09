@@ -1,6 +1,22 @@
-import { useState, useEffect } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/store";
+import { setUser } from "@/store/userSlice";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase/client";
+import { getCompanyByUserId } from "@/lib/supabase/company";
 import { Button } from "@/components/ui/button";
+
+interface Company {
+  id: string;
+  name: string;
+  type: string;
+  user_id: string;
+  is_active: boolean;
+  created_at: string;
+}
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,27 +25,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sheet, SheetContent, SheetTrigger, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetOverlay,
+  SheetPortal,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Menu, Home, Upload, Sparkles, User, ChevronLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { getCurrentUser, getSession, signOut } from "@/lib/supabase/auth";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
-import { getCompanyByUserId } from "@/lib/supabase/company";
-import { setUser } from "@/store/userSlice";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/store";
 
 const DashboardLayout = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const location = useLocation();
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const userState = useSelector((state: RootState) => state.user);
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [company, setCompany] = useState<Company | null>(null);
 
   useEffect(() => {
     fetchUserDetails();
@@ -37,21 +53,22 @@ const DashboardLayout = () => {
 
   const fetchUserDetails = async () => {
     try {
-      const [{ session }, user] = await Promise.all([
-        getSession(),
-        getCurrentUser()
-      ]);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
 
+      const user = session?.user;
       if (!session || !user) {
         navigate("/login", { replace: true });
         return;
       }
 
-      const company = await getCompanyByUserId(user.id);
+      const companyData = await getCompanyByUserId(user.id);
+      setCompany(companyData);
 
-      dispatch(setUser({ user, session, company }));
+      dispatch(setUser({ user, session }));
       setIsLoading(false);
-      if (!company) {
+
+      if (!companyData) {
         navigate("/company-setup");
         return;
       }
@@ -71,7 +88,7 @@ const DashboardLayout = () => {
 
   // Logout handler
   const handleLogout = async () => {
-    const { error } = await signOut();
+    const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
         title: "Error",
@@ -110,13 +127,13 @@ const DashboardLayout = () => {
             <SheetPortal>
               <SheetOverlay className="z-[100]" />
               <SheetContent side="left" className="z-[101] w-[240px] p-0 bg-gray-900 border-r border-gray-800">
-                <SidebarContent isActive={isActive} onNavigate={() => setIsOpen(false)} isDark />
+                <SidebarContent isActive={isActive} onNavigate={() => setIsOpen(false)} isDark company={company} />
               </SheetContent>
             </SheetPortal>
           </Sheet>
           <img src={logo} alt="Logo" className="h-28 w-28" />
         </div>
-        {!userState.company && (
+        {!company && (
           <div className="fixed top-5 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-md hidden md:flex items-center z-50 shadow-sm">
             <p className="text-sm text-red-400 flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +186,7 @@ const DashboardLayout = () => {
       <div className="flex h-[calc(100vh-5rem)]">
         {/* Sidebar */}
         <aside className={`hidden md:flex flex-col border-r border-gray-800 bg-gray-900 justify-between transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
-          <SidebarContent isActive={isActive} isCollapsed={isCollapsed} isDark />
+          <SidebarContent isActive={isActive} isCollapsed={isCollapsed} isDark company={company} />
           <div className="flex items-center justify-end px-3 py-2.5 border-t border-gray-800">
             <Button
               variant="ghost"
@@ -196,13 +213,13 @@ type SidebarContentProps = {
   onNavigate?: () => void;
   isCollapsed?: boolean;
   isDark?: boolean;
+  company?: Company | null;
 };
-function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false }: SidebarContentProps) {
-  const userState = useSelector((state: RootState) => state.user);
+function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false, company }: SidebarContentProps) {
   const { toast } = useToast();
 
   const handleNavigation = (path: string) => {
-    if (!userState.company && path !== '/profile') {
+    if (!company && path !== '/profile') {
       toast({
         title: "Action Required",
         description: "Please complete your company profile first.",
@@ -224,6 +241,7 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
           onNavigate={() => handleNavigation('/')}
           isCollapsed={isCollapsed}
           isDark={isDark}
+          company={company}
         />
         <SidebarLink
           to="/upload"
@@ -233,6 +251,7 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
           onNavigate={() => handleNavigation('/upload')}
           isCollapsed={isCollapsed}
           isDark={isDark}
+          company={company}
         />
         <SidebarLink
           to="/ai-suggestion"
@@ -242,6 +261,7 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
           onNavigate={() => handleNavigation('/ai-suggestion')}
           isCollapsed={isCollapsed}
           isDark={isDark}
+          company={company}
         />
       </div>
     </nav>
@@ -256,12 +276,11 @@ type SidebarLinkProps = {
   onNavigate: () => void;
   isCollapsed?: boolean;
   isDark?: boolean;
+  company?: Company | null;
 };
-function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false, isDark = false }: SidebarLinkProps) {
-  const userState = useSelector((state: RootState) => state.user);
-
+function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false, isDark = false, company }: SidebarLinkProps) {
   const handleClick = (e: React.MouseEvent) => {
-    if (!userState.company && to !== '/profile') {
+    if (!company && to !== '/profile') {
       e.preventDefault();
       return;
     }
@@ -275,7 +294,7 @@ function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false,
       className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${active
         ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black')
         : (isDark ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-black')
-        } ${isCollapsed ? 'justify-center px-0' : ''} ${!userState.company && to !== '/profile' ? 'opacity-50 cursor-not-allowed' : ''
+        } ${isCollapsed ? 'justify-center px-0' : ''} ${!company && to !== '/profile' ? 'opacity-50 cursor-not-allowed' : ''
         }`}
       style={isCollapsed ? { width: '100%', justifyContent: 'center' } : {}}
     >

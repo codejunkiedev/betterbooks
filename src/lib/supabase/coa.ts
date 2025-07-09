@@ -24,13 +24,17 @@ export async function getCOATemplate(): Promise<{ data: COATemplate[] | null; er
 
 export async function copyCOATemplateToCompany(companyId: string): Promise<{ data: CompanyCOA[] | null; error: PostgrestError | null }> {
   try {
-    const { data: templateData } = await getCOATemplate();
-    const coaEntries = templateData?.map(template => ({
+    const { data: templateData, error: templateError } = await getCOATemplate();
+
+    if (templateError || !templateData) {
+      throw new Error("Failed to fetch COA template");
+    }
+    const coaEntries = templateData.map(template => ({
       template_id: template.id,
       account_id: template.account_id,
       account_name: template.account_name,
       account_type: template.account_type,
-      parent_id: template.parent_id,
+      parent_id: null, // Set to null to avoid foreign key constraint issues
       company_id: companyId,
       credit_balance: 0,
       debit_balance: 0
@@ -46,7 +50,7 @@ export async function copyCOATemplateToCompany(companyId: string): Promise<{ dat
       throw new Error("Failed to copy COA template");
     }
 
-    return { data: data, error: null };
+    return { data, error: null };
   } catch (error) {
     console.error("Error copying COA template to company:", error);
     return { data: null, error: error as PostgrestError };
@@ -54,13 +58,13 @@ export async function copyCOATemplateToCompany(companyId: string): Promise<{ dat
 }
 
 // Get company COA entries
-export async function getCompanyCOA(companyId: number): Promise<{ data: CompanyCOA[] | null; error: PostgrestError | null }> {
+export async function getCompanyCOA(companyId: string): Promise<{ data: CompanyCOA[] | null; error: PostgrestError | null }> {
   try {
     const { data, error } = await supabase
       .from("company_coa")
       .select("*")
       .eq("company_id", companyId)
-      .order("id"); // Order by template_id to maintain template order
+      .order("template_id"); // Order by template_id to maintain template order
 
     if (error) {
       console.error("Error fetching company COA:", error);
