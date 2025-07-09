@@ -42411,8 +42411,7 @@ async function copyCOATemplateToCompany(companyId) {
       account_id: template.account_id,
       account_name: template.account_name,
       account_type: template.account_type,
-      parent_id: null,
-      // Set to null to avoid foreign key constraint issues
+      parent_id: template.parent_id,
       company_id: companyId,
       credit_balance: 0,
       debit_balance: 0
@@ -43291,4 +43290,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) }) })
 );
-//# sourceMappingURL=index-DzU7pXAa.js.map
+//# sourceMappingURL=index-DVfELJz0.js.map
