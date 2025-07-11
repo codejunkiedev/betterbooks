@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { COMPANY_TYPES } from "../../constants/companyTypes";
+import { COMPANY_TYPES } from "@/constants/company";
 
 interface CompanyInfoStepProps {
     companyName: string;

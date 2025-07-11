@@ -32,7 +32,7 @@ import {
   SheetPortal,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Menu, Home, Upload, Sparkles, User, ChevronLeft } from "lucide-react";
+import { Menu, Home, Upload, Sparkles, User, ChevronLeft, FileText } from "lucide-react";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
@@ -246,9 +246,19 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
         <SidebarLink
           to="/upload"
           icon={<Upload className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-          label="Upload Invoice"
+          label="Upload Documents"
           active={isActive("/upload")}
           onNavigate={() => handleNavigation('/upload')}
+          isCollapsed={isCollapsed}
+          isDark={isDark}
+          company={company}
+        />
+        <SidebarLink
+          to="/documents"
+          icon={<FileText className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+          label="Documents"
+          active={isActive("/documents")}
+          onNavigate={() => handleNavigation('/documents')}
           isCollapsed={isCollapsed}
           isDark={isDark}
           company={company}

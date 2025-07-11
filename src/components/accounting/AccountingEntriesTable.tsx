@@ -13,7 +13,7 @@ import {
 import { AccountingEntry } from "@/interfaces/accounting";
 import { fetchAccountingEntries } from "@/lib/supabase/accounting";
 import { Skeleton } from "@/components/ui/loading";
-import { InvoicePreview } from "@/components/shared/InvoicePreview";
+import { InvoicePreview } from "@/components/shared/documentPreview";
 import { getFileUrl } from "@/lib/supabase/storage";
 import {
   Tooltip,

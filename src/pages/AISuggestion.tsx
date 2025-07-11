@@ -34,7 +34,7 @@ import { getInvoiceLineItems } from '../lib/supabase/line-item';
 import { LineItem } from '../interfaces/line-item';
 import { getFileUrl } from "@/lib/supabase/storage";
 import { LoadingSpinner, Skeleton } from "@/components/ui/loading";
-import { InvoicePreview } from "@/components/shared/InvoicePreview";
+import { InvoicePreview } from "@/components/shared/documentPreview";
 
 const ITEMS_PER_PAGE = 5;
 

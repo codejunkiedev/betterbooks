@@ -1,5 +1,5 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/browser-CkjTflrh.js","assets/vendor-75o5KjsB.js"])))=>i.map(i=>d[i]);
-import { r as reactExports, j as jsxRuntimeExports, S as Slot$1, a as reactDomExports, P as Primitive, u as useLayoutEffect2, c as createContextScope, b as useComposedRefs, d as useCallbackRef, e as Presence, D as DismissableLayer, f as createSlottable, g as composeEventHandlers$1, h as useId, i as useControllableState, O as Overlay, k as Portal$1, C as Content$1, l as Close$1, T as Title$1, m as Description$1, R as Root$5, n as React, o as createSlot, p as composeRefs, q as Portal$2, s as useFocusGuards, t as ReactRemoveScroll, F as FocusScope, v as hideOthers, w as dispatchDiscreteCustomEvent, x as Trigger$2, y as Root$6, B as Branch, z as Root$7 } from "./ui-DPNJlV1q.js";
+import { r as reactExports, j as jsxRuntimeExports, S as Slot$2, a as reactDomExports, P as Primitive, u as useLayoutEffect2, c as createContextScope, b as useComposedRefs, d as useCallbackRef, e as Presence, D as DismissableLayer, f as createSlottable, g as composeEventHandlers$1, h as useId, i as useControllableState, O as Overlay, k as Portal$2, C as Content$2, l as Close$1, T as Title$1, m as Description$1, R as Root$5, n as React, o as createSlot, p as composeRefs, q as Portal$3, s as useFocusGuards, t as ReactRemoveScroll, F as FocusScope, v as hideOthers, w as dispatchDiscreteCustomEvent, x as Trigger$4, y as Root$6, B as Branch, z as Root$7 } from "./ui-DPNJlV1q.js";
 import { r as requireReact, a as requireReactDom, g as getDefaultExportFromCjs, b as getAugmentedNamespace } from "./vendor-75o5KjsB.js";
 (function polyfill() {
   const relList = document.createElement("link").relList;
@@ -23351,7 +23351,7 @@ const buttonVariants = cva(
 );
 const Button = reactExports.forwardRef(
   ({ className, variant, size: size2, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot$1 : "button";
+    const Comp = asChild ? Slot$2 : "button";
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       Comp,
       {
@@ -30739,17 +30739,6 @@ const signUp = async (email, password) => {
     };
   }
 };
-const getCurrentUser = async () => {
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    if (!user) throw new Error("User not authenticated");
-    return user;
-  } catch (error) {
-    console.error("Error getting current user:", error);
-    throw error;
-  }
-};
 const resetPassword = async (email) => {
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email);
@@ -30778,17 +30767,17 @@ async function createProfile(profile) {
 function SignUp() {
   const [email, setEmail] = reactExports.useState("");
   const [password, setPassword] = reactExports.useState("");
-  const [confirm, setConfirm] = reactExports.useState("");
+  const [confirm2, setConfirm] = reactExports.useState("");
   const [loading, setLoading] = reactExports.useState(false);
   const navigate = useNavigate();
   const { toast: toast2 } = useToast();
   const handleSignUp = async (e) => {
     e.preventDefault();
-    if (!email || !password || !confirm) {
+    if (!email || !password || !confirm2) {
       toast2({ title: "Error", description: "All fields are required.", variant: "destructive" });
       return;
     }
-    if (password !== confirm) {
+    if (password !== confirm2) {
       toast2({ title: "Error", description: "Passwords do not match.", variant: "destructive" });
       return;
     }
@@ -30877,7 +30866,7 @@ function SignUp() {
           {
             type: "password",
             placeholder: "Confirm Password",
-            value: confirm,
+            value: confirm2,
             onChange: (e) => setConfirm(e.target.value),
             required: true
           }
@@ -31148,7 +31137,7 @@ var defaultAttributes = {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Icon = reactExports.forwardRef(
+const Icon$1 = reactExports.forwardRef(
   ({
     color = "currentColor",
     size: size2 = 24,
@@ -31185,7 +31174,7 @@ const Icon = reactExports.forwardRef(
  */
 const createLucideIcon = (iconName, iconNode) => {
   const Component = reactExports.forwardRef(
-    ({ className, ...props }, ref) => reactExports.createElement(Icon, {
+    ({ className, ...props }, ref) => reactExports.createElement(Icon$1, {
       ref,
       iconNode,
       className: mergeClasses(
@@ -31205,35 +31194,111 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$j = [
-  ["path", { d: "M7 7h10v10", key: "1tivn9" }],
-  ["path", { d: "M7 17 17 7", key: "1vkiza" }]
+const __iconNode$q = [
+  ["path", { d: "M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z", key: "1b4qmf" }],
+  ["path", { d: "M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2", key: "i71pzd" }],
+  ["path", { d: "M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2", key: "10jefs" }],
+  ["path", { d: "M10 6h4", key: "1itunk" }],
+  ["path", { d: "M10 10h4", key: "tcdvrf" }],
+  ["path", { d: "M10 14h4", key: "kelpxr" }],
+  ["path", { d: "M10 18h4", key: "1ulq68" }]
 ];
-const ArrowUpRight = createLucideIcon("arrow-up-right", __iconNode$j);
+const Building2 = createLucideIcon("building-2", __iconNode$q);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$i = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
-const Check = createLucideIcon("check", __iconNode$i);
+const __iconNode$p = [
+  ["path", { d: "M8 2v4", key: "1cmpym" }],
+  ["path", { d: "M16 2v4", key: "4m81vk" }],
+  ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
+  ["path", { d: "M3 10h18", key: "8toen8" }]
+];
+const Calendar = createLucideIcon("calendar", __iconNode$p);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$h = [["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]];
-const ChevronLeft = createLucideIcon("chevron-left", __iconNode$h);
+const __iconNode$o = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
+const Check = createLucideIcon("check", __iconNode$o);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$g = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
-const ChevronRight = createLucideIcon("chevron-right", __iconNode$g);
+const __iconNode$n = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
+const ChevronDown = createLucideIcon("chevron-down", __iconNode$n);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$m = [["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]];
+const ChevronLeft = createLucideIcon("chevron-left", __iconNode$m);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$l = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
+const ChevronRight = createLucideIcon("chevron-right", __iconNode$l);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$k = [["path", { d: "m18 15-6-6-6 6", key: "153udz" }]];
+const ChevronUp = createLucideIcon("chevron-up", __iconNode$k);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$j = [
+  ["path", { d: "M21.801 10A10 10 0 1 1 17 3.335", key: "yps3ct" }],
+  ["path", { d: "m9 11 3 3L22 4", key: "1pflzl" }]
+];
+const CircleCheckBig = createLucideIcon("circle-check-big", __iconNode$j);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$i = [["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }]];
+const Circle = createLucideIcon("circle", __iconNode$i);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$h = [
+  ["rect", { width: "20", height: "14", x: "2", y: "5", rx: "2", key: "ynyp8z" }],
+  ["line", { x1: "2", x2: "22", y1: "10", y2: "10", key: "1b3vmo" }]
+];
+const CreditCard = createLucideIcon("credit-card", __iconNode$h);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$g = [
+  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+  ["polyline", { points: "7 10 12 15 17 10", key: "2ggqvy" }],
+  ["line", { x1: "12", x2: "12", y1: "15", y2: "3", key: "1vk2je" }]
+];
+const Download = createLucideIcon("download", __iconNode$g);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
@@ -31241,37 +31306,6 @@ const ChevronRight = createLucideIcon("chevron-right", __iconNode$g);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$f = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
-  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
-];
-const CircleAlert = createLucideIcon("circle-alert", __iconNode$f);
-/**
- * @license lucide-react v0.508.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$e = [
-  ["path", { d: "M21.801 10A10 10 0 1 1 17 3.335", key: "yps3ct" }],
-  ["path", { d: "m9 11 3 3L22 4", key: "1pflzl" }]
-];
-const CircleCheckBig = createLucideIcon("circle-check-big", __iconNode$e);
-/**
- * @license lucide-react v0.508.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$d = [["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }]];
-const Circle = createLucideIcon("circle", __iconNode$d);
-/**
- * @license lucide-react v0.508.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$c = [
   [
     "path",
     {
@@ -31281,28 +31315,44 @@ const __iconNode$c = [
   ],
   ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
 ];
-const Eye = createLucideIcon("eye", __iconNode$c);
+const Eye = createLucideIcon("eye", __iconNode$f);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$b = [
+const __iconNode$e = [
   ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
   ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
   ["path", { d: "M10 9H8", key: "b1mrlr" }],
   ["path", { d: "M16 13H8", key: "t4e002" }],
   ["path", { d: "M16 17H8", key: "z1uh3a" }]
 ];
-const FileText = createLucideIcon("file-text", __iconNode$b);
+const FileText = createLucideIcon("file-text", __iconNode$e);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$a = [
+const __iconNode$d = [
+  [
+    "path",
+    {
+      d: "M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z",
+      key: "sc7q7i"
+    }
+  ]
+];
+const Funnel = createLucideIcon("funnel", __iconNode$d);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$c = [
   ["path", { d: "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8", key: "5wwlr5" }],
   [
     "path",
@@ -31312,34 +31362,34 @@ const __iconNode$a = [
     }
   ]
 ];
-const House = createLucideIcon("house", __iconNode$a);
+const House = createLucideIcon("house", __iconNode$c);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$9 = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
-const LoaderCircle = createLucideIcon("loader-circle", __iconNode$9);
+const __iconNode$b = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
+const LoaderCircle = createLucideIcon("loader-circle", __iconNode$b);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$8 = [
+const __iconNode$a = [
   ["path", { d: "M4 12h16", key: "1lakjw" }],
   ["path", { d: "M4 18h16", key: "19g7jn" }],
   ["path", { d: "M4 6h16", key: "1o0s65" }]
 ];
-const Menu$1 = createLucideIcon("menu", __iconNode$8);
+const Menu$1 = createLucideIcon("menu", __iconNode$a);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$7 = [
+const __iconNode$9 = [
   [
     "path",
     {
@@ -31348,7 +31398,36 @@ const __iconNode$7 = [
     }
   ]
 ];
-const Pen = createLucideIcon("pen", __iconNode$7);
+const Pen = createLucideIcon("pen", __iconNode$9);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$8 = [
+  [
+    "path",
+    { d: "M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z", key: "q3az6g" }
+  ],
+  ["path", { d: "M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8", key: "1h4pet" }],
+  ["path", { d: "M12 17.5v-11", key: "1jc1ny" }]
+];
+const Receipt = createLucideIcon("receipt", __iconNode$8);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$7 = [
+  ["path", { d: "m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z", key: "7g6ntu" }],
+  ["path", { d: "m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z", key: "ijws7r" }],
+  ["path", { d: "M7 21h10", key: "1b0cd5" }],
+  ["path", { d: "M12 3v18", key: "108xh3" }],
+  ["path", { d: "M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2", key: "3gwbw2" }]
+];
+const Scale = createLucideIcon("scale", __iconNode$7);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
@@ -31356,20 +31435,6 @@ const Pen = createLucideIcon("pen", __iconNode$7);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$6 = [
-  ["path", { d: "m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z", key: "7g6ntu" }],
-  ["path", { d: "m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z", key: "ijws7r" }],
-  ["path", { d: "M7 21h10", key: "1b0cd5" }],
-  ["path", { d: "M12 3v18", key: "108xh3" }],
-  ["path", { d: "M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2", key: "3gwbw2" }]
-];
-const Scale = createLucideIcon("scale", __iconNode$6);
-/**
- * @license lucide-react v0.508.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$5 = [
   [
     "path",
     {
@@ -31382,7 +31447,21 @@ const __iconNode$5 = [
   ["path", { d: "M4 17v2", key: "vumght" }],
   ["path", { d: "M5 18H3", key: "zchphs" }]
 ];
-const Sparkles = createLucideIcon("sparkles", __iconNode$5);
+const Sparkles = createLucideIcon("sparkles", __iconNode$6);
+/**
+ * @license lucide-react v0.508.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$5 = [
+  ["path", { d: "M3 6h18", key: "d0wm0j" }],
+  ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
+  ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
+  ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
+  ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
+];
+const Trash2 = createLucideIcon("trash-2", __iconNode$5);
 /**
  * @license lucide-react v0.508.0 - ISC
  *
@@ -33043,7 +33122,7 @@ const oppositeAlignmentMap = {
   start: "end",
   end: "start"
 };
-function clamp(start, value, end) {
+function clamp$1(start, value, end) {
   return max(start, min(value, end));
 }
 function evaluate(value, param) {
@@ -33393,7 +33472,7 @@ const arrow$3 = (options) => ({
     const min$1 = minPadding;
     const max2 = clientSize - arrowDimensions[length] - maxPadding;
     const center = clientSize / 2 - arrowDimensions[length] / 2 + centerToReference;
-    const offset2 = clamp(min$1, center, max2);
+    const offset2 = clamp$1(min$1, center, max2);
     const shouldAddOffset = !middlewareData.arrow && getAlignment(placement) != null && center !== offset2 && rects.reference[length] / 2 - (center < min$1 ? minPadding : maxPadding) - arrowDimensions[length] / 2 < 0;
     const alignmentOffset = shouldAddOffset ? center < min$1 ? center - min$1 : center - max2 : 0;
     return {
@@ -33689,14 +33768,14 @@ const shift$2 = function(options) {
         const maxSide = mainAxis === "y" ? "bottom" : "right";
         const min2 = mainAxisCoord + overflow[minSide];
         const max2 = mainAxisCoord - overflow[maxSide];
-        mainAxisCoord = clamp(min2, mainAxisCoord, max2);
+        mainAxisCoord = clamp$1(min2, mainAxisCoord, max2);
       }
       if (checkCrossAxis) {
         const minSide = crossAxis === "y" ? "top" : "left";
         const maxSide = crossAxis === "y" ? "bottom" : "right";
         const min2 = crossAxisCoord + overflow[minSide];
         const max2 = crossAxisCoord - overflow[maxSide];
-        crossAxisCoord = clamp(min2, crossAxisCoord, max2);
+        crossAxisCoord = clamp$1(min2, crossAxisCoord, max2);
       }
       const limitedCoords = limiter.fn({
         ...state,
@@ -34955,8 +35034,8 @@ var PopperAnchor = reactExports.forwardRef(
   }
 );
 PopperAnchor.displayName = ANCHOR_NAME$1;
-var CONTENT_NAME$3 = "PopperContent";
-var [PopperContentProvider, useContentContext] = createPopperContext(CONTENT_NAME$3);
+var CONTENT_NAME$5 = "PopperContent";
+var [PopperContentProvider, useContentContext] = createPopperContext(CONTENT_NAME$5);
 var PopperContent = reactExports.forwardRef(
   (props, forwardedRef) => {
     var _a, _b, _c, _d, _e, _f;
@@ -34976,7 +35055,7 @@ var PopperContent = reactExports.forwardRef(
       onPlaced,
       ...contentProps
     } = props;
-    const context = usePopperContext(CONTENT_NAME$3, __scopePopper);
+    const context = usePopperContext(CONTENT_NAME$5, __scopePopper);
     const [content, setContent] = reactExports.useState(null);
     const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
     const [arrow$12, setArrow] = reactExports.useState(null);
@@ -35099,8 +35178,8 @@ var PopperContent = reactExports.forwardRef(
     );
   }
 );
-PopperContent.displayName = CONTENT_NAME$3;
-var ARROW_NAME$3 = "PopperArrow";
+PopperContent.displayName = CONTENT_NAME$5;
+var ARROW_NAME$4 = "PopperArrow";
 var OPPOSITE_SIDE = {
   top: "bottom",
   right: "left",
@@ -35109,7 +35188,7 @@ var OPPOSITE_SIDE = {
 };
 var PopperArrow = reactExports.forwardRef(function PopperArrow2(props, forwardedRef) {
   const { __scopePopper, ...arrowProps } = props;
-  const contentContext = useContentContext(ARROW_NAME$3, __scopePopper);
+  const contentContext = useContentContext(ARROW_NAME$4, __scopePopper);
   const baseSide = OPPOSITE_SIDE[contentContext.placedSide];
   return (
     // we have to use an extra wrapper because `ResizeObserver` (used by `useSize`)
@@ -35154,7 +35233,7 @@ var PopperArrow = reactExports.forwardRef(function PopperArrow2(props, forwarded
     )
   );
 });
-PopperArrow.displayName = ARROW_NAME$3;
+PopperArrow.displayName = ARROW_NAME$4;
 function isNotNull(value) {
   return value !== null;
 }
@@ -35194,9 +35273,9 @@ function getSideAndAlignFromPlacement(placement) {
   const [side, align = "center"] = placement.split("-");
   return [side, align];
 }
-var Root2$3 = Popper;
+var Root2$5 = Popper;
 var Anchor = PopperAnchor;
-var Content = PopperContent;
+var Content$1 = PopperContent;
 var Arrow = PopperArrow;
 var VISUALLY_HIDDEN_STYLES = Object.freeze({
   // See: https://github.com/twbs/bootstrap/blob/main/scss/mixins/_visually-hidden.scss
@@ -35229,7 +35308,7 @@ var Root$3 = VisuallyHidden;
 var [createTooltipContext, createTooltipScope] = createContextScope("Tooltip", [
   createPopperScope
 ]);
-var usePopperScope$1 = createPopperScope();
+var usePopperScope$2 = createPopperScope();
 var PROVIDER_NAME$1 = "TooltipProvider";
 var DEFAULT_DELAY_DURATION = 700;
 var TOOLTIP_OPEN = "tooltip.open";
@@ -35289,7 +35368,7 @@ var Tooltip$1 = (props) => {
     delayDuration: delayDurationProp
   } = props;
   const providerContext = useTooltipProviderContext(TOOLTIP_NAME, props.__scopeTooltip);
-  const popperScope = usePopperScope$1(__scopeTooltip);
+  const popperScope = usePopperScope$2(__scopeTooltip);
   const [trigger, setTrigger] = reactExports.useState(null);
   const contentId = useId();
   const openTimerRef = reactExports.useRef(0);
@@ -35340,7 +35419,7 @@ var Tooltip$1 = (props) => {
       }
     };
   }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$3, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$5, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
     TooltipContextProvider,
     {
       scope: __scopeTooltip,
@@ -35369,13 +35448,13 @@ var Tooltip$1 = (props) => {
   ) });
 };
 Tooltip$1.displayName = TOOLTIP_NAME;
-var TRIGGER_NAME$1 = "TooltipTrigger";
+var TRIGGER_NAME$3 = "TooltipTrigger";
 var TooltipTrigger$1 = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeTooltip, ...triggerProps } = props;
-    const context = useTooltipContext(TRIGGER_NAME$1, __scopeTooltip);
-    const providerContext = useTooltipProviderContext(TRIGGER_NAME$1, __scopeTooltip);
-    const popperScope = usePopperScope$1(__scopeTooltip);
+    const context = useTooltipContext(TRIGGER_NAME$3, __scopeTooltip);
+    const providerContext = useTooltipProviderContext(TRIGGER_NAME$3, __scopeTooltip);
+    const popperScope = usePopperScope$2(__scopeTooltip);
     const ref = reactExports.useRef(null);
     const composedRefs = useComposedRefs(forwardedRef, ref, context.onTriggerChange);
     const isPointerDownRef = reactExports.useRef(false);
@@ -35418,23 +35497,23 @@ var TooltipTrigger$1 = reactExports.forwardRef(
     ) });
   }
 );
-TooltipTrigger$1.displayName = TRIGGER_NAME$1;
-var PORTAL_NAME$2 = "TooltipPortal";
-var [PortalProvider$1, usePortalContext$1] = createTooltipContext(PORTAL_NAME$2, {
+TooltipTrigger$1.displayName = TRIGGER_NAME$3;
+var PORTAL_NAME$3 = "TooltipPortal";
+var [PortalProvider$1, usePortalContext$1] = createTooltipContext(PORTAL_NAME$3, {
   forceMount: void 0
 });
-var CONTENT_NAME$2 = "TooltipContent";
+var CONTENT_NAME$4 = "TooltipContent";
 var TooltipContent$1 = reactExports.forwardRef(
   (props, forwardedRef) => {
-    const portalContext = usePortalContext$1(CONTENT_NAME$2, props.__scopeTooltip);
+    const portalContext = usePortalContext$1(CONTENT_NAME$4, props.__scopeTooltip);
     const { forceMount = portalContext.forceMount, side = "top", ...contentProps } = props;
-    const context = useTooltipContext(CONTENT_NAME$2, props.__scopeTooltip);
+    const context = useTooltipContext(CONTENT_NAME$4, props.__scopeTooltip);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: context.disableHoverableContent ? /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContentImpl, { side, ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ jsxRuntimeExports.jsx(TooltipContentHoverable, { side, ...contentProps, ref: forwardedRef }) });
   }
 );
 var TooltipContentHoverable = reactExports.forwardRef((props, forwardedRef) => {
-  const context = useTooltipContext(CONTENT_NAME$2, props.__scopeTooltip);
-  const providerContext = useTooltipProviderContext(CONTENT_NAME$2, props.__scopeTooltip);
+  const context = useTooltipContext(CONTENT_NAME$4, props.__scopeTooltip);
+  const providerContext = useTooltipProviderContext(CONTENT_NAME$4, props.__scopeTooltip);
   const ref = reactExports.useRef(null);
   const composedRefs = useComposedRefs(forwardedRef, ref);
   const [pointerGraceArea, setPointerGraceArea] = reactExports.useState(null);
@@ -35505,8 +35584,8 @@ var TooltipContentImpl = reactExports.forwardRef(
       onPointerDownOutside,
       ...contentProps
     } = props;
-    const context = useTooltipContext(CONTENT_NAME$2, __scopeTooltip);
-    const popperScope = usePopperScope$1(__scopeTooltip);
+    const context = useTooltipContext(CONTENT_NAME$4, __scopeTooltip);
+    const popperScope = usePopperScope$2(__scopeTooltip);
     const { onClose } = context;
     reactExports.useEffect(() => {
       document.addEventListener(TOOLTIP_OPEN, onClose);
@@ -35532,7 +35611,7 @@ var TooltipContentImpl = reactExports.forwardRef(
         onFocusOutside: (event) => event.preventDefault(),
         onDismiss: onClose,
         children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          Content,
+          Content$1,
           {
             "data-state": context.stateAttribute,
             ...popperScope,
@@ -35559,20 +35638,20 @@ var TooltipContentImpl = reactExports.forwardRef(
     );
   }
 );
-TooltipContent$1.displayName = CONTENT_NAME$2;
-var ARROW_NAME$2 = "TooltipArrow";
+TooltipContent$1.displayName = CONTENT_NAME$4;
+var ARROW_NAME$3 = "TooltipArrow";
 var TooltipArrow = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeTooltip, ...arrowProps } = props;
-    const popperScope = usePopperScope$1(__scopeTooltip);
+    const popperScope = usePopperScope$2(__scopeTooltip);
     const visuallyHiddenContentContext = useVisuallyHiddenContentContext(
-      ARROW_NAME$2,
+      ARROW_NAME$3,
       __scopeTooltip
     );
     return visuallyHiddenContentContext.isInside ? null : /* @__PURE__ */ jsxRuntimeExports.jsx(Arrow, { ...popperScope, ...arrowProps, ref: forwardedRef });
   }
 );
-TooltipArrow.displayName = ARROW_NAME$2;
+TooltipArrow.displayName = ARROW_NAME$3;
 function getExitSideFromRect(point, rect) {
   const top = Math.abs(rect.top - point.y);
   const bottom = Math.abs(rect.bottom - point.y);
@@ -35690,13 +35769,13 @@ function getHullPresorted(points) {
 }
 var Provider$2 = TooltipProvider$1;
 var Root3$1 = Tooltip$1;
-var Trigger$1 = TooltipTrigger$1;
-var Content2$2 = TooltipContent$1;
+var Trigger$3 = TooltipTrigger$1;
+var Content2$3 = TooltipContent$1;
 const TooltipProvider = Provider$2;
 const Tooltip = Root3$1;
-const TooltipTrigger = Trigger$1;
+const TooltipTrigger = Trigger$3;
 const TooltipContent = reactExports.forwardRef(({ className, sideOffset = 4, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-  Content2$2,
+  Content2$3,
   {
     ref,
     sideOffset,
@@ -35707,7 +35786,7 @@ const TooltipContent = reactExports.forwardRef(({ className, sideOffset = 4, ...
     ...props
   }
 ));
-TooltipContent.displayName = Content2$2.displayName;
+TooltipContent.displayName = Content2$3.displayName;
 function AccountingSummary() {
   const [summary, setSummary] = reactExports.useState(null);
   const [isLoading, setIsLoading] = reactExports.useState(true);
@@ -35849,7 +35928,7 @@ const TableCaption = reactExports.forwardRef(({ className, ...props }, ref) => /
 ));
 TableCaption.displayName = "TableCaption";
 const Dialog = Root$5;
-const DialogPortal = Portal$1;
+const DialogPortal = Portal$2;
 const DialogOverlay = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Overlay,
   {
@@ -35865,7 +35944,7 @@ DialogOverlay.displayName = Overlay.displayName;
 const DialogContent = reactExports.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogPortal, { children: [
   /* @__PURE__ */ jsxRuntimeExports.jsx(DialogOverlay, {}),
   /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    Content$1,
+    Content$2,
     {
       ref,
       className: cn(
@@ -35883,7 +35962,7 @@ const DialogContent = reactExports.forwardRef(({ className, children, ...props }
     }
   )
 ] }));
-DialogContent.displayName = Content$1.displayName;
+DialogContent.displayName = Content$2.displayName;
 const DialogHeader = ({
   className,
   ...props
@@ -35933,7 +36012,7 @@ const DialogDescription = reactExports.forwardRef(({ className, ...props }, ref)
   }
 ));
 DialogDescription.displayName = Description$1.displayName;
-const InvoicePreview = ({ isOpen, onClose, previewUrl }) => {
+const DocumentPreview = ({ isOpen, onClose, previewUrl, documentName }) => {
   const [isImageLoading, setIsImageLoading] = reactExports.useState(true);
   reactExports.useEffect(() => {
     if (isOpen && previewUrl) {
@@ -35941,14 +36020,14 @@ const InvoicePreview = ({ isOpen, onClose, previewUrl }) => {
     }
   }, [isOpen, previewUrl]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open: isOpen, onOpenChange: onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "max-w-4xl", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: "Invoice Preview" }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: documentName ? `Preview: ${documentName}` : "Document Preview" }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative w-full h-[80vh] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden", children: previewUrl ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
       isImageLoading && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center bg-gray-100", children: /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingSpinner, { text: "Loading preview..." }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "img",
         {
           src: previewUrl,
-          alt: "Invoice preview",
+          alt: "Document preview",
           className: "max-w-full max-h-full object-contain",
           onLoad: () => setIsImageLoading(false),
           onError: () => {
@@ -35960,13 +36039,14 @@ const InvoicePreview = ({ isOpen, onClose, previewUrl }) => {
     ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingSpinner, { text: "Loading preview..." }) })
   ] }) });
 };
-const uploadFiles = async (files, folder = "invoices") => {
+const InvoicePreview = DocumentPreview;
+const uploadFiles = async (files, folder = "", bucket = "documents") => {
   try {
     const uploadPromises = files.map(async (file) => {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-      const filePath = `${folder}/${fileName}`;
-      const { error } = await supabase.storage.from("invoices").upload(filePath, file);
+      const filePath = folder ? `${folder}/${fileName}` : fileName;
+      const { error } = await supabase.storage.from(bucket).upload(filePath, file);
       if (error) throw error;
       return {
         path: filePath,
@@ -35978,19 +36058,15 @@ const uploadFiles = async (files, folder = "invoices") => {
     const results = await Promise.all(uploadPromises);
     return { data: results, error: null };
   } catch (error) {
-    console.error("Error uploading files:", error);
     return { data: null, error };
   }
 };
-const getFileUrl = async (path, options) => {
-  const { data, error } = await supabase.storage.from("invoices").createSignedUrl(path, 3600, options);
-  if (error) {
-    console.error("Error creating signed URL:", error);
-    throw error;
-  }
+const getFileUrl = async (path, bucket = "documents", options) => {
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600, options);
+  if (error) throw error;
   return data.signedUrl;
 };
-const ITEMS_PER_PAGE$1 = 5;
+const ITEMS_PER_PAGE$2 = 5;
 const AccountingEntriesTable = () => {
   const [entries, setEntries] = reactExports.useState([]);
   const [isLoading, setIsLoading] = reactExports.useState(true);
@@ -36005,7 +36081,7 @@ const AccountingEntriesTable = () => {
   const loadEntries = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await fetchAccountingEntries(currentPage, ITEMS_PER_PAGE$1);
+      const { data, error } = await fetchAccountingEntries(currentPage, ITEMS_PER_PAGE$2);
       if (error) throw error;
       setEntries((data == null ? void 0 : data.items) || []);
       setTotalItems((data == null ? void 0 : data.total) || 0);
@@ -36020,7 +36096,7 @@ const AccountingEntriesTable = () => {
       setIsLoading(false);
     }
   };
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE$1);
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE$2);
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
@@ -36044,7 +36120,7 @@ const AccountingEntriesTable = () => {
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { children: "Credit Account" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableHead, { className: "text-right", children: "Amount" })
         ] }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: Array.from({ length: ITEMS_PER_PAGE$1 }).map((_, index2) => /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(TableBody, { children: Array.from({ length: ITEMS_PER_PAGE$2 }).map((_, index2) => /* @__PURE__ */ jsxRuntimeExports.jsxs(TableRow, { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { className: "w-[200px] min-w-[200px] max-w-[200px]", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-32" }) }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(TableCell, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Skeleton, { className: "h-4 w-8" }) }),
@@ -36109,9 +36185,9 @@ const AccountingEntriesTable = () => {
     entries.length > 0 && totalItems > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-4 flex items-center justify-between px-2", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-sm text-gray-500", children: [
         "Showing ",
-        (currentPage - 1) * ITEMS_PER_PAGE$1 + 1,
+        (currentPage - 1) * ITEMS_PER_PAGE$2 + 1,
         " to ",
-        Math.min(currentPage * ITEMS_PER_PAGE$1, totalItems),
+        Math.min(currentPage * ITEMS_PER_PAGE$2, totalItems),
         " of ",
         totalItems,
         " entries"
@@ -38942,19 +39018,19 @@ function useDirection(localDir) {
 }
 var ENTRY_FOCUS = "rovingFocusGroup.onEntryFocus";
 var EVENT_OPTIONS = { bubbles: false, cancelable: true };
-var GROUP_NAME$2 = "RovingFocusGroup";
-var [Collection$2, useCollection$2, createCollectionScope$2] = createCollection(GROUP_NAME$2);
+var GROUP_NAME$3 = "RovingFocusGroup";
+var [Collection$3, useCollection$3, createCollectionScope$3] = createCollection(GROUP_NAME$3);
 var [createRovingFocusGroupContext, createRovingFocusGroupScope] = createContextScope(
-  GROUP_NAME$2,
-  [createCollectionScope$2]
+  GROUP_NAME$3,
+  [createCollectionScope$3]
 );
-var [RovingFocusProvider, useRovingFocusContext] = createRovingFocusGroupContext(GROUP_NAME$2);
+var [RovingFocusProvider, useRovingFocusContext] = createRovingFocusGroupContext(GROUP_NAME$3);
 var RovingFocusGroup = reactExports.forwardRef(
   (props, forwardedRef) => {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$2.Provider, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$2.Slot, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ jsxRuntimeExports.jsx(RovingFocusGroupImpl, { ...props, ref: forwardedRef }) }) });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$3.Provider, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$3.Slot, { scope: props.__scopeRovingFocusGroup, children: /* @__PURE__ */ jsxRuntimeExports.jsx(RovingFocusGroupImpl, { ...props, ref: forwardedRef }) }) });
   }
 );
-RovingFocusGroup.displayName = GROUP_NAME$2;
+RovingFocusGroup.displayName = GROUP_NAME$3;
 var RovingFocusGroupImpl = reactExports.forwardRef((props, forwardedRef) => {
   const {
     __scopeRovingFocusGroup,
@@ -38975,11 +39051,11 @@ var RovingFocusGroupImpl = reactExports.forwardRef((props, forwardedRef) => {
     prop: currentTabStopIdProp,
     defaultProp: defaultCurrentTabStopId ?? null,
     onChange: onCurrentTabStopIdChange,
-    caller: GROUP_NAME$2
+    caller: GROUP_NAME$3
   });
   const [isTabbingBackOut, setIsTabbingBackOut] = reactExports.useState(false);
   const handleEntryFocus = useCallbackRef(onEntryFocus);
-  const getItems = useCollection$2(__scopeRovingFocusGroup);
+  const getItems = useCollection$3(__scopeRovingFocusGroup);
   const isClickFocusRef = reactExports.useRef(false);
   const [focusableItemsCount, setFocusableItemsCount] = reactExports.useState(0);
   reactExports.useEffect(() => {
@@ -39045,7 +39121,7 @@ var RovingFocusGroupImpl = reactExports.forwardRef((props, forwardedRef) => {
     }
   );
 });
-var ITEM_NAME$3 = "RovingFocusGroupItem";
+var ITEM_NAME$4 = "RovingFocusGroupItem";
 var RovingFocusGroupItem = reactExports.forwardRef(
   (props, forwardedRef) => {
     const {
@@ -39058,9 +39134,9 @@ var RovingFocusGroupItem = reactExports.forwardRef(
     } = props;
     const autoId = useId();
     const id = tabStopId || autoId;
-    const context = useRovingFocusContext(ITEM_NAME$3, __scopeRovingFocusGroup);
+    const context = useRovingFocusContext(ITEM_NAME$4, __scopeRovingFocusGroup);
     const isCurrentTabStop = context.currentTabStopId === id;
-    const getItems = useCollection$2(__scopeRovingFocusGroup);
+    const getItems = useCollection$3(__scopeRovingFocusGroup);
     const { onFocusableItemAdd, onFocusableItemRemove, currentTabStopId } = context;
     reactExports.useEffect(() => {
       if (focusable) {
@@ -39069,7 +39145,7 @@ var RovingFocusGroupItem = reactExports.forwardRef(
       }
     }, [focusable, onFocusableItemAdd, onFocusableItemRemove]);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      Collection$2.ItemSlot,
+      Collection$3.ItemSlot,
       {
         scope: __scopeRovingFocusGroup,
         id,
@@ -39103,7 +39179,7 @@ var RovingFocusGroupItem = reactExports.forwardRef(
                 else if (focusIntent === "prev" || focusIntent === "next") {
                   if (focusIntent === "prev") candidateNodes.reverse();
                   const currentIndex = candidateNodes.indexOf(event.currentTarget);
-                  candidateNodes = context.loop ? wrapArray$1(candidateNodes, currentIndex + 1) : candidateNodes.slice(currentIndex + 1);
+                  candidateNodes = context.loop ? wrapArray$2(candidateNodes, currentIndex + 1) : candidateNodes.slice(currentIndex + 1);
                 }
                 setTimeout(() => focusFirst$2(candidateNodes));
               }
@@ -39115,7 +39191,7 @@ var RovingFocusGroupItem = reactExports.forwardRef(
     );
   }
 );
-RovingFocusGroupItem.displayName = ITEM_NAME$3;
+RovingFocusGroupItem.displayName = ITEM_NAME$4;
 var MAP_KEY_TO_FOCUS_INTENT = {
   ArrowLeft: "prev",
   ArrowUp: "prev",
@@ -39144,37 +39220,37 @@ function focusFirst$2(candidates, preventScroll = false) {
     if (document.activeElement !== PREVIOUSLY_FOCUSED_ELEMENT) return;
   }
 }
-function wrapArray$1(array, startIndex) {
+function wrapArray$2(array, startIndex) {
   return array.map((_, index2) => array[(startIndex + index2) % array.length]);
 }
 var Root$1 = RovingFocusGroup;
-var Item = RovingFocusGroupItem;
-var SELECTION_KEYS = ["Enter", " "];
+var Item$1 = RovingFocusGroupItem;
+var SELECTION_KEYS$1 = ["Enter", " "];
 var FIRST_KEYS = ["ArrowDown", "PageUp", "Home"];
 var LAST_KEYS = ["ArrowUp", "PageDown", "End"];
 var FIRST_LAST_KEYS = [...FIRST_KEYS, ...LAST_KEYS];
 var SUB_OPEN_KEYS = {
-  ltr: [...SELECTION_KEYS, "ArrowRight"],
-  rtl: [...SELECTION_KEYS, "ArrowLeft"]
+  ltr: [...SELECTION_KEYS$1, "ArrowRight"],
+  rtl: [...SELECTION_KEYS$1, "ArrowLeft"]
 };
 var SUB_CLOSE_KEYS = {
   ltr: ["ArrowLeft"],
   rtl: ["ArrowRight"]
 };
 var MENU_NAME = "Menu";
-var [Collection$1, useCollection$1, createCollectionScope$1] = createCollection(MENU_NAME);
+var [Collection$2, useCollection$2, createCollectionScope$2] = createCollection(MENU_NAME);
 var [createMenuContext, createMenuScope] = createContextScope(MENU_NAME, [
-  createCollectionScope$1,
+  createCollectionScope$2,
   createPopperScope,
   createRovingFocusGroupScope
 ]);
-var usePopperScope = createPopperScope();
-var useRovingFocusGroupScope$1 = createRovingFocusGroupScope();
+var usePopperScope$1 = createPopperScope();
+var useRovingFocusGroupScope$2 = createRovingFocusGroupScope();
 var [MenuProvider, useMenuContext] = createMenuContext(MENU_NAME);
 var [MenuRootProvider, useMenuRootContext] = createMenuContext(MENU_NAME);
 var Menu = (props) => {
   const { __scopeMenu, open = false, children, dir, onOpenChange, modal = true } = props;
-  const popperScope = usePopperScope(__scopeMenu);
+  const popperScope = usePopperScope$1(__scopeMenu);
   const [content, setContent] = reactExports.useState(null);
   const isUsingKeyboardRef = reactExports.useRef(false);
   const handleOpenChange = useCallbackRef(onOpenChange);
@@ -39193,7 +39269,7 @@ var Menu = (props) => {
       document.removeEventListener("pointermove", handlePointer, { capture: true });
     };
   }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$3, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$5, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
     MenuProvider,
     {
       scope: __scopeMenu,
@@ -39220,35 +39296,35 @@ var ANCHOR_NAME = "MenuAnchor";
 var MenuAnchor = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeMenu, ...anchorProps } = props;
-    const popperScope = usePopperScope(__scopeMenu);
+    const popperScope = usePopperScope$1(__scopeMenu);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Anchor, { ...popperScope, ...anchorProps, ref: forwardedRef });
   }
 );
 MenuAnchor.displayName = ANCHOR_NAME;
-var PORTAL_NAME$1 = "MenuPortal";
-var [PortalProvider, usePortalContext] = createMenuContext(PORTAL_NAME$1, {
+var PORTAL_NAME$2 = "MenuPortal";
+var [PortalProvider, usePortalContext] = createMenuContext(PORTAL_NAME$2, {
   forceMount: void 0
 });
 var MenuPortal = (props) => {
   const { __scopeMenu, forceMount, children, container } = props;
-  const context = useMenuContext(PORTAL_NAME$1, __scopeMenu);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(PortalProvider, { scope: __scopeMenu, forceMount, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$2, { asChild: true, container, children }) }) });
+  const context = useMenuContext(PORTAL_NAME$2, __scopeMenu);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(PortalProvider, { scope: __scopeMenu, forceMount, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$3, { asChild: true, container, children }) }) });
 };
-MenuPortal.displayName = PORTAL_NAME$1;
-var CONTENT_NAME$1 = "MenuContent";
-var [MenuContentProvider, useMenuContentContext] = createMenuContext(CONTENT_NAME$1);
+MenuPortal.displayName = PORTAL_NAME$2;
+var CONTENT_NAME$3 = "MenuContent";
+var [MenuContentProvider, useMenuContentContext] = createMenuContext(CONTENT_NAME$3);
 var MenuContent = reactExports.forwardRef(
   (props, forwardedRef) => {
-    const portalContext = usePortalContext(CONTENT_NAME$1, props.__scopeMenu);
+    const portalContext = usePortalContext(CONTENT_NAME$3, props.__scopeMenu);
     const { forceMount = portalContext.forceMount, ...contentProps } = props;
-    const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
-    const rootContext = useMenuRootContext(CONTENT_NAME$1, props.__scopeMenu);
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$1.Provider, { scope: props.__scopeMenu, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$1.Slot, { scope: props.__scopeMenu, children: rootContext.modal ? /* @__PURE__ */ jsxRuntimeExports.jsx(MenuRootContentModal, { ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ jsxRuntimeExports.jsx(MenuRootContentNonModal, { ...contentProps, ref: forwardedRef }) }) }) });
+    const context = useMenuContext(CONTENT_NAME$3, props.__scopeMenu);
+    const rootContext = useMenuRootContext(CONTENT_NAME$3, props.__scopeMenu);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$2.Provider, { scope: props.__scopeMenu, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$2.Slot, { scope: props.__scopeMenu, children: rootContext.modal ? /* @__PURE__ */ jsxRuntimeExports.jsx(MenuRootContentModal, { ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ jsxRuntimeExports.jsx(MenuRootContentNonModal, { ...contentProps, ref: forwardedRef }) }) }) });
   }
 );
 var MenuRootContentModal = reactExports.forwardRef(
   (props, forwardedRef) => {
-    const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
+    const context = useMenuContext(CONTENT_NAME$3, props.__scopeMenu);
     const ref = reactExports.useRef(null);
     const composedRefs = useComposedRefs(forwardedRef, ref);
     reactExports.useEffect(() => {
@@ -39274,7 +39350,7 @@ var MenuRootContentModal = reactExports.forwardRef(
   }
 );
 var MenuRootContentNonModal = reactExports.forwardRef((props, forwardedRef) => {
-  const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
+  const context = useMenuContext(CONTENT_NAME$3, props.__scopeMenu);
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     MenuContentImpl,
     {
@@ -39287,7 +39363,7 @@ var MenuRootContentNonModal = reactExports.forwardRef((props, forwardedRef) => {
     }
   );
 });
-var Slot = createSlot("MenuContent.ScrollLock");
+var Slot$1 = createSlot("MenuContent.ScrollLock");
 var MenuContentImpl = reactExports.forwardRef(
   (props, forwardedRef) => {
     const {
@@ -39306,11 +39382,11 @@ var MenuContentImpl = reactExports.forwardRef(
       disableOutsideScroll,
       ...contentProps
     } = props;
-    const context = useMenuContext(CONTENT_NAME$1, __scopeMenu);
-    const rootContext = useMenuRootContext(CONTENT_NAME$1, __scopeMenu);
-    const popperScope = usePopperScope(__scopeMenu);
-    const rovingFocusGroupScope = useRovingFocusGroupScope$1(__scopeMenu);
-    const getItems = useCollection$1(__scopeMenu);
+    const context = useMenuContext(CONTENT_NAME$3, __scopeMenu);
+    const rootContext = useMenuRootContext(CONTENT_NAME$3, __scopeMenu);
+    const popperScope = usePopperScope$1(__scopeMenu);
+    const rovingFocusGroupScope = useRovingFocusGroupScope$2(__scopeMenu);
+    const getItems = useCollection$2(__scopeMenu);
     const [currentItemId, setCurrentItemId] = reactExports.useState(null);
     const contentRef = reactExports.useRef(null);
     const composedRefs = useComposedRefs(forwardedRef, contentRef, context.onContentChange);
@@ -39321,7 +39397,7 @@ var MenuContentImpl = reactExports.forwardRef(
     const pointerDirRef = reactExports.useRef("right");
     const lastPointerXRef = reactExports.useRef(0);
     const ScrollLockWrapper = disableOutsideScroll ? ReactRemoveScroll : reactExports.Fragment;
-    const scrollLockWrapperProps = disableOutsideScroll ? { as: Slot, allowPinchZoom: true } : void 0;
+    const scrollLockWrapperProps = disableOutsideScroll ? { as: Slot$1, allowPinchZoom: true } : void 0;
     const handleTypeaheadSearch = (key) => {
       var _a, _b;
       const search = searchRef.current + key;
@@ -39415,7 +39491,7 @@ var MenuContentImpl = reactExports.forwardRef(
                     }),
                     preventScrollOnEntryFocus: true,
                     children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      Content,
+                      Content$1,
                       {
                         role: "menu",
                         "aria-orientation": "vertical",
@@ -39474,31 +39550,31 @@ var MenuContentImpl = reactExports.forwardRef(
     );
   }
 );
-MenuContent.displayName = CONTENT_NAME$1;
-var GROUP_NAME$1 = "MenuGroup";
+MenuContent.displayName = CONTENT_NAME$3;
+var GROUP_NAME$2 = "MenuGroup";
 var MenuGroup = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeMenu, ...groupProps } = props;
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.div, { role: "group", ...groupProps, ref: forwardedRef });
   }
 );
-MenuGroup.displayName = GROUP_NAME$1;
-var LABEL_NAME$1 = "MenuLabel";
+MenuGroup.displayName = GROUP_NAME$2;
+var LABEL_NAME$2 = "MenuLabel";
 var MenuLabel = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeMenu, ...labelProps } = props;
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.div, { ...labelProps, ref: forwardedRef });
   }
 );
-MenuLabel.displayName = LABEL_NAME$1;
-var ITEM_NAME$2 = "MenuItem";
+MenuLabel.displayName = LABEL_NAME$2;
+var ITEM_NAME$3 = "MenuItem";
 var ITEM_SELECT = "menu.itemSelect";
 var MenuItem = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { disabled = false, onSelect, ...itemProps } = props;
     const ref = reactExports.useRef(null);
-    const rootContext = useMenuRootContext(ITEM_NAME$2, props.__scopeMenu);
-    const contentContext = useMenuContentContext(ITEM_NAME$2, props.__scopeMenu);
+    const rootContext = useMenuRootContext(ITEM_NAME$3, props.__scopeMenu);
+    const contentContext = useMenuContentContext(ITEM_NAME$3, props.__scopeMenu);
     const composedRefs = useComposedRefs(forwardedRef, ref);
     const isPointerDownRef = reactExports.useRef(false);
     const handleSelect = () => {
@@ -39533,7 +39609,7 @@ var MenuItem = reactExports.forwardRef(
         onKeyDown: composeEventHandlers$1(props.onKeyDown, (event) => {
           const isTypingAhead = contentContext.searchRef.current !== "";
           if (disabled || isTypingAhead && event.key === " ") return;
-          if (SELECTION_KEYS.includes(event.key)) {
+          if (SELECTION_KEYS$1.includes(event.key)) {
             event.currentTarget.click();
             event.preventDefault();
           }
@@ -39542,12 +39618,12 @@ var MenuItem = reactExports.forwardRef(
     );
   }
 );
-MenuItem.displayName = ITEM_NAME$2;
+MenuItem.displayName = ITEM_NAME$3;
 var MenuItemImpl = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeMenu, disabled = false, textValue, ...itemProps } = props;
-    const contentContext = useMenuContentContext(ITEM_NAME$2, __scopeMenu);
-    const rovingFocusGroupScope = useRovingFocusGroupScope$1(__scopeMenu);
+    const contentContext = useMenuContentContext(ITEM_NAME$3, __scopeMenu);
+    const rovingFocusGroupScope = useRovingFocusGroupScope$2(__scopeMenu);
     const ref = reactExports.useRef(null);
     const composedRefs = useComposedRefs(forwardedRef, ref);
     const [isFocused, setIsFocused] = reactExports.useState(false);
@@ -39559,12 +39635,12 @@ var MenuItemImpl = reactExports.forwardRef(
       }
     }, [itemProps.children]);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      Collection$1.ItemSlot,
+      Collection$2.ItemSlot,
       {
         scope: __scopeMenu,
         disabled,
         textValue: textValue ?? textContent,
-        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Item, { asChild: true, ...rovingFocusGroupScope, focusable: !disabled, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Item$1, { asChild: true, ...rovingFocusGroupScope, focusable: !disabled, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
           Primitive.div,
           {
             role: "menuitem",
@@ -39662,15 +39738,15 @@ var MenuRadioItem = reactExports.forwardRef(
   }
 );
 MenuRadioItem.displayName = RADIO_ITEM_NAME$1;
-var ITEM_INDICATOR_NAME = "MenuItemIndicator";
+var ITEM_INDICATOR_NAME$1 = "MenuItemIndicator";
 var [ItemIndicatorProvider, useItemIndicatorContext] = createMenuContext(
-  ITEM_INDICATOR_NAME,
+  ITEM_INDICATOR_NAME$1,
   { checked: false }
 );
 var MenuItemIndicator = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeMenu, forceMount, ...itemIndicatorProps } = props;
-    const indicatorContext = useItemIndicatorContext(ITEM_INDICATOR_NAME, __scopeMenu);
+    const indicatorContext = useItemIndicatorContext(ITEM_INDICATOR_NAME$1, __scopeMenu);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       Presence,
       {
@@ -39687,8 +39763,8 @@ var MenuItemIndicator = reactExports.forwardRef(
     );
   }
 );
-MenuItemIndicator.displayName = ITEM_INDICATOR_NAME;
-var SEPARATOR_NAME$1 = "MenuSeparator";
+MenuItemIndicator.displayName = ITEM_INDICATOR_NAME$1;
+var SEPARATOR_NAME$2 = "MenuSeparator";
 var MenuSeparator = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeMenu, ...separatorProps } = props;
@@ -39703,16 +39779,16 @@ var MenuSeparator = reactExports.forwardRef(
     );
   }
 );
-MenuSeparator.displayName = SEPARATOR_NAME$1;
-var ARROW_NAME$1 = "MenuArrow";
+MenuSeparator.displayName = SEPARATOR_NAME$2;
+var ARROW_NAME$2 = "MenuArrow";
 var MenuArrow = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeMenu, ...arrowProps } = props;
-    const popperScope = usePopperScope(__scopeMenu);
+    const popperScope = usePopperScope$1(__scopeMenu);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Arrow, { ...popperScope, ...arrowProps, ref: forwardedRef });
   }
 );
-MenuArrow.displayName = ARROW_NAME$1;
+MenuArrow.displayName = ARROW_NAME$2;
 var SUB_NAME = "MenuSub";
 var [MenuSubProvider, useMenuSubContext] = createMenuContext(SUB_NAME);
 var SUB_TRIGGER_NAME$1 = "MenuSubTrigger";
@@ -39822,14 +39898,14 @@ MenuSubTrigger.displayName = SUB_TRIGGER_NAME$1;
 var SUB_CONTENT_NAME$1 = "MenuSubContent";
 var MenuSubContent = reactExports.forwardRef(
   (props, forwardedRef) => {
-    const portalContext = usePortalContext(CONTENT_NAME$1, props.__scopeMenu);
+    const portalContext = usePortalContext(CONTENT_NAME$3, props.__scopeMenu);
     const { forceMount = portalContext.forceMount, ...subContentProps } = props;
-    const context = useMenuContext(CONTENT_NAME$1, props.__scopeMenu);
-    const rootContext = useMenuRootContext(CONTENT_NAME$1, props.__scopeMenu);
+    const context = useMenuContext(CONTENT_NAME$3, props.__scopeMenu);
+    const rootContext = useMenuRootContext(CONTENT_NAME$3, props.__scopeMenu);
     const subContext = useMenuSubContext(SUB_CONTENT_NAME$1, props.__scopeMenu);
     const ref = reactExports.useRef(null);
     const composedRefs = useComposedRefs(forwardedRef, ref);
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$1.Provider, { scope: props.__scopeMenu, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$1.Slot, { scope: props.__scopeMenu, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$2.Provider, { scope: props.__scopeMenu, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$2.Slot, { scope: props.__scopeMenu, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
       MenuContentImpl,
       {
         id: subContext.contentId,
@@ -39886,14 +39962,14 @@ function focusFirst$1(candidates) {
     if (document.activeElement !== PREVIOUSLY_FOCUSED_ELEMENT) return;
   }
 }
-function wrapArray(array, startIndex) {
+function wrapArray$1(array, startIndex) {
   return array.map((_, index2) => array[(startIndex + index2) % array.length]);
 }
 function getNextMatch(values, search, currentMatch) {
   const isRepeated = search.length > 1 && Array.from(search).every((char) => char === search[0]);
   const normalizedSearch = isRepeated ? search[0] : search;
   const currentMatchIndex = currentMatch ? values.indexOf(currentMatch) : -1;
-  let wrappedValues = wrapArray(values, Math.max(currentMatchIndex, 0));
+  let wrappedValues = wrapArray$1(values, Math.max(currentMatchIndex, 0));
   const excludeCurrentMatch = normalizedSearch.length === 1;
   if (excludeCurrentMatch) wrappedValues = wrappedValues.filter((v) => v !== currentMatch);
   const nextMatch = wrappedValues.find(
@@ -39926,16 +40002,16 @@ function whenMouse(handler) {
 }
 var Root3 = Menu;
 var Anchor2 = MenuAnchor;
-var Portal = MenuPortal;
-var Content2$1 = MenuContent;
+var Portal$1 = MenuPortal;
+var Content2$2 = MenuContent;
 var Group = MenuGroup;
-var Label$1 = MenuLabel;
+var Label$2 = MenuLabel;
 var Item2$2 = MenuItem;
 var CheckboxItem = MenuCheckboxItem;
 var RadioGroup$2 = MenuRadioGroup;
 var RadioItem = MenuRadioItem;
-var ItemIndicator = MenuItemIndicator;
-var Separator = MenuSeparator;
+var ItemIndicator$1 = MenuItemIndicator;
+var Separator$1 = MenuSeparator;
 var Arrow2 = MenuArrow;
 var SubTrigger = MenuSubTrigger;
 var SubContent = MenuSubContent;
@@ -39980,11 +40056,11 @@ var DropdownMenu$1 = (props) => {
   );
 };
 DropdownMenu$1.displayName = DROPDOWN_MENU_NAME;
-var TRIGGER_NAME = "DropdownMenuTrigger";
+var TRIGGER_NAME$2 = "DropdownMenuTrigger";
 var DropdownMenuTrigger$1 = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDropdownMenu, disabled = false, ...triggerProps } = props;
-    const context = useDropdownMenuContext(TRIGGER_NAME, __scopeDropdownMenu);
+    const context = useDropdownMenuContext(TRIGGER_NAME$2, __scopeDropdownMenu);
     const menuScope = useMenuScope(__scopeDropdownMenu);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Anchor2, { asChild: true, ...menuScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
       Primitive.button,
@@ -40015,23 +40091,23 @@ var DropdownMenuTrigger$1 = reactExports.forwardRef(
     ) });
   }
 );
-DropdownMenuTrigger$1.displayName = TRIGGER_NAME;
-var PORTAL_NAME = "DropdownMenuPortal";
+DropdownMenuTrigger$1.displayName = TRIGGER_NAME$2;
+var PORTAL_NAME$1 = "DropdownMenuPortal";
 var DropdownMenuPortal = (props) => {
   const { __scopeDropdownMenu, ...portalProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Portal, { ...menuScope, ...portalProps });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$1, { ...menuScope, ...portalProps });
 };
-DropdownMenuPortal.displayName = PORTAL_NAME;
-var CONTENT_NAME = "DropdownMenuContent";
+DropdownMenuPortal.displayName = PORTAL_NAME$1;
+var CONTENT_NAME$2 = "DropdownMenuContent";
 var DropdownMenuContent$1 = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDropdownMenu, ...contentProps } = props;
-    const context = useDropdownMenuContext(CONTENT_NAME, __scopeDropdownMenu);
+    const context = useDropdownMenuContext(CONTENT_NAME$2, __scopeDropdownMenu);
     const menuScope = useMenuScope(__scopeDropdownMenu);
     const hasInteractedOutsideRef = reactExports.useRef(false);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      Content2$1,
+      Content2$2,
       {
         id: context.contentId,
         "aria-labelledby": context.triggerId,
@@ -40065,8 +40141,8 @@ var DropdownMenuContent$1 = reactExports.forwardRef(
     );
   }
 );
-DropdownMenuContent$1.displayName = CONTENT_NAME;
-var GROUP_NAME = "DropdownMenuGroup";
+DropdownMenuContent$1.displayName = CONTENT_NAME$2;
+var GROUP_NAME$1 = "DropdownMenuGroup";
 var DropdownMenuGroup = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDropdownMenu, ...groupProps } = props;
@@ -40074,17 +40150,17 @@ var DropdownMenuGroup = reactExports.forwardRef(
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Group, { ...menuScope, ...groupProps, ref: forwardedRef });
   }
 );
-DropdownMenuGroup.displayName = GROUP_NAME;
-var LABEL_NAME = "DropdownMenuLabel";
+DropdownMenuGroup.displayName = GROUP_NAME$1;
+var LABEL_NAME$1 = "DropdownMenuLabel";
 var DropdownMenuLabel$1 = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDropdownMenu, ...labelProps } = props;
     const menuScope = useMenuScope(__scopeDropdownMenu);
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { ...menuScope, ...labelProps, ref: forwardedRef });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Label$2, { ...menuScope, ...labelProps, ref: forwardedRef });
   }
 );
-DropdownMenuLabel$1.displayName = LABEL_NAME;
-var ITEM_NAME$1 = "DropdownMenuItem";
+DropdownMenuLabel$1.displayName = LABEL_NAME$1;
+var ITEM_NAME$2 = "DropdownMenuItem";
 var DropdownMenuItem$1 = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDropdownMenu, ...itemProps } = props;
@@ -40092,7 +40168,7 @@ var DropdownMenuItem$1 = reactExports.forwardRef(
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Item2$2, { ...menuScope, ...itemProps, ref: forwardedRef });
   }
 );
-DropdownMenuItem$1.displayName = ITEM_NAME$1;
+DropdownMenuItem$1.displayName = ITEM_NAME$2;
 var CHECKBOX_ITEM_NAME = "DropdownMenuCheckboxItem";
 var DropdownMenuCheckboxItem$1 = reactExports.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...checkboxItemProps } = props;
@@ -40118,17 +40194,17 @@ var INDICATOR_NAME$2 = "DropdownMenuItemIndicator";
 var DropdownMenuItemIndicator = reactExports.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...itemIndicatorProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(ItemIndicator, { ...menuScope, ...itemIndicatorProps, ref: forwardedRef });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(ItemIndicator$1, { ...menuScope, ...itemIndicatorProps, ref: forwardedRef });
 });
 DropdownMenuItemIndicator.displayName = INDICATOR_NAME$2;
-var SEPARATOR_NAME = "DropdownMenuSeparator";
+var SEPARATOR_NAME$1 = "DropdownMenuSeparator";
 var DropdownMenuSeparator$1 = reactExports.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...separatorProps } = props;
   const menuScope = useMenuScope(__scopeDropdownMenu);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Separator, { ...menuScope, ...separatorProps, ref: forwardedRef });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Separator$1, { ...menuScope, ...separatorProps, ref: forwardedRef });
 });
-DropdownMenuSeparator$1.displayName = SEPARATOR_NAME;
-var ARROW_NAME = "DropdownMenuArrow";
+DropdownMenuSeparator$1.displayName = SEPARATOR_NAME$1;
+var ARROW_NAME$1 = "DropdownMenuArrow";
 var DropdownMenuArrow = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeDropdownMenu, ...arrowProps } = props;
@@ -40136,7 +40212,7 @@ var DropdownMenuArrow = reactExports.forwardRef(
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Arrow2, { ...menuScope, ...arrowProps, ref: forwardedRef });
   }
 );
-DropdownMenuArrow.displayName = ARROW_NAME;
+DropdownMenuArrow.displayName = ARROW_NAME$1;
 var SUB_TRIGGER_NAME = "DropdownMenuSubTrigger";
 var DropdownMenuSubTrigger$1 = reactExports.forwardRef((props, forwardedRef) => {
   const { __scopeDropdownMenu, ...subTriggerProps } = props;
@@ -40169,10 +40245,10 @@ var DropdownMenuSubContent$1 = reactExports.forwardRef((props, forwardedRef) => 
   );
 });
 DropdownMenuSubContent$1.displayName = SUB_CONTENT_NAME;
-var Root2$2 = DropdownMenu$1;
-var Trigger = DropdownMenuTrigger$1;
+var Root2$4 = DropdownMenu$1;
+var Trigger$2 = DropdownMenuTrigger$1;
 var Portal2 = DropdownMenuPortal;
-var Content2 = DropdownMenuContent$1;
+var Content2$1 = DropdownMenuContent$1;
 var Label2 = DropdownMenuLabel$1;
 var Item2$1 = DropdownMenuItem$1;
 var CheckboxItem2 = DropdownMenuCheckboxItem$1;
@@ -40181,8 +40257,8 @@ var ItemIndicator2 = DropdownMenuItemIndicator;
 var Separator2 = DropdownMenuSeparator$1;
 var SubTrigger2 = DropdownMenuSubTrigger$1;
 var SubContent2 = DropdownMenuSubContent$1;
-const DropdownMenu = Root2$2;
-const DropdownMenuTrigger = Trigger;
+const DropdownMenu = Root2$4;
+const DropdownMenuTrigger = Trigger$2;
 const DropdownMenuSubTrigger = reactExports.forwardRef(({ className, inset, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
   SubTrigger2,
   {
@@ -40213,7 +40289,7 @@ const DropdownMenuSubContent = reactExports.forwardRef(({ className, ...props },
 ));
 DropdownMenuSubContent.displayName = SubContent2.displayName;
 const DropdownMenuContent = reactExports.forwardRef(({ className, sideOffset = 4, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(Portal2, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-  Content2,
+  Content2$1,
   {
     ref,
     sideOffset,
@@ -40224,7 +40300,7 @@ const DropdownMenuContent = reactExports.forwardRef(({ className, sideOffset = 4
     ...props
   }
 ) }));
-DropdownMenuContent.displayName = Content2.displayName;
+DropdownMenuContent.displayName = Content2$1.displayName;
 const DropdownMenuItem = reactExports.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Item2$1,
   {
@@ -40294,8 +40370,8 @@ const DropdownMenuSeparator = reactExports.forwardRef(({ className, ...props }, 
 ));
 DropdownMenuSeparator.displayName = Separator2.displayName;
 const Sheet = Root$5;
-const SheetTrigger = Trigger$2;
-const SheetPortal = Portal$1;
+const SheetTrigger = Trigger$4;
+const SheetPortal = Portal$2;
 const SheetOverlay = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Overlay,
   {
@@ -40327,7 +40403,7 @@ const sheetVariants = cva(
 const SheetContent = reactExports.forwardRef(({ side = "right", className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(SheetPortal, { children: [
   /* @__PURE__ */ jsxRuntimeExports.jsx(SheetOverlay, {}),
   /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    Content$1,
+    Content$2,
     {
       ref,
       className: cn(sheetVariants({ side }), className),
@@ -40342,7 +40418,7 @@ const SheetContent = reactExports.forwardRef(({ side = "right", className, child
     }
   )
 ] }));
-SheetContent.displayName = Content$1.displayName;
+SheetContent.displayName = Content$2.displayName;
 const SheetTitle = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Title$1,
   {
@@ -40524,9 +40600,22 @@ function SidebarContent({ isActive, onNavigate = () => {
       {
         to: "/upload",
         icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: `h-5 w-5 ${isDark ? "text-gray-400 group-hover:text-white" : "text-gray-600 group-hover:text-black"}` }),
-        label: "Upload Invoice",
+        label: "Upload Documents",
         active: isActive("/upload"),
         onNavigate: () => handleNavigation("/upload"),
+        isCollapsed,
+        isDark,
+        company
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      SidebarLink,
+      {
+        to: "/documents",
+        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: `h-5 w-5 ${isDark ? "text-gray-400 group-hover:text-white" : "text-gray-600 group-hover:text-black"}` }),
+        label: "Documents",
+        active: isActive("/documents"),
+        onNavigate: () => handleNavigation("/documents"),
         isCollapsed,
         isDark,
         company
@@ -40569,105 +40658,314 @@ function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false,
     }
   );
 }
-const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
-  {
-    variants: {
-      variant: {
-        default: "bg-background text-foreground",
-        destructive: "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive"
+var TABS_NAME = "Tabs";
+var [createTabsContext, createTabsScope] = createContextScope(TABS_NAME, [
+  createRovingFocusGroupScope
+]);
+var useRovingFocusGroupScope$1 = createRovingFocusGroupScope();
+var [TabsProvider, useTabsContext] = createTabsContext(TABS_NAME);
+var Tabs$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeTabs,
+      value: valueProp,
+      onValueChange,
+      defaultValue,
+      orientation = "horizontal",
+      dir,
+      activationMode = "automatic",
+      ...tabsProps
+    } = props;
+    const direction = useDirection(dir);
+    const [value, setValue] = useControllableState({
+      prop: valueProp,
+      onChange: onValueChange,
+      defaultProp: defaultValue ?? "",
+      caller: TABS_NAME
+    });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      TabsProvider,
+      {
+        scope: __scopeTabs,
+        baseId: useId(),
+        value,
+        onValueChange: setValue,
+        orientation,
+        dir: direction,
+        activationMode,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Primitive.div,
+          {
+            dir: direction,
+            "data-orientation": orientation,
+            ...tabsProps,
+            ref: forwardedRef
+          }
+        )
       }
-    },
-    defaultVariants: {
-      variant: "default"
-    }
+    );
   }
 );
-const Alert = reactExports.forwardRef(({ className, variant, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-  "div",
-  {
-    ref,
-    role: "alert",
-    className: cn(alertVariants({ variant }), className),
-    ...props
-  }
-));
-Alert.displayName = "Alert";
-const AlertTitle = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-  "h5",
-  {
-    ref,
-    className: cn("mb-1 font-medium leading-none tracking-tight", className),
-    ...props
-  }
-));
-AlertTitle.displayName = "AlertTitle";
-const AlertDescription = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-  "div",
-  {
-    ref,
-    className: cn("text-sm [&_p]:leading-relaxed", className),
-    ...props
-  }
-));
-AlertDescription.displayName = "AlertDescription";
-const uploadInvoice = async (data) => {
-  var _a;
-  try {
-    const user = await getCurrentUser();
-    const invoicePromises = (_a = data == null ? void 0 : data.files) == null ? void 0 : _a.map(
-      (file) => supabase.from("invoices").insert({
-        user_id: user.id,
-        file,
-        data: {},
-        ocr_response: {},
-        deepseek_response: {},
-        status: "pending",
-        type: data.type,
-        opening_balance: 0,
-        closing_balance: 0
-      }).select().single()
+Tabs$1.displayName = TABS_NAME;
+var TAB_LIST_NAME = "TabsList";
+var TabsList$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeTabs, loop = true, ...listProps } = props;
+    const context = useTabsContext(TAB_LIST_NAME, __scopeTabs);
+    const rovingFocusGroupScope = useRovingFocusGroupScope$1(__scopeTabs);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Root$1,
+      {
+        asChild: true,
+        ...rovingFocusGroupScope,
+        orientation: context.orientation,
+        dir: context.dir,
+        loop,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Primitive.div,
+          {
+            role: "tablist",
+            "aria-orientation": context.orientation,
+            ...listProps,
+            ref: forwardedRef
+          }
+        )
+      }
     );
-    const results = await Promise.all(invoicePromises || []);
-    const errors2 = results.filter((result) => result.error);
-    if (errors2.length > 0) {
-      throw new Error("Some invoices failed to upload: " + errors2.map((e) => {
-        var _a2;
-        return (_a2 = e.error) == null ? void 0 : _a2.message;
-      }).join(", "));
+  }
+);
+TabsList$1.displayName = TAB_LIST_NAME;
+var TRIGGER_NAME$1 = "TabsTrigger";
+var TabsTrigger$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeTabs, value, disabled = false, ...triggerProps } = props;
+    const context = useTabsContext(TRIGGER_NAME$1, __scopeTabs);
+    const rovingFocusGroupScope = useRovingFocusGroupScope$1(__scopeTabs);
+    const triggerId = makeTriggerId(context.baseId, value);
+    const contentId = makeContentId(context.baseId, value);
+    const isSelected = value === context.value;
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Item$1,
+      {
+        asChild: true,
+        ...rovingFocusGroupScope,
+        focusable: !disabled,
+        active: isSelected,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Primitive.button,
+          {
+            type: "button",
+            role: "tab",
+            "aria-selected": isSelected,
+            "aria-controls": contentId,
+            "data-state": isSelected ? "active" : "inactive",
+            "data-disabled": disabled ? "" : void 0,
+            disabled,
+            id: triggerId,
+            ...triggerProps,
+            ref: forwardedRef,
+            onMouseDown: composeEventHandlers$1(props.onMouseDown, (event) => {
+              if (!disabled && event.button === 0 && event.ctrlKey === false) {
+                context.onValueChange(value);
+              } else {
+                event.preventDefault();
+              }
+            }),
+            onKeyDown: composeEventHandlers$1(props.onKeyDown, (event) => {
+              if ([" ", "Enter"].includes(event.key)) context.onValueChange(value);
+            }),
+            onFocus: composeEventHandlers$1(props.onFocus, () => {
+              const isAutomaticActivation = context.activationMode !== "manual";
+              if (!isSelected && !disabled && isAutomaticActivation) {
+                context.onValueChange(value);
+              }
+            })
+          }
+        )
+      }
+    );
+  }
+);
+TabsTrigger$1.displayName = TRIGGER_NAME$1;
+var CONTENT_NAME$1 = "TabsContent";
+var TabsContent$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeTabs, value, forceMount, children, ...contentProps } = props;
+    const context = useTabsContext(CONTENT_NAME$1, __scopeTabs);
+    const triggerId = makeTriggerId(context.baseId, value);
+    const contentId = makeContentId(context.baseId, value);
+    const isSelected = value === context.value;
+    const isMountAnimationPreventedRef = reactExports.useRef(isSelected);
+    reactExports.useEffect(() => {
+      const rAF = requestAnimationFrame(() => isMountAnimationPreventedRef.current = false);
+      return () => cancelAnimationFrame(rAF);
+    }, []);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || isSelected, children: ({ present }) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Primitive.div,
+      {
+        "data-state": isSelected ? "active" : "inactive",
+        "data-orientation": context.orientation,
+        role: "tabpanel",
+        "aria-labelledby": triggerId,
+        hidden: !present,
+        id: contentId,
+        tabIndex: 0,
+        ...contentProps,
+        ref: forwardedRef,
+        style: {
+          ...props.style,
+          animationDuration: isMountAnimationPreventedRef.current ? "0s" : void 0
+        },
+        children: present && children
+      }
+    ) });
+  }
+);
+TabsContent$1.displayName = CONTENT_NAME$1;
+function makeTriggerId(baseId, value) {
+  return `${baseId}-trigger-${value}`;
+}
+function makeContentId(baseId, value) {
+  return `${baseId}-content-${value}`;
+}
+var Root2$3 = Tabs$1;
+var List = TabsList$1;
+var Trigger$1 = TabsTrigger$1;
+var Content = TabsContent$1;
+const Tabs = Root2$3;
+const TabsList = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  List,
+  {
+    ref,
+    className: cn(
+      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+      className
+    ),
+    ...props
+  }
+));
+TabsList.displayName = List.displayName;
+const TabsTrigger = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  Trigger$1,
+  {
+    ref,
+    className: cn(
+      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+      className
+    ),
+    ...props
+  }
+));
+TabsTrigger.displayName = Trigger$1.displayName;
+const TabsContent = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  Content,
+  {
+    ref,
+    className: cn(
+      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+      className
+    ),
+    ...props
+  }
+));
+TabsContent.displayName = Content.displayName;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
+const DOCUMENTS_TABLE = "documents";
+const DOCUMENT_TYPE_FOLDER = {
+  INVOICE: "invoices",
+  RECEIPT: "receipts",
+  BANK_STATEMENT: "bank_statements",
+  OTHER: "others"
+};
+const uploadDocuments = async (request) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+    const company = await getCompanyByUserId(user.id);
+    if (!company) throw new Error("Company not found");
+    const folder = DOCUMENT_TYPE_FOLDER[request.type];
+    const { data: uploadedFiles, error: uploadError } = await uploadFiles(request.files, folder);
+    if (uploadError) throw uploadError;
+    const documents = uploadedFiles.map((file) => ({
+      company_id: company.id,
+      uploaded_by_user_id: user.id,
+      file_path: file.path,
+      original_filename: file.name,
+      type: request.type,
+      status: "PENDING_REVIEW"
+    }));
+    const { data, error: insertError } = await supabase.from(DOCUMENTS_TABLE).insert(documents).select();
+    if (insertError) {
+      throw insertError;
     }
-    const invoices = results.map((result) => result.data);
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+};
+const getPaginatedDocuments = async (page = 1, pageSize = 10, filters) => {
+  try {
+    let countQuery = supabase.from(DOCUMENTS_TABLE).select("*", { count: "exact", head: true });
+    if (filters == null ? void 0 : filters.type) {
+      countQuery = countQuery.eq("type", filters.type);
+    }
+    if (filters == null ? void 0 : filters.status) {
+      countQuery = countQuery.eq("status", filters.status);
+    }
+    if (filters == null ? void 0 : filters.date_from) {
+      countQuery = countQuery.gte("uploaded_at", filters.date_from);
+    }
+    if (filters == null ? void 0 : filters.date_to) {
+      countQuery = countQuery.lte("uploaded_at", filters.date_to);
+    }
+    const { count: count2 } = await countQuery;
+    let query = supabase.from(DOCUMENTS_TABLE).select("*").order("uploaded_at", { ascending: false }).range((page - 1) * pageSize, page * pageSize - 1);
+    if (filters == null ? void 0 : filters.type) {
+      query = query.eq("type", filters.type);
+    }
+    if (filters == null ? void 0 : filters.status) {
+      query = query.eq("status", filters.status);
+    }
+    if (filters == null ? void 0 : filters.date_from) {
+      query = query.gte("uploaded_at", filters.date_from);
+    }
+    if (filters == null ? void 0 : filters.date_to) {
+      query = query.lte("uploaded_at", filters.date_to);
+    }
+    const { data } = await query;
     return {
-      data: invoices,
+      data: {
+        items: data || [],
+        total: count2 || 0
+      },
       error: null
     };
   } catch (error) {
-    console.error("Error uploading invoices:", error);
-    return {
-      data: null,
-      error
-    };
+    return { data: null, error };
   }
 };
-const processInvoice = async () => {
+const deleteDocument = async (documentId) => {
   try {
-    const user = await getCurrentUser();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!(session == null ? void 0 : session.access_token)) {
-      throw new Error("No active session found");
+    const { data: document2, error: fetchError } = await supabase.from(DOCUMENTS_TABLE).select("file_path").eq("id", documentId).single();
+    if (fetchError) {
+      throw fetchError;
     }
-    supabase.functions.invoke("process-invoice", {
-      body: { user_id: user.id },
-      headers: {
-        "Authorization": `Bearer ${session.access_token}`
-      }
-    }).catch((error) => {
-      console.error("Background invoice processing error:", error);
-    });
-    return { message: "Invoice processing initiated in background" };
+    if (document2 == null ? void 0 : document2.file_path) {
+      await supabase.storage.from("documents").remove([document2.file_path]);
+    }
+    await supabase.from(DOCUMENTS_TABLE).delete().eq("id", documentId);
+    return { error: null };
   } catch (error) {
-    console.error("Error initiating invoice processing:", error);
-    throw error;
+    return { error };
+  }
+};
+const getDocumentDownloadUrl = async (filePath) => {
+  try {
+    const { data } = await supabase.storage.from("documents").createSignedUrl(filePath, 3600);
+    return (data == null ? void 0 : data.signedUrl) || null;
+  } catch {
+    return null;
   }
 };
 function usePrevious(value) {
@@ -40757,7 +41055,7 @@ var RadioIndicator = reactExports.forwardRef(
   }
 );
 RadioIndicator.displayName = INDICATOR_NAME$1;
-var BUBBLE_INPUT_NAME = "RadioBubbleInput";
+var BUBBLE_INPUT_NAME$1 = "RadioBubbleInput";
 var RadioBubbleInput = reactExports.forwardRef(
   ({
     __scopeRadio,
@@ -40806,7 +41104,7 @@ var RadioBubbleInput = reactExports.forwardRef(
     );
   }
 );
-RadioBubbleInput.displayName = BUBBLE_INPUT_NAME;
+RadioBubbleInput.displayName = BUBBLE_INPUT_NAME$1;
 function getState(checked) {
   return checked ? "checked" : "unchecked";
 }
@@ -40878,11 +41176,11 @@ var RadioGroup$1 = reactExports.forwardRef(
   }
 );
 RadioGroup$1.displayName = RADIO_GROUP_NAME;
-var ITEM_NAME = "RadioGroupItem";
+var ITEM_NAME$1 = "RadioGroupItem";
 var RadioGroupItem$1 = reactExports.forwardRef(
   (props, forwardedRef) => {
     const { __scopeRadioGroup, disabled, ...itemProps } = props;
-    const context = useRadioGroupContext(ITEM_NAME, __scopeRadioGroup);
+    const context = useRadioGroupContext(ITEM_NAME$1, __scopeRadioGroup);
     const isDisabled = context.disabled || disabled;
     const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeRadioGroup);
     const radioScope = useRadioScope(__scopeRadioGroup);
@@ -40905,7 +41203,7 @@ var RadioGroupItem$1 = reactExports.forwardRef(
       };
     }, []);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      Item,
+      Item$1,
       {
         asChild: true,
         ...rovingFocusGroupScope,
@@ -40935,7 +41233,7 @@ var RadioGroupItem$1 = reactExports.forwardRef(
     );
   }
 );
-RadioGroupItem$1.displayName = ITEM_NAME;
+RadioGroupItem$1.displayName = ITEM_NAME$1;
 var INDICATOR_NAME2 = "RadioGroupIndicator";
 var RadioGroupIndicator = reactExports.forwardRef(
   (props, forwardedRef) => {
@@ -40945,12 +41243,12 @@ var RadioGroupIndicator = reactExports.forwardRef(
   }
 );
 RadioGroupIndicator.displayName = INDICATOR_NAME2;
-var Root2$1 = RadioGroup$1;
+var Root2$2 = RadioGroup$1;
 var Item2 = RadioGroupItem$1;
 var Indicator$1 = RadioGroupIndicator;
 const RadioGroup = reactExports.forwardRef(({ className, ...props }, ref) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    Root2$1,
+    Root2$2,
     {
       className: cn("grid gap-2", className),
       ...props,
@@ -40958,7 +41256,7 @@ const RadioGroup = reactExports.forwardRef(({ className, ...props }, ref) => {
     }
   );
 });
-RadioGroup.displayName = Root2$1.displayName;
+RadioGroup.displayName = Root2$2.displayName;
 const RadioGroupItem = reactExports.forwardRef(({ className, ...props }, ref) => {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     Item2,
@@ -40977,7 +41275,7 @@ RadioGroupItem.displayName = Item2.displayName;
 const labelVariants = cva(
   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 );
-const Label = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+const Label$1 = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
   Root$6,
   {
     ref,
@@ -40985,7 +41283,7 @@ const Label = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PU
     ...props
   }
 ));
-Label.displayName = Root$6.displayName;
+Label$1.displayName = Root$6.displayName;
 var PROGRESS_NAME = "Progress";
 var DEFAULT_MAX = 100;
 var [createProgressContext, createProgressScope] = createContextScope(PROGRESS_NAME);
@@ -41091,15 +41389,12 @@ const Progress = reactExports.forwardRef(({ className, value, ...props }, ref) =
   }
 ));
 Progress.displayName = Root.displayName;
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg"];
-const UploadInvoice = () => {
+const UploadInvoicesExpenses = () => {
   const [files, setFiles] = reactExports.useState([]);
   const [isDragging, setIsDragging] = reactExports.useState(false);
-  const [showAlert, setShowAlert] = reactExports.useState(true);
   const [isUploading, setIsUploading] = reactExports.useState(false);
   const [uploadProgress, setUploadProgress] = reactExports.useState(0);
-  const [invoiceType, setInvoiceType] = reactExports.useState("debit");
+  const [documentType, setDocumentType] = reactExports.useState("INVOICE");
   const { toast: toast2 } = useToast();
   const validateFiles = (fileList) => {
     return Array.from(fileList).filter((file) => {
@@ -41114,7 +41409,7 @@ const UploadInvoice = () => {
       if (!ALLOWED_TYPES.includes(file.type)) {
         toast2({
           title: "Invalid file type",
-          description: `${file.name} is not a supported format. Please use PNG or JPEG files only.`,
+          description: `${file.name} is not a supported format. Please use PNG, JPEG, or PDF files only.`,
           variant: "destructive"
         });
         return false;
@@ -41176,7 +41471,7 @@ const UploadInvoice = () => {
     if (!files.length) {
       toast2({
         title: "No files selected",
-        description: "Please select at least one image to upload.",
+        description: "Please select at least one file to upload.",
         variant: "destructive"
       });
       return;
@@ -41184,24 +41479,18 @@ const UploadInvoice = () => {
     setIsUploading(true);
     setUploadProgress(0);
     try {
-      const { data, error } = await uploadFiles(files);
+      setUploadProgress(25);
+      const { error } = await uploadDocuments({
+        files,
+        type: documentType
+      });
       if (error) {
         throw error;
       }
-      setUploadProgress(50);
-      const { error: invoiceError } = await uploadInvoice({
-        files: data,
-        type: invoiceType
-      });
-      if (invoiceError) {
-        throw invoiceError;
-      }
-      setUploadProgress(75);
-      await processInvoice();
       setUploadProgress(100);
       toast2({
         title: "Upload completed",
-        description: "Images uploaded successfully for processing."
+        description: `${files.length} ${files.length === 1 ? "file" : "files"} uploaded successfully for processing.`
       });
       setFiles([]);
     } catch (err) {
@@ -41216,60 +41505,41 @@ const UploadInvoice = () => {
       setUploadProgress(0);
     }
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "container mx-auto px-4 py-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-3xl mx-auto space-y-8", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-6", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center space-y-3", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-3xl font-bold tracking-tight", children: "Upload Invoice" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500 text-lg", children: "Upload your invoice images for processing" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-2xl font-bold tracking-tight", children: "Upload Invoices & Receipts" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500", children: "Upload your invoices and receipts for processing" })
     ] }),
-    showAlert && /* @__PURE__ */ jsxRuntimeExports.jsxs(Alert, { className: "bg-blue-50/50 border-blue-200 relative", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-5 w-5 text-blue-600 mt-0.5" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(AlertDescription, { className: "text-sm text-blue-800", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-blue-900", children: "Tip:" }),
-          " For best results, ensure your invoice images are clear, well-lit, and contain all necessary information."
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        Button,
-        {
-          variant: "ghost",
-          size: "sm",
-          className: "absolute right-2 top-2 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full p-1",
-          onClick: () => setShowAlert(false),
-          children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" })
-        }
-      )
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "p-8 space-y-8", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { className: "text-sm font-bold mb-2 block text-gray-900", children: "Select Invoice Type" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-6", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { className: "text-sm font-bold mb-2 block text-gray-900", children: "Select Document Type" }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
           RadioGroup,
           {
-            value: invoiceType,
-            onValueChange: (value) => setInvoiceType(value),
-            className: "grid grid-cols-2 gap-2",
+            value: documentType,
+            onValueChange: (value) => setDocumentType(value),
+            className: "grid grid-cols-2 gap-3",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(
                   RadioGroupItem,
                   {
-                    value: "debit",
-                    id: "debit",
+                    value: "INVOICE",
+                    id: "invoice",
                     className: "peer sr-only"
                   }
                 ),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  Label,
+                  Label$1,
                   {
-                    htmlFor: "debit",
-                    className: "flex items-center justify-between rounded-md border-2 border-muted bg-white px-3 py-2 hover:bg-gray-50 peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md",
+                    htmlFor: "invoice",
+                    className: "flex items-center justify-between rounded-md border-2 border-gray-200 bg-white px-3 py-2 hover:bg-gray-50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5 cursor-pointer",
                     children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowUpRight, { className: "h-2 w-2 text-white rotate-180" }) }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-gray-900 text-sm", children: "Debit" })
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Receipt, { className: "h-2 w-2 text-white" }) }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-gray-900 text-sm", children: "Invoice" })
                       ] }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-medium text-gray-500", children: "Money coming in" })
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-medium text-gray-500", children: "Bills & invoices" })
                     ]
                   }
                 )
@@ -41278,22 +41548,22 @@ const UploadInvoice = () => {
                 /* @__PURE__ */ jsxRuntimeExports.jsx(
                   RadioGroupItem,
                   {
-                    value: "credit",
-                    id: "credit",
+                    value: "RECEIPT",
+                    id: "receipt",
                     className: "peer sr-only"
                   }
                 ),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  Label,
+                  Label$1,
                   {
-                    htmlFor: "credit",
-                    className: "flex items-center justify-between rounded-md border-2 border-muted bg-white px-3 py-2 hover:bg-gray-50 peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md",
+                    htmlFor: "receipt",
+                    className: "flex items-center justify-between rounded-md border-2 border-gray-200 bg-white px-3 py-2 hover:bg-gray-50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5 cursor-pointer",
                     children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowUpRight, { className: "h-2 w-2 text-white" }) }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-gray-900 text-sm", children: "Credit" })
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CreditCard, { className: "h-2 w-2 text-white" }) }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-gray-900 text-sm", children: "Receipt" })
                       ] }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-medium text-gray-500", children: "Money going out" })
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-medium text-gray-500", children: "Receipts & expenses" })
                     ]
                   }
                 )
@@ -41301,7 +41571,7 @@ const UploadInvoice = () => {
             ]
           }
         )
-      ] }) }),
+      ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "div",
         {
@@ -41313,10 +41583,10 @@ const UploadInvoice = () => {
           children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center gap-6", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `rounded-full p-5 transition-colors duration-200 ${isDragging ? "bg-primary/10" : "bg-gray-50"}`, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: `h-10 w-10 transition-colors duration-200 ${isDragging ? "text-primary" : "text-gray-500"}` }) }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-xl font-medium text-gray-900", children: "Drag and drop your invoice images here" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-xl font-medium text-gray-900", children: "Drag and drop your documents here" }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-base text-gray-600", children: "or click to browse your files" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-gray-500", children: "Supported formats: PNG, JPEG (max 10MB per file)" })
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-gray-500", children: "Supported formats: PNG, JPEG, PDF (max 10MB per file)" })
               ] })
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -41324,7 +41594,7 @@ const UploadInvoice = () => {
               {
                 type: "file",
                 multiple: true,
-                accept: ".png,.jpg,.jpeg",
+                accept: ".png,.jpg,.jpeg,.pdf",
                 onChange: handleFileSelect,
                 className: "hidden",
                 id: "file-upload"
@@ -41343,72 +41613,2057 @@ const UploadInvoice = () => {
             )
           ] }) })
         }
-      )
-    ] }),
-    files.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "p-8 relative bg-white", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-6", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between border-b pb-4", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-xl font-semibold text-gray-900", children: "Selected Images" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-600 bg-gray-50 px-4 py-1.5 rounded-full border border-gray-200", children: [
-            files.length,
-            " ",
-            files.length === 1 ? "image" : "images",
-            " selected"
-          ] })
+      ),
+      files.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-6", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between border-b pb-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-lg font-semibold text-gray-900", children: "Selected Files" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-600 bg-gray-50 px-4 py-1.5 rounded-full border border-gray-200", children: [
+              files.length,
+              " ",
+              files.length === 1 ? "file" : "files",
+              " selected"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Button,
+            {
+              onClick: handleUpload,
+              disabled: isUploading,
+              className: "gap-2 bg-black hover:bg-gray-800 text-white shadow-sm hover:shadow-md transition-all px-5",
+              size: "sm",
+              children: isUploading ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium", children: "Processing..." }) }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-4 w-4" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-medium", children: [
+                  "Upload ",
+                  files.length,
+                  " ",
+                  files.length === 1 ? "File" : "Files"
+                ] })
+              ] })
+            }
+          )
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          Button,
-          {
-            onClick: handleUpload,
-            disabled: isUploading,
-            className: "gap-2 bg-black hover:bg-gray-800 text-white shadow-sm hover:shadow-md transition-all px-5",
-            size: "sm",
-            children: isUploading ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium", children: "Processing..." }) }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-4 w-4" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-medium", children: [
-                "Upload ",
-                files.length,
-                " ",
-                files.length === 1 ? "Image" : "Images"
+        isUploading && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-sm text-gray-600", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Uploading files..." }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+              uploadProgress,
+              "%"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Progress, { value: uploadProgress, className: "h-2" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-4", children: files.map((file, index2) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "border border-gray-200 rounded-xl p-5 space-y-2 bg-white hover:bg-gray-50 transition-all duration-200", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-3 rounded-lg bg-gray-50", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-6 w-6 text-gray-500" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-gray-900", children: file.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-500", children: [
+                (file.size / (1024 * 1024)).toFixed(2),
+                " MB"
               ] })
             ] })
-          }
-        )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Button,
+            {
+              variant: "ghost",
+              size: "icon",
+              onClick: () => removeFile(index2),
+              className: "h-9 w-9 hover:bg-red-50 hover:text-red-500 transition-colors duration-200",
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" })
+            }
+          )
+        ] }) }, `${file.name}-${index2}`)) })
+      ] })
+    ] })
+  ] });
+};
+const UploadBankStatements = () => {
+  const [files, setFiles] = reactExports.useState([]);
+  const [isDragging, setIsDragging] = reactExports.useState(false);
+  const [isUploading, setIsUploading] = reactExports.useState(false);
+  const [uploadProgress, setUploadProgress] = reactExports.useState(0);
+  const { toast: toast2 } = useToast();
+  const validateFiles = (fileList) => {
+    return Array.from(fileList).filter((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        toast2({
+          title: "File too large",
+          description: `${file.name} exceeds the 10MB limit.`,
+          variant: "destructive"
+        });
+        return false;
+      }
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast2({
+          title: "Invalid file type",
+          description: `${file.name} is not a supported format. Please use PNG, JPEG, or PDF files only.`,
+          variant: "destructive"
+        });
+        return false;
+      }
+      return true;
+    });
+  };
+  const handleDragEnter = reactExports.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+  const handleDragLeave = reactExports.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+  const handleDragOver = reactExports.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  }, [isDragging]);
+  const handleDrop = reactExports.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const droppedFiles = e.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
+      const validFiles = validateFiles(droppedFiles);
+      if (validFiles.length) {
+        setFiles((prev) => [...prev, ...validFiles]);
+        toast2({
+          title: "Files added",
+          description: `Added ${validFiles.length} file(s) to upload.`
+        });
+      }
+    }
+  }, [toast2]);
+  const handleFileSelect = reactExports.useCallback((e) => {
+    const selectedFiles = e.target.files;
+    if (selectedFiles && selectedFiles.length > 0) {
+      const validFiles = validateFiles(selectedFiles);
+      if (validFiles.length) {
+        setFiles((prev) => [...prev, ...validFiles]);
+        toast2({
+          title: "Files added",
+          description: `Added ${validFiles.length} file(s) to upload.`
+        });
+      }
+    }
+    e.target.value = "";
+  }, [toast2]);
+  const removeFile = reactExports.useCallback((index2) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index2));
+  }, []);
+  const handleUpload = async () => {
+    if (!files.length) {
+      toast2({
+        title: "No files selected",
+        description: "Please select at least one file to upload.",
+        variant: "destructive"
+      });
+      return;
+    }
+    setIsUploading(true);
+    setUploadProgress(0);
+    try {
+      setUploadProgress(25);
+      const { error } = await uploadDocuments({
+        files,
+        type: "BANK_STATEMENT"
+      });
+      if (error) {
+        throw error;
+      }
+      setUploadProgress(100);
+      toast2({
+        title: "Upload completed",
+        description: `${files.length} ${files.length === 1 ? "file" : "files"} uploaded successfully for processing.`
+      });
+      setFiles([]);
+    } catch (err) {
+      console.error("Upload error:", err);
+      toast2({
+        title: "Upload failed",
+        description: "There was an error uploading your files. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-6", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center space-y-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-2xl font-bold tracking-tight", children: "Upload Bank Statements" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500", children: "Upload your bank statements for processing" })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-6", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bg-gradient-to-br from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { className: "text-sm font-bold mb-2 block text-gray-900", children: "Document Type" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between rounded-md border-2 border-primary bg-white px-3 py-2 shadow-sm", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Building2, { className: "h-2 w-2 text-white" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-gray-900 text-sm", children: "Bank Statement" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs font-medium text-gray-500", children: "Monthly or quarterly statements" })
+        ] })
       ] }),
-      isUploading && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-sm text-gray-600", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Uploading files..." }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-            uploadProgress,
-            "%"
-          ] })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Progress, { value: uploadProgress, className: "h-2" })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-4", children: files.map((file, index2) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "border border-gray-200 rounded-xl p-5 space-y-2 bg-white hover:bg-gray-50 transition-all duration-200", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-4", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-3 rounded-lg bg-gray-50", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-6 w-6 text-gray-500" }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-gray-900", children: file.name }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-500", children: [
-              (file.size / (1024 * 1024)).toFixed(2),
-              " MB"
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "div",
+        {
+          className: `p-10 border-2 border-dashed transition-all duration-200 bg-white rounded-xl ${isDragging ? "border-primary bg-primary/5" : "border-gray-300 group hover:border-gray-800 hover:bg-gray-50"}`,
+          onDragEnter: handleDragEnter,
+          onDragOver: handleDragOver,
+          onDragLeave: handleDragLeave,
+          onDrop: handleDrop,
+          children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-center", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center gap-6", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `rounded-full p-5 transition-colors duration-200 ${isDragging ? "bg-primary/10" : "bg-gray-50"}`, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: `h-10 w-10 transition-colors duration-200 ${isDragging ? "text-primary" : "text-gray-500"}` }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-xl font-medium text-gray-900", children: "Drag and drop your bank statements here" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-base text-gray-600", children: "or click to browse your files" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-sm text-gray-500", children: "Supported formats: PNG, JPEG, PDF (max 10MB per file)" })
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                type: "file",
+                multiple: true,
+                accept: ".png,.jpg,.jpeg,.pdf",
+                onChange: handleFileSelect,
+                className: "hidden",
+                id: "file-upload"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "label",
+              {
+                htmlFor: "file-upload",
+                className: "cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-12 px-8 shadow-sm hover:shadow-md",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-4 w-4 mr-2 text-gray-600" }),
+                  "Browse Files"
+                ]
+              }
+            )
+          ] }) })
+        }
+      ),
+      files.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-6", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between border-b pb-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-lg font-semibold text-gray-900", children: "Selected Files" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-600 bg-gray-50 px-4 py-1.5 rounded-full border border-gray-200", children: [
+              files.length,
+              " ",
+              files.length === 1 ? "file" : "files",
+              " selected"
             ] })
-          ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Button,
+            {
+              onClick: handleUpload,
+              disabled: isUploading,
+              className: "gap-2 bg-black hover:bg-gray-800 text-white shadow-sm hover:shadow-md transition-all px-5",
+              size: "sm",
+              children: isUploading ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium", children: "Processing..." }) }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "h-4 w-4" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-medium", children: [
+                  "Upload ",
+                  files.length,
+                  " ",
+                  files.length === 1 ? "File" : "Files"
+                ] })
+              ] })
+            }
+          )
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          Button,
-          {
-            variant: "ghost",
-            size: "icon",
-            onClick: () => removeFile(index2),
-            className: "h-9 w-9 hover:bg-red-50 hover:text-red-500 transition-colors duration-200",
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" })
-          }
-        )
-      ] }) }, `${file.name}-${index2}`)) })
+        isUploading && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-3", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-sm text-gray-600", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Uploading files..." }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+              uploadProgress,
+              "%"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Progress, { value: uploadProgress, className: "h-2" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-4", children: files.map((file, index2) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "border border-gray-200 rounded-xl p-5 space-y-2 bg-white hover:bg-gray-50 transition-all duration-200", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-4", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-3 rounded-lg bg-gray-50", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-6 w-6 text-gray-500" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-gray-900", children: file.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-sm text-gray-500", children: [
+                (file.size / (1024 * 1024)).toFixed(2),
+                " MB"
+              ] })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Button,
+            {
+              variant: "ghost",
+              size: "icon",
+              onClick: () => removeFile(index2),
+              className: "h-9 w-9 hover:bg-red-50 hover:text-red-500 transition-colors duration-200",
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" })
+            }
+          )
+        ] }) }, `${file.name}-${index2}`)) })
+      ] })
+    ] })
+  ] });
+};
+const UploadDocuments = () => {
+  const [activeTab, setActiveTab] = reactExports.useState("invoices-expenses");
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "container mx-auto px-4 py-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-4xl mx-auto space-y-8", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center space-y-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-3xl font-bold tracking-tight", children: "Upload Documents" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500 text-lg", children: "Upload your invoices, expenses, and bank statements" })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Card, { className: "p-6", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Tabs, { value: activeTab, onValueChange: setActiveTab, className: "w-full", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(TabsList, { className: "grid w-full grid-cols-2 mb-6", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(TabsTrigger, { value: "invoices-expenses", className: "flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Receipt, { className: "h-4 w-4" }),
+          "Invoices & Expenses"
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(TabsTrigger, { value: "bank-statements", className: "flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Building2, { className: "h-4 w-4" }),
+          "Bank Statements"
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(TabsContent, { value: "invoices-expenses", className: "space-y-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(UploadInvoicesExpenses, {}) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(TabsContent, { value: "bank-statements", className: "space-y-6", children: /* @__PURE__ */ jsxRuntimeExports.jsx(UploadBankStatements, {}) })
     ] }) })
   ] }) });
+};
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  {
+    variants: {
+      variant: {
+        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+        secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+        outline: "text-foreground"
+      }
+    },
+    defaultVariants: {
+      variant: "default"
+    }
+  }
+);
+function Badge({ className, variant, ...props }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn(badgeVariants({ variant }), className), ...props });
+}
+function clamp(value, [min2, max2]) {
+  return Math.min(max2, Math.max(min2, value));
+}
+var OPEN_KEYS = [" ", "Enter", "ArrowUp", "ArrowDown"];
+var SELECTION_KEYS = [" ", "Enter"];
+var SELECT_NAME = "Select";
+var [Collection$1, useCollection$1, createCollectionScope$1] = createCollection(SELECT_NAME);
+var [createSelectContext, createSelectScope] = createContextScope(SELECT_NAME, [
+  createCollectionScope$1,
+  createPopperScope
+]);
+var usePopperScope = createPopperScope();
+var [SelectProvider, useSelectContext] = createSelectContext(SELECT_NAME);
+var [SelectNativeOptionsProvider, useSelectNativeOptionsContext] = createSelectContext(SELECT_NAME);
+var Select$1 = (props) => {
+  const {
+    __scopeSelect,
+    children,
+    open: openProp,
+    defaultOpen,
+    onOpenChange,
+    value: valueProp,
+    defaultValue,
+    onValueChange,
+    dir,
+    name,
+    autoComplete,
+    disabled,
+    required,
+    form
+  } = props;
+  const popperScope = usePopperScope(__scopeSelect);
+  const [trigger, setTrigger] = reactExports.useState(null);
+  const [valueNode, setValueNode] = reactExports.useState(null);
+  const [valueNodeHasChildren, setValueNodeHasChildren] = reactExports.useState(false);
+  const direction = useDirection(dir);
+  const [open, setOpen] = useControllableState({
+    prop: openProp,
+    defaultProp: defaultOpen ?? false,
+    onChange: onOpenChange,
+    caller: SELECT_NAME
+  });
+  const [value, setValue] = useControllableState({
+    prop: valueProp,
+    defaultProp: defaultValue,
+    onChange: onValueChange,
+    caller: SELECT_NAME
+  });
+  const triggerPointerDownPosRef = reactExports.useRef(null);
+  const isFormControl = trigger ? form || !!trigger.closest("form") : true;
+  const [nativeOptionsSet, setNativeOptionsSet] = reactExports.useState(/* @__PURE__ */ new Set());
+  const nativeSelectKey = Array.from(nativeOptionsSet).map((option) => option.props.value).join(";");
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Root2$5, { ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    SelectProvider,
+    {
+      required,
+      scope: __scopeSelect,
+      trigger,
+      onTriggerChange: setTrigger,
+      valueNode,
+      onValueNodeChange: setValueNode,
+      valueNodeHasChildren,
+      onValueNodeHasChildrenChange: setValueNodeHasChildren,
+      contentId: useId(),
+      value,
+      onValueChange: setValue,
+      open,
+      onOpenChange: setOpen,
+      dir: direction,
+      triggerPointerDownPosRef,
+      disabled,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$1.Provider, { scope: __scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          SelectNativeOptionsProvider,
+          {
+            scope: props.__scopeSelect,
+            onNativeOptionAdd: reactExports.useCallback((option) => {
+              setNativeOptionsSet((prev) => new Set(prev).add(option));
+            }, []),
+            onNativeOptionRemove: reactExports.useCallback((option) => {
+              setNativeOptionsSet((prev) => {
+                const optionsSet = new Set(prev);
+                optionsSet.delete(option);
+                return optionsSet;
+              });
+            }, []),
+            children
+          }
+        ) }),
+        isFormControl ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          SelectBubbleInput,
+          {
+            "aria-hidden": true,
+            required,
+            tabIndex: -1,
+            name,
+            autoComplete,
+            value,
+            onChange: (event) => setValue(event.target.value),
+            disabled,
+            form,
+            children: [
+              value === void 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "" }) : null,
+              Array.from(nativeOptionsSet)
+            ]
+          },
+          nativeSelectKey
+        ) : null
+      ]
+    }
+  ) });
+};
+Select$1.displayName = SELECT_NAME;
+var TRIGGER_NAME = "SelectTrigger";
+var SelectTrigger$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, disabled = false, ...triggerProps } = props;
+    const popperScope = usePopperScope(__scopeSelect);
+    const context = useSelectContext(TRIGGER_NAME, __scopeSelect);
+    const isDisabled = context.disabled || disabled;
+    const composedRefs = useComposedRefs(forwardedRef, context.onTriggerChange);
+    const getItems = useCollection$1(__scopeSelect);
+    const pointerTypeRef = reactExports.useRef("touch");
+    const [searchRef, handleTypeaheadSearch, resetTypeahead] = useTypeaheadSearch((search) => {
+      const enabledItems = getItems().filter((item) => !item.disabled);
+      const currentItem = enabledItems.find((item) => item.value === context.value);
+      const nextItem = findNextItem(enabledItems, search, currentItem);
+      if (nextItem !== void 0) {
+        context.onValueChange(nextItem.value);
+      }
+    });
+    const handleOpen = (pointerEvent) => {
+      if (!isDisabled) {
+        context.onOpenChange(true);
+        resetTypeahead();
+      }
+      if (pointerEvent) {
+        context.triggerPointerDownPosRef.current = {
+          x: Math.round(pointerEvent.pageX),
+          y: Math.round(pointerEvent.pageY)
+        };
+      }
+    };
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Anchor, { asChild: true, ...popperScope, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Primitive.button,
+      {
+        type: "button",
+        role: "combobox",
+        "aria-controls": context.contentId,
+        "aria-expanded": context.open,
+        "aria-required": context.required,
+        "aria-autocomplete": "none",
+        dir: context.dir,
+        "data-state": context.open ? "open" : "closed",
+        disabled: isDisabled,
+        "data-disabled": isDisabled ? "" : void 0,
+        "data-placeholder": shouldShowPlaceholder(context.value) ? "" : void 0,
+        ...triggerProps,
+        ref: composedRefs,
+        onClick: composeEventHandlers$1(triggerProps.onClick, (event) => {
+          event.currentTarget.focus();
+          if (pointerTypeRef.current !== "mouse") {
+            handleOpen(event);
+          }
+        }),
+        onPointerDown: composeEventHandlers$1(triggerProps.onPointerDown, (event) => {
+          pointerTypeRef.current = event.pointerType;
+          const target = event.target;
+          if (target.hasPointerCapture(event.pointerId)) {
+            target.releasePointerCapture(event.pointerId);
+          }
+          if (event.button === 0 && event.ctrlKey === false && event.pointerType === "mouse") {
+            handleOpen(event);
+            event.preventDefault();
+          }
+        }),
+        onKeyDown: composeEventHandlers$1(triggerProps.onKeyDown, (event) => {
+          const isTypingAhead = searchRef.current !== "";
+          const isModifierKey = event.ctrlKey || event.altKey || event.metaKey;
+          if (!isModifierKey && event.key.length === 1) handleTypeaheadSearch(event.key);
+          if (isTypingAhead && event.key === " ") return;
+          if (OPEN_KEYS.includes(event.key)) {
+            handleOpen();
+            event.preventDefault();
+          }
+        })
+      }
+    ) });
+  }
+);
+SelectTrigger$1.displayName = TRIGGER_NAME;
+var VALUE_NAME = "SelectValue";
+var SelectValue$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, className, style, children, placeholder = "", ...valueProps } = props;
+    const context = useSelectContext(VALUE_NAME, __scopeSelect);
+    const { onValueNodeHasChildrenChange } = context;
+    const hasChildren = children !== void 0;
+    const composedRefs = useComposedRefs(forwardedRef, context.onValueNodeChange);
+    useLayoutEffect2(() => {
+      onValueNodeHasChildrenChange(hasChildren);
+    }, [onValueNodeHasChildrenChange, hasChildren]);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Primitive.span,
+      {
+        ...valueProps,
+        ref: composedRefs,
+        style: { pointerEvents: "none" },
+        children: shouldShowPlaceholder(context.value) ? /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: placeholder }) : children
+      }
+    );
+  }
+);
+SelectValue$1.displayName = VALUE_NAME;
+var ICON_NAME = "SelectIcon";
+var SelectIcon = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, children, ...iconProps } = props;
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.span, { "aria-hidden": true, ...iconProps, ref: forwardedRef, children: children || "▼" });
+  }
+);
+SelectIcon.displayName = ICON_NAME;
+var PORTAL_NAME = "SelectPortal";
+var SelectPortal = (props) => {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$3, { asChild: true, ...props });
+};
+SelectPortal.displayName = PORTAL_NAME;
+var CONTENT_NAME = "SelectContent";
+var SelectContent$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const context = useSelectContext(CONTENT_NAME, props.__scopeSelect);
+    const [fragment, setFragment] = reactExports.useState();
+    useLayoutEffect2(() => {
+      setFragment(new DocumentFragment());
+    }, []);
+    if (!context.open) {
+      const frag = fragment;
+      return frag ? reactDomExports.createPortal(
+        /* @__PURE__ */ jsxRuntimeExports.jsx(SelectContentProvider, { scope: props.__scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$1.Slot, { scope: props.__scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { children: props.children }) }) }),
+        frag
+      ) : null;
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(SelectContentImpl, { ...props, ref: forwardedRef });
+  }
+);
+SelectContent$1.displayName = CONTENT_NAME;
+var CONTENT_MARGIN = 10;
+var [SelectContentProvider, useSelectContentContext] = createSelectContext(CONTENT_NAME);
+var CONTENT_IMPL_NAME = "SelectContentImpl";
+var Slot = createSlot("SelectContent.RemoveScroll");
+var SelectContentImpl = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeSelect,
+      position = "item-aligned",
+      onCloseAutoFocus,
+      onEscapeKeyDown,
+      onPointerDownOutside,
+      //
+      // PopperContent props
+      side,
+      sideOffset,
+      align,
+      alignOffset,
+      arrowPadding,
+      collisionBoundary,
+      collisionPadding,
+      sticky,
+      hideWhenDetached,
+      avoidCollisions,
+      //
+      ...contentProps
+    } = props;
+    const context = useSelectContext(CONTENT_NAME, __scopeSelect);
+    const [content, setContent] = reactExports.useState(null);
+    const [viewport, setViewport] = reactExports.useState(null);
+    const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
+    const [selectedItem, setSelectedItem] = reactExports.useState(null);
+    const [selectedItemText, setSelectedItemText] = reactExports.useState(
+      null
+    );
+    const getItems = useCollection$1(__scopeSelect);
+    const [isPositioned, setIsPositioned] = reactExports.useState(false);
+    const firstValidItemFoundRef = reactExports.useRef(false);
+    reactExports.useEffect(() => {
+      if (content) return hideOthers(content);
+    }, [content]);
+    useFocusGuards();
+    const focusFirst2 = reactExports.useCallback(
+      (candidates) => {
+        const [firstItem, ...restItems] = getItems().map((item) => item.ref.current);
+        const [lastItem] = restItems.slice(-1);
+        const PREVIOUSLY_FOCUSED_ELEMENT = document.activeElement;
+        for (const candidate of candidates) {
+          if (candidate === PREVIOUSLY_FOCUSED_ELEMENT) return;
+          candidate == null ? void 0 : candidate.scrollIntoView({ block: "nearest" });
+          if (candidate === firstItem && viewport) viewport.scrollTop = 0;
+          if (candidate === lastItem && viewport) viewport.scrollTop = viewport.scrollHeight;
+          candidate == null ? void 0 : candidate.focus();
+          if (document.activeElement !== PREVIOUSLY_FOCUSED_ELEMENT) return;
+        }
+      },
+      [getItems, viewport]
+    );
+    const focusSelectedItem = reactExports.useCallback(
+      () => focusFirst2([selectedItem, content]),
+      [focusFirst2, selectedItem, content]
+    );
+    reactExports.useEffect(() => {
+      if (isPositioned) {
+        focusSelectedItem();
+      }
+    }, [isPositioned, focusSelectedItem]);
+    const { onOpenChange, triggerPointerDownPosRef } = context;
+    reactExports.useEffect(() => {
+      if (content) {
+        let pointerMoveDelta = { x: 0, y: 0 };
+        const handlePointerMove = (event) => {
+          var _a, _b;
+          pointerMoveDelta = {
+            x: Math.abs(Math.round(event.pageX) - (((_a = triggerPointerDownPosRef.current) == null ? void 0 : _a.x) ?? 0)),
+            y: Math.abs(Math.round(event.pageY) - (((_b = triggerPointerDownPosRef.current) == null ? void 0 : _b.y) ?? 0))
+          };
+        };
+        const handlePointerUp = (event) => {
+          if (pointerMoveDelta.x <= 10 && pointerMoveDelta.y <= 10) {
+            event.preventDefault();
+          } else {
+            if (!content.contains(event.target)) {
+              onOpenChange(false);
+            }
+          }
+          document.removeEventListener("pointermove", handlePointerMove);
+          triggerPointerDownPosRef.current = null;
+        };
+        if (triggerPointerDownPosRef.current !== null) {
+          document.addEventListener("pointermove", handlePointerMove);
+          document.addEventListener("pointerup", handlePointerUp, { capture: true, once: true });
+        }
+        return () => {
+          document.removeEventListener("pointermove", handlePointerMove);
+          document.removeEventListener("pointerup", handlePointerUp, { capture: true });
+        };
+      }
+    }, [content, onOpenChange, triggerPointerDownPosRef]);
+    reactExports.useEffect(() => {
+      const close = () => onOpenChange(false);
+      window.addEventListener("blur", close);
+      window.addEventListener("resize", close);
+      return () => {
+        window.removeEventListener("blur", close);
+        window.removeEventListener("resize", close);
+      };
+    }, [onOpenChange]);
+    const [searchRef, handleTypeaheadSearch] = useTypeaheadSearch((search) => {
+      const enabledItems = getItems().filter((item) => !item.disabled);
+      const currentItem = enabledItems.find((item) => item.ref.current === document.activeElement);
+      const nextItem = findNextItem(enabledItems, search, currentItem);
+      if (nextItem) {
+        setTimeout(() => nextItem.ref.current.focus());
+      }
+    });
+    const itemRefCallback = reactExports.useCallback(
+      (node, value, disabled) => {
+        const isFirstValidItem = !firstValidItemFoundRef.current && !disabled;
+        const isSelectedItem = context.value !== void 0 && context.value === value;
+        if (isSelectedItem || isFirstValidItem) {
+          setSelectedItem(node);
+          if (isFirstValidItem) firstValidItemFoundRef.current = true;
+        }
+      },
+      [context.value]
+    );
+    const handleItemLeave = reactExports.useCallback(() => content == null ? void 0 : content.focus(), [content]);
+    const itemTextRefCallback = reactExports.useCallback(
+      (node, value, disabled) => {
+        const isFirstValidItem = !firstValidItemFoundRef.current && !disabled;
+        const isSelectedItem = context.value !== void 0 && context.value === value;
+        if (isSelectedItem || isFirstValidItem) {
+          setSelectedItemText(node);
+        }
+      },
+      [context.value]
+    );
+    const SelectPosition = position === "popper" ? SelectPopperPosition : SelectItemAlignedPosition;
+    const popperContentProps = SelectPosition === SelectPopperPosition ? {
+      side,
+      sideOffset,
+      align,
+      alignOffset,
+      arrowPadding,
+      collisionBoundary,
+      collisionPadding,
+      sticky,
+      hideWhenDetached,
+      avoidCollisions
+    } : {};
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      SelectContentProvider,
+      {
+        scope: __scopeSelect,
+        content,
+        viewport,
+        onViewportChange: setViewport,
+        itemRefCallback,
+        selectedItem,
+        onItemLeave: handleItemLeave,
+        itemTextRefCallback,
+        focusSelectedItem,
+        selectedItemText,
+        position,
+        isPositioned,
+        searchRef,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(ReactRemoveScroll, { as: Slot, allowPinchZoom: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          FocusScope,
+          {
+            asChild: true,
+            trapped: context.open,
+            onMountAutoFocus: (event) => {
+              event.preventDefault();
+            },
+            onUnmountAutoFocus: composeEventHandlers$1(onCloseAutoFocus, (event) => {
+              var _a;
+              (_a = context.trigger) == null ? void 0 : _a.focus({ preventScroll: true });
+              event.preventDefault();
+            }),
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              DismissableLayer,
+              {
+                asChild: true,
+                disableOutsidePointerEvents: true,
+                onEscapeKeyDown,
+                onPointerDownOutside,
+                onFocusOutside: (event) => event.preventDefault(),
+                onDismiss: () => context.onOpenChange(false),
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  SelectPosition,
+                  {
+                    role: "listbox",
+                    id: context.contentId,
+                    "data-state": context.open ? "open" : "closed",
+                    dir: context.dir,
+                    onContextMenu: (event) => event.preventDefault(),
+                    ...contentProps,
+                    ...popperContentProps,
+                    onPlaced: () => setIsPositioned(true),
+                    ref: composedRefs,
+                    style: {
+                      // flex layout so we can place the scroll buttons properly
+                      display: "flex",
+                      flexDirection: "column",
+                      // reset the outline by default as the content MAY get focused
+                      outline: "none",
+                      ...contentProps.style
+                    },
+                    onKeyDown: composeEventHandlers$1(contentProps.onKeyDown, (event) => {
+                      const isModifierKey = event.ctrlKey || event.altKey || event.metaKey;
+                      if (event.key === "Tab") event.preventDefault();
+                      if (!isModifierKey && event.key.length === 1) handleTypeaheadSearch(event.key);
+                      if (["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) {
+                        const items = getItems().filter((item) => !item.disabled);
+                        let candidateNodes = items.map((item) => item.ref.current);
+                        if (["ArrowUp", "End"].includes(event.key)) {
+                          candidateNodes = candidateNodes.slice().reverse();
+                        }
+                        if (["ArrowUp", "ArrowDown"].includes(event.key)) {
+                          const currentElement = event.target;
+                          const currentIndex = candidateNodes.indexOf(currentElement);
+                          candidateNodes = candidateNodes.slice(currentIndex + 1);
+                        }
+                        setTimeout(() => focusFirst2(candidateNodes));
+                        event.preventDefault();
+                      }
+                    })
+                  }
+                )
+              }
+            )
+          }
+        ) })
+      }
+    );
+  }
+);
+SelectContentImpl.displayName = CONTENT_IMPL_NAME;
+var ITEM_ALIGNED_POSITION_NAME = "SelectItemAlignedPosition";
+var SelectItemAlignedPosition = reactExports.forwardRef((props, forwardedRef) => {
+  const { __scopeSelect, onPlaced, ...popperProps } = props;
+  const context = useSelectContext(CONTENT_NAME, __scopeSelect);
+  const contentContext = useSelectContentContext(CONTENT_NAME, __scopeSelect);
+  const [contentWrapper, setContentWrapper] = reactExports.useState(null);
+  const [content, setContent] = reactExports.useState(null);
+  const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node));
+  const getItems = useCollection$1(__scopeSelect);
+  const shouldExpandOnScrollRef = reactExports.useRef(false);
+  const shouldRepositionRef = reactExports.useRef(true);
+  const { viewport, selectedItem, selectedItemText, focusSelectedItem } = contentContext;
+  const position = reactExports.useCallback(() => {
+    if (context.trigger && context.valueNode && contentWrapper && content && viewport && selectedItem && selectedItemText) {
+      const triggerRect = context.trigger.getBoundingClientRect();
+      const contentRect = content.getBoundingClientRect();
+      const valueNodeRect = context.valueNode.getBoundingClientRect();
+      const itemTextRect = selectedItemText.getBoundingClientRect();
+      if (context.dir !== "rtl") {
+        const itemTextOffset = itemTextRect.left - contentRect.left;
+        const left = valueNodeRect.left - itemTextOffset;
+        const leftDelta = triggerRect.left - left;
+        const minContentWidth = triggerRect.width + leftDelta;
+        const contentWidth = Math.max(minContentWidth, contentRect.width);
+        const rightEdge = window.innerWidth - CONTENT_MARGIN;
+        const clampedLeft = clamp(left, [
+          CONTENT_MARGIN,
+          // Prevents the content from going off the starting edge of the
+          // viewport. It may still go off the ending edge, but this can be
+          // controlled by the user since they may want to manage overflow in a
+          // specific way.
+          // https://github.com/radix-ui/primitives/issues/2049
+          Math.max(CONTENT_MARGIN, rightEdge - contentWidth)
+        ]);
+        contentWrapper.style.minWidth = minContentWidth + "px";
+        contentWrapper.style.left = clampedLeft + "px";
+      } else {
+        const itemTextOffset = contentRect.right - itemTextRect.right;
+        const right = window.innerWidth - valueNodeRect.right - itemTextOffset;
+        const rightDelta = window.innerWidth - triggerRect.right - right;
+        const minContentWidth = triggerRect.width + rightDelta;
+        const contentWidth = Math.max(minContentWidth, contentRect.width);
+        const leftEdge = window.innerWidth - CONTENT_MARGIN;
+        const clampedRight = clamp(right, [
+          CONTENT_MARGIN,
+          Math.max(CONTENT_MARGIN, leftEdge - contentWidth)
+        ]);
+        contentWrapper.style.minWidth = minContentWidth + "px";
+        contentWrapper.style.right = clampedRight + "px";
+      }
+      const items = getItems();
+      const availableHeight = window.innerHeight - CONTENT_MARGIN * 2;
+      const itemsHeight = viewport.scrollHeight;
+      const contentStyles = window.getComputedStyle(content);
+      const contentBorderTopWidth = parseInt(contentStyles.borderTopWidth, 10);
+      const contentPaddingTop = parseInt(contentStyles.paddingTop, 10);
+      const contentBorderBottomWidth = parseInt(contentStyles.borderBottomWidth, 10);
+      const contentPaddingBottom = parseInt(contentStyles.paddingBottom, 10);
+      const fullContentHeight = contentBorderTopWidth + contentPaddingTop + itemsHeight + contentPaddingBottom + contentBorderBottomWidth;
+      const minContentHeight = Math.min(selectedItem.offsetHeight * 5, fullContentHeight);
+      const viewportStyles = window.getComputedStyle(viewport);
+      const viewportPaddingTop = parseInt(viewportStyles.paddingTop, 10);
+      const viewportPaddingBottom = parseInt(viewportStyles.paddingBottom, 10);
+      const topEdgeToTriggerMiddle = triggerRect.top + triggerRect.height / 2 - CONTENT_MARGIN;
+      const triggerMiddleToBottomEdge = availableHeight - topEdgeToTriggerMiddle;
+      const selectedItemHalfHeight = selectedItem.offsetHeight / 2;
+      const itemOffsetMiddle = selectedItem.offsetTop + selectedItemHalfHeight;
+      const contentTopToItemMiddle = contentBorderTopWidth + contentPaddingTop + itemOffsetMiddle;
+      const itemMiddleToContentBottom = fullContentHeight - contentTopToItemMiddle;
+      const willAlignWithoutTopOverflow = contentTopToItemMiddle <= topEdgeToTriggerMiddle;
+      if (willAlignWithoutTopOverflow) {
+        const isLastItem = items.length > 0 && selectedItem === items[items.length - 1].ref.current;
+        contentWrapper.style.bottom = "0px";
+        const viewportOffsetBottom = content.clientHeight - viewport.offsetTop - viewport.offsetHeight;
+        const clampedTriggerMiddleToBottomEdge = Math.max(
+          triggerMiddleToBottomEdge,
+          selectedItemHalfHeight + // viewport might have padding bottom, include it to avoid a scrollable viewport
+          (isLastItem ? viewportPaddingBottom : 0) + viewportOffsetBottom + contentBorderBottomWidth
+        );
+        const height = contentTopToItemMiddle + clampedTriggerMiddleToBottomEdge;
+        contentWrapper.style.height = height + "px";
+      } else {
+        const isFirstItem = items.length > 0 && selectedItem === items[0].ref.current;
+        contentWrapper.style.top = "0px";
+        const clampedTopEdgeToTriggerMiddle = Math.max(
+          topEdgeToTriggerMiddle,
+          contentBorderTopWidth + viewport.offsetTop + // viewport might have padding top, include it to avoid a scrollable viewport
+          (isFirstItem ? viewportPaddingTop : 0) + selectedItemHalfHeight
+        );
+        const height = clampedTopEdgeToTriggerMiddle + itemMiddleToContentBottom;
+        contentWrapper.style.height = height + "px";
+        viewport.scrollTop = contentTopToItemMiddle - topEdgeToTriggerMiddle + viewport.offsetTop;
+      }
+      contentWrapper.style.margin = `${CONTENT_MARGIN}px 0`;
+      contentWrapper.style.minHeight = minContentHeight + "px";
+      contentWrapper.style.maxHeight = availableHeight + "px";
+      onPlaced == null ? void 0 : onPlaced();
+      requestAnimationFrame(() => shouldExpandOnScrollRef.current = true);
+    }
+  }, [
+    getItems,
+    context.trigger,
+    context.valueNode,
+    contentWrapper,
+    content,
+    viewport,
+    selectedItem,
+    selectedItemText,
+    context.dir,
+    onPlaced
+  ]);
+  useLayoutEffect2(() => position(), [position]);
+  const [contentZIndex, setContentZIndex] = reactExports.useState();
+  useLayoutEffect2(() => {
+    if (content) setContentZIndex(window.getComputedStyle(content).zIndex);
+  }, [content]);
+  const handleScrollButtonChange = reactExports.useCallback(
+    (node) => {
+      if (node && shouldRepositionRef.current === true) {
+        position();
+        focusSelectedItem == null ? void 0 : focusSelectedItem();
+        shouldRepositionRef.current = false;
+      }
+    },
+    [position, focusSelectedItem]
+  );
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    SelectViewportProvider,
+    {
+      scope: __scopeSelect,
+      contentWrapper,
+      shouldExpandOnScrollRef,
+      onScrollButtonChange: handleScrollButtonChange,
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "div",
+        {
+          ref: setContentWrapper,
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            position: "fixed",
+            zIndex: contentZIndex
+          },
+          children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Primitive.div,
+            {
+              ...popperProps,
+              ref: composedRefs,
+              style: {
+                // When we get the height of the content, it includes borders. If we were to set
+                // the height without having `boxSizing: 'border-box'` it would be too big.
+                boxSizing: "border-box",
+                // We need to ensure the content doesn't get taller than the wrapper
+                maxHeight: "100%",
+                ...popperProps.style
+              }
+            }
+          )
+        }
+      )
+    }
+  );
+});
+SelectItemAlignedPosition.displayName = ITEM_ALIGNED_POSITION_NAME;
+var POPPER_POSITION_NAME = "SelectPopperPosition";
+var SelectPopperPosition = reactExports.forwardRef((props, forwardedRef) => {
+  const {
+    __scopeSelect,
+    align = "start",
+    collisionPadding = CONTENT_MARGIN,
+    ...popperProps
+  } = props;
+  const popperScope = usePopperScope(__scopeSelect);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    Content$1,
+    {
+      ...popperScope,
+      ...popperProps,
+      ref: forwardedRef,
+      align,
+      collisionPadding,
+      style: {
+        // Ensure border-box for floating-ui calculations
+        boxSizing: "border-box",
+        ...popperProps.style,
+        // re-namespace exposed content custom properties
+        ...{
+          "--radix-select-content-transform-origin": "var(--radix-popper-transform-origin)",
+          "--radix-select-content-available-width": "var(--radix-popper-available-width)",
+          "--radix-select-content-available-height": "var(--radix-popper-available-height)",
+          "--radix-select-trigger-width": "var(--radix-popper-anchor-width)",
+          "--radix-select-trigger-height": "var(--radix-popper-anchor-height)"
+        }
+      }
+    }
+  );
+});
+SelectPopperPosition.displayName = POPPER_POSITION_NAME;
+var [SelectViewportProvider, useSelectViewportContext] = createSelectContext(CONTENT_NAME, {});
+var VIEWPORT_NAME$1 = "SelectViewport";
+var SelectViewport = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, nonce, ...viewportProps } = props;
+    const contentContext = useSelectContentContext(VIEWPORT_NAME$1, __scopeSelect);
+    const viewportContext = useSelectViewportContext(VIEWPORT_NAME$1, __scopeSelect);
+    const composedRefs = useComposedRefs(forwardedRef, contentContext.onViewportChange);
+    const prevScrollTopRef = reactExports.useRef(0);
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "style",
+        {
+          dangerouslySetInnerHTML: {
+            __html: `[data-radix-select-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-select-viewport]::-webkit-scrollbar{display:none}`
+          },
+          nonce
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Collection$1.Slot, { scope: __scopeSelect, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Primitive.div,
+        {
+          "data-radix-select-viewport": "",
+          role: "presentation",
+          ...viewportProps,
+          ref: composedRefs,
+          style: {
+            // we use position: 'relative' here on the `viewport` so that when we call
+            // `selectedItem.offsetTop` in calculations, the offset is relative to the viewport
+            // (independent of the scrollUpButton).
+            position: "relative",
+            flex: 1,
+            // Viewport should only be scrollable in the vertical direction.
+            // This won't work in vertical writing modes, so we'll need to
+            // revisit this if/when that is supported
+            // https://developer.chrome.com/blog/vertical-form-controls
+            overflow: "hidden auto",
+            ...viewportProps.style
+          },
+          onScroll: composeEventHandlers$1(viewportProps.onScroll, (event) => {
+            const viewport = event.currentTarget;
+            const { contentWrapper, shouldExpandOnScrollRef } = viewportContext;
+            if ((shouldExpandOnScrollRef == null ? void 0 : shouldExpandOnScrollRef.current) && contentWrapper) {
+              const scrolledBy = Math.abs(prevScrollTopRef.current - viewport.scrollTop);
+              if (scrolledBy > 0) {
+                const availableHeight = window.innerHeight - CONTENT_MARGIN * 2;
+                const cssMinHeight = parseFloat(contentWrapper.style.minHeight);
+                const cssHeight = parseFloat(contentWrapper.style.height);
+                const prevHeight = Math.max(cssMinHeight, cssHeight);
+                if (prevHeight < availableHeight) {
+                  const nextHeight = prevHeight + scrolledBy;
+                  const clampedNextHeight = Math.min(availableHeight, nextHeight);
+                  const heightDiff = nextHeight - clampedNextHeight;
+                  contentWrapper.style.height = clampedNextHeight + "px";
+                  if (contentWrapper.style.bottom === "0px") {
+                    viewport.scrollTop = heightDiff > 0 ? heightDiff : 0;
+                    contentWrapper.style.justifyContent = "flex-end";
+                  }
+                }
+              }
+            }
+            prevScrollTopRef.current = viewport.scrollTop;
+          })
+        }
+      ) })
+    ] });
+  }
+);
+SelectViewport.displayName = VIEWPORT_NAME$1;
+var GROUP_NAME = "SelectGroup";
+var [SelectGroupContextProvider, useSelectGroupContext] = createSelectContext(GROUP_NAME);
+var SelectGroup = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, ...groupProps } = props;
+    const groupId = useId();
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(SelectGroupContextProvider, { scope: __scopeSelect, id: groupId, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.div, { role: "group", "aria-labelledby": groupId, ...groupProps, ref: forwardedRef }) });
+  }
+);
+SelectGroup.displayName = GROUP_NAME;
+var LABEL_NAME = "SelectLabel";
+var SelectLabel$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, ...labelProps } = props;
+    const groupContext = useSelectGroupContext(LABEL_NAME, __scopeSelect);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.div, { id: groupContext.id, ...labelProps, ref: forwardedRef });
+  }
+);
+SelectLabel$1.displayName = LABEL_NAME;
+var ITEM_NAME = "SelectItem";
+var [SelectItemContextProvider, useSelectItemContext] = createSelectContext(ITEM_NAME);
+var SelectItem$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const {
+      __scopeSelect,
+      value,
+      disabled = false,
+      textValue: textValueProp,
+      ...itemProps
+    } = props;
+    const context = useSelectContext(ITEM_NAME, __scopeSelect);
+    const contentContext = useSelectContentContext(ITEM_NAME, __scopeSelect);
+    const isSelected = context.value === value;
+    const [textValue, setTextValue] = reactExports.useState(textValueProp ?? "");
+    const [isFocused, setIsFocused] = reactExports.useState(false);
+    const composedRefs = useComposedRefs(
+      forwardedRef,
+      (node) => {
+        var _a;
+        return (_a = contentContext.itemRefCallback) == null ? void 0 : _a.call(contentContext, node, value, disabled);
+      }
+    );
+    const textId = useId();
+    const pointerTypeRef = reactExports.useRef("touch");
+    const handleSelect = () => {
+      if (!disabled) {
+        context.onValueChange(value);
+        context.onOpenChange(false);
+      }
+    };
+    if (value === "") {
+      throw new Error(
+        "A <Select.Item /> must have a value prop that is not an empty string. This is because the Select value can be set to an empty string to clear the selection and show the placeholder."
+      );
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      SelectItemContextProvider,
+      {
+        scope: __scopeSelect,
+        value,
+        disabled,
+        textId,
+        isSelected,
+        onItemTextChange: reactExports.useCallback((node) => {
+          setTextValue((prevTextValue) => prevTextValue || ((node == null ? void 0 : node.textContent) ?? "").trim());
+        }, []),
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Collection$1.ItemSlot,
+          {
+            scope: __scopeSelect,
+            value,
+            disabled,
+            textValue,
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Primitive.div,
+              {
+                role: "option",
+                "aria-labelledby": textId,
+                "data-highlighted": isFocused ? "" : void 0,
+                "aria-selected": isSelected && isFocused,
+                "data-state": isSelected ? "checked" : "unchecked",
+                "aria-disabled": disabled || void 0,
+                "data-disabled": disabled ? "" : void 0,
+                tabIndex: disabled ? void 0 : -1,
+                ...itemProps,
+                ref: composedRefs,
+                onFocus: composeEventHandlers$1(itemProps.onFocus, () => setIsFocused(true)),
+                onBlur: composeEventHandlers$1(itemProps.onBlur, () => setIsFocused(false)),
+                onClick: composeEventHandlers$1(itemProps.onClick, () => {
+                  if (pointerTypeRef.current !== "mouse") handleSelect();
+                }),
+                onPointerUp: composeEventHandlers$1(itemProps.onPointerUp, () => {
+                  if (pointerTypeRef.current === "mouse") handleSelect();
+                }),
+                onPointerDown: composeEventHandlers$1(itemProps.onPointerDown, (event) => {
+                  pointerTypeRef.current = event.pointerType;
+                }),
+                onPointerMove: composeEventHandlers$1(itemProps.onPointerMove, (event) => {
+                  var _a;
+                  pointerTypeRef.current = event.pointerType;
+                  if (disabled) {
+                    (_a = contentContext.onItemLeave) == null ? void 0 : _a.call(contentContext);
+                  } else if (pointerTypeRef.current === "mouse") {
+                    event.currentTarget.focus({ preventScroll: true });
+                  }
+                }),
+                onPointerLeave: composeEventHandlers$1(itemProps.onPointerLeave, (event) => {
+                  var _a;
+                  if (event.currentTarget === document.activeElement) {
+                    (_a = contentContext.onItemLeave) == null ? void 0 : _a.call(contentContext);
+                  }
+                }),
+                onKeyDown: composeEventHandlers$1(itemProps.onKeyDown, (event) => {
+                  var _a;
+                  const isTypingAhead = ((_a = contentContext.searchRef) == null ? void 0 : _a.current) !== "";
+                  if (isTypingAhead && event.key === " ") return;
+                  if (SELECTION_KEYS.includes(event.key)) handleSelect();
+                  if (event.key === " ") event.preventDefault();
+                })
+              }
+            )
+          }
+        )
+      }
+    );
+  }
+);
+SelectItem$1.displayName = ITEM_NAME;
+var ITEM_TEXT_NAME = "SelectItemText";
+var SelectItemText = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, className, style, ...itemTextProps } = props;
+    const context = useSelectContext(ITEM_TEXT_NAME, __scopeSelect);
+    const contentContext = useSelectContentContext(ITEM_TEXT_NAME, __scopeSelect);
+    const itemContext = useSelectItemContext(ITEM_TEXT_NAME, __scopeSelect);
+    const nativeOptionsContext = useSelectNativeOptionsContext(ITEM_TEXT_NAME, __scopeSelect);
+    const [itemTextNode, setItemTextNode] = reactExports.useState(null);
+    const composedRefs = useComposedRefs(
+      forwardedRef,
+      (node) => setItemTextNode(node),
+      itemContext.onItemTextChange,
+      (node) => {
+        var _a;
+        return (_a = contentContext.itemTextRefCallback) == null ? void 0 : _a.call(contentContext, node, itemContext.value, itemContext.disabled);
+      }
+    );
+    const textContent = itemTextNode == null ? void 0 : itemTextNode.textContent;
+    const nativeOption = reactExports.useMemo(
+      () => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: itemContext.value, disabled: itemContext.disabled, children: textContent }, itemContext.value),
+      [itemContext.disabled, itemContext.value, textContent]
+    );
+    const { onNativeOptionAdd, onNativeOptionRemove } = nativeOptionsContext;
+    useLayoutEffect2(() => {
+      onNativeOptionAdd(nativeOption);
+      return () => onNativeOptionRemove(nativeOption);
+    }, [onNativeOptionAdd, onNativeOptionRemove, nativeOption]);
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.span, { id: itemContext.textId, ...itemTextProps, ref: composedRefs }),
+      itemContext.isSelected && context.valueNode && !context.valueNodeHasChildren ? reactDomExports.createPortal(itemTextProps.children, context.valueNode) : null
+    ] });
+  }
+);
+SelectItemText.displayName = ITEM_TEXT_NAME;
+var ITEM_INDICATOR_NAME = "SelectItemIndicator";
+var SelectItemIndicator = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, ...itemIndicatorProps } = props;
+    const itemContext = useSelectItemContext(ITEM_INDICATOR_NAME, __scopeSelect);
+    return itemContext.isSelected ? /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.span, { "aria-hidden": true, ...itemIndicatorProps, ref: forwardedRef }) : null;
+  }
+);
+SelectItemIndicator.displayName = ITEM_INDICATOR_NAME;
+var SCROLL_UP_BUTTON_NAME = "SelectScrollUpButton";
+var SelectScrollUpButton$1 = reactExports.forwardRef((props, forwardedRef) => {
+  const contentContext = useSelectContentContext(SCROLL_UP_BUTTON_NAME, props.__scopeSelect);
+  const viewportContext = useSelectViewportContext(SCROLL_UP_BUTTON_NAME, props.__scopeSelect);
+  const [canScrollUp, setCanScrollUp] = reactExports.useState(false);
+  const composedRefs = useComposedRefs(forwardedRef, viewportContext.onScrollButtonChange);
+  useLayoutEffect2(() => {
+    if (contentContext.viewport && contentContext.isPositioned) {
+      let handleScroll2 = function() {
+        const canScrollUp2 = viewport.scrollTop > 0;
+        setCanScrollUp(canScrollUp2);
+      };
+      const viewport = contentContext.viewport;
+      handleScroll2();
+      viewport.addEventListener("scroll", handleScroll2);
+      return () => viewport.removeEventListener("scroll", handleScroll2);
+    }
+  }, [contentContext.viewport, contentContext.isPositioned]);
+  return canScrollUp ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+    SelectScrollButtonImpl,
+    {
+      ...props,
+      ref: composedRefs,
+      onAutoScroll: () => {
+        const { viewport, selectedItem } = contentContext;
+        if (viewport && selectedItem) {
+          viewport.scrollTop = viewport.scrollTop - selectedItem.offsetHeight;
+        }
+      }
+    }
+  ) : null;
+});
+SelectScrollUpButton$1.displayName = SCROLL_UP_BUTTON_NAME;
+var SCROLL_DOWN_BUTTON_NAME = "SelectScrollDownButton";
+var SelectScrollDownButton$1 = reactExports.forwardRef((props, forwardedRef) => {
+  const contentContext = useSelectContentContext(SCROLL_DOWN_BUTTON_NAME, props.__scopeSelect);
+  const viewportContext = useSelectViewportContext(SCROLL_DOWN_BUTTON_NAME, props.__scopeSelect);
+  const [canScrollDown, setCanScrollDown] = reactExports.useState(false);
+  const composedRefs = useComposedRefs(forwardedRef, viewportContext.onScrollButtonChange);
+  useLayoutEffect2(() => {
+    if (contentContext.viewport && contentContext.isPositioned) {
+      let handleScroll2 = function() {
+        const maxScroll = viewport.scrollHeight - viewport.clientHeight;
+        const canScrollDown2 = Math.ceil(viewport.scrollTop) < maxScroll;
+        setCanScrollDown(canScrollDown2);
+      };
+      const viewport = contentContext.viewport;
+      handleScroll2();
+      viewport.addEventListener("scroll", handleScroll2);
+      return () => viewport.removeEventListener("scroll", handleScroll2);
+    }
+  }, [contentContext.viewport, contentContext.isPositioned]);
+  return canScrollDown ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+    SelectScrollButtonImpl,
+    {
+      ...props,
+      ref: composedRefs,
+      onAutoScroll: () => {
+        const { viewport, selectedItem } = contentContext;
+        if (viewport && selectedItem) {
+          viewport.scrollTop = viewport.scrollTop + selectedItem.offsetHeight;
+        }
+      }
+    }
+  ) : null;
+});
+SelectScrollDownButton$1.displayName = SCROLL_DOWN_BUTTON_NAME;
+var SelectScrollButtonImpl = reactExports.forwardRef((props, forwardedRef) => {
+  const { __scopeSelect, onAutoScroll, ...scrollIndicatorProps } = props;
+  const contentContext = useSelectContentContext("SelectScrollButton", __scopeSelect);
+  const autoScrollTimerRef = reactExports.useRef(null);
+  const getItems = useCollection$1(__scopeSelect);
+  const clearAutoScrollTimer = reactExports.useCallback(() => {
+    if (autoScrollTimerRef.current !== null) {
+      window.clearInterval(autoScrollTimerRef.current);
+      autoScrollTimerRef.current = null;
+    }
+  }, []);
+  reactExports.useEffect(() => {
+    return () => clearAutoScrollTimer();
+  }, [clearAutoScrollTimer]);
+  useLayoutEffect2(() => {
+    var _a;
+    const activeItem = getItems().find((item) => item.ref.current === document.activeElement);
+    (_a = activeItem == null ? void 0 : activeItem.ref.current) == null ? void 0 : _a.scrollIntoView({ block: "nearest" });
+  }, [getItems]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    Primitive.div,
+    {
+      "aria-hidden": true,
+      ...scrollIndicatorProps,
+      ref: forwardedRef,
+      style: { flexShrink: 0, ...scrollIndicatorProps.style },
+      onPointerDown: composeEventHandlers$1(scrollIndicatorProps.onPointerDown, () => {
+        if (autoScrollTimerRef.current === null) {
+          autoScrollTimerRef.current = window.setInterval(onAutoScroll, 50);
+        }
+      }),
+      onPointerMove: composeEventHandlers$1(scrollIndicatorProps.onPointerMove, () => {
+        var _a;
+        (_a = contentContext.onItemLeave) == null ? void 0 : _a.call(contentContext);
+        if (autoScrollTimerRef.current === null) {
+          autoScrollTimerRef.current = window.setInterval(onAutoScroll, 50);
+        }
+      }),
+      onPointerLeave: composeEventHandlers$1(scrollIndicatorProps.onPointerLeave, () => {
+        clearAutoScrollTimer();
+      })
+    }
+  );
+});
+var SEPARATOR_NAME = "SelectSeparator";
+var SelectSeparator$1 = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, ...separatorProps } = props;
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.div, { "aria-hidden": true, ...separatorProps, ref: forwardedRef });
+  }
+);
+SelectSeparator$1.displayName = SEPARATOR_NAME;
+var ARROW_NAME = "SelectArrow";
+var SelectArrow = reactExports.forwardRef(
+  (props, forwardedRef) => {
+    const { __scopeSelect, ...arrowProps } = props;
+    const popperScope = usePopperScope(__scopeSelect);
+    const context = useSelectContext(ARROW_NAME, __scopeSelect);
+    const contentContext = useSelectContentContext(ARROW_NAME, __scopeSelect);
+    return context.open && contentContext.position === "popper" ? /* @__PURE__ */ jsxRuntimeExports.jsx(Arrow, { ...popperScope, ...arrowProps, ref: forwardedRef }) : null;
+  }
+);
+SelectArrow.displayName = ARROW_NAME;
+var BUBBLE_INPUT_NAME = "SelectBubbleInput";
+var SelectBubbleInput = reactExports.forwardRef(
+  ({ __scopeSelect, value, ...props }, forwardedRef) => {
+    const ref = reactExports.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, ref);
+    const prevValue = usePrevious(value);
+    reactExports.useEffect(() => {
+      const select = ref.current;
+      if (!select) return;
+      const selectProto = window.HTMLSelectElement.prototype;
+      const descriptor = Object.getOwnPropertyDescriptor(
+        selectProto,
+        "value"
+      );
+      const setValue = descriptor.set;
+      if (prevValue !== value && setValue) {
+        const event = new Event("change", { bubbles: true });
+        setValue.call(select, value);
+        select.dispatchEvent(event);
+      }
+    }, [prevValue, value]);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Primitive.select,
+      {
+        ...props,
+        style: { ...VISUALLY_HIDDEN_STYLES, ...props.style },
+        ref: composedRefs,
+        defaultValue: value
+      }
+    );
+  }
+);
+SelectBubbleInput.displayName = BUBBLE_INPUT_NAME;
+function shouldShowPlaceholder(value) {
+  return value === "" || value === void 0;
+}
+function useTypeaheadSearch(onSearchChange) {
+  const handleSearchChange = useCallbackRef(onSearchChange);
+  const searchRef = reactExports.useRef("");
+  const timerRef = reactExports.useRef(0);
+  const handleTypeaheadSearch = reactExports.useCallback(
+    (key) => {
+      const search = searchRef.current + key;
+      handleSearchChange(search);
+      (function updateSearch(value) {
+        searchRef.current = value;
+        window.clearTimeout(timerRef.current);
+        if (value !== "") timerRef.current = window.setTimeout(() => updateSearch(""), 1e3);
+      })(search);
+    },
+    [handleSearchChange]
+  );
+  const resetTypeahead = reactExports.useCallback(() => {
+    searchRef.current = "";
+    window.clearTimeout(timerRef.current);
+  }, []);
+  reactExports.useEffect(() => {
+    return () => window.clearTimeout(timerRef.current);
+  }, []);
+  return [searchRef, handleTypeaheadSearch, resetTypeahead];
+}
+function findNextItem(items, search, currentItem) {
+  const isRepeated = search.length > 1 && Array.from(search).every((char) => char === search[0]);
+  const normalizedSearch = isRepeated ? search[0] : search;
+  const currentItemIndex = currentItem ? items.indexOf(currentItem) : -1;
+  let wrappedItems = wrapArray(items, Math.max(currentItemIndex, 0));
+  const excludeCurrentItem = normalizedSearch.length === 1;
+  if (excludeCurrentItem) wrappedItems = wrappedItems.filter((v) => v !== currentItem);
+  const nextItem = wrappedItems.find(
+    (item) => item.textValue.toLowerCase().startsWith(normalizedSearch.toLowerCase())
+  );
+  return nextItem !== currentItem ? nextItem : void 0;
+}
+function wrapArray(array, startIndex) {
+  return array.map((_, index2) => array[(startIndex + index2) % array.length]);
+}
+var Root2$1 = Select$1;
+var Trigger = SelectTrigger$1;
+var Value = SelectValue$1;
+var Icon = SelectIcon;
+var Portal = SelectPortal;
+var Content2 = SelectContent$1;
+var Viewport$1 = SelectViewport;
+var Label = SelectLabel$1;
+var Item = SelectItem$1;
+var ItemText = SelectItemText;
+var ItemIndicator = SelectItemIndicator;
+var ScrollUpButton = SelectScrollUpButton$1;
+var ScrollDownButton = SelectScrollDownButton$1;
+var Separator = SelectSeparator$1;
+const Select = Root2$1;
+const SelectValue = Value;
+const SelectTrigger = reactExports.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+  Trigger,
+  {
+    ref,
+    className: cn(
+      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      className
+    ),
+    ...props,
+    children: [
+      children,
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-4 w-4 opacity-50" }) })
+    ]
+  }
+));
+SelectTrigger.displayName = Trigger.displayName;
+const SelectScrollUpButton = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  ScrollUpButton,
+  {
+    ref,
+    className: cn(
+      "flex cursor-default items-center justify-center py-1",
+      className
+    ),
+    ...props,
+    children: /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronUp, { className: "h-4 w-4" })
+  }
+));
+SelectScrollUpButton.displayName = ScrollUpButton.displayName;
+const SelectScrollDownButton = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  ScrollDownButton,
+  {
+    ref,
+    className: cn(
+      "flex cursor-default items-center justify-center py-1",
+      className
+    ),
+    ...props,
+    children: /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-4 w-4" })
+  }
+));
+SelectScrollDownButton.displayName = ScrollDownButton.displayName;
+const SelectContent = reactExports.forwardRef(({ className, children, position = "popper", ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(Portal, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+  Content2,
+  {
+    ref,
+    className: cn(
+      "relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-select-content-transform-origin]",
+      position === "popper" && "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+      className
+    ),
+    position,
+    ...props,
+    children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(SelectScrollUpButton, {}),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Viewport$1,
+        {
+          className: cn(
+            "p-1",
+            position === "popper" && "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+          ),
+          children
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(SelectScrollDownButton, {})
+    ]
+  }
+) }));
+SelectContent.displayName = Content2.displayName;
+const SelectLabel = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  Label,
+  {
+    ref,
+    className: cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className),
+    ...props
+  }
+));
+SelectLabel.displayName = Label.displayName;
+const SelectItem = reactExports.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+  Item,
+  {
+    ref,
+    className: cn(
+      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className
+    ),
+    ...props,
+    children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(ItemIndicator, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "h-4 w-4" }) }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(ItemText, { children })
+    ]
+  }
+));
+SelectItem.displayName = Item.displayName;
+const SelectSeparator = reactExports.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+  Separator,
+  {
+    ref,
+    className: cn("-mx-1 my-1 h-px bg-muted", className),
+    ...props
+  }
+));
+SelectSeparator.displayName = Separator.displayName;
+const useDocumentActions = () => {
+  const { toast: toast2 } = useToast();
+  const handleDownload = async (doc) => {
+    try {
+      const downloadUrl = await getDocumentDownloadUrl(doc.file_path);
+      if (downloadUrl) {
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = doc.original_filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast2({
+          title: "Download started",
+          description: "Your document is being downloaded."
+        });
+      } else {
+        throw new Error("Failed to get download URL");
+      }
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      toast2({
+        title: "Download failed",
+        description: "Failed to download the document. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  const handlePreview = async (doc) => {
+    try {
+      const downloadUrl = await getDocumentDownloadUrl(doc.file_path);
+      if (downloadUrl) {
+        return downloadUrl;
+      } else {
+        throw new Error("Failed to get preview URL");
+      }
+    } catch (error) {
+      console.error("Error previewing document:", error);
+      toast2({
+        title: "Preview failed",
+        description: "Failed to open the document preview. Please try again.",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+  return {
+    handlePreview,
+    handleDownload
+  };
+};
+const DocumentActionButtons = ({
+  document: document2,
+  onDelete,
+  onPreview,
+  showPreview = true,
+  showDownload = true,
+  showDelete = true,
+  size: size2 = "sm",
+  variant = "ghost"
+}) => {
+  const { handleDownload } = useDocumentActions();
+  const handlePreviewClick = () => {
+    if (onPreview) {
+      onPreview(document2);
+    }
+  };
+  const handleDeleteClick = () => {
+    if (onDelete) {
+      onDelete(document2.id);
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+    showPreview && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Button,
+      {
+        variant,
+        size: size2,
+        onClick: handlePreviewClick,
+        className: "h-8 w-8 p-0",
+        title: "Preview document",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "h-4 w-4" })
+      }
+    ),
+    showDownload && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Button,
+      {
+        variant,
+        size: size2,
+        onClick: () => handleDownload(document2),
+        className: "h-8 w-8 p-0",
+        title: "Download document",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Download, { className: "h-4 w-4" })
+      }
+    ),
+    showDelete && onDelete && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Button,
+      {
+        variant,
+        size: size2,
+        onClick: handleDeleteClick,
+        className: "h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50",
+        title: "Delete document",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-4 w-4" })
+      }
+    )
+  ] });
+};
+const ITEMS_PER_PAGE$1 = 5;
+const DocumentsList = () => {
+  const [documents, setDocuments] = reactExports.useState([]);
+  const [isLoading, setIsLoading] = reactExports.useState(true);
+  const [filters, setFilters] = reactExports.useState({});
+  const [currentPage, setCurrentPage] = reactExports.useState(1);
+  const [totalItems, setTotalItems] = reactExports.useState(0);
+  const [isPreviewOpen, setIsPreviewOpen] = reactExports.useState(false);
+  const [previewUrl, setPreviewUrl] = reactExports.useState(null);
+  const [previewDocument, setPreviewDocument] = reactExports.useState(null);
+  const [isFilterModalOpen, setIsFilterModalOpen] = reactExports.useState(false);
+  const [tempFilters, setTempFilters] = reactExports.useState({});
+  const { toast: toast2 } = useToast();
+  const { handlePreview: getPreviewUrl } = useDocumentActions();
+  reactExports.useEffect(() => {
+    loadDocuments();
+  }, [filters, currentPage]);
+  reactExports.useEffect(() => {
+    if (isFilterModalOpen) {
+      setTempFilters(filters);
+    }
+  }, [isFilterModalOpen, filters]);
+  const loadDocuments = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await getPaginatedDocuments(currentPage, ITEMS_PER_PAGE$1, filters);
+      if (error) {
+        throw error;
+      }
+      setDocuments((data == null ? void 0 : data.items) || []);
+      setTotalItems((data == null ? void 0 : data.total) || 0);
+    } catch (error) {
+      console.error("Error loading documents:", error);
+      toast2({
+        title: "Error",
+        description: "Failed to load documents. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handlePreview = async (doc) => {
+    const previewUrl2 = await getPreviewUrl(doc);
+    if (previewUrl2) {
+      setPreviewUrl(previewUrl2);
+      setPreviewDocument(doc);
+      setIsPreviewOpen(true);
+    }
+  };
+  const handleDelete = async (documentId) => {
+    if (!confirm("Are you sure you want to delete this document?")) {
+      return;
+    }
+    try {
+      const { error } = await deleteDocument(documentId);
+      if (error) {
+        throw error;
+      }
+      toast2({
+        title: "Document deleted",
+        description: "The document has been deleted successfully."
+      });
+      if (documents.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      } else {
+        loadDocuments();
+      }
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast2({
+        title: "Delete failed",
+        description: "Failed to delete the document. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  const handlePageChange = (newPage) => {
+    const totalPages2 = Math.ceil(totalItems / ITEMS_PER_PAGE$1);
+    if (newPage >= 1 && newPage <= totalPages2) {
+      setCurrentPage(newPage);
+    }
+  };
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setCurrentPage(1);
+    setIsFilterModalOpen(false);
+  };
+  const handleClearFilters = () => {
+    setTempFilters({});
+    setFilters({});
+    setCurrentPage(1);
+    setIsFilterModalOpen(false);
+  };
+  const getActiveFiltersCount = () => {
+    return Object.values(filters).filter((value) => value !== void 0 && value !== "").length;
+  };
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      PENDING_REVIEW: { color: "bg-yellow-100 text-yellow-800 border-yellow-200", label: "Pending Review" },
+      IN_PROGRESS: { color: "bg-blue-100 text-blue-800 border-blue-200", label: "In Progress" },
+      COMPLETED: { color: "bg-green-100 text-green-800 border-green-200", label: "Completed" }
+    };
+    const config = statusConfig[status];
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Badge,
+      {
+        className: `${config.color} border hover:bg-opacity-100 hover:no-underline`,
+        style: {
+          backgroundColor: status === "PENDING_REVIEW" ? "#fef3c7" : status === "IN_PROGRESS" ? "#dbeafe" : status === "COMPLETED" ? "#dcfce7" : "#f3f4f6",
+          color: status === "PENDING_REVIEW" ? "#92400e" : status === "IN_PROGRESS" ? "#1e40af" : status === "COMPLETED" ? "#166534" : "#374151",
+          borderColor: status === "PENDING_REVIEW" ? "#fde68a" : status === "IN_PROGRESS" ? "#bfdbfe" : status === "COMPLETED" ? "#bbf7d0" : "#d1d5db"
+        },
+        children: config.label
+      }
+    );
+  };
+  const getDocumentIcon = (type) => {
+    const iconConfig = {
+      INVOICE: Receipt,
+      RECEIPT: CreditCard,
+      BANK_STATEMENT: Building2,
+      OTHER: FileText
+    };
+    const Icon2 = iconConfig[type] || FileText;
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "h-5 w-5" });
+  };
+  const getDocumentTypeLabel = (type) => {
+    const labelConfig = {
+      INVOICE: "Invoice",
+      RECEIPT: "Receipt",
+      BANK_STATEMENT: "Bank Statement",
+      OTHER: "Other"
+    };
+    return labelConfig[type];
+  };
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE$1);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "container mx-auto px-4 py-8", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-6xl mx-auto space-y-8", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-3xl font-bold tracking-tight", children: "Documents" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500 text-lg", children: "View and manage your uploaded documents" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          Button,
+          {
+            variant: "outline",
+            onClick: () => setIsFilterModalOpen(true),
+            className: "flex items-center gap-2",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Funnel, { className: "h-4 w-4" }),
+              "Filters",
+              getActiveFiltersCount() > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "secondary", className: "ml-1", children: getActiveFiltersCount() })
+            ]
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "p-6", children: [
+        isLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-center py-12", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" }) }) : documents.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center py-12", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-12 w-12 text-gray-400 mx-auto mb-4" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-lg font-medium text-gray-900 mb-2", children: "No documents found" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-gray-500", children: "Upload some documents to get started." })
+        ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-4", children: documents.map((doc) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "div",
+          {
+            className: "border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-4", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2 rounded-lg bg-gray-100", children: getDocumentIcon(doc.type) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 mb-1", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "font-medium text-gray-900", children: doc.original_filename }),
+                    getStatusBadge(doc.status)
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4 text-sm text-gray-500", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-4 w-4" }),
+                      getDocumentTypeLabel(doc.type)
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(Calendar, { className: "h-4 w-4" }),
+                      format(new Date(doc.uploaded_at), "MMM dd, yyyy")
+                    ] })
+                  ] })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                DocumentActionButtons,
+                {
+                  document: doc,
+                  onPreview: handlePreview,
+                  onDelete: handleDelete
+                }
+              )
+            ] })
+          },
+          doc.id
+        )) }),
+        documents.length > 0 && totalItems > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-6 flex items-center justify-between px-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-sm text-gray-500", children: [
+            "Showing ",
+            (currentPage - 1) * ITEMS_PER_PAGE$1 + 1,
+            " to ",
+            Math.min(currentPage * ITEMS_PER_PAGE$1, totalItems),
+            " of ",
+            totalItems,
+            " documents"
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Button,
+              {
+                variant: "outline",
+                size: "sm",
+                onClick: () => handlePageChange(currentPage - 1),
+                disabled: currentPage === 1,
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronLeft, { className: "h-4 w-4" })
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-sm text-gray-500", children: [
+              "Page ",
+              currentPage,
+              " of ",
+              totalPages
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Button,
+              {
+                variant: "outline",
+                size: "sm",
+                onClick: () => handlePageChange(currentPage + 1),
+                disabled: currentPage === totalPages,
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-4 w-4" })
+              }
+            )
+          ] })
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Dialog, { open: isFilterModalOpen, onOpenChange: setIsFilterModalOpen, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogContent, { className: "max-w-md", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsxs(DialogTitle, { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Funnel, { className: "h-5 w-5" }),
+        "Filter Documents"
+      ] }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { htmlFor: "type-filter", children: "Document Type" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            Select,
+            {
+              value: tempFilters.type || "all",
+              onValueChange: (value) => setTempFilters((prev) => ({
+                ...prev,
+                type: value === "all" ? void 0 : value
+              })),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(SelectTrigger, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectValue, { placeholder: "All types" }) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(SelectContent, { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: "all", children: "All types" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: "INVOICE", children: "Invoice" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: "RECEIPT", children: "Receipt" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: "BANK_STATEMENT", children: "Bank Statement" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: "OTHER", children: "Other" })
+                ] })
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { htmlFor: "status-filter", children: "Status" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            Select,
+            {
+              value: tempFilters.status || "all",
+              onValueChange: (value) => setTempFilters((prev) => ({
+                ...prev,
+                status: value === "all" ? void 0 : value
+              })),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(SelectTrigger, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(SelectValue, { placeholder: "All statuses" }) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(SelectContent, { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: "all", children: "All statuses" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: "PENDING_REVIEW", children: "Pending Review" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: "IN_PROGRESS", children: "In Progress" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(SelectItem, { value: "COMPLETED", children: "Completed" })
+                ] })
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { htmlFor: "date-from", children: "Date From" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Input,
+              {
+                id: "date-from",
+                type: "date",
+                value: tempFilters.date_from || "",
+                onChange: (e) => setTempFilters((prev) => ({
+                  ...prev,
+                  date_from: e.target.value || void 0
+                })),
+                className: "pr-10"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Calendar, { className: "absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { htmlFor: "date-to", children: "Date To" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Input,
+              {
+                id: "date-to",
+                type: "date",
+                value: tempFilters.date_to || "",
+                onChange: (e) => setTempFilters((prev) => ({
+                  ...prev,
+                  date_to: e.target.value || void 0
+                })),
+                className: "pr-10"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Calendar, { className: "absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2 pt-4", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: handleApplyFilters, className: "flex-1", children: "Apply Filters" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "outline", onClick: handleClearFilters, className: "flex-1", children: "Clear All" })
+        ] })
+      ] })
+    ] }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      DocumentPreview,
+      {
+        isOpen: isPreviewOpen,
+        onClose: () => setIsPreviewOpen(false),
+        previewUrl,
+        documentName: previewDocument == null ? void 0 : previewDocument.original_filename
+      }
+    )
+  ] });
 };
 const fetchInvoiceSuggestions = async (page = 1, pageSize = 10) => {
   try {
@@ -41832,7 +44087,7 @@ const InvoiceSuggestion = () => {
         /* @__PURE__ */ jsxRuntimeExports.jsx(DialogHeader, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogTitle, { children: "Edit Accounting Entry" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-4 py-4", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "debit", children: "Debit Account" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { htmlFor: "debit", children: "Debit Account" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               Input,
               {
@@ -41843,7 +44098,7 @@ const InvoiceSuggestion = () => {
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "credit", children: "Credit Account" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { htmlFor: "credit", children: "Credit Account" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               Input,
               {
@@ -41854,7 +44109,7 @@ const InvoiceSuggestion = () => {
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid gap-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Label, { htmlFor: "amount", children: "Amount" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Label$1, { htmlFor: "amount", children: "Amount" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               Input,
               {
@@ -42445,6 +44700,24 @@ function CompanySetup() {
     canProceed,
     submitForm
   } = useCompanySetup();
+  reactExports.useEffect(() => {
+    const checkCompany = async () => {
+      if (!user) return;
+      try {
+        const company = await getCompanyByUserId(user.id);
+        if (company) {
+          navigate("/", { replace: true });
+        }
+      } catch (error2) {
+        console.error("Error checking company:", error2);
+      }
+    };
+    checkCompany();
+  }, [user, navigate]);
+  if (!user) {
+    navigate("/login", { replace: true });
+    return null;
+  }
   const handleSubmit = async (data) => {
     if (!user) {
       toast2({
@@ -42549,7 +44822,8 @@ function App() {
       element: /* @__PURE__ */ jsxRuntimeExports.jsx(DashboardLayout, {}),
       children: [
         { path: "", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Dashboard, {}) },
-        { path: "upload", element: /* @__PURE__ */ jsxRuntimeExports.jsx(UploadInvoice, {}) },
+        { path: "upload", element: /* @__PURE__ */ jsxRuntimeExports.jsx(UploadDocuments, {}) },
+        { path: "documents", element: /* @__PURE__ */ jsxRuntimeExports.jsx(DocumentsList, {}) },
         { path: "ai-suggestion", element: /* @__PURE__ */ jsxRuntimeExports.jsx(InvoiceSuggestion, {}) },
         { path: "profile", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Profile, {}) }
       ]
@@ -43033,7 +45307,7 @@ var ToastAnnounce = (props) => {
     const timer = window.setTimeout(() => setIsAnnounced(true), 1e3);
     return () => window.clearTimeout(timer);
   }, []);
-  return isAnnounced ? null : /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$2, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(VisuallyHidden, { ...announceProps, children: renderAnnounceText && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+  return isAnnounced ? null : /* @__PURE__ */ jsxRuntimeExports.jsx(Portal$3, { asChild: true, children: /* @__PURE__ */ jsxRuntimeExports.jsx(VisuallyHidden, { ...announceProps, children: renderAnnounceText && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     context.label,
     " ",
     children
@@ -43290,4 +45564,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) }) })
 );
-//# sourceMappingURL=index-DVfELJz0.js.map
+//# sourceMappingURL=index-VFxS6-2V.js.map
