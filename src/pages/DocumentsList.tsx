@@ -7,13 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getPaginatedDocuments } from "@/lib/supabase/document";
+import { getPaginatedDocuments, deleteDocument } from "@/lib/supabase/document";
 import { DocumentType, DocumentStatus } from "@/constants/documents";
-import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft, ChevronRight, Eye, Download } from "lucide-react";
+import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { Document, DocumentFilters } from "@/interfaces/document";
 import { DocumentPreview } from "@/components/shared/documentPreview";
 import { useDocumentActions } from "@/components/shared/documentUtils";
+import { DocumentActionButtons } from "@/components/shared/DocumentActionButtons";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -29,7 +30,7 @@ const DocumentsList = () => {
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [tempFilters, setTempFilters] = useState<DocumentFilters>({});
     const { toast } = useToast();
-    const { handlePreview: getPreviewUrl, handleDownload } = useDocumentActions();
+    const { handlePreview: getPreviewUrl } = useDocumentActions();
 
     useEffect(() => {
         loadDocuments();
@@ -72,7 +73,37 @@ const DocumentsList = () => {
         }
     };
 
+    const handleDelete = async (documentId: string) => {
+        if (!confirm('Are you sure you want to delete this document?')) {
+            return;
+        }
 
+        try {
+            const { error } = await deleteDocument(documentId);
+            if (error) {
+                throw error;
+            }
+
+            toast({
+                title: "Document deleted",
+                description: "The document has been deleted successfully.",
+            });
+
+            // If we're on the last page and it becomes empty, go to previous page
+            if (documents.length === 1 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            } else {
+                loadDocuments();
+            }
+        } catch (error) {
+            console.error('Error deleting document:', error);
+            toast({
+                title: "Delete failed",
+                description: "Failed to delete the document. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
 
     const handlePageChange = (newPage: number) => {
         const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -103,12 +134,9 @@ const DocumentsList = () => {
             PENDING_REVIEW: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Pending Review' },
             IN_PROGRESS: { color: 'bg-blue-100 text-blue-800 border-blue-200', label: 'In Progress' },
             COMPLETED: { color: 'bg-green-100 text-green-800 border-green-200', label: 'Completed' },
-            USER_INPUT_NEEDED: { color: 'bg-red-100 text-red-800 border-red-200', label: 'User Input Needed' },
         };
 
-        // Fallback for unknown status
-        const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800 border-gray-200', label: status || 'Unknown' };
-
+        const config = statusConfig[status];
         return (
             <Badge
                 className={`${config.color} border hover:bg-opacity-100 hover:no-underline`}
@@ -218,29 +246,11 @@ const DocumentsList = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* Inline Action Buttons */}
-                                        <div className="flex items-center gap-2">
-                                            {/* Preview Button */}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handlePreview(doc)}
-                                                className="h-8 w-8 p-0"
-                                                title="Preview document"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                            {/* Download Button */}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleDownload(doc)}
-                                                className="h-8 w-8 p-0"
-                                                title="Download document"
-                                            >
-                                                <Download className="h-4 w-4" />
-                                            </Button>
-                                        </div>
+                                        <DocumentActionButtons
+                                            document={doc}
+                                            onPreview={handlePreview}
+                                            onDelete={handleDelete}
+                                        />
                                     </div>
                                 </div>
                             ))}

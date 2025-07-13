@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Eye, FileText } from "lucide-react";
@@ -33,7 +33,11 @@ const AccountingEntriesTable = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const { toast } = useToast();
 
-  const loadEntries = useCallback(async () => {
+  useEffect(() => {
+    loadEntries();
+  }, [currentPage]);
+
+  const loadEntries = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await fetchAccountingEntries(currentPage, ITEMS_PER_PAGE);
@@ -50,11 +54,7 @@ const AccountingEntriesTable = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, toast]);
-
-  useEffect(() => {
-    loadEntries();
-  }, [loadEntries]);
+  };
 
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 

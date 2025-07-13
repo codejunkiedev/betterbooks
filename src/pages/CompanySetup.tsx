@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/hooks/useRedux";
-import { useCompanySetup } from "@/hooks/useCompanySetup";
+import { useCompanySetup, CompanySetupData } from "@/hooks/useCompanySetup";
+import { createCompany } from "@/lib/supabase/company";
 import { useToast } from "@/hooks/use-toast";
 import {
     StepIndicator,
@@ -11,49 +12,53 @@ import {
 } from "@/components/company-setup";
 import { copyCOATemplateToCompany } from "@/lib/supabase/coa";
 import { getCompanyByUserId } from "@/lib/supabase/company";
-import { useEffect, memo, useCallback, useState } from "react";
+import { useEffect } from "react";
 
-const CompanySetup = memo(() => {
+export default function CompanySetup() {
     const navigate = useNavigate();
     const user = useAppSelector(state => state.user.user);
     const { toast } = useToast();
-    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
     const {
         currentStep,
-        companyData,
+        totalSteps,
+        formData,
+        error,
         isLoading,
-        updateCompanyData,
+        updateField,
+        skipBalance,
+        addBalance,
         nextStep,
-        prevStep,
-        canProceedToNextStep,
-        createCompany,
+        previousStep,
+        canProceed,
+        submitForm,
     } = useCompanySetup();
 
-    // Memoized company check function
-    const checkCompany = useCallback(async () => {
-        if (!user) return;
-
-        try {
-            const company = await getCompanyByUserId(user.id);
-            if (company) {
-                navigate("/", { replace: true });
-            }
-        } catch (error) {
-            console.error("Error checking company:", error);
-        }
-    }, [user, navigate]);
-
-    // Check authentication and redirect if needed
+    // Check if company already exists
     useEffect(() => {
-        if (!user) {
-            navigate("/login", { replace: true });
-        } else {
-            setIsCheckingAuth(false);
-        }
+        const checkCompany = async () => {
+            if (!user) return;
+
+            try {
+                const company = await getCompanyByUserId(user.id);
+                if (company) {
+                    navigate("/", { replace: true });
+                }
+            } catch (error) {
+                console.error("Error checking company:", error);
+            }
+        };
+
+        checkCompany();
     }, [user, navigate]);
 
-    const handleSubmit = useCallback(async () => {
+    // If user is not authenticated, redirect to login
+    if (!user) {
+        navigate("/login", { replace: true });
+        return null;
+    }
+
+    const handleSubmit = async (data: CompanySetupData) => {
         if (!user) {
             toast({
                 title: "Error",
@@ -64,15 +69,20 @@ const CompanySetup = memo(() => {
         }
 
         try {
-            const company = await createCompany(user.id);
-            if (company) {
-                await copyCOATemplateToCompany(company.id);
-                toast({
-                    title: "Success",
-                    description: "Company setup completed successfully!",
-                });
-                navigate("/");
-            }
+            const company = await createCompany({
+                user_id: user.id,
+                name: data.company_name,
+                type: data.company_type,
+            });
+
+            await copyCOATemplateToCompany(company.id);
+
+            toast({
+                title: "Success",
+                description: "Company setup completed successfully!",
+            });
+
+            navigate("/");
         } catch (error) {
             console.error("Error creating company:", error);
             toast({
@@ -81,95 +91,45 @@ const CompanySetup = memo(() => {
                 variant: "destructive"
             });
         }
-    }, [user, createCompany, toast, navigate]);
+    };
 
-    const handleFieldChange = useCallback((field: string, value: string | number) => {
-        updateCompanyData({ [field]: value });
-    }, [updateCompanyData]);
-
-    const handleSkipBalance = useCallback(() => {
-        updateCompanyData({
-            openingBalance: undefined,
-            openingBalanceDate: undefined
-        });
-    }, [updateCompanyData]);
-
-    const handleAddBalance = useCallback(() => {
-        updateCompanyData({
-            openingBalance: 0,
-            openingBalanceDate: new Date()
-        });
-    }, [updateCompanyData]);
-
-    // Helper function to safely convert date to string
-    const formatDateForDisplay = useCallback((dateValue: string | Date | undefined): string => {
-        if (!dateValue) return '';
-
-        try {
-            const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
-            if (isNaN(date.getTime())) return '';
-            return date.toISOString().split('T')[0];
-        } catch {
-            return '';
-        }
-    }, []);
-
-    const renderCurrentStep = useCallback(() => {
+    const renderCurrentStep = () => {
         switch (currentStep) {
             case 1:
                 return (
                     <CompanyInfoStep
-                        companyName={companyData.name || ''}
-                        companyType={companyData.type || ''}
-                        onFieldChange={handleFieldChange}
+                        companyName={formData.company_name}
+                        companyType={formData.company_type}
+                        onFieldChange={updateField}
                         isLoading={isLoading}
                     />
                 );
             case 2:
                 return (
                     <OpeningBalanceStep
-                        cashBalance={companyData.openingBalance?.toString() || ''}
-                        balanceDate={formatDateForDisplay(companyData.openingBalanceDate)}
-                        skipBalance={companyData.openingBalance === undefined || companyData.openingBalance === null}
-                        onFieldChange={handleFieldChange}
-                        onSkipBalance={handleSkipBalance}
-                        onAddBalance={handleAddBalance}
+                        cashBalance={formData.cash_balance}
+                        balanceDate={formData.balance_date}
+                        skipBalance={formData.skip_balance}
+                        onFieldChange={updateField}
+                        onSkipBalance={skipBalance}
+                        onAddBalance={addBalance}
                         isLoading={isLoading}
                     />
                 );
             case 3:
                 return (
                     <ReviewStep
-                        companyName={companyData.name || ''}
-                        companyType={companyData.type || ''}
-                        skipBalance={companyData.openingBalance === undefined || companyData.openingBalance === null}
-                        cashBalance={companyData.openingBalance?.toString() || ''}
-                        balanceDate={formatDateForDisplay(companyData.openingBalanceDate)}
+                        companyName={formData.company_name}
+                        companyType={formData.company_type}
+                        skipBalance={formData.skip_balance}
+                        cashBalance={formData.cash_balance}
+                        balanceDate={formData.balance_date}
                     />
                 );
             default:
                 return null;
         }
-    }, [currentStep, companyData, handleFieldChange, handleSkipBalance, handleAddBalance, isLoading, formatDateForDisplay]);
-
-    // Check if company already exists
-    useEffect(() => {
-        if (!isCheckingAuth && user) {
-            checkCompany();
-        }
-    }, [checkCompany, isCheckingAuth, user]);
-
-    // Show loading while checking authentication
-    if (isCheckingAuth || !user) {
-        return (
-            <div className="container mx-auto px-4 py-8">
-                <div className="max-w-2xl mx-auto text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-2 text-gray-600">Loading...</p>
-                </div>
-            </div>
-        );
-    }
+    };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -182,25 +142,29 @@ const CompanySetup = memo(() => {
 
                 <StepIndicator
                     currentStep={currentStep}
-                    totalSteps={3}
+                    totalSteps={totalSteps}
                 />
 
                 <div className="space-y-6">
                     {renderCurrentStep()}
 
+                    {error && (
+                        <div className="text-red-600 text-sm bg-red-50 p-3 rounded border border-red-200">
+                            {error}
+                        </div>
+                    )}
+
                     <NavigationButtons
                         currentStep={currentStep}
-                        totalSteps={3}
-                        onPrevious={prevStep}
+                        totalSteps={totalSteps}
+                        onPrevious={previousStep}
                         onNext={nextStep}
-                        onSubmit={handleSubmit}
+                        onSubmit={() => submitForm(handleSubmit)}
                         isLoading={isLoading}
-                        canProceed={canProceedToNextStep}
+                        canProceed={canProceed()}
                     />
                 </div>
             </div>
         </div>
     );
-});
-
-export default CompanySetup; 
+} 

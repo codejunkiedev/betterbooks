@@ -1,144 +1,127 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Company, CompanyType } from '../core/domain/entities/Company';
-import { CreateCompanyUseCase } from '../core/application/use-cases/company/CreateCompanyUseCase';
-import { Container } from '../infrastructure/di/Container';
-import { useToast } from './use-toast';
+import { useState, useCallback } from 'react';
 
 export interface CompanySetupData {
-    name: string;
-    type: CompanyType;
-    openingBalance?: number;
-    openingBalanceDate?: Date;
+    company_name: string;
+    company_type: string;
+    cash_balance: string;
+    balance_date: string;
+    skip_balance: boolean;
 }
 
-export const useCompanySetup = () => {
-    const [isLoading, setIsLoading] = useState(false);
+export function useCompanySetup() {
     const [currentStep, setCurrentStep] = useState(1);
-    const [companyData, setCompanyData] = useState<Partial<CompanySetupData>>({});
-    const navigate = useNavigate();
-    const { toast } = useToast();
+    const [formData, setFormData] = useState<CompanySetupData>({
+        company_name: "",
+        company_type: "",
+        cash_balance: "",
+        balance_date: "",
+        skip_balance: false,
+    });
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Get dependencies from container
-    const container = Container.getInstance();
-    const createCompanyUseCase = new CreateCompanyUseCase(container.getCompanyRepository());
+    const totalSteps = 3;
 
-    const updateCompanyData = (data: Partial<CompanySetupData>) => {
-        setCompanyData(prev => {
-            const updated = { ...prev, ...data };
+    const updateField = useCallback((field: string, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: value,
+        }));
+        setError(""); // Clear error when user makes changes
+    }, []);
 
-            // Convert openingBalanceDate string to Date object if needed
-            if (data.openingBalanceDate && typeof data.openingBalanceDate === 'string') {
-                const dateValue = new Date(data.openingBalanceDate);
-                if (!isNaN(dateValue.getTime())) {
-                    updated.openingBalanceDate = dateValue;
+    const skipBalance = useCallback(() => {
+        setFormData(prev => ({
+            ...prev,
+            skip_balance: true,
+            cash_balance: "",
+            balance_date: "",
+        }));
+        setError("");
+    }, []);
+
+    const addBalance = useCallback(() => {
+        setFormData(prev => ({
+            ...prev,
+            skip_balance: false,
+        }));
+        setError("");
+    }, []);
+
+    const validateCurrentStep = useCallback(() => {
+        switch (currentStep) {
+            case 1:
+                if (!formData.company_name.trim()) {
+                    setError("Company name is required.");
+                    return false;
                 }
-            }
-
-            return updated;
-        });
-    };
-
-    const nextStep = () => {
-        if (canProceedToNextStep()) {
-            setCurrentStep(prev => Math.min(prev + 1, 3));
+                if (!formData.company_type) {
+                    setError("Company type is required.");
+                    return false;
+                }
+                break;
+            case 2:
+                if (!formData.skip_balance) {
+                    if (!formData.cash_balance.trim()) {
+                        setError("Cash balance is required when not skipping.");
+                        return false;
+                    }
+                    if (!formData.balance_date) {
+                        setError("Balance date is required when not skipping.");
+                        return false;
+                    }
+                }
+                break;
         }
-    };
+        setError("");
+        return true;
+    }, [currentStep, formData]);
 
-    const prevStep = () => {
+    const nextStep = useCallback(() => {
+        if (validateCurrentStep()) {
+            setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+        }
+    }, [validateCurrentStep, totalSteps]);
+
+    const previousStep = useCallback(() => {
         setCurrentStep(prev => Math.max(prev - 1, 1));
-    };
+        setError("");
+    }, []);
 
-    const goToStep = (step: number) => {
-        setCurrentStep(Math.max(1, Math.min(step, 3)));
-    };
-
-    const createCompany = async (userId: string): Promise<Company | null> => {
-        if (!companyData.name || !companyData.type) {
-            toast({
-                title: "Validation Error",
-                description: "Please fill in all required fields",
-                variant: "destructive"
-            });
-            return null;
+    const canProceed = useCallback(() => {
+        switch (currentStep) {
+            case 1:
+                return Boolean(formData.company_name.trim() && formData.company_type);
+            case 2:
+                return Boolean(formData.skip_balance || (formData.cash_balance.trim() && formData.balance_date));
+            default:
+                return true;
         }
+    }, [currentStep, formData]);
 
+    const submitForm = useCallback(async (onSubmit: (data: CompanySetupData) => void) => {
         setIsLoading(true);
-
         try {
-            const result = await createCompanyUseCase.execute({
-                userId,
-                name: companyData.name,
-                type: companyData.type,
-                openingBalance: companyData.openingBalance,
-                openingBalanceDate: companyData.openingBalanceDate
-            });
-
-            if (result.isSuccess) {
-                toast({
-                    title: "Success",
-                    description: "Company created successfully!",
-                });
-
-                // Navigate to dashboard after successful creation
-                navigate('/');
-                return result.value.company;
-            } else {
-                toast({
-                    title: "Error",
-                    description: result.error,
-                    variant: "destructive"
-                });
-                return null;
-            }
+            await onSubmit(formData);
         } catch (error) {
-            console.error("Error creating company:", error);
-            toast({
-                title: "Error",
-                description: "Failed to create company. Please try again.",
-                variant: "destructive"
-            });
-            return null;
+            setError(error instanceof Error ? error.message : "An error occurred");
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const canProceedToNextStep = (): boolean => {
-        switch (currentStep) {
-            case 1:
-                return !!(companyData.name?.trim() && companyData.type);
-            case 2:
-                return true; // Opening balance is optional
-            case 3:
-                return true; // Review step
-            default:
-                return false;
-        }
-    };
-
-    const getStepProgress = (): number => {
-        return (currentStep / 3) * 100;
-    };
+    }, [formData]);
 
     return {
-        // State
-        isLoading,
         currentStep,
-        companyData,
-
-        // Actions
-        updateCompanyData,
+        totalSteps,
+        formData,
+        error,
+        isLoading,
+        updateField,
+        skipBalance,
+        addBalance,
         nextStep,
-        prevStep,
-        goToStep,
-        createCompany,
-
-        // Computed
-        canProceedToNextStep: canProceedToNextStep(),
-        stepProgress: getStepProgress(),
-
-        // Validation
-        isStepValid: canProceedToNextStep()
+        previousStep,
+        canProceed,
+        submitForm,
     };
-}; 
+} 
