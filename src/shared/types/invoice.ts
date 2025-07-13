@@ -1,4 +1,4 @@
-import { UploadedFile } from "./storage";
+import { UploadedFile } from "@/shared/types";
 
 export type InvoiceStatus = 'pending' | 'processing' | 'completed' | 'failed';
 export type InvoiceType = 'debit' | 'credit';

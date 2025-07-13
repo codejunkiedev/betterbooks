@@ -1,6 +1,6 @@
-import { getDocumentDownloadUrl } from "@/services/supabase/document";
-import { Document } from "@/shared/types/document";
-import { useToast } from "@/shared/hooks/use-toast";
+import { getDocumentDownloadUrl } from "@/shared/services/supabase/document";
+import { Document } from "@/shared/types";
+import { useToast } from "@/shared/hooks";
 
 interface ToastOptions {
     title: string;

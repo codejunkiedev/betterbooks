@@ -1,4 +1,4 @@
-import { useToast } from "@/shared/hooks/use-toast"
+import { useToast } from "@/shared/hooks"
 import {
   Toast,
   ToastClose,
@@ -6,14 +6,22 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "@/shared/components/toast"
+} from "./toast"
+
+type ToasterToast = {
+  id: string
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: React.ReactNode
+  [key: string]: unknown
+}
 
 export function Toaster() {
   const { toasts } = useToast()
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {toasts.map(function ({ id, title, description, action, ...props }: ToasterToast) {
         return (
           <Toast key={id} {...props}>
             <div className="grid gap-1">

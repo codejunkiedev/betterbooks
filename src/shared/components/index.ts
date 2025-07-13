@@ -26,8 +26,12 @@ export * from './textarea';
 export * from './toast';
 export * from './toaster';
 export * from './tooltip';
-export * from './DashboardLayout';
+
+// Custom components
 export * from './NotFound';
 export * from './DocumentActionButtons';
 export * from './documentPreview';
-export * from './documentUtils'; 
+export * from './documentUtils';
+export * from './ProtectedRoute';
+export * from './RoleBasedNavigation';
+export * from './ErrorBoundary'; 

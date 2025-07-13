@@ -1,6 +1,6 @@
 import { Button } from "@/shared/components/button";
 import { Download, Eye, Trash2 } from "lucide-react";
-import { Document } from "@/shared/types/document";
+import { Document } from "@/shared/types";
 import { useDocumentActions } from "./documentUtils";
 
 interface DocumentActionButtonsProps {

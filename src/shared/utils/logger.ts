@@ -1,5 +1,5 @@
 import { isDevelopment, isProduction } from '@/shared/config/environment';
-import { ApplicationError } from '@/shared/types/errors';
+import { ApplicationError } from '@/shared/types';
 
 export enum LogLevel {
     DEBUG = 0,

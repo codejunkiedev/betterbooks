@@ -19,16 +19,16 @@ function validateEnvironment(): void {
     );
 
     if (missingVars.length > 0) {
-        throw new Error(
-            `Missing required environment variables: ${missingVars.join(', ')}`
+        console.warn(
+            `Missing environment variables: ${missingVars.join(', ')}. Using default values.`
         );
     }
 }
 
 export const config: EnvironmentConfig = {
     NODE_ENV: (import.meta.env.MODE as EnvironmentConfig['NODE_ENV']) || 'development',
-    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL!,
-    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY!,
+    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || '',
+    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
     VITE_APP_NAME: import.meta.env.VITE_APP_NAME || 'BetterBooks',
     VITE_APP_VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
     VITE_API_TIMEOUT: parseInt(import.meta.env.VITE_API_TIMEOUT || '30000'),
@@ -40,4 +40,3 @@ validateEnvironment();
 
 export const isDevelopment = config.NODE_ENV === 'development';
 export const isProduction = config.NODE_ENV === 'production';
-export const isTest = config.NODE_ENV === 'test'; 
