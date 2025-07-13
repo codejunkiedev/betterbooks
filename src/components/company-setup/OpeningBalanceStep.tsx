@@ -22,36 +22,7 @@ export function OpeningBalanceStep({
     isLoading
 }: OpeningBalanceStepProps) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Map form field names to hook field names
-        const fieldMap: Record<string, string> = {
-            'cash_balance': 'openingBalance',
-            'balance_date': 'openingBalanceDate'
-        };
-
-        const fieldName = fieldMap[e.target.name] || e.target.name;
-        const value = e.target.value;
-
-        // Convert cash balance to number if it's a valid number
-        if (fieldName === 'openingBalance') {
-            if (value === '') {
-                onFieldChange(fieldName, '');
-                return;
-            }
-            const numValue = parseFloat(value);
-            if (!isNaN(numValue)) {
-                onFieldChange(fieldName, numValue.toString());
-                return;
-            }
-        }
-
-        // For date field, just pass the string value as-is
-        // The conversion to Date object will be handled in the parent component
-        if (fieldName === 'openingBalanceDate') {
-            onFieldChange(fieldName, value);
-            return;
-        }
-
-        onFieldChange(fieldName, value);
+        onFieldChange(e.target.name, e.target.value);
     };
 
     return (
@@ -75,7 +46,6 @@ export function OpeningBalanceStep({
                                 name="cash_balance"
                                 type="number"
                                 step="0.01"
-                                min="0"
                                 placeholder="0.00"
                                 value={cashBalance}
                                 onChange={handleChange}
@@ -88,14 +58,14 @@ export function OpeningBalanceStep({
                             <label htmlFor="balance_date" className="text-sm font-medium">
                                 Date
                             </label>
-                            <Input
+                            <input
                                 id="balance_date"
                                 name="balance_date"
                                 type="date"
                                 value={balanceDate}
                                 onChange={handleChange}
                                 disabled={isLoading}
-                                className="w-full"
+                                className="w-full appearance-none px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                             />
                         </div>
                     </div>

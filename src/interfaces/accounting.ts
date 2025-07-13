@@ -30,24 +30,4 @@ export interface AccountingSummaryType {
     start: string;
     end: string;
   };
-}
-
-export interface JournalEntryData {
-  id: string;
-  company_id: string;
-  entry_date: string;
-  description: string;
-  created_by_accountant_id: string;
-  source_document_id?: string;
-  is_adjusting_entry: boolean;
-  created_at: string;
-  journal_entry_lines?: JournalEntryLineData[];
-}
-
-export interface JournalEntryLineData {
-  id: string;
-  journal_entry_id: string;
-  account_id: string;
-  type: 'DEBIT' | 'CREDIT';
-  amount: number;
 } 
