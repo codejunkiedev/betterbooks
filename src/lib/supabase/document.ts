@@ -185,12 +185,33 @@ export const deleteDocument = async (documentId: string): Promise<{ error: Error
 
 export const getDocumentDownloadUrl = async (filePath: string): Promise<string | null> => {
     try {
-        const { data } = await supabase.storage
+        // First try to get a signed URL
+        const { data, error } = await supabase.storage
             .from('documents')
             .createSignedUrl(filePath, 3600);
+
+        if (error) {
+            console.error('Error creating signed URL:', error);
+            // Fallback to public URL if signed URL fails
+            const { data: publicUrl } = supabase.storage
+                .from('documents')
+                .getPublicUrl(filePath);
+            return publicUrl.publicUrl || null;
+        }
+
         return data?.signedUrl || null;
-    } catch {
-        return null;
+    } catch (error) {
+        console.error('Error in getDocumentDownloadUrl:', error);
+        // Fallback to public URL
+        try {
+            const { data: publicUrl } = supabase.storage
+                .from('documents')
+                .getPublicUrl(filePath);
+            return publicUrl.publicUrl || null;
+        } catch (fallbackError) {
+            console.error('Error getting public URL:', fallbackError);
+            return null;
+        }
     }
 };
 

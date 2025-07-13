@@ -5,7 +5,6 @@ import { X, Upload, FileText, Building2 } from "lucide-react";
 import { uploadDocuments } from "@/lib/supabase/document";
 import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
-import { MAX_FILE_SIZE, ALLOWED_TYPES } from "@/constants/documents";
 
 const UploadBankStatements = () => {
     const [files, setFiles] = useState<File[]>([]);
@@ -14,29 +13,17 @@ const UploadBankStatements = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const { toast } = useToast();
 
-    const validateFiles = (fileList: FileList): File[] => {
-        return Array.from(fileList).filter(file => {
-            if (file.size > MAX_FILE_SIZE) {
-                toast({
-                    title: "File too large",
-                    description: `${file.name} exceeds the 10MB limit.`,
-                    variant: "destructive",
-                });
-                return false;
+    const validateFiles = useCallback((fileList: FileList): File[] => {
+        const validFiles: File[] = [];
+        Array.from(fileList).forEach((file) => {
+            const isValidType = ["image/png", "image/jpeg", "application/pdf"].includes(file.type);
+            const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+            if (isValidType && isValidSize) {
+                validFiles.push(file);
             }
-
-            if (!ALLOWED_TYPES.includes(file.type)) {
-                toast({
-                    title: "Invalid file type",
-                    description: `${file.name} is not a supported format. Please use PNG, JPEG, or PDF files only.`,
-                    variant: "destructive",
-                });
-                return false;
-            }
-
-            return true;
         });
-    };
+        return validFiles;
+    }, []);
 
     const handleDragEnter = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -58,14 +45,12 @@ const UploadBankStatements = () => {
         }
     }, [isDragging]);
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
+    const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        e.stopPropagation();
         setIsDragging(false);
-
-        const droppedFiles = e.dataTransfer.files;
-        if (droppedFiles && droppedFiles.length > 0) {
-            const validFiles = validateFiles(droppedFiles);
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            const validFiles = validateFiles(files);
             if (validFiles.length) {
                 setFiles(prev => [...prev, ...validFiles]);
                 toast({
@@ -74,7 +59,7 @@ const UploadBankStatements = () => {
                 });
             }
         }
-    }, [toast]);
+    }, [toast, validateFiles]);
 
     const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = e.target.files;
@@ -90,7 +75,7 @@ const UploadBankStatements = () => {
         }
         // Reset the input value so the same file can be selected again
         e.target.value = '';
-    }, [toast]);
+    }, [toast, validateFiles]);
 
     const removeFile = useCallback((index: number) => {
         setFiles(prev => prev.filter((_, i) => i !== index));

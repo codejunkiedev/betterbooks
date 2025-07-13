@@ -18,19 +18,35 @@ export const useDocumentActions = (): DocumentActions => {
 
     const handleDownload = async (doc: Document) => {
         try {
+
+            toast({
+                title: "Download started",
+                description: "Your document is being downloaded. Please wait...",
+            });
+
             const downloadUrl = await getDocumentDownloadUrl(doc.file_path);
             if (downloadUrl) {
+                // Fetch the file as blob to force download
+                const response = await fetch(downloadUrl);
+                const blob = await response.blob();
+
+                // Create blob URL
+                const blobUrl = window.URL.createObjectURL(blob);
+
+                // Create a temporary anchor element
                 const link = document.createElement('a');
-                link.href = downloadUrl;
+                link.href = blobUrl;
                 link.download = doc.original_filename;
+                link.style.display = 'none';
+
+                // Append to body, click, and remove
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
 
-                toast({
-                    title: "Download started",
-                    description: "Your document is being downloaded.",
-                });
+                // Clean up blob URL
+                window.URL.revokeObjectURL(blobUrl);
+
             } else {
                 throw new Error('Failed to get download URL');
             }
@@ -75,12 +91,26 @@ export const documentActions = {
         try {
             const downloadUrl = await getDocumentDownloadUrl(doc.file_path);
             if (downloadUrl) {
+                // Fetch the file as blob to force download
+                const response = await fetch(downloadUrl);
+                const blob = await response.blob();
+
+                // Create blob URL
+                const blobUrl = window.URL.createObjectURL(blob);
+
+                // Create a temporary anchor element
                 const link = document.createElement('a');
-                link.href = downloadUrl;
+                link.href = blobUrl;
                 link.download = doc.original_filename;
+                link.style.display = 'none';
+
+                // Append to body, click, and remove
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+
+                // Clean up blob URL
+                window.URL.revokeObjectURL(blobUrl);
 
                 if (showToast) {
                     showToast({
