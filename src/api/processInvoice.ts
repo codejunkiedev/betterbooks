@@ -1,10 +1,10 @@
-import { supabase } from '@/lib/supabase/client';
-import { getCurrentUser } from '@/lib/supabase/auth';
+import { supabase } from '@/services/supabase/client';
+import { getCurrentUser } from '@/services/supabase/auth';
 export const processInvoice = async () => {
   try {
     const user = await getCurrentUser();
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session?.access_token) {
       throw new Error('No active session found');
     }
@@ -14,7 +14,7 @@ export const processInvoice = async () => {
       headers: {
         'Authorization': `Bearer ${session.access_token}`
       }
-    }).catch(error => {
+    }).catch((error: unknown) => {
       console.error('Background invoice processing error:', error);
     });
 
