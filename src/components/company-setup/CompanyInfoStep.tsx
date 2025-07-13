@@ -16,7 +16,14 @@ export function CompanyInfoStep({
     isLoading
 }: CompanyInfoStepProps) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        onFieldChange(e.target.name, e.target.value);
+        // Map form field names to hook field names
+        const fieldMap: Record<string, string> = {
+            'company_name': 'name',
+            'company_type': 'type'
+        };
+
+        const fieldName = fieldMap[e.target.name] || e.target.name;
+        onFieldChange(fieldName, e.target.value);
     };
 
     const formatCompanyType = (type: string) => {
@@ -34,7 +41,7 @@ export function CompanyInfoStep({
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <label htmlFor="company_name" className="text-sm font-medium">
-                        Company Name
+                        Company Name *
                     </label>
                     <Input
                         id="company_name"
@@ -44,12 +51,13 @@ export function CompanyInfoStep({
                         onChange={handleChange}
                         required
                         disabled={isLoading}
+                        className="w-full"
                     />
                 </div>
 
                 <div className="space-y-2">
                     <label htmlFor="company_type" className="text-sm font-medium">
-                        Company Type
+                        Company Type *
                     </label>
                     <select
                         id="company_type"
@@ -58,7 +66,7 @@ export function CompanyInfoStep({
                         onChange={handleChange}
                         required
                         disabled={isLoading}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50"
                     >
                         <option value="">Select Company Type</option>
                         {COMPANY_TYPES.map(type => (

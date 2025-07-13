@@ -26,7 +26,29 @@ export function ReviewStep({
         if (skipBalance) {
             return "Skipped (will be set to $0.00)";
         }
-        return `$${parseFloat(cashBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })} as of ${new Date(balanceDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+
+        const amount = parseFloat(cashBalance);
+        if (isNaN(amount)) {
+            return "Invalid amount";
+        }
+
+        let dateDisplay = "";
+        if (balanceDate) {
+            try {
+                const date = new Date(balanceDate);
+                if (!isNaN(date.getTime())) {
+                    dateDisplay = ` as of ${date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    })}`;
+                }
+            } catch {
+                dateDisplay = "";
+            }
+        }
+
+        return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}${dateDisplay}`;
     };
 
     return (
