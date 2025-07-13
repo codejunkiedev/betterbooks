@@ -6,7 +6,7 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "./toast"
+} from './Toast'
 
 type ToasterToast = {
   id: string

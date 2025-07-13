@@ -6,7 +6,7 @@ import { setUser } from "@/shared/services/store/userSlice";
 import { useToast } from "@/shared/hooks";
 import { getSession, signOut } from "@/shared/services/supabase/auth";
 import { getCompanyByUserId } from "@/shared/services/supabase/company";
-import { Button } from "@/shared/components/button";
+import { Button } from "@/shared/components/Button";
 
 interface Company {
   id: string;
@@ -16,7 +16,7 @@ interface Company {
   is_active: boolean;
   created_at: string;
 }
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/Avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,18 +24,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/components/dropdown-menu";
+} from "@/shared/components/DropdownMenu";
 import {
   Sheet,
   SheetContent,
   SheetOverlay,
   SheetPortal,
   SheetTrigger,
-} from "@/shared/components/sheet";
+} from "@/shared/components/Sheet";
 import { Menu, Home, Upload, Sparkles, User, ChevronLeft, FileText } from "lucide-react";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
+
+import { logger } from '@/shared/utils/logger';
 const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,7 +71,7 @@ const DashboardLayout = () => {
         return;
       }
     } catch (error) {
-      console.error("Error checking authentication:", error);
+      logger.error("Error checking authentication:", error instanceof Error ? error : new Error(String(error)));
       toast({
         title: "Error",
         description: "Authentication failed. Please log in again.",

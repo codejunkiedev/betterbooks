@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/shared/components/button";
-import { useToast } from "@/shared/hooks/use-toast";
+import { Button } from '@/shared/components/Button';
+import { useToast } from "@/shared/hooks/useToast";
 import { FileText, Check, Edit2, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import {
   Table,
@@ -9,33 +9,35 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/components/table";
-import { Input } from "@/shared/components/input";
+} from '@/shared/components/Table';
+import { Input } from '@/shared/components/Input';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/shared/components/tooltip";
+} from '@/shared/components/Tooltip';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/shared/components/dialog";
-import { Label } from "@/shared/components/label";
+} from '@/shared/components/Dialog';
+import { Label } from '@/shared/components/Label';
 import { InvoiceSuggestionType } from "@/shared/types/suggestion";
 import {
   fetchInvoiceSuggestions,
   approveInvoiceSuggestion
 } from "@/shared/services/supabase/suggestion";
-import { getInvoiceLineItems } from '@/shared/services/supabase/line-item';
-import { LineItem } from '@/shared/types/line-item';
+import { getInvoiceLineItems } from '@/shared/services/supabase/lineItem';
+import { LineItem } from '@/shared/types/lineItem';
 import { getFileUrl } from "@/shared/services/supabase/storage";
-import { LoadingSpinner, Skeleton } from "@/shared/components/loading";
-import { InvoicePreview } from "@/shared/components/documentPreview";
+import { LoadingSpinner, Skeleton } from '@/shared/components/Loading';
+import { InvoicePreview } from "@/shared/components/DocumentPreview";
 
+
+import { logger } from '@/shared/utils/logger';
 const ITEMS_PER_PAGE = 5;
 
 const InvoiceSuggestion = () => {
@@ -65,7 +67,7 @@ const InvoiceSuggestion = () => {
       setSuggestions(data?.items || []);
       setTotalItems(data?.total || 0);
     } catch (error: unknown) {
-      console.error("Error fetching invoice suggestions:", error);
+      logger.error("Error fetching invoice suggestions:", error instanceof Error ? error : new Error(String(error)));
       toast({
         title: "Error Fetching Suggestions",
         description: error instanceof Error ? error.message : "Could not retrieve invoice suggestions from the database.",
@@ -103,7 +105,7 @@ const InvoiceSuggestion = () => {
         description: "The accounting entry has been approved successfully.",
       });
     } catch (error: unknown) {
-      console.error("Error approving entry:", error);
+      logger.error("Error approving entry:", error instanceof Error ? error : new Error(String(error)));
       toast({
         title: "Error",
         description: "Failed to approve the entry. Please try again.",
@@ -126,7 +128,7 @@ const InvoiceSuggestion = () => {
   const fetchLineItems = async (invoiceId: string) => {
     const { data, error } = await getInvoiceLineItems(invoiceId);
     if (error) {
-      console.error("Error fetching line items:", error);
+      logger.error("Error fetching line items:", error instanceof Error ? error : new Error(String(error)));
       toast({
         title: "Error",
         description: "Failed to fetch line items. Please try again.",
@@ -166,7 +168,7 @@ const InvoiceSuggestion = () => {
         description: "The accounting entry has been updated and approved successfully.",
       });
     } catch (error: unknown) {
-      console.error("Error saving changes:", error);
+      logger.error("Error saving changes:", error instanceof Error ? error : new Error(String(error)));
       toast({
         title: "Error",
         description: "Failed to save changes. Please try again.",
@@ -190,7 +192,7 @@ const InvoiceSuggestion = () => {
         setIsPreviewOpen(true);
       }
     } catch (error) {
-      console.error('Error generating preview URL:', error);
+      logger.error('Error generating preview URL:', error instanceof Error ? error : new Error(String(error)));
       toast({
         title: "Error",
         description: "Failed to generate preview URL. Please try again.",

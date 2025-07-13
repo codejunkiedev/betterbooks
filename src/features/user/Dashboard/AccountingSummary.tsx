@@ -3,14 +3,16 @@ import { TrendingUp, TrendingDown, Scale } from "lucide-react";
 import { format } from "date-fns";
 import { AccountingSummaryType } from "@/shared/types/accounting";
 import { fetchAccountingSummary } from "@/shared/services/supabase/accounting";
-import { useToast } from "@/shared/hooks/use-toast";
-import { Skeleton } from "@/shared/components/loading";
+import { useToast } from "@/shared/hooks/useToast";
+import { Skeleton } from '@/shared/components/Loading';
+
+import { logger } from '@/shared/utils/logger';
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from "@/shared/components/tooltip";
+} from '@/shared/components/Tooltip';
 
 export function AccountingSummary() {
     const [summary, setSummary] = useState<AccountingSummaryType | null>(null);
@@ -25,7 +27,7 @@ export function AccountingSummary() {
         } catch (error: unknown) {
             // Use logger instead of console.error in production
             if (process.env.NODE_ENV === 'development') {
-                console.error("Error fetching accounting summary:", error);
+                logger.error("Error fetching accounting summary:", error instanceof Error ? error : new Error(String(error)));
             }
             toast({
                 title: "Error",

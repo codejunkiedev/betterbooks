@@ -2,6 +2,8 @@ import { supabase } from './client';
 import { ApiResponse } from '@/shared/types';
 import { LineItem, CreateLineItemData } from '@/shared/types';
 
+
+import { logger } from '@/shared/utils/logger';
 export const createLineItem = async (
   data: CreateLineItemData
 ): Promise<ApiResponse<LineItem>> => {
@@ -19,7 +21,7 @@ export const createLineItem = async (
       error: null
     };
   } catch (error) {
-    console.error('Error creating line item:', error);
+    logger.error('Error creating line item:', error instanceof Error ? error : new Error(String(error)));
     return {
       data: null,
       error: error as Error
@@ -43,7 +45,7 @@ export const getInvoiceLineItems = async (
       error: null
     };
   } catch (error) {
-    console.error('Error fetching line items:', error);
+    logger.error('Error fetching line items:', error instanceof Error ? error : new Error(String(error)));
     return {
       data: null,
       error: error as Error

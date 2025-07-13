@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/shared/hooks/useRedux";
 import { useCompanySetup, CompanySetupData } from "@/shared/hooks/useCompanySetup";
 import { createCompany } from "@/shared/services/supabase/company";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/hooks/useToast";
 import {
     StepIndicator,
     CompanyInfoStep,
@@ -14,6 +14,8 @@ import { copyCOATemplateToCompany } from "@/shared/services/supabase/coa";
 import { getCompanyByUserId } from "@/shared/services/supabase/company";
 import { useEffect } from "react";
 
+
+import { logger } from '@/shared/utils/logger';
 export default function CompanySetup() {
     const navigate = useNavigate();
     const user = useAppSelector(state => state.user.user);
@@ -45,7 +47,7 @@ export default function CompanySetup() {
                     navigate("/", { replace: true });
                 }
             } catch (error) {
-                console.error("Error checking company:", error);
+                logger.error("Error checking company:", error instanceof Error ? error : new Error(String(error)));
             }
         };
 
@@ -84,7 +86,7 @@ export default function CompanySetup() {
 
             navigate("/");
         } catch (error) {
-            console.error("Error creating company:", error);
+            logger.error("Error creating company:", error instanceof Error ? error : new Error(String(error)));
             toast({
                 title: "Error",
                 description: "Failed to create company. Please try again.",

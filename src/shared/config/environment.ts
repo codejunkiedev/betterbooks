@@ -13,15 +13,15 @@ const requiredEnvVars = [
     'VITE_SUPABASE_ANON_KEY',
 ] as const;
 
+import { logger } from '@/shared/utils/logger';
+
 function validateEnvironment(): void {
     const missingVars = requiredEnvVars.filter(
         (varName) => !import.meta.env[varName]
     );
 
     if (missingVars.length > 0) {
-        console.warn(
-            `Missing environment variables: ${missingVars.join(', ')}. Using default values.`
-        );
+        logger.warn(`Missing environment variables: ${missingVars.join(', ')}. Using default values.`);
     }
 }
 

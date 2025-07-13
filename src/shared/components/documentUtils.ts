@@ -2,6 +2,8 @@ import { getDocumentDownloadUrl } from "@/shared/services/supabase/document";
 import { Document } from "@/shared/types";
 import { useToast } from "@/shared/hooks";
 
+
+import { logger } from '@/shared/utils/logger';
 interface ToastOptions {
     title: string;
     description: string;
@@ -35,7 +37,7 @@ export const useDocumentActions = (): DocumentActions => {
                 throw new Error('Failed to get download URL');
             }
         } catch (error) {
-            console.error('Error downloading document:', error);
+            logger.error('Error downloading document:', error instanceof Error ? error : new Error(String(error)));
             toast({
                 title: "Download failed",
                 description: "Failed to download the document. Please try again.",
@@ -53,7 +55,7 @@ export const useDocumentActions = (): DocumentActions => {
                 throw new Error('Failed to get preview URL');
             }
         } catch (error) {
-            console.error('Error previewing document:', error);
+            logger.error('Error previewing document:', error instanceof Error ? error : new Error(String(error)));
             toast({
                 title: "Preview failed",
                 description: "Failed to open the document preview. Please try again.",
@@ -92,7 +94,7 @@ export const documentActions = {
                 throw new Error('Failed to get download URL');
             }
         } catch (error) {
-            console.error('Error downloading document:', error);
+            logger.error('Error downloading document:', error instanceof Error ? error : new Error(String(error)));
             if (showToast) {
                 showToast({
                     title: "Download failed",
@@ -112,7 +114,7 @@ export const documentActions = {
                 throw new Error('Failed to get preview URL');
             }
         } catch (error) {
-            console.error('Error previewing document:', error);
+            logger.error('Error previewing document:', error instanceof Error ? error : new Error(String(error)));
             if (showToast) {
                 showToast({
                     title: "Preview failed",

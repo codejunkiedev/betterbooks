@@ -9,6 +9,8 @@ import { getCurrentUser } from './auth';
 import { PaginatedResponse } from '@/shared/types';
 import { PostgrestError } from '@supabase/supabase-js';
 
+
+import { logger } from '@/shared/utils/logger';
 // Helper function to get current user
 
 export const uploadInvoice = async (
@@ -52,7 +54,7 @@ export const uploadInvoice = async (
             error: null
         };
     } catch (error) {
-        console.error('Error uploading invoices:', error);
+        logger.error('Error uploading invoices:', error instanceof Error ? error : new Error(String(error)));
         return {
             data: null,
             error: error as Error
@@ -78,7 +80,7 @@ export const getInvoices = async (): Promise<ApiResponse<InvoiceData[]>> => {
             error: null
         };
     } catch (error) {
-        console.error('Error fetching invoices:', error);
+        logger.error('Error fetching invoices:', error instanceof Error ? error : new Error(String(error)));
         return {
             data: null,
             error: error as Error
@@ -105,7 +107,7 @@ export const getInvoice = async (id: string): Promise<ApiResponse<InvoiceData>> 
             error: null
         };
     } catch (error) {
-        console.error('Error fetching invoice:', error);
+        logger.error('Error fetching invoice:', error instanceof Error ? error : new Error(String(error)));
         return {
             data: null,
             error: error as Error
@@ -136,7 +138,7 @@ export const updateInvoice = async (
             error: null
         };
     } catch (error) {
-        console.error('Error updating invoice:', error);
+        logger.error('Error updating invoice:', error instanceof Error ? error : new Error(String(error)));
         return {
             data: null,
             error: error as Error
@@ -162,7 +164,7 @@ export const deleteInvoice = async (id: string): Promise<ApiResponse<void>> => {
             error: null
         };
     } catch (error) {
-        console.error('Error deleting invoice:', error);
+        logger.error('Error deleting invoice:', error instanceof Error ? error : new Error(String(error)));
         return {
             data: null,
             error: error as Error
@@ -202,7 +204,7 @@ export const fetchInvoices = async (page: number = 1, pageSize: number = 10): Pr
             error: null
         };
     } catch (error) {
-        console.error("Error fetching invoice suggestions:", error);
+        logger.error("Error fetching invoice suggestions:", error instanceof Error ? error : new Error(String(error)));
         return { data: null, error: error as PostgrestError };
     }
 };

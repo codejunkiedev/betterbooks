@@ -21311,7 +21311,7 @@ function requirePostgrestFilterBuilder() {
      * @param options.config - The text search configuration to use
      * @param options.type - Change how the `query` text is interpreted
      */
-    textSearch(column, query, { config, type } = {}) {
+    textSearch(column, query, { config: config2, type } = {}) {
       let typePart = "";
       if (type === "plain") {
         typePart = "pl";
@@ -21320,7 +21320,7 @@ function requirePostgrestFilterBuilder() {
       } else if (type === "websearch") {
         typePart = "w";
       }
-      const configPart = config === void 0 ? "" : `(${config})`;
+      const configPart = config2 === void 0 ? "" : `(${config2})`;
       this.url.searchParams.append(column, `${typePart}fts${configPart}.${query}`);
       return this;
     }
@@ -22488,7 +22488,7 @@ class RealtimeChannel {
       this._onError((e) => callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CHANNEL_ERROR, e));
       this._onClose(() => callback === null || callback === void 0 ? void 0 : callback(REALTIME_SUBSCRIBE_STATES.CLOSED));
       const accessTokenPayload = {};
-      const config = {
+      const config2 = {
         broadcast,
         presence,
         postgres_changes: (_b = (_a = this.bindings.postgres_changes) === null || _a === void 0 ? void 0 : _a.map((r2) => r2.filter)) !== null && _b !== void 0 ? _b : [],
@@ -22497,7 +22497,7 @@ class RealtimeChannel {
       if (this.socket.accessTokenValue) {
         accessTokenPayload.access_token = this.socket.accessTokenValue;
       }
-      this.updateJoinPayload(Object.assign({ config }, accessTokenPayload));
+      this.updateJoinPayload(Object.assign({ config: config2 }, accessTokenPayload));
       this.joinedOnce = true;
       this._rejoin(timeout);
       this.joinPush.receive("ok", async ({ postgres_changes }) => {
@@ -27486,26 +27486,36 @@ class SupabaseClient {
 const createClient = (supabaseUrl2, supabaseKey, options) => {
   return new SupabaseClient(supabaseUrl2, supabaseKey, options);
 };
-const supabaseUrl = "https://bfmmxsrzuzklexrfrqwb.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW14c3J6dXprbGV4cmZycXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1Mzc1NTQsImV4cCI6MjA2MjExMzU1NH0.9_tiPZwB2YkGjhcpQlIYhmAu3eil_4mvhB3QOaqfVBw";
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    flowType: "pkce"
-  },
-  global: {
-    headers: {
-      "X-Client-Info": "betterbooks-web"
-    }
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
+const __vite_import_meta_env__ = { "BASE_URL": "/", "DEV": false, "MODE": "development", "PROD": true, "SSR": false, "VITE_API_URL": "http://localhost:3000", "VITE_APP_ENV": "development", "VITE_DEBUG_MODE": "false", "VITE_ENABLE_LOGGING": "false", "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW14c3J6dXprbGV4cmZycXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1Mzc1NTQsImV4cCI6MjA2MjExMzU1NH0.9_tiPZwB2YkGjhcpQlIYhmAu3eil_4mvhB3QOaqfVBw", "VITE_SUPABASE_URL": "https://bfmmxsrzuzklexrfrqwb.supabase.co" };
+const requiredEnvVars = [
+  "VITE_SUPABASE_URL",
+  "VITE_SUPABASE_ANON_KEY"
+];
+function validateEnvironment() {
+  const missingVars = requiredEnvVars.filter(
+    (varName) => !__vite_import_meta_env__[varName]
+  );
+  if (missingVars.length > 0) {
+    logger.warn(`Missing environment variables: ${missingVars.join(", ")}. Using default values.`);
   }
-});
+}
+const config = {
+  NODE_ENV: "development"
+};
+validateEnvironment();
+const isDevelopment = config.NODE_ENV === "development";
+class ApplicationError extends Error {
+  constructor(code, message2, details = void 0) {
+    super(message2);
+    __publicField(this, "code");
+    __publicField(this, "details");
+    __publicField(this, "timestamp");
+    this.name = "ApplicationError";
+    this.code = code;
+    this.details = details;
+    this.timestamp = /* @__PURE__ */ new Date();
+  }
+}
 var UserRole = /* @__PURE__ */ ((UserRole2) => {
   UserRole2["USER"] = "USER";
   UserRole2["ACCOUNTANT"] = "ACCOUNTANT";
@@ -27606,6 +27616,138 @@ const ROLE_PERMISSIONS = {
     /* MANAGE_TAX_DOCUMENTS */
   ]
 };
+var LogLevel = /* @__PURE__ */ ((LogLevel2) => {
+  LogLevel2[LogLevel2["DEBUG"] = 0] = "DEBUG";
+  LogLevel2[LogLevel2["INFO"] = 1] = "INFO";
+  LogLevel2[LogLevel2["WARN"] = 2] = "WARN";
+  LogLevel2[LogLevel2["ERROR"] = 3] = "ERROR";
+  LogLevel2[LogLevel2["FATAL"] = 4] = "FATAL";
+  return LogLevel2;
+})(LogLevel || {});
+const _Logger = class _Logger {
+  constructor() {
+    __publicField(this, "logLevel");
+    this.logLevel = 0;
+  }
+  static getInstance() {
+    if (!_Logger.instance) {
+      _Logger.instance = new _Logger();
+    }
+    return _Logger.instance;
+  }
+  shouldLog(level) {
+    return level >= this.logLevel;
+  }
+  formatMessage(entry) {
+    const timestamp = entry.timestamp.toISOString();
+    const level = LogLevel[entry.level];
+    const context = entry.context ? ` | ${JSON.stringify(entry.context)}` : "";
+    const error = entry.error ? ` | Error: ${entry.error.message}` : "";
+    return `[${timestamp}] ${level}: ${entry.message}${context}${error}`;
+  }
+  log(level, message2, context, error) {
+    if (!this.shouldLog(level)) return;
+    const entry = {
+      level,
+      message: message2,
+      timestamp: /* @__PURE__ */ new Date(),
+      context,
+      error
+    };
+    const formattedMessage = this.formatMessage(entry);
+    switch (level) {
+      case 0:
+        console.debug(formattedMessage);
+        break;
+      case 1:
+        console.info(formattedMessage);
+        break;
+      case 2:
+        console.warn(formattedMessage);
+        break;
+      case 3:
+      case 4:
+        console.error(formattedMessage);
+        if ((error == null ? void 0 : error.stack) && isDevelopment) {
+          console.error(error.stack);
+        }
+        break;
+    }
+  }
+  sendToErrorTracking(entry) {
+    if (entry.error instanceof ApplicationError) {
+      console.error("Application Error:", {
+        code: entry.error.code,
+        message: entry.error.message,
+        details: entry.error.details,
+        timestamp: entry.error.timestamp
+      });
+    }
+  }
+  debug(message2, context) {
+    this.log(0, message2, context);
+  }
+  info(message2, context) {
+    this.log(1, message2, context);
+  }
+  warn(message2, context) {
+    this.log(2, message2, context);
+  }
+  error(message2, errorOrContext, context) {
+    if (errorOrContext instanceof Error) {
+      this.log(3, message2, context, errorOrContext);
+    } else {
+      this.log(3, message2, errorOrContext, void 0);
+    }
+  }
+  fatal(message2, errorOrContext, context) {
+    if (errorOrContext instanceof Error) {
+      this.log(4, message2, context, errorOrContext);
+    } else {
+      this.log(4, message2, errorOrContext, void 0);
+    }
+  }
+  setLogLevel(level) {
+    this.logLevel = level;
+  }
+};
+__publicField(_Logger, "instance");
+let Logger = _Logger;
+const logger = Logger.getInstance();
+const supabaseUrl = "https://bfmmxsrzuzklexrfrqwb.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW14c3J6dXprbGV4cmZycXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1Mzc1NTQsImV4cCI6MjA2MjExMzU1NH0.9_tiPZwB2YkGjhcpQlIYhmAu3eil_4mvhB3QOaqfVBw";
+logger.info("Supabase Client Configuration", {
+  url: `${supabaseUrl.substring(0, 20)}...`,
+  key: `${supabaseAnonKey.substring(0, 20)}...`,
+  mode: "development"
+});
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: "pkce"
+  },
+  global: {
+    headers: {
+      "X-Client-Info": "betterbooks-web"
+    }
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
+  }
+});
+supabase.auth.getSession().then(({ error }) => {
+  if (error) {
+    logger.error("Initial Supabase connection test failed", error);
+  } else {
+    logger.info("Supabase connection test successful");
+  }
+}).catch((error) => {
+  logger.error("Supabase client initialization error", error);
+});
 const getSession = async () => {
   const { data, error } = await supabase.auth.getSession();
   return {
@@ -27624,7 +27766,7 @@ const signIn = async (email, password) => {
       error
     };
   } catch (error) {
-    console.error("Error signing in:", error);
+    logger.error("Error signing in", error instanceof Error ? error : new Error(String(error)));
     return {
       user: null,
       error
@@ -27647,7 +27789,7 @@ const signUp = async (email, password, fullName) => {
       error
     };
   } catch (error) {
-    console.error("Error signing up:", error);
+    logger.error("Error signing up", error instanceof Error ? error : new Error(String(error)));
     return {
       user: null,
       error
@@ -27659,7 +27801,7 @@ const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
   } catch (error) {
-    console.error("Error signing out:", error);
+    logger.error("Error signing out", error instanceof Error ? error : new Error(String(error)));
     return { error };
   }
 };
@@ -27670,7 +27812,7 @@ const getCurrentUser = async () => {
     if (!user) throw new Error("User not authenticated");
     return user;
   } catch (error) {
-    console.error("Error getting current user:", error);
+    logger.error("Error getting current user", error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 };
@@ -27679,7 +27821,7 @@ const resetPassword = async (email) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     return { error };
   } catch (error) {
-    console.error("Error resetting password:", error);
+    logger.error("Error resetting password", error instanceof Error ? error : new Error(String(error)));
     return { error };
   }
 };
@@ -27688,7 +27830,7 @@ const updatePassword = async (newPassword) => {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     return { error };
   } catch (error) {
-    console.error("Error updating password:", error);
+    logger.error("Error updating password", error instanceof Error ? error : new Error(String(error)));
     return { error };
   }
 };
@@ -27727,7 +27869,7 @@ const fetchUserPermissions = async (userId) => {
       permissions: ROLE_PERMISSIONS[UserRole.USER]
     };
   } catch (error) {
-    console.error("Error fetching user permissions:", error);
+    logger.error("Error fetching user permissions", error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 };
@@ -27828,27 +27970,32 @@ const AuthProvider = ({ children }) => {
   reactExports.useEffect(() => {
     const getInitialSession = async () => {
       try {
-        console.log("Attempting to get initial session...");
+        logger.info("Attempting to get initial session...");
+        logger.info("Environment check", {
+          supabaseUrl: "https://bfmmxsrzuzklexrfrqwb.supabase.co" ? "Set" : "Missing",
+          supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbW14c3J6dXprbGV4cmZycXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1Mzc1NTQsImV4cCI6MjA2MjExMzU1NH0.9_tiPZwB2YkGjhcpQlIYhmAu3eil_4mvhB3QOaqfVBw" ? "Set" : "Missing",
+          mode: "development"
+        });
         const timeoutPromise = new Promise(
-          (_, reject) => setTimeout(() => reject(new Error("Connection timeout - Supabase service may be unavailable")), 1e4)
+          (_, reject) => setTimeout(() => reject(new Error("Connection timeout - Supabase service may be unavailable")), 15e3)
         );
         const sessionPromise = getSession();
         const result = await Promise.race([sessionPromise, timeoutPromise]);
         const { session, error: error2 } = result;
         if (error2) {
-          console.error("Supabase auth error:", error2);
+          logger.error("Supabase auth error", error2);
           throw error2;
         }
-        console.log("Session retrieved successfully:", session ? "User logged in" : "No session");
+        logger.info("Session retrieved successfully", { hasSession: !!session });
         setUser2((session == null ? void 0 : session.user) ?? null);
         if (session == null ? void 0 : session.user) {
-          console.log("Fetching user permissions for:", session.user.id);
+          logger.info("Fetching user permissions", { userId: session.user.id });
           const permissions = await fetchUserPermissions(session.user.id);
           setUserPermissions(permissions);
         }
         setLoading(false);
       } catch (error2) {
-        console.error("Error getting initial session:", error2);
+        logger.error("Error getting initial session", error2 instanceof Error ? error2 : new Error(String(error2)));
         let errorMessage = "Failed to connect to authentication service.";
         if (error2 instanceof Error) {
           if (error2.message.includes("timeout")) {
@@ -27869,7 +28016,7 @@ const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         try {
-          console.log("Auth state changed:", _event, session ? "User logged in" : "User logged out");
+          logger.info("Auth state changed", { event: _event, hasSession: !!session });
           setUser2((session == null ? void 0 : session.user) ?? null);
           if (session == null ? void 0 : session.user) {
             const permissions = await fetchUserPermissions(session.user.id);
@@ -27879,7 +28026,7 @@ const AuthProvider = ({ children }) => {
           }
           setLoading(false);
         } catch (error2) {
-          console.error("Error in auth state change:", error2);
+          logger.error("Error in auth state change", error2 instanceof Error ? error2 : new Error(String(error2)));
           setError("Authentication error occurred. Please try refreshing the page.");
           setLoading(false);
         }
@@ -29088,12 +29235,12 @@ function clsx() {
   return n;
 }
 const CLASS_PART_SEPARATOR = "-";
-const createClassGroupUtils = (config) => {
-  const classMap = createClassMap(config);
+const createClassGroupUtils = (config2) => {
+  const classMap = createClassMap(config2);
   const {
     conflictingClassGroups,
     conflictingClassGroupModifiers
-  } = config;
+  } = config2;
   const getClassGroupId = (className) => {
     const classParts = className.split(CLASS_PART_SEPARATOR);
     if (classParts[0] === "" && classParts.length !== 1) {
@@ -29142,11 +29289,11 @@ const getGroupIdForArbitraryProperty = (className) => {
     }
   }
 };
-const createClassMap = (config) => {
+const createClassMap = (config2) => {
   const {
     theme,
     classGroups
-  } = config;
+  } = config2;
   const classMap = {
     nextPart: /* @__PURE__ */ new Map(),
     validators: []
@@ -29236,11 +29383,11 @@ const createLruCache = (maxCacheSize) => {
 const IMPORTANT_MODIFIER = "!";
 const MODIFIER_SEPARATOR = ":";
 const MODIFIER_SEPARATOR_LENGTH = MODIFIER_SEPARATOR.length;
-const createParseClassName = (config) => {
+const createParseClassName = (config2) => {
   const {
     prefix,
     experimentalParseClassName
-  } = config;
+  } = config2;
   let parseClassName = (className) => {
     const modifiers = [];
     let bracketDepth = 0;
@@ -29310,8 +29457,8 @@ const stripImportantModifier = (baseClassName) => {
   }
   return baseClassName;
 };
-const createSortModifiers = (config) => {
-  const orderSensitiveModifiers = Object.fromEntries(config.orderSensitiveModifiers.map((modifier) => [modifier, true]));
+const createSortModifiers = (config2) => {
+  const orderSensitiveModifiers = Object.fromEntries(config2.orderSensitiveModifiers.map((modifier) => [modifier, true]));
   const sortModifiers = (modifiers) => {
     if (modifiers.length <= 1) {
       return modifiers;
@@ -29332,11 +29479,11 @@ const createSortModifiers = (config) => {
   };
   return sortModifiers;
 };
-const createConfigUtils = (config) => ({
-  cache: createLruCache(config.cacheSize),
-  parseClassName: createParseClassName(config),
-  sortModifiers: createSortModifiers(config),
-  ...createClassGroupUtils(config)
+const createConfigUtils = (config2) => ({
+  cache: createLruCache(config2.cacheSize),
+  parseClassName: createParseClassName(config2),
+  sortModifiers: createSortModifiers(config2),
+  ...createClassGroupUtils(config2)
 });
 const SPLIT_CLASSES_REGEX = /\s+/;
 const mergeClassList = (classList, configUtils) => {
@@ -29429,8 +29576,8 @@ function createTailwindMerge(createConfigFirst, ...createConfigRest) {
   let cacheSet;
   let functionToCall = initTailwindMerge;
   function initTailwindMerge(classList) {
-    const config = createConfigRest.reduce((previousConfig, createConfigCurrent) => createConfigCurrent(previousConfig), createConfigFirst());
-    configUtils = createConfigUtils(config);
+    const config2 = createConfigRest.reduce((previousConfig, createConfigCurrent) => createConfigCurrent(previousConfig), createConfigFirst());
+    configUtils = createConfigUtils(config2);
     cacheGet = configUtils.cache.get;
     cacheSet = configUtils.cache.set;
     functionToCall = tailwindMerge;
@@ -32077,10 +32224,10 @@ const AvatarFallback = reactExports.forwardRef(({ className, ...props }, ref) =>
 AvatarFallback.displayName = Fallback.displayName;
 const falsyToString = (value) => typeof value === "boolean" ? `${value}` : value === 0 ? "0" : value;
 const cx = clsx;
-const cva = (base, config) => (props) => {
+const cva = (base, config2) => (props) => {
   var _config_compoundVariants;
-  if ((config === null || config === void 0 ? void 0 : config.variants) == null) return cx(base, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
-  const { variants, defaultVariants } = config;
+  if ((config2 === null || config2 === void 0 ? void 0 : config2.variants) == null) return cx(base, props === null || props === void 0 ? void 0 : props.class, props === null || props === void 0 ? void 0 : props.className);
+  const { variants, defaultVariants } = config2;
   const getVariantClassNames = Object.keys(variants).map((variant) => {
     const variantProp = props === null || props === void 0 ? void 0 : props[variant];
     const defaultVariantProp = defaultVariants === null || defaultVariants === void 0 ? void 0 : defaultVariants[variant];
@@ -32096,7 +32243,7 @@ const cva = (base, config) => (props) => {
     acc[key] = value;
     return acc;
   }, {});
-  const getCompoundVariantClassNames = config === null || config === void 0 ? void 0 : (_config_compoundVariants = config.compoundVariants) === null || _config_compoundVariants === void 0 ? void 0 : _config_compoundVariants.reduce((acc, param) => {
+  const getCompoundVariantClassNames = config2 === null || config2 === void 0 ? void 0 : (_config_compoundVariants = config2.compoundVariants) === null || _config_compoundVariants === void 0 ? void 0 : _config_compoundVariants.reduce((acc, param) => {
     let { class: cvClass, className: cvClassName, ...compoundVariantOptions } = param;
     return Object.entries(compoundVariantOptions).every((param2) => {
       let [key, value] = param2;
@@ -32405,13 +32552,13 @@ function computeCoordsFromPlacement(_ref, placement, rtl) {
   }
   return coords;
 }
-const computePosition$1 = async (reference, floating, config) => {
+const computePosition$1 = async (reference, floating, config2) => {
   const {
     placement = "bottom",
     strategy = "absolute",
     middleware = [],
     platform: platform2
-  } = config;
+  } = config2;
   const validMiddleware = middleware.filter(Boolean);
   const rtl = await (platform2.isRTL == null ? void 0 : platform2.isRTL(floating));
   let rects = await platform2.getElementRects({
@@ -33923,15 +34070,15 @@ function useFloating(options) {
     if (!referenceRef.current || !floatingRef.current) {
       return;
     }
-    const config = {
+    const config2 = {
       placement,
       strategy,
       middleware: latestMiddleware
     };
     if (platformRef.current) {
-      config.platform = platformRef.current;
+      config2.platform = platformRef.current;
     }
-    computePosition(referenceRef.current, floatingRef.current, config).then((data2) => {
+    computePosition(referenceRef.current, floatingRef.current, config2).then((data2) => {
       const fullData = {
         ...data2,
         // The floating element's position may be recomputed while it's closed
@@ -35855,9 +36002,7 @@ class ErrorBoundary extends reactExports.Component {
       error,
       errorInfo
     });
-    {
-      console.error("ErrorBoundary caught an error:", error, errorInfo);
-    }
+    logger.error("ErrorBoundary caught an error", error, { errorInfo });
   }
   render() {
     if (this.state.hasError) {
@@ -40838,7 +40983,7 @@ const fetchAccountingSummary = async () => {
       error: null
     };
   } catch (error) {
-    console.error("Error fetching accounting summary:", error);
+    logger.error("Error fetching accounting summary:", error instanceof Error ? error : new Error(String(error)));
     return { data: null, error };
   }
 };
@@ -40862,7 +41007,7 @@ const fetchAccountingEntries = async (page = 1, pageSize = 10, filter) => {
       error: null
     };
   } catch (error) {
-    console.error("Error fetching accounting entries:", error);
+    logger.error("Error fetching accounting entries:", error instanceof Error ? error : new Error(String(error)));
     return { data: null, error };
   }
 };
@@ -40877,7 +41022,7 @@ function AccountingSummary() {
       setSummary(data);
     } catch (error) {
       {
-        console.error("Error fetching accounting summary:", error);
+        logger.error("Error fetching accounting summary:", error instanceof Error ? error : new Error(String(error)));
       }
       toast2({
         title: "Error",
@@ -41039,7 +41184,7 @@ const DocumentPreview = ({ isOpen, onClose, previewUrl, documentName }) => {
           onLoad: () => setIsImageLoading(false),
           onError: () => {
             setIsImageLoading(false);
-            console.error("Error loading image:", previewUrl);
+            logger.error("Error loading image", { url: previewUrl });
           }
         }
       )
@@ -41090,7 +41235,7 @@ const AccountingEntriesTable = () => {
       setEntries((data == null ? void 0 : data.items) || []);
       setTotalItems((data == null ? void 0 : data.total) || 0);
     } catch (error) {
-      console.error("Error fetching accounting entries:", error);
+      logger.error("Error fetching accounting entries:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Error Fetching Entries",
         description: error instanceof Error ? error.message : "Could not retrieve accounting entries from the database.",
@@ -41273,7 +41418,7 @@ const fetchDashboardStats = async () => {
       error: null
     };
   } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
+    logger.error("Error fetching dashboard stats:", error instanceof Error ? error : new Error(String(error)));
     return {
       data: null,
       error
@@ -41289,14 +41434,14 @@ const Dashboard = () => {
         const { data, error } = await fetchDashboardStats();
         if (error) {
           if (true) {
-            console.error("Error fetching dashboard stats:", error);
+            logger.error("Error fetching dashboard stats:", error instanceof Error ? error : new Error(String(error)));
           }
         } else {
           setStats(data);
         }
       } catch (error) {
         {
-          console.error("Error loading dashboard stats:", error);
+          logger.error("Error loading dashboard stats:", error instanceof Error ? error : new Error(String(error)));
         }
       } finally {
         setIsLoading(false);
@@ -41338,7 +41483,7 @@ async function getCompanyByUserId(userId) {
     if (error.code === "PGRST116") {
       return null;
     }
-    console.error("Error fetching company:", error);
+    logger.error("Error fetching company:", error);
     throw error;
   }
   return data;
@@ -41354,7 +41499,7 @@ async function createCompany({
     type
   }).select().single();
   if (error) {
-    console.error("Error creating company:", error);
+    logger.error("Error creating company:", error);
     throw error;
   }
   return data;
@@ -41362,7 +41507,7 @@ async function createCompany({
 async function updateCompany(companyId, updates) {
   const { data, error } = await supabase.from("companies").update(updates).eq("id", companyId);
   if (error) {
-    console.error("Error updating company:", error);
+    logger.error("Error updating company:", error);
     throw error;
   }
   return data;
@@ -41484,7 +41629,7 @@ const useDocumentActions = () => {
         throw new Error("Failed to get download URL");
       }
     } catch (error) {
-      console.error("Error downloading document:", error);
+      logger.error("Error downloading document:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Download failed",
         description: "Failed to download the document. Please try again.",
@@ -41501,7 +41646,7 @@ const useDocumentActions = () => {
         throw new Error("Failed to get preview URL");
       }
     } catch (error) {
-      console.error("Error previewing document:", error);
+      logger.error("Error previewing document:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Preview failed",
         description: "Failed to open the document preview. Please try again.",
@@ -41601,7 +41746,7 @@ const DocumentsList = () => {
       setDocuments((data == null ? void 0 : data.items) || []);
       setTotalItems((data == null ? void 0 : data.total) || 0);
     } catch (error) {
-      console.error("Error loading documents:", error);
+      logger.error("Error loading documents:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Error",
         description: "Failed to load documents. Please try again.",
@@ -41646,7 +41791,7 @@ const DocumentsList = () => {
         loadDocuments();
       }
     } catch (error) {
-      console.error("Error deleting document:", error);
+      logger.error("Error deleting document:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Delete failed",
         description: "Failed to delete the document. Please try again.",
@@ -41680,17 +41825,17 @@ const DocumentsList = () => {
       IN_PROGRESS: { color: "bg-blue-100 text-blue-800 border-blue-200", label: "In Progress" },
       COMPLETED: { color: "bg-green-100 text-green-800 border-green-200", label: "Completed" }
     };
-    const config = statusConfig[status];
+    const config2 = statusConfig[status];
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       Badge,
       {
-        className: `${config.color} border hover:bg-opacity-100 hover:no-underline`,
+        className: `${config2.color} border hover:bg-opacity-100 hover:no-underline`,
         style: {
           backgroundColor: status === "PENDING_REVIEW" ? "#fef3c7" : status === "IN_PROGRESS" ? "#dbeafe" : status === "COMPLETED" ? "#dcfce7" : "#f3f4f6",
           color: status === "PENDING_REVIEW" ? "#92400e" : status === "IN_PROGRESS" ? "#1e40af" : status === "COMPLETED" ? "#166534" : "#374151",
           borderColor: status === "PENDING_REVIEW" ? "#fde68a" : status === "IN_PROGRESS" ? "#bfdbfe" : status === "COMPLETED" ? "#bbf7d0" : "#d1d5db"
         },
-        children: config.label
+        children: config2.label
       }
     );
   };
@@ -42643,7 +42788,7 @@ const UploadInvoicesExpenses = () => {
       });
       setFiles([]);
     } catch (err) {
-      console.error("Upload error:", err);
+      logger.error("Upload error:", err instanceof Error ? err : new Error(String(err)));
       toast2({
         title: "Upload failed",
         description: "There was an error uploading your files. Please try again.",
@@ -42938,7 +43083,7 @@ const UploadBankStatements = () => {
       });
       setFiles([]);
     } catch (err) {
-      console.error("Upload error:", err);
+      logger.error("Upload error:", err instanceof Error ? err : new Error(String(err)));
       toast2({
         title: "Upload failed",
         description: "There was an error uploading your files. Please try again.",
@@ -43123,7 +43268,7 @@ function Profile() {
             });
           }
         } catch (error) {
-          console.error("Error fetching company:", error);
+          logger.error("Error fetching company:", error instanceof Error ? error : new Error(String(error)));
         }
       }
     };
@@ -43175,7 +43320,7 @@ function Profile() {
         description: "Company information updated successfully."
       });
     } catch (error) {
-      console.error("Error saving company:", error);
+      logger.error("Error saving company:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Error",
         description: "Failed to save company information.",
@@ -43491,12 +43636,12 @@ async function getCOATemplate() {
   try {
     const { data, error } = await supabase.from("coa_template").select("*").order("id");
     if (error) {
-      console.error("Error fetching COA template:", error);
+      logger.error("Error fetching COA template:", error instanceof Error ? error : new Error(String(error)));
       return { data: null, error };
     }
     return { data, error: null };
   } catch (error) {
-    console.error("Error fetching COA template:", error);
+    logger.error("Error fetching COA template:", error instanceof Error ? error : new Error(String(error)));
     return { data: null, error };
   }
 }
@@ -43518,12 +43663,12 @@ async function copyCOATemplateToCompany(companyId) {
     }));
     const { data, error } = await supabase.from("company_coa").insert(coaEntries).select();
     if (error) {
-      console.error("Error inserting COA entries:", error);
+      logger.error("Error inserting COA entries:", error instanceof Error ? error : new Error(String(error)));
       throw new Error("Failed to copy COA template");
     }
     return { data, error: null };
   } catch (error) {
-    console.error("Error copying COA template to company:", error);
+    logger.error("Error copying COA template to company:", error instanceof Error ? error : new Error(String(error)));
     return { data: null, error };
   }
 }
@@ -43554,7 +43699,7 @@ function CompanySetup() {
           navigate("/", { replace: true });
         }
       } catch (error2) {
-        console.error("Error checking company:", error2);
+        logger.error("Error checking company:", error2 instanceof Error ? error2 : new Error(String(error2)));
       }
     };
     checkCompany();
@@ -43585,7 +43730,7 @@ function CompanySetup() {
       });
       navigate("/");
     } catch (error2) {
-      console.error("Error creating company:", error2);
+      logger.error("Error creating company:", error2 instanceof Error ? error2 : new Error(String(error2)));
       toast2({
         title: "Error",
         description: "Failed to create company. Please try again.",
@@ -43676,7 +43821,7 @@ const fetchInvoiceSuggestions = async (page = 1, pageSize = 10) => {
     };
   } catch (error) {
     {
-      console.error("Error fetching invoice suggestions:", error);
+      logger.error("Error fetching invoice suggestions:", error instanceof Error ? error : new Error(String(error)));
     }
     return { data: null, error };
   }
@@ -43700,7 +43845,7 @@ const approveInvoiceSuggestion = async (id, suggestion) => {
     }).eq("id", id).eq("user_id", user.id);
     if (invoiceError) {
       if (true) {
-        console.error("Error updating invoice:", invoiceError);
+        logger.error("Error updating invoice:", invoiceError instanceof Error ? invoiceError : new Error(String(invoiceError)));
       }
       throw new Error("Failed to update invoice");
     }
@@ -43715,7 +43860,7 @@ const approveInvoiceSuggestion = async (id, suggestion) => {
     return { error: null };
   } catch (error) {
     {
-      console.error("Error approving invoice suggestion:", error);
+      logger.error("Error approving invoice suggestion:", error instanceof Error ? error : new Error(String(error)));
     }
     return { error };
   }
@@ -43729,7 +43874,7 @@ const getInvoiceLineItems = async (invoiceId) => {
       error: null
     };
   } catch (error) {
-    console.error("Error fetching line items:", error);
+    logger.error("Error fetching line items:", error instanceof Error ? error : new Error(String(error)));
     return {
       data: null,
       error
@@ -43763,7 +43908,7 @@ const InvoiceSuggestion = () => {
       setSuggestions((data == null ? void 0 : data.items) || []);
       setTotalItems((data == null ? void 0 : data.total) || 0);
     } catch (error) {
-      console.error("Error fetching invoice suggestions:", error);
+      logger.error("Error fetching invoice suggestions:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Error Fetching Suggestions",
         description: error instanceof Error ? error.message : "Could not retrieve invoice suggestions from the database.",
@@ -43794,7 +43939,7 @@ const InvoiceSuggestion = () => {
         description: "The accounting entry has been approved successfully."
       });
     } catch (error) {
-      console.error("Error approving entry:", error);
+      logger.error("Error approving entry:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Error",
         description: "Failed to approve the entry. Please try again.",
@@ -43816,7 +43961,7 @@ const InvoiceSuggestion = () => {
   const fetchLineItems = async (invoiceId) => {
     const { data, error } = await getInvoiceLineItems(invoiceId);
     if (error) {
-      console.error("Error fetching line items:", error);
+      logger.error("Error fetching line items:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Error",
         description: "Failed to fetch line items. Please try again.",
@@ -43851,7 +43996,7 @@ const InvoiceSuggestion = () => {
         description: "The accounting entry has been updated and approved successfully."
       });
     } catch (error) {
-      console.error("Error saving changes:", error);
+      logger.error("Error saving changes:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Error",
         description: "Failed to save changes. Please try again.",
@@ -43873,7 +44018,7 @@ const InvoiceSuggestion = () => {
         setIsPreviewOpen(true);
       }
     } catch (error) {
-      console.error("Error generating preview URL:", error);
+      logger.error("Error generating preview URL:", error instanceof Error ? error : new Error(String(error)));
       toast2({
         title: "Error",
         description: "Failed to generate preview URL. Please try again.",
@@ -45854,7 +45999,7 @@ function prepareCopy(state) {
   }
 }
 var Immer2 = class {
-  constructor(config) {
+  constructor(config2) {
     this.autoFreeze_ = true;
     this.useStrictShallowCopy_ = false;
     this.produce = (base, recipe, patchListener) => {
@@ -45915,10 +46060,10 @@ var Immer2 = class {
       });
       return [result, patches, inversePatches];
     };
-    if (typeof (config == null ? void 0 : config.autoFreeze) === "boolean")
-      this.setAutoFreeze(config.autoFreeze);
-    if (typeof (config == null ? void 0 : config.useStrictShallowCopy) === "boolean")
-      this.setUseStrictShallowCopy(config.useStrictShallowCopy);
+    if (typeof (config2 == null ? void 0 : config2.autoFreeze) === "boolean")
+      this.setAutoFreeze(config2.autoFreeze);
+    if (typeof (config2 == null ? void 0 : config2.useStrictShallowCopy) === "boolean")
+      this.setUseStrictShallowCopy(config2.useStrictShallowCopy);
   }
   createDraft(base) {
     if (!isDraftable(base))
@@ -46802,13 +46947,13 @@ function buildCreateSlice({
       ...makeSelectorProps(reducerPath),
       injectInto(injectable, {
         reducerPath: pathOpt,
-        ...config
+        ...config2
       } = {}) {
         const newReducerPath = pathOpt ?? reducerPath;
         injectable.inject({
           reducerPath: newReducerPath,
           reducer: reducer2
-        }, config);
+        }, config2);
         return {
           ...slice,
           ...makeSelectorProps(newReducerPath, true)
@@ -46835,11 +46980,11 @@ function wrapSelector(selector, selectState, getInitialState, injected) {
 }
 var createSlice = /* @__PURE__ */ buildCreateSlice();
 function buildReducerCreators() {
-  function asyncThunk(payloadCreator, config) {
+  function asyncThunk(payloadCreator, config2) {
     return {
       _reducerDefinitionType: "asyncThunk",
       payloadCreator,
-      ...config
+      ...config2
     };
   }
   asyncThunk.withTypes = () => asyncThunk;
@@ -46966,4 +47111,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     /* @__PURE__ */ jsxRuntimeExports.jsx(Toaster, {})
   ] }) }) })
 );
-//# sourceMappingURL=index-BMev18lw.js.map
+//# sourceMappingURL=index-DYUgifOt.js.map

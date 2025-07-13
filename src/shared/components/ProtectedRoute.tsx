@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { UserRole, Permission } from '@/shared/types';
-import { LoadingSpinner } from '@/shared/components/loading';
+import { LoadingSpinner } from '@/shared/components/Loading';
 
 interface ProtectedRouteProps {
     children: ReactNode;

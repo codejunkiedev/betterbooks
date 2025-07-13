@@ -1,7 +1,8 @@
 import React, { Component, ReactNode } from 'react';
-import { Button } from '@/shared/components/button';
+import { Button } from '@/shared/components/Button';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '@/shared/utils/logger';
 
 interface Props {
     children: ReactNode;
@@ -30,13 +31,8 @@ export class ErrorBoundary extends Component<Props & { navigate: (path: string) 
             errorInfo
         });
 
-        // Log error to console in development
-        if (process.env.NODE_ENV === 'development') {
-            console.error('ErrorBoundary caught an error:', error, errorInfo);
-        }
-
-        // TODO: Send to error tracking service in production
-        // logger.error('React Error Boundary caught error', error, { errorInfo });
+        // Log error using logger
+        logger.error('ErrorBoundary caught an error', error, { errorInfo });
     }
 
     handleRetry = () => {

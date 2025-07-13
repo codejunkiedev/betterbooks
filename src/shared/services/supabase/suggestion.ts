@@ -3,6 +3,8 @@ import { getCurrentUser } from "./auth";
 import { InvoiceSuggestionType, PaginatedResponse } from "@/shared/types";
 import { PostgrestError } from "@supabase/supabase-js";
 
+
+import { logger } from '@/shared/utils/logger';
 export const fetchInvoiceSuggestions = async (page: number = 1, pageSize: number = 10): Promise<{ data: PaginatedResponse | null; error: PostgrestError | null }> => {
   try {
     const user = await getCurrentUser();
@@ -37,7 +39,7 @@ export const fetchInvoiceSuggestions = async (page: number = 1, pageSize: number
   } catch (error) {
     // Use logger instead of console.error in production
     if (process.env.NODE_ENV === 'development') {
-      console.error("Error fetching invoice suggestions:", error);
+      logger.error("Error fetching invoice suggestions:", error instanceof Error ? error : new Error(String(error)));
     }
     return { data: null, error: error as PostgrestError };
   }
@@ -59,7 +61,7 @@ export const updateInvoiceSuggestion = async (id: string, deepseekResponse: Invo
   } catch (error) {
     // Use logger instead of console.error in production
     if (process.env.NODE_ENV === 'development') {
-      console.error("Error saving changes:", error);
+      logger.error("Error saving changes:", error instanceof Error ? error : new Error(String(error)));
     }
     return { error };
   }
@@ -104,7 +106,7 @@ export const approveInvoiceSuggestion = async (
     if (invoiceError) {
       // Use logger instead of console.error in production
       if (process.env.NODE_ENV === 'development') {
-        console.error('Error updating invoice:', invoiceError);
+        logger.error('Error updating invoice:', invoiceError instanceof Error ? invoiceError : new Error(String(invoiceError)));
       }
       throw new Error('Failed to update invoice');
     }
@@ -128,7 +130,7 @@ export const approveInvoiceSuggestion = async (
   } catch (error) {
     // Use logger instead of console.error in production
     if (process.env.NODE_ENV === 'development') {
-      console.error("Error approving invoice suggestion:", error);
+      logger.error("Error approving invoice suggestion:", error instanceof Error ? error : new Error(String(error)));
     }
     return { error: error as PostgrestError };
   }

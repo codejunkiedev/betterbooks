@@ -1,11 +1,13 @@
 import { useState, useCallback } from "react";
-import { Button } from "@/shared/components/button";
-import { useToast } from "@/shared/hooks/use-toast";
+import { Button } from '@/shared/components/Button';
+import { useToast } from "@/shared/hooks/useToast";
 import { X, Upload, FileText, Building2 } from "lucide-react";
 import { uploadDocuments } from "@/shared/services/supabase/document";
-import { Progress } from "@/shared/components/progress";
-import { Label } from "@/shared/components/label";
+import { Progress } from '@/shared/components/Progress';
+import { Label } from '@/shared/components/Label';
 
+
+import { logger } from '@/shared/utils/logger';
 const UploadBankStatements = () => {
     const [files, setFiles] = useState<File[]>([]);
     const [isDragging, setIsDragging] = useState(false);
@@ -136,7 +138,7 @@ const UploadBankStatements = () => {
 
             setFiles([]);
         } catch (err) {
-            console.error('Upload error:', err);
+            logger.error('Upload error:', err instanceof Error ? err : new Error(String(err)));
             toast({
                 title: "Upload failed",
                 description: "There was an error uploading your files. Please try again.",

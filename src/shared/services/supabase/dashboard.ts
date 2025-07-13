@@ -1,6 +1,8 @@
 import { DashboardStats } from "@/shared/types";
 import { supabase } from "./client";
 
+
+import { logger } from '@/shared/utils/logger';
 export const fetchDashboardStats = async (): Promise<{ data: DashboardStats | null; error: unknown }> => {
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -41,7 +43,7 @@ export const fetchDashboardStats = async (): Promise<{ data: DashboardStats | nu
       error: null
     };
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
+    logger.error('Error fetching dashboard stats:', error instanceof Error ? error : new Error(String(error)));
     return {
       data: null,
       error

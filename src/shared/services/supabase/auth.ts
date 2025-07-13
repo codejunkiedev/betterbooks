@@ -1,6 +1,7 @@
 import { supabase } from './client';
 import { User, AuthError } from '@supabase/supabase-js';
 import { AuthResponse, UserPermissions, UserRole, ROLE_PERMISSIONS } from '@/shared/types';
+import { logger } from '@/shared/utils/logger';
 
 export const getSession = async () => {
     const { data, error } = await supabase.auth.getSession();
@@ -22,7 +23,7 @@ export const signIn = async (email: string, password: string): Promise<AuthRespo
             error: error,
         };
     } catch (error) {
-        console.error('Error signing in:', error);
+        logger.error('Error signing in', error instanceof Error ? error : new Error(String(error)));
         return {
             user: null,
             error: error as AuthError,
@@ -47,7 +48,7 @@ export const signUp = async (email: string, password: string, fullName?: string)
             error: error,
         };
     } catch (error) {
-        console.error('Error signing up:', error);
+        logger.error('Error signing up', error instanceof Error ? error : new Error(String(error)));
         return {
             user: null,
             error: error as AuthError,
@@ -60,7 +61,7 @@ export const signOut = async (): Promise<{ error: AuthError | null }> => {
         const { error } = await supabase.auth.signOut();
         return { error };
     } catch (error) {
-        console.error('Error signing out:', error);
+        logger.error('Error signing out', error instanceof Error ? error : new Error(String(error)));
         return { error: error as AuthError };
     }
 };
@@ -72,7 +73,7 @@ export const getCurrentUser = async (): Promise<User> => {
         if (!user) throw new Error('User not authenticated');
         return user;
     } catch (error) {
-        console.error('Error getting current user:', error);
+        logger.error('Error getting current user', error instanceof Error ? error : new Error(String(error)));
         throw error;
     }
 };
@@ -82,7 +83,7 @@ export const resetPassword = async (email: string): Promise<{ error: AuthError |
         const { error } = await supabase.auth.resetPasswordForEmail(email);
         return { error };
     } catch (error) {
-        console.error('Error resetting password:', error);
+        logger.error('Error resetting password', error instanceof Error ? error : new Error(String(error)));
         return { error: error as AuthError };
     }
 };
@@ -92,7 +93,7 @@ export const updatePassword = async (newPassword: string): Promise<{ error: Auth
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         return { error };
     } catch (error) {
-        console.error('Error updating password:', error);
+        logger.error('Error updating password', error instanceof Error ? error : new Error(String(error)));
         return { error: error as AuthError };
     }
 };
@@ -156,7 +157,7 @@ export const fetchUserPermissions = async (userId: string): Promise<UserPermissi
         };
 
     } catch (error) {
-        console.error('Error fetching user permissions:', error);
+        logger.error('Error fetching user permissions', error instanceof Error ? error : new Error(String(error)));
         return null;
     }
 };

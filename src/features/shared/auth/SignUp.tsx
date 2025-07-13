@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/shared/hooks';
-import { Button } from '@/shared/components/button';
-import { Input } from '@/shared/components/input';
-import { Label } from '@/shared/components/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/card';
-import { Alert, AlertDescription } from '@/shared/components/alert';
-import { LoadingSpinner } from '@/shared/components/loading';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/select';
+import { Button } from '@/shared/components/Button';
+import { Input } from '@/shared/components/Input';
+import { Label } from '@/shared/components/Label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/Card';
+import { Alert, AlertDescription } from '@/shared/components/Alert';
+import { LoadingSpinner } from '@/shared/components/Loading';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/Select';
 import { Eye, EyeOff, Mail, Lock, User, Building, ArrowRight, Check } from 'lucide-react';
 
 const COMPANY_TYPES = [

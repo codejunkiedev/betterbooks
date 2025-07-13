@@ -3,6 +3,8 @@ import { supabase } from "./client";
 import { PostgrestError } from "@supabase/supabase-js";
 
 
+
+import { logger } from '@/shared/utils/logger';
 export async function getCOATemplate(): Promise<{ data: COATemplate[] | null; error: PostgrestError | null }> {
   try {
     const { data, error } = await supabase
@@ -11,13 +13,13 @@ export async function getCOATemplate(): Promise<{ data: COATemplate[] | null; er
       .order("id");
 
     if (error) {
-      console.error("Error fetching COA template:", error);
+      logger.error("Error fetching COA template:", error instanceof Error ? error : new Error(String(error)));
       return { data: null, error };
     }
 
     return { data, error: null };
   } catch (error) {
-    console.error("Error fetching COA template:", error);
+    logger.error("Error fetching COA template:", error instanceof Error ? error : new Error(String(error)));
     return { data: null, error: error as PostgrestError };
   }
 }
@@ -46,13 +48,13 @@ export async function copyCOATemplateToCompany(companyId: string): Promise<{ dat
       .select();
 
     if (error) {
-      console.error("Error inserting COA entries:", error);
+      logger.error("Error inserting COA entries:", error instanceof Error ? error : new Error(String(error)));
       throw new Error("Failed to copy COA template");
     }
 
     return { data, error: null };
   } catch (error) {
-    console.error("Error copying COA template to company:", error);
+    logger.error("Error copying COA template to company:", error instanceof Error ? error : new Error(String(error)));
     return { data: null, error: error as PostgrestError };
   }
 }
@@ -67,13 +69,13 @@ export async function getCompanyCOA(companyId: string): Promise<{ data: CompanyC
       .order("template_id"); // Order by template_id to maintain template order
 
     if (error) {
-      console.error("Error fetching company COA:", error);
+      logger.error("Error fetching company COA:", error instanceof Error ? error : new Error(String(error)));
       return { data: null, error };
     }
 
     return { data, error: null };
   } catch (error) {
-    console.error("Error fetching company COA:", error);
+    logger.error("Error fetching company COA:", error instanceof Error ? error : new Error(String(error)));
     return { data: null, error: error as PostgrestError };
   }
 } 

@@ -1,6 +1,8 @@
 import { supabase } from "./client";
 import { PostgrestError } from "@supabase/supabase-js";
 
+
+import { logger } from '@/shared/utils/logger';
 interface AccountingSummary {
   totalDebits: number;
   totalCredits: number;
@@ -49,7 +51,7 @@ export const fetchAccountingSummary = async (): Promise<{ data: AccountingSummar
     error: null
   };
   } catch (error) {
-    console.error("Error fetching accounting summary:", error);
+    logger.error("Error fetching accounting summary:", error instanceof Error ? error : new Error(String(error)));
     return { data: null, error: error as PostgrestError };
   }
 };
@@ -132,7 +134,7 @@ export const fetchAccountingEntries = async (
       error: null
     };
   } catch (error) {
-    console.error("Error fetching accounting entries:", error);
+    logger.error("Error fetching accounting entries:", error instanceof Error ? error : new Error(String(error)));
     return { data: null, error: error as PostgrestError };
   }
 };
@@ -157,7 +159,7 @@ export const updateAccountingEntry = async (
 
     return { error: null };
   } catch (error) {
-    console.error("Error updating accounting entry:", error);
+    logger.error("Error updating accounting entry:", error instanceof Error ? error : new Error(String(error)));
     return { error: error as PostgrestError };
   }
 }; 

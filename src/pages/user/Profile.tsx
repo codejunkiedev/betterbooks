@@ -1,11 +1,13 @@
-import { Input } from "@/shared/components/input";
-import { Button } from "@/shared/components/button";
-import { useToast } from "@/shared/hooks/use-toast";
+import { Input } from '@/shared/components/Input';
+import { Button } from '@/shared/components/Button';
+import { useToast } from "@/shared/hooks/useToast";
 import { createCompany, updateCompany, getCompanyByUserId } from "@/shared/services/supabase/company";
 import { useSelector } from "react-redux";
 import { RootState } from "@/shared/services/store";
 import { useState, useEffect } from "react";
 
+
+import { logger } from '@/shared/utils/logger';
 interface Company {
     id: string;
     name: string;
@@ -44,7 +46,7 @@ export default function Profile() {
                         });
                     }
                 } catch (error) {
-                    console.error("Error fetching company:", error);
+                    logger.error("Error fetching company:", error instanceof Error ? error : new Error(String(error)));
                 }
             }
         };
@@ -105,7 +107,7 @@ export default function Profile() {
                 description: "Company information updated successfully.",
             });
         } catch (error) {
-            console.error("Error saving company:", error);
+            logger.error("Error saving company:", error instanceof Error ? error : new Error(String(error)));
             toast({
                 title: "Error",
                 description: "Failed to save company information.",

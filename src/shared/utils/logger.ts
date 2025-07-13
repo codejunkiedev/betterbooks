@@ -108,12 +108,20 @@ class Logger {
         this.log(LogLevel.WARN, message, context);
     }
 
-    public error(message: string, error?: Error, context?: Record<string, unknown>): void {
-        this.log(LogLevel.ERROR, message, context, error);
+    public error(message: string, errorOrContext?: Error | Record<string, unknown>, context?: Record<string, unknown>): void {
+        if (errorOrContext instanceof Error) {
+            this.log(LogLevel.ERROR, message, context, errorOrContext);
+        } else {
+            this.log(LogLevel.ERROR, message, errorOrContext, undefined);
+        }
     }
 
-    public fatal(message: string, error?: Error, context?: Record<string, unknown>): void {
-        this.log(LogLevel.FATAL, message, context, error);
+    public fatal(message: string, errorOrContext?: Error | Record<string, unknown>, context?: Record<string, unknown>): void {
+        if (errorOrContext instanceof Error) {
+            this.log(LogLevel.FATAL, message, context, errorOrContext);
+        } else {
+            this.log(LogLevel.FATAL, message, errorOrContext, undefined);
+        }
     }
 
     public setLogLevel(level: LogLevel): void {

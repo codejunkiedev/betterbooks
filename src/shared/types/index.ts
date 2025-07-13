@@ -7,7 +7,7 @@ export * from './coa';
 export * from './dashboard';
 export * from './document';
 export * from './invoice';
-export * from './line-item';
+export * from './lineItem';
 export * from './profile';
 export * from './storage';
 export * from './suggestion';

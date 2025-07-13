@@ -1,7 +1,9 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/dialog";
-import { LoadingSpinner } from "@/shared/components/loading";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/Dialog';
+import { LoadingSpinner } from '@/shared/components/Loading';
 import { useState, useEffect } from "react";
 
+
+import { logger } from '@/shared/utils/logger';
 interface DocumentPreviewProps {
   isOpen: boolean;
   onClose: () => void;
@@ -40,7 +42,7 @@ export const DocumentPreview = ({ isOpen, onClose, previewUrl, documentName }: D
                 onLoad={() => setIsImageLoading(false)}
                 onError={() => {
                   setIsImageLoading(false);
-                  console.error('Error loading image:', previewUrl);
+                  logger.error('Error loading image', { url: previewUrl });
                 }}
               />
             </>

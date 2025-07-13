@@ -1,5 +1,7 @@
 import { supabase } from "@/shared/services/supabase/client";
 
+
+import { logger } from '@/shared/utils/logger';
 // Get the company for a user by user ID
 export async function getCompanyByUserId(userId: string) {
   const { data, error } = await supabase
@@ -12,7 +14,7 @@ export async function getCompanyByUserId(userId: string) {
     if (error.code === 'PGRST116') { // Record not found
       return null;
     }
-    console.error("Error fetching company:", error);
+    logger.error("Error fetching company:", error);
     throw error;
   }
   return data;
@@ -39,7 +41,7 @@ export async function createCompany({
     .single();
 
   if (error) {
-    console.error("Error creating company:", error);
+    logger.error("Error creating company:", error);
     throw error;
   }
 
@@ -60,7 +62,7 @@ export async function updateCompany(
     .eq("id", companyId);
 
   if (error) {
-    console.error("Error updating company:", error);
+    logger.error("Error updating company:", error);
     throw error;
   }
   return data;
@@ -73,7 +75,7 @@ export async function deleteCompanyById(companyId: string) {
     .eq("id", companyId);
 
   if (error) {
-    console.error("Error deleting company:", error);
+    logger.error("Error deleting company:", error);
     throw error;
   }
 

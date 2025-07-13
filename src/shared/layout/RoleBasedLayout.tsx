@@ -2,8 +2,8 @@ import React, { ReactNode } from 'react';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { UserRole } from '@/shared/types';
 import { RoleBasedNavigation } from '@/shared/components/RoleBasedNavigation';
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/avatar';
-import { Button } from '@/shared/components/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/Avatar';
+import { Button } from '@/shared/components/Button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger
-} from '@/shared/components/dropdown-menu';
+} from '@/shared/components/DropdownMenu';
 import { LogOut, User, Settings, Bell } from 'lucide-react';
 
 interface RoleBasedLayoutProps {

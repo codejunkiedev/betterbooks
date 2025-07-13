@@ -11,6 +11,7 @@ import {
     fetchUserPermissions
 } from '@/shared/services/supabase/auth';
 import { UserRole, Permission, UserPermissions } from '@/shared/types';
+import { logger } from '@/shared/utils/logger';
 
 export interface AuthContextType {
     user: User | null;
@@ -156,11 +157,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Get initial session
         const getInitialSession = async () => {
             try {
-                console.log('Attempting to get initial session...');
+                logger.info('Attempting to get initial session...');
 
-                // Add timeout to prevent infinite loading (increased to 10 seconds)
+                // Debug environment variables
+                logger.info('Environment check', {
+                    supabaseUrl: import.meta.env.VITE_SUPABASE_URL ? 'Set' : 'Missing',
+                    supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Set' : 'Missing',
+                    mode: import.meta.env.MODE
+                });
+
+                // Add timeout to prevent infinite loading (increased to 15 seconds)
                 const timeoutPromise = new Promise<never>((_, reject) =>
-                    setTimeout(() => reject(new Error('Connection timeout - Supabase service may be unavailable')), 10000)
+                    setTimeout(() => reject(new Error('Connection timeout - Supabase service may be unavailable')), 15000)
                 );
 
                 const sessionPromise = getSession();
@@ -168,22 +176,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 const { session, error } = result;
 
                 if (error) {
-                    console.error('Supabase auth error:', error);
+                    logger.error('Supabase auth error', error);
                     throw error;
                 }
 
-                console.log('Session retrieved successfully:', session ? 'User logged in' : 'No session');
+                logger.info('Session retrieved successfully', { hasSession: !!session });
                 setUser(session?.user ?? null);
 
                 if (session?.user) {
-                    console.log('Fetching user permissions for:', session.user.id);
+                    logger.info('Fetching user permissions', { userId: session.user.id });
                     const permissions = await fetchUserPermissions(session.user.id);
                     setUserPermissions(permissions);
                 }
 
                 setLoading(false);
             } catch (error) {
-                console.error('Error getting initial session:', error);
+                logger.error('Error getting initial session', error instanceof Error ? error : new Error(String(error)));
 
                 let errorMessage = 'Failed to connect to authentication service.';
 
@@ -210,7 +218,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (_event, session) => {
                 try {
-                    console.log('Auth state changed:', _event, session ? 'User logged in' : 'User logged out');
+                    logger.info('Auth state changed', { event: _event, hasSession: !!session });
                     setUser(session?.user ?? null);
 
                     if (session?.user) {
@@ -222,7 +230,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
                     setLoading(false);
                 } catch (error) {
-                    console.error('Error in auth state change:', error);
+                    logger.error('Error in auth state change', error instanceof Error ? error : new Error(String(error)));
                     setError('Authentication error occurred. Please try refreshing the page.');
                     setLoading(false);
                 }

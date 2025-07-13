@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { AccountingSummary, AccountingEntriesTable, StatsGrid } from "@/features/user/Dashboard";
 import { DashboardStats } from "@/shared/types/dashboard";
 import { fetchDashboardStats } from "@/shared/services/supabase/dashboard";
-import { PageSkeleton } from "@/shared/components/loading";
+import { PageSkeleton } from '@/shared/components/Loading';
 
+
+import { logger } from '@/shared/utils/logger';
 const Dashboard = () => {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -15,7 +17,7 @@ const Dashboard = () => {
                 if (error) {
                     // Use logger instead of console.error in production
                     if (process.env.NODE_ENV === 'development') {
-                        console.error("Error fetching dashboard stats:", error);
+                        logger.error("Error fetching dashboard stats:", error instanceof Error ? error : new Error(String(error)));
                     }
                 } else {
                     setStats(data);
@@ -23,7 +25,7 @@ const Dashboard = () => {
             } catch (error) {
                 // Use logger instead of console.error in production
                 if (process.env.NODE_ENV === 'development') {
-                    console.error("Error loading dashboard stats:", error);
+                    logger.error("Error loading dashboard stats:", error instanceof Error ? error : new Error(String(error)));
                 }
             } finally {
                 setIsLoading(false);

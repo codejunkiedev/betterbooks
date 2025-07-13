@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/shared/components/button";
+import { Button } from '@/shared/components/Button';
 import {
     Table,
     TableBody,
@@ -8,11 +8,13 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/shared/components/table";
+} from '@/shared/components/Table';
 import { InvoiceSuggestionType } from "@/shared/types/suggestion";
 import { fetchInvoices } from "@/shared/services/supabase/invoice";
 import { ChartBar } from "lucide-react";
 
+
+import { logger } from '@/shared/utils/logger';
 const ITEMS_PER_PAGE = 5;
 
 const RecentInvoicesTable = () => {
@@ -29,7 +31,7 @@ const RecentInvoicesTable = () => {
             setSuggestions(data?.items || []);
             setTotalItems(data?.total || 0);
         } catch (error) {
-            console.error("Error loading suggestions:", error);
+            logger.error("Error loading suggestions:", error instanceof Error ? error : new Error(String(error)));
         } finally {
             setIsLoading(false);
         }

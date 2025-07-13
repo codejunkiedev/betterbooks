@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/card';
-import { Button } from '@/shared/components/button';
-import { Input } from '@/shared/components/input';
-import { Label } from '@/shared/components/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/select';
-import { Textarea } from '@/shared/components/textarea';
-import { LoadingSpinner } from '@/shared/components/loading';
-import { Alert, AlertDescription } from '@/shared/components/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/Card';
+import { Button } from '@/shared/components/Button';
+import { Input } from '@/shared/components/Input';
+import { Label } from '@/shared/components/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/Select';
+import { Textarea } from '@/shared/components/Textarea';
+import { LoadingSpinner } from '@/shared/components/Loading';
+import { Alert, AlertDescription } from '@/shared/components/Alert';
 import {
     Building,
     DollarSign,

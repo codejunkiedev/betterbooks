@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/shared/hooks';
-import { Button } from '@/shared/components/button';
-import { Input } from '@/shared/components/input';
-import { Label } from '@/shared/components/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/card';
-import { Alert, AlertDescription } from '@/shared/components/alert';
-import { LoadingSpinner } from '@/shared/components/loading';
+import { Button } from '@/shared/components/Button';
+import { Input } from '@/shared/components/Input';
+import { Label } from '@/shared/components/Label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/Card';
+import { Alert, AlertDescription } from '@/shared/components/Alert';
+import { LoadingSpinner } from '@/shared/components/Loading';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 
 export const Login: React.FC = () => {
