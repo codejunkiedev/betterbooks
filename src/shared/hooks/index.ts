@@ -1,4 +1,4 @@
 // Shared hooks exports
-export * from './use-toast';
+export * from './useToast';
 export * from './useCompanySetup';
 export * from './useRedux'; 

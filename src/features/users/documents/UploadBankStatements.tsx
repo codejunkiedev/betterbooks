@@ -1,10 +1,10 @@
 import { useState, useCallback } from "react";
-import { Button } from "@/shared/components/button";
-import { useToast } from "@/shared/hooks/use-toast";
+import { Button } from "@/shared/components/Button";
+import { useToast } from "@/shared/hooks/useToast";
 import { X, Upload, FileText, Building2 } from "lucide-react";
 import { uploadDocuments } from "@/shared/services/supabase/document";
-import { Progress } from "@/shared/components/progress";
-import { Label } from "@/shared/components/label";
+import { Progress } from "@/shared/components/Progress";
+import { Label } from "@/shared/components/Label";
 
 const UploadBankStatements = () => {
     const [files, setFiles] = useState<File[]>([]);

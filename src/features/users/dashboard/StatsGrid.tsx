@@ -1,12 +1,12 @@
 import { FileText, Sparkles, CheckCircle } from "lucide-react";
 import { DashboardStats } from "@/shared/types/dashboard";
-import { Skeleton } from "@/shared/components/loading";
+import { Skeleton } from "@/shared/components/Loading";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/shared/components/tooltip";
+} from "@/shared/components/Tooltip";
 
 interface StatsGridProps {
   stats: DashboardStats | null;

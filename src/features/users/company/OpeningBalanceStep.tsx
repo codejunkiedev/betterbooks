@@ -1,6 +1,6 @@
-import { Input } from "@/shared/components/input";
-import { Button } from "@/shared/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/card";
+import { Input } from "@/shared/components/Input";
+import { Button } from "@/shared/components/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 
 interface OpeningBalanceStepProps {
     cashBalance: string;

@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
-import { Button } from "@/shared/components/button";
-import { useToast } from "@/shared/hooks/use-toast";
+import { Button } from "@/shared/components/Button";
+import { useToast } from "@/shared/hooks/useToast";
 import { X, Upload, FileText, Receipt, CreditCard } from "lucide-react";
 import { uploadDocuments } from "@/shared/services/supabase/document";
-import { RadioGroup, RadioGroupItem } from "@/shared/components/radio-group";
-import { Label } from "@/shared/components/label";
-import { Progress } from "@/shared/components/progress";
+import { RadioGroup, RadioGroupItem } from "@/shared/components/RadioGroup";
+import { Label } from "@/shared/components/Label";
+import { Progress } from "@/shared/components/Progress";
 import { DocumentType } from "@/shared/constants/documents";
 
 const UploadInvoicesExpenses = () => {

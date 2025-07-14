@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
 import { useCompanySetup, CompanySetupData } from "@/shared/hooks/useCompanySetup";
 import { createCompanyWithSetup, fetchCompanyByUserId } from "@/shared/services/store/companySlice";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/hooks/useToast";
 import {
     StepIndicator,
     CompanyInfoStep,

@@ -1,5 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/dialog";
-import { LoadingSpinner } from "@/shared/components/loading";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/Dialog";
+import { LoadingSpinner } from "@/shared/components/Loading";
 import { useState, useEffect } from "react";
 
 interface DocumentPreviewProps {

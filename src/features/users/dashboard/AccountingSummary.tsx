@@ -3,14 +3,14 @@ import { TrendingUp, TrendingDown, Scale } from "lucide-react";
 import { format } from "date-fns";
 import { AccountingSummaryType } from "@/shared/types/accounting";
 import { fetchAccountingSummary } from "@/shared/services/supabase/accounting";
-import { useToast } from "@/shared/hooks/use-toast";
-import { Skeleton } from "@/shared/components/loading";
+import { useToast } from "@/shared/hooks/useToast";
+import { Skeleton } from "@/shared/components/Loading";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/shared/components/tooltip";
+} from "@/shared/components/Tooltip";
 
 export function AccountingSummary() {
   const [summary, setSummary] = useState<AccountingSummaryType | null>(null);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/shared/components/button";
+import { Button } from "@/shared/components/Button";
 import {
   Table,
   TableBody,
@@ -8,7 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/components/table";
+} from "@/shared/components/Table";
 import { InvoiceSuggestionType } from "@/shared/types/suggestion";
 import { fetchInvoices } from "@/shared/services/supabase/invoice";
 import { ChartBar } from "lucide-react";

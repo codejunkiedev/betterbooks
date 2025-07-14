@@ -1,16 +1,13 @@
 import { useRoutes } from "react-router-dom";
-import SignUpPage from "@/pages/shared/auth/SignUpPage";
-import LoginPage from "@/pages/shared/auth/LoginPage";
-import ForgotPasswordPage from "@/pages/shared/auth/ForgotPasswordPage";
-import ResetPasswordPage from "@/pages/shared/auth/ResetPasswordPage";
+import { SignUp, Login, ForgotPassword, ResetPassword } from "@/pages/shared/auth";
 import NotFound from "@/shared/components/NotFound";
-import DashboardPage from "@/pages/user/DashboardPage";
+import Dashboard from "@/pages/user/Dashboard";
 import DashboardLayout from "@/shared/components/DashboardLayout";
-import UploadDocumentsPage from "@/pages/user/UploadDocumentsPage";
-import DocumentsListPage from "@/pages/user/DocumentsListPage";
-import AISuggestionPage from "@/pages/user/AISuggestionPage";
-import ProfilePage from "@/pages/user/ProfilePage";
-import CompanySetupPage from "@/pages/user/CompanySetupPage";
+import UploadDocuments from "@/pages/user/UploadDocuments";
+import DocumentsList from "@/pages/user/Documents";
+import AISuggestion from "@/pages/user/AISuggestion";
+import Profile from "@/pages/user/Profile";
+import CompanySetup from "@/pages/user/CompanySetup";
 
 export default function App() {
   const routes = useRoutes([
@@ -18,18 +15,18 @@ export default function App() {
       path: "/",
       element: <DashboardLayout />,
       children: [
-        { path: "", element: <DashboardPage /> },
-        { path: "upload", element: <UploadDocumentsPage /> },
-        { path: "documents", element: <DocumentsListPage /> },
-        { path: "ai-suggestion", element: <AISuggestionPage /> },
-        { path: "profile", element: <ProfilePage /> },
+        { path: "", element: <Dashboard /> },
+        { path: "upload", element: <UploadDocuments /> },
+        { path: "documents", element: <DocumentsList /> },
+        { path: "ai-suggestion", element: <AISuggestion /> },
+        { path: "profile", element: <Profile /> },
       ],
     },
-    { path: "/signup", element: <SignUpPage /> },
-    { path: "/login", element: <LoginPage /> },
-    { path: "/forgot-password", element: <ForgotPasswordPage /> },
-    { path: "/reset-password", element: <ResetPasswordPage /> },
-    { path: "/company-setup", element: <CompanySetupPage /> },
+    { path: "/signup", element: <SignUp /> },
+    { path: "/login", element: <Login /> },
+    { path: "/forgot-password", element: <ForgotPassword /> },
+    { path: "/reset-password", element: <ResetPassword /> },
+    { path: "/company-setup", element: <CompanySetup /> },
     { path: "*", element: <NotFound /> },
   ]);
   return <>{routes}</>;

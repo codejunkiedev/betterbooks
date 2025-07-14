@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/shared/components/button";
-import { useToast } from "@/shared/hooks/use-toast";
+import { Button } from "@/shared/components/Button";
+import { useToast } from "@/shared/hooks/useToast";
 import { ChevronLeft, ChevronRight, Eye, FileText } from "lucide-react";
 import {
   Table,
@@ -9,18 +9,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/components/table";
+} from "@/shared/components/Table";
 import { AccountingEntry } from "@/shared/types/accounting";
 import { fetchAccountingEntries } from "@/shared/services/supabase/accounting";
-import { Skeleton } from "@/shared/components/loading";
-import { InvoicePreview } from "@/shared/components/documentPreview";
+import { Skeleton } from "@/shared/components/Loading";
+import { InvoicePreview } from "@/shared/components/DocumentPreview";
 import { getFileUrl } from "@/shared/services/supabase/storage";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/shared/components/tooltip";
+} from "@/shared/components/Tooltip";
 
 const ITEMS_PER_PAGE = 5;
 

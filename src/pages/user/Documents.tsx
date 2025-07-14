@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/shared/components/button";
-import { useToast } from "@/shared/hooks/use-toast";
-import { Card } from "@/shared/components/card";
-import { Badge } from "@/shared/components/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/select";
-import { Input } from "@/shared/components/input";
-import { Label } from "@/shared/components/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/dialog";
+import { Button } from "@/shared/components/Button";
+import { useToast } from "@/shared/hooks/useToast";
+import { Card } from "@/shared/components/Card";
+import { Badge } from "@/shared/components";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/Select";
+import { Input } from "@/shared/components/Input";
+import { Label } from "@/shared/components/Label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/Dialog";
 import { getPaginatedDocuments, deleteDocument } from "@/shared/services/supabase/document";
 import { DocumentType, DocumentStatus } from "@/shared/constants/documents";
 import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { Document, DocumentFilters } from "@/shared/types/document";
-import { DocumentPreview } from "@/shared/components/documentPreview";
+import { DocumentPreview } from "@/shared/components/DocumentPreview";
 import { useDocumentActions } from "@/shared/components/documentUtils";
 import { DocumentActionButtons } from "@/shared/components/DocumentActionButtons";
 

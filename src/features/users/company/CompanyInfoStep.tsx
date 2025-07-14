@@ -1,5 +1,5 @@
-import { Input } from "@/shared/components/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/card";
+import { Input } from "@/shared/components/Input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 import { COMPANY_TYPES } from "@/shared/constants/company";
 
 interface CompanyInfoStepProps {

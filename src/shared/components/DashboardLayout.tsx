@@ -3,9 +3,9 @@ import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
 import { setUser } from "@/shared/services/store/userSlice";
 import { fetchCompanyByUserId, setCurrentCompany } from "@/shared/services/store/companySlice";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/hooks/useToast";
 import { supabase } from "@/shared/services/supabase/client";
-import { Button } from "@/shared/components/button";
+import { Button } from "@/shared/components/Button";
 
 interface Company {
   id: string;
@@ -15,7 +15,7 @@ interface Company {
   is_active: boolean;
   created_at: string;
 }
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/Avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,14 +23,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/shared/components/dropdown-menu";
+} from "@/shared/components/DropdownMenu";
 import {
   Sheet,
   SheetContent,
   SheetOverlay,
   SheetPortal,
   SheetTrigger,
-} from "@/shared/components/sheet";
+} from "@/shared/components/Sheet";
 import { Menu, Home, Upload, Sparkles, User, ChevronLeft, FileText } from "lucide-react";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";

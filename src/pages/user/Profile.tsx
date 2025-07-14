@@ -1,6 +1,6 @@
-import { Input } from "@/shared/components/input";
-import { Button } from "@/shared/components/button";
-import { useToast } from "@/shared/hooks/use-toast";
+import { Input } from "@/shared/components/Input";
+import { Button } from "@/shared/components/Button";
+import { useToast } from "@/shared/hooks/useToast";
 import { createCompany, updateCompany, getCompanyByUserId } from "@/shared/services/supabase/company";
 import { useSelector } from "react-redux";
 import { RootState } from "@/shared/services/store";

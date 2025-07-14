@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Card } from "@/shared/components/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/tabs";
+import { Card } from "@/shared/components/Card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/Tabs";
 import { Receipt, Building2 } from "lucide-react";
 import UploadInvoicesExpenses from "@/features/users/documents/UploadInvoicesExpenses";
 import UploadBankStatements from "@/features/users/documents/UploadBankStatements";

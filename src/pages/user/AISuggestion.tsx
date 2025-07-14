@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "@/shared/components/button";
-import { useToast } from "@/shared/hooks/use-toast";
+import { Button } from "@/shared/components/Button";
+import { useToast } from "@/shared/hooks/useToast";
 import { FileText, Check, Edit2, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import {
   Table,
@@ -9,22 +9,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/shared/components/table";
-import { Input } from "@/shared/components/input";
+} from "@/shared/components/Table";
+import { Input } from "@/shared/components/Input";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/shared/components/tooltip";
+} from "@/shared/components/Tooltip";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/shared/components/dialog";
-import { Label } from "@/shared/components/label";
+} from "@/shared/components/Dialog";
+import { Label } from "@/shared/components/Label";
 import { InvoiceSuggestionType } from "@/shared/types/suggestion";
 import {
   fetchInvoiceSuggestions,
@@ -33,8 +33,8 @@ import {
 import { getInvoiceLineItems } from '@/shared/services/supabase/line-item';
 import { LineItem } from '@/shared/types/line-item';
 import { getFileUrl } from "@/shared/services/supabase/storage";
-import { LoadingSpinner, Skeleton } from "@/shared/components/loading";
-import { InvoicePreview } from "@/shared/components/documentPreview";
+import { LoadingSpinner, Skeleton } from "@/shared/components/Loading";
+import { InvoicePreview } from "@/shared/components/DocumentPreview";
 
 const ITEMS_PER_PAGE = 5;
 

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Input } from "@/shared/components/input";
-import { Button } from "@/shared/components/button";
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/shared/components/card";
-import { useToast } from "@/shared/hooks/use-toast";
+import { Input } from "@/shared/components/Input";
+import { Button } from "@/shared/components/Button";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/shared/components/Card";
+import { useToast } from "@/shared/hooks/useToast";
 import { updatePassword } from "@/shared/services/supabase/auth";
 
 export default function ResetPassword() {

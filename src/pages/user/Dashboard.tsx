@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AccountingSummary, AccountingEntriesTable, StatsGrid } from "@/features/users/dashboard";
 import { DashboardStats } from "@/shared/types/dashboard";
 import { fetchDashboardStats } from "@/shared/services/supabase/dashboard";
-import { PageSkeleton } from "@/shared/components/loading";
+import { PageSkeleton } from "@/shared/components/Loading";
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);

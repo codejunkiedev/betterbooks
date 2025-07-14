@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 
 interface ReviewStepProps {
     companyName: string;

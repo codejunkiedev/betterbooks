@@ -1,4 +1,4 @@
-import { Button } from "@/shared/components/button";
+import { Button } from "@/shared/components/Button";
 
 interface NavigationButtonsProps {
     currentStep: number;

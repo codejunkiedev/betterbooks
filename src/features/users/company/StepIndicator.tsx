@@ -1,4 +1,4 @@
-import { Progress } from "@/shared/components/progress";
+import { Progress } from "@/shared/components/Progress";
 
 interface StepIndicatorProps {
     currentStep: number;
