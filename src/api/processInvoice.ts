@@ -1,5 +1,5 @@
-import { supabase } from '@/services/supabase/client';
-import { getCurrentUser } from '@/services/supabase/auth';
+import { supabase } from '@/shared/services/supabase/client';
+import { getCurrentUser } from '@/shared/services/supabase/auth';
 export const processInvoice = async () => {
   try {
     const user = await getCurrentUser();

@@ -1,52 +1,42 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useAppDispatch, useAppSelector } from './useRedux';
+import {
+    updateSetupField,
+    skipBalance,
+    addBalance,
+    nextStep,
+    previousStep,
+    setError,
+    clearError,
+    CompanySetupData,
+} from '@/shared/services/store/companySlice';
 
-export interface CompanySetupData {
-    company_name: string;
-    company_type: string;
-    cash_balance: string;
-    balance_date: string;
-    skip_balance: boolean;
-}
+export type { CompanySetupData };
 
 export function useCompanySetup() {
-    const [currentStep, setCurrentStep] = useState(1);
-    const [formData, setFormData] = useState<CompanySetupData>({
-        company_name: "",
-        company_type: "",
-        cash_balance: "",
-        balance_date: "",
-        skip_balance: false,
-    });
-    const [error, setError] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-
-    const totalSteps = 3;
+    const dispatch = useAppDispatch();
+    const {
+        currentStep,
+        totalSteps,
+        setupData: formData,
+        error,
+        isLoading,
+    } = useAppSelector(state => state.company);
 
     const updateField = useCallback((field: string, value: string) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value,
-        }));
-        setError(""); // Clear error when user makes changes
-    }, []);
+        dispatch(updateSetupField({ field: field as keyof CompanySetupData, value }));
+        dispatch(clearError());
+    }, [dispatch]);
 
-    const skipBalance = useCallback(() => {
-        setFormData(prev => ({
-            ...prev,
-            skip_balance: true,
-            cash_balance: "",
-            balance_date: "",
-        }));
-        setError("");
-    }, []);
+    const handleSkipBalance = useCallback(() => {
+        dispatch(skipBalance());
+        dispatch(clearError());
+    }, [dispatch]);
 
-    const addBalance = useCallback(() => {
-        setFormData(prev => ({
-            ...prev,
-            skip_balance: false,
-        }));
-        setError("");
-    }, []);
+    const handleAddBalance = useCallback(() => {
+        dispatch(addBalance());
+        dispatch(clearError());
+    }, [dispatch]);
 
     const validateCurrentStep = useCallback(() => {
         switch (currentStep) {
@@ -73,20 +63,20 @@ export function useCompanySetup() {
                 }
                 break;
         }
-        setError("");
+        dispatch(clearError());
         return true;
-    }, [currentStep, formData]);
+    }, [currentStep, formData, dispatch]);
 
-    const nextStep = useCallback(() => {
+    const handleNextStep = useCallback(() => {
         if (validateCurrentStep()) {
-            setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+            dispatch(nextStep());
         }
-    }, [validateCurrentStep, totalSteps]);
+    }, [validateCurrentStep, dispatch]);
 
-    const previousStep = useCallback(() => {
-        setCurrentStep(prev => Math.max(prev - 1, 1));
-        setError("");
-    }, []);
+    const handlePreviousStep = useCallback(() => {
+        dispatch(previousStep());
+        dispatch(clearError());
+    }, [dispatch]);
 
     const canProceed = useCallback(() => {
         switch (currentStep) {
@@ -100,15 +90,12 @@ export function useCompanySetup() {
     }, [currentStep, formData]);
 
     const submitForm = useCallback(async (onSubmit: (data: CompanySetupData) => void) => {
-        setIsLoading(true);
         try {
             await onSubmit(formData);
         } catch (error) {
-            setError(error instanceof Error ? error.message : "An error occurred");
-        } finally {
-            setIsLoading(false);
+            dispatch(setError(error instanceof Error ? error.message : "An error occurred"));
         }
-    }, [formData]);
+    }, [formData, dispatch]);
 
     return {
         currentStep,
@@ -117,10 +104,10 @@ export function useCompanySetup() {
         error,
         isLoading,
         updateField,
-        skipBalance,
-        addBalance,
-        nextStep,
-        previousStep,
+        skipBalance: handleSkipBalance,
+        addBalance: handleAddBalance,
+        nextStep: handleNextStep,
+        previousStep: handlePreviousStep,
         canProceed,
         submitForm,
     };

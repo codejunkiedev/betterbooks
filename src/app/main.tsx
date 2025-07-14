@@ -2,11 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
-import '@/services/supabase/client'
+import '@/shared/services/supabase/client'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from "@/shared/components/toaster";
 import { Provider } from 'react-redux'
-import { store } from '@/services/store'
+import { store } from '@/shared/services/store'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

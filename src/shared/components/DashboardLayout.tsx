@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "@/services/store";
-import { setUser } from "@/services/store/userSlice";
+import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
+import { setUser } from "@/shared/services/store/userSlice";
+import { fetchCompanyByUserId, setCurrentCompany } from "@/shared/services/store/companySlice";
 import { useToast } from "@/shared/hooks/use-toast";
-import { supabase } from "@/services/supabase/client";
-import { getCompanyByUserId } from "@/services/supabase/company";
+import { supabase } from "@/shared/services/supabase/client";
 import { Button } from "@/shared/components/button";
 
 interface Company {
@@ -39,13 +38,13 @@ import userAvatar from "@/assets/user-avatar.jpeg";
 const DashboardLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch();
-  const userState = useSelector((state: RootState) => state.user);
+  const dispatch = useAppDispatch();
+  const userState = useAppSelector((state) => state.user);
+  const { currentCompany: company } = useAppSelector((state) => state.company);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [company, setCompany] = useState<Company | null>(null);
 
   const fetchUserDetails = useCallback(async () => {
     try {
@@ -58,8 +57,8 @@ const DashboardLayout = () => {
         return;
       }
 
-      const companyData = await getCompanyByUserId(user.id);
-      setCompany(companyData);
+      const companyData = await dispatch(fetchCompanyByUserId(user.id)).unwrap();
+      dispatch(setCurrentCompany(companyData));
 
       dispatch(setUser({ user, session }));
       setIsLoading(false);
