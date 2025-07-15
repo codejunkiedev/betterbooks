@@ -6,6 +6,7 @@ import { Input } from '@/shared/components/Input';
 import { useToast } from '@/shared/hooks/useToast';
 import { DocumentActionButtons } from '@/shared/components/DocumentActionButtons';
 import { DocumentPreview } from '@/shared/components/DocumentPreview';
+import { CommentPanel } from '@/shared/components/CommentPanel';
 import {
     Search,
     Building,
@@ -40,6 +41,7 @@ export default function BankStatements() {
     const [clients, setClients] = useState<ClientWithStatements[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
+    const [commentDocument, setCommentDocument] = useState<Document | null>(null);
     const { toast } = useToast();
 
     const loadClientsWithBankStatements = useCallback(async () => {
@@ -88,6 +90,7 @@ export default function BankStatements() {
     const handleBackToClients = () => {
         setSelectedClient(null);
         setPreviewDocument(null);
+        setCommentDocument(null);
     };
 
     const handleDownloadAll = async (statements: Document[], clientName: string) => {
@@ -119,6 +122,10 @@ export default function BankStatements() {
 
     const handlePreviewDocument = (document: Document) => {
         setPreviewDocument(document);
+    };
+
+    const handleCommentsDocument = (document: Document) => {
+        setCommentDocument(document);
     };
 
     const filteredClients = clients.filter(client => {
@@ -197,8 +204,10 @@ export default function BankStatements() {
                                             <DocumentActionButtons
                                                 document={statement}
                                                 onPreview={handlePreviewDocument}
+                                                onComments={handleCommentsDocument}
                                                 showPreview={true}
                                                 showDownload={true}
+                                                showComments={true}
                                                 size="sm"
                                                 variant="ghost"
                                             />
@@ -216,6 +225,16 @@ export default function BankStatements() {
                         document={previewDocument}
                         isOpen={!!previewDocument}
                         onClose={() => setPreviewDocument(null)}
+                    />
+                )}
+
+                {/* Comment Panel */}
+                {commentDocument && (
+                    <CommentPanel
+                        isOpen={!!commentDocument}
+                        onClose={() => setCommentDocument(null)}
+                        documentId={commentDocument.id}
+                        documentName={commentDocument.original_filename}
                     />
                 )}
             </div>

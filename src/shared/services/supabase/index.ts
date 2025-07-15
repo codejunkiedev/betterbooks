@@ -10,4 +10,5 @@ export * from './invoice';
 export * from './line-item';
 export * from './profile';
 export * from './storage';
-export * from './suggestion'; 
+export * from './suggestion';
+export * from './comment'; 

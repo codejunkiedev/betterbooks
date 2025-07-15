@@ -13,7 +13,7 @@ import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft
 import { format } from "date-fns";
 import { Document, DocumentFilters } from "@/shared/types/document";
 import { DocumentPreview } from "@/shared/components/DocumentPreview";
-
+import { CommentPanel } from "@/shared/components/CommentPanel";
 import { DocumentActionButtons } from "@/shared/components/DocumentActionButtons";
 
 const ITEMS_PER_PAGE = 5;
@@ -35,6 +35,7 @@ const DocumentsList = () => {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
+    const [commentDocument, setCommentDocument] = useState<Document | null>(null);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [tempFilters, setTempFilters] = useState<FilterState>({});
     const { toast } = useToast();
@@ -82,6 +83,10 @@ const DocumentsList = () => {
     const handlePreview = async (doc: Document) => {
         setPreviewDocument(doc);
         setIsPreviewOpen(true);
+    };
+
+    const handleCommentsDocument = (document: Document) => {
+        setCommentDocument(document);
     };
 
     // const handleDelete = async (documentId: string) => {
@@ -318,6 +323,8 @@ const DocumentsList = () => {
                                         <DocumentActionButtons
                                             document={doc}
                                             onPreview={handlePreview}
+                                            onComments={handleCommentsDocument}
+                                            showComments={true}
                                         // onDelete={handleDelete}
                                         />
                                     </div>
@@ -462,6 +469,16 @@ const DocumentsList = () => {
                     isOpen={isPreviewOpen}
                     onClose={() => setIsPreviewOpen(false)}
                     document={previewDocument}
+                />
+            )}
+
+            {/* Comment Panel */}
+            {commentDocument && (
+                <CommentPanel
+                    isOpen={!!commentDocument}
+                    onClose={() => setCommentDocument(null)}
+                    documentId={commentDocument.id}
+                    documentName={commentDocument.original_filename}
                 />
             )}
         </div>

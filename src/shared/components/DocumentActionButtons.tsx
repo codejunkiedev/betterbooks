@@ -1,5 +1,5 @@
 import { Button } from "@/shared/components/Button";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, MessageSquare } from "lucide-react";
 import { Document } from "@/shared/types/document";
 import { useDocumentActions } from "./documentUtils";
 
@@ -7,8 +7,10 @@ interface DocumentActionButtonsProps {
     document: Document;
     // onDelete?: (documentId: string) => void;
     onPreview?: (document: Document) => void;
+    onComments?: (document: Document) => void;
     showPreview?: boolean;
     showDownload?: boolean;
+    showComments?: boolean;
     // showDelete?: boolean;
     size?: "sm" | "default" | "lg";
     variant?: "ghost" | "outline" | "default";
@@ -18,8 +20,10 @@ export const DocumentActionButtons = ({
     document,
     // onDelete,
     onPreview,
+    onComments,
     showPreview = true,
     showDownload = true,
+    showComments = true,
     // showDelete = true,
     size = "sm",
     variant = "ghost"
@@ -29,6 +33,12 @@ export const DocumentActionButtons = ({
     const handlePreviewClick = () => {
         if (onPreview) {
             onPreview(document);
+        }
+    };
+
+    const handleCommentsClick = () => {
+        if (onComments) {
+            onComments(document);
         }
     };
 
@@ -61,6 +71,18 @@ export const DocumentActionButtons = ({
                     title="Download document"
                 >
                     <Download className="h-4 w-4" />
+                </Button>
+            )}
+
+            {showComments && (
+                <Button
+                    variant={variant}
+                    size={size}
+                    onClick={handleCommentsClick}
+                    className="h-8 w-8 p-0"
+                    title="View comments"
+                >
+                    <MessageSquare className="h-4 w-4" />
                 </Button>
             )}
 
