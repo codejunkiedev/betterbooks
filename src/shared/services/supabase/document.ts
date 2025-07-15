@@ -42,6 +42,67 @@ export const uploadDocuments = async (request: DocumentUploadRequest): Promise<D
     }
 };
 
+// Upload documents for a specific company (for accountants uploading for clients)
+export const uploadDocumentsForCompany = async (
+    request: DocumentUploadRequest & { companyId: string }
+): Promise<DocumentListResponse> => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        // Verify this is an accountant and they have access to this company
+        const { data: accountant, error: accountantError } = await supabase
+            .from('accountants')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+        if (accountantError || !accountant) {
+            throw new Error('Only accountants can upload documents for clients');
+        }
+
+        // Verify the company is assigned to this accountant
+        const { data: company, error: companyError } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('id', request.companyId)
+            .eq('assigned_accountant_id', accountant.id)
+            .maybeSingle();
+
+        if (companyError || !company) {
+            throw new Error('Company not found or not assigned to this accountant');
+        }
+
+        // Dynamically select folder based on document type
+        const folder = DOCUMENT_TYPE_FOLDER[request.type];
+        const { data: uploadedFiles, error: uploadError } = await uploadFiles(request.files, folder);
+        if (uploadError) throw uploadError;
+
+        const documents = (uploadedFiles as UploadedFile[]).map(file => ({
+            company_id: request.companyId,
+            uploaded_by_user_id: user.id,
+            file_path: file.path,
+            original_filename: file.name,
+            type: request.type,
+            status: 'COMPLETED' as DocumentStatus // Tax documents uploaded by accountants are automatically completed
+        }));
+
+        const { data, error: insertError } = await supabase
+            .from(DOCUMENTS_TABLE)
+            .insert(documents)
+            .select();
+
+        if (insertError) {
+            throw insertError;
+        }
+
+        return { data, error: null };
+    } catch (error) {
+        return { data: null, error: error as Error };
+    }
+};
+
 export const getDocuments = async (filters?: DocumentFilters): Promise<DocumentListResponse> => {
     try {
         let query = supabase

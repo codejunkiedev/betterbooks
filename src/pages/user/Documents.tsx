@@ -9,7 +9,7 @@ import { Label } from "@/shared/components/Label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/Dialog";
 import { getPaginatedDocuments } from "@/shared/services/supabase/document";
 import { DocumentType, DocumentStatus } from "@/shared/constants/documents";
-import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft, ChevronRight, Calculator } from "lucide-react";
 import { format } from "date-fns";
 import { Document, DocumentFilters } from "@/shared/types/document";
 import { DocumentPreview } from "@/shared/components/DocumentPreview";
@@ -173,6 +173,9 @@ const DocumentsList = () => {
             INVOICE: Receipt,
             RECEIPT: CreditCard,
             BANK_STATEMENT: Building2,
+            TAX_RETURN: Calculator,
+            TAX_VOUCHER: Calculator,
+            TAX_SUMMARY: Calculator,
             OTHER: FileText,
         };
 
@@ -185,6 +188,9 @@ const DocumentsList = () => {
             INVOICE: 'Invoice',
             RECEIPT: 'Receipt',
             BANK_STATEMENT: 'Bank Statement',
+            TAX_RETURN: 'Tax Return',
+            TAX_VOUCHER: 'Tax Voucher',
+            TAX_SUMMARY: 'Tax Summary',
             OTHER: 'Other',
         };
 
@@ -215,6 +221,58 @@ const DocumentsList = () => {
                         )}
                     </Button>
                 </div>
+
+                {/* Quick Filter Section for Tax Documents */}
+                <Card className="p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Calculator className="h-5 w-5 text-blue-600" />
+                            <h3 className="font-semibold text-gray-900">Tax Documents</h3>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant={filters.type === 'TAX_RETURN' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                    setFilters({ type: 'TAX_RETURN' });
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                Tax Returns
+                            </Button>
+                            <Button
+                                variant={filters.type === 'TAX_VOUCHER' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                    setFilters({ type: 'TAX_VOUCHER' });
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                Tax Vouchers
+                            </Button>
+                            <Button
+                                variant={filters.type === 'TAX_SUMMARY' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                    setFilters({ type: 'TAX_SUMMARY' });
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                Tax Summaries
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setFilters({});
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                View All
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
 
                 {/* Documents List */}
                 <Card className="p-6">
@@ -327,6 +385,9 @@ const DocumentsList = () => {
                                     <SelectItem value="INVOICE">Invoice</SelectItem>
                                     <SelectItem value="RECEIPT">Receipt</SelectItem>
                                     <SelectItem value="BANK_STATEMENT">Bank Statement</SelectItem>
+                                    <SelectItem value="TAX_RETURN">Tax Return</SelectItem>
+                                    <SelectItem value="TAX_VOUCHER">Tax Voucher</SelectItem>
+                                    <SelectItem value="TAX_SUMMARY">Tax Summary</SelectItem>
                                     <SelectItem value="OTHER">Other</SelectItem>
                                 </SelectContent>
                             </Select>
