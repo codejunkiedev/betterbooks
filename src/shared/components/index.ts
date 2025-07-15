@@ -26,8 +26,12 @@ export * from './Textarea';
 export * from './Toast';
 export * from './Toaster';
 export * from './Tooltip';
-export * from './DashboardLayout';
+
 export * from './NotFound';
 export * from './DocumentActionButtons';
 export * from './DocumentPreview';
-export * from './documentUtils'; 
+export * from './documentUtils';
+
+// Auth and Role components
+export { default as RoleGuard } from './RoleGuard';
+export { default as Unauthorized } from './Unauthorized'; 

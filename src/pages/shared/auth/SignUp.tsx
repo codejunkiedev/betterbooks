@@ -34,7 +34,7 @@ export default function SignUp() {
 
     setLoading(true);
 
-    const { error: signInError } = await signIn(email, password);
+    const { error: signInError } = await signIn({ email, password });
 
     if (signInError) {
       if (signInError.message.includes("Email not confirmed")) {
@@ -66,7 +66,7 @@ export default function SignUp() {
     }
 
     // If not registered, proceed with sign up
-    const { user, error } = await signUp(email, password);
+    const { user, error } = await signUp({ email, password });
 
     if (error) {
       toast({ title: "Sign Up Failed", description: error.message, variant: "destructive" });

@@ -39,6 +39,32 @@ export const initializeAuth = createAsyncThunk(
   }
 );
 
+// Async thunk for setting up auth state listener
+export const setupAuthListener = createAsyncThunk(
+  'user/setupAuthListener',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      const { supabase } = await import('@/shared/services/supabase/client');
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('Auth state changed:', event, session);
+
+          if (event === 'SIGNED_OUT') {
+            dispatch(clearAuth());
+          } else {
+            dispatch(setUser(session ? { user: session.user, session } : null));
+          }
+        }
+      );
+
+      return subscription;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to setup auth listener');
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: 'user',
   initialState,
@@ -89,6 +115,13 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.isInitialized = true;
+      })
+      .addCase(setupAuthListener.fulfilled, (state) => {
+        // Auth listener is set up successfully
+        state.error = null;
+      })
+      .addCase(setupAuthListener.rejected, (state, action) => {
+        state.error = action.payload as string;
       });
   },
 });

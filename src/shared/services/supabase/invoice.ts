@@ -15,7 +15,11 @@ export const uploadInvoice = async (
     data: CreateInvoiceData
 ): Promise<ApiResponse<InvoiceData[]>> => {
     try {
-        const user = await getCurrentUser();
+        const { user, error: userError } = await getCurrentUser();
+
+        if (userError || !user) {
+            throw new Error('User not authenticated');
+        }
 
         // Create invoice records for each file
         const invoicePromises = data?.files?.map(file =>
@@ -63,7 +67,11 @@ export const uploadInvoice = async (
 // Helper function to get all invoices for the current user
 export const getInvoices = async (): Promise<ApiResponse<InvoiceData[]>> => {
     try {
-        const user = await getCurrentUser();
+        const { user, error: userError } = await getCurrentUser();
+
+        if (userError || !user) {
+            throw new Error('User not authenticated');
+        }
 
         const { data: invoices, error } = await supabase
             .from('invoices')
@@ -89,7 +97,11 @@ export const getInvoices = async (): Promise<ApiResponse<InvoiceData[]>> => {
 // Helper function to get a single invoice by ID
 export const getInvoice = async (id: string): Promise<ApiResponse<InvoiceData>> => {
     try {
-        const user = await getCurrentUser();
+        const { user, error: userError } = await getCurrentUser();
+
+        if (userError || !user) {
+            throw new Error('User not authenticated');
+        }
 
         const { data: invoice, error } = await supabase
             .from('invoices')
@@ -119,7 +131,11 @@ export const updateInvoice = async (
     updates: UpdateInvoiceData
 ): Promise<ApiResponse<InvoiceData>> => {
     try {
-        const user = await getCurrentUser();
+        const { user, error: userError } = await getCurrentUser();
+
+        if (userError || !user) {
+            throw new Error('User not authenticated');
+        }
 
         const { data: invoice, error } = await supabase
             .from('invoices')
@@ -147,7 +163,11 @@ export const updateInvoice = async (
 // Helper function to delete an invoice
 export const deleteInvoice = async (id: string): Promise<ApiResponse<void>> => {
     try {
-        const user = await getCurrentUser();
+        const { user, error: userError } = await getCurrentUser();
+
+        if (userError || !user) {
+            throw new Error('User not authenticated');
+        }
 
         const { error } = await supabase
             .from('invoices')
