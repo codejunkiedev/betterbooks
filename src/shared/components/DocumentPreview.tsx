@@ -10,6 +10,14 @@ interface DocumentPreviewProps {
   document: Document;
 }
 
+// Legacy interface for backward compatibility
+interface LegacyDocumentPreviewProps {
+  isOpen: boolean;
+  onClose: () => void;
+  previewUrl: string | null;
+  documentName?: string;
+}
+
 export const DocumentPreview = ({ isOpen, onClose, document }: DocumentPreviewProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,5 +128,98 @@ export const DocumentPreview = ({ isOpen, onClose, document }: DocumentPreviewPr
   );
 };
 
-// Keep the old name for backward compatibility
-export const InvoicePreview = DocumentPreview; 
+// Legacy component for backward compatibility with old interface
+const LegacyDocumentPreview = ({ isOpen, onClose, previewUrl, documentName }: LegacyDocumentPreviewProps) => {
+  const [isImageLoading, setIsImageLoading] = useState(true);
+
+  // Reset loading state when modal opens or URL changes
+  useEffect(() => {
+    if (isOpen && previewUrl) {
+      setIsImageLoading(true);
+    }
+  }, [isOpen, previewUrl]);
+
+  const getFileExtension = (filename: string) => {
+    return filename?.split('.').pop()?.toLowerCase() || '';
+  };
+
+  const isPDF = (filename: string) => {
+    return getFileExtension(filename) === 'pdf';
+  };
+
+  const isImage = (filename: string) => {
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    return imageExtensions.includes(getFileExtension(filename));
+  };
+
+  const renderLegacyPreview = () => {
+    if (!previewUrl) {
+      return <LoadingSpinner text="Loading preview..." />;
+    }
+
+    const filename = documentName || '';
+
+    if (isPDF(filename)) {
+      return (
+        <iframe
+          src={previewUrl}
+          className="w-full h-full border-0"
+          title={`Preview: ${filename}`}
+        />
+      );
+    }
+
+    if (isImage(filename) || !filename) {
+      return (
+        <>
+          {isImageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <LoadingSpinner text="Loading preview..." />
+            </div>
+          )}
+          <img
+            src={previewUrl}
+            alt="Document preview"
+            className="max-w-full max-h-full object-contain"
+            onLoad={() => setIsImageLoading(false)}
+            onError={() => {
+              setIsImageLoading(false);
+              console.error('Error loading image:', previewUrl);
+            }}
+          />
+        </>
+      );
+    }
+
+    // For other file types
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-gray-500">
+        <div className="text-lg mb-2">Preview not available</div>
+        <div className="text-sm mb-4">This file type cannot be previewed in the browser</div>
+        <a
+          href={previewUrl}
+          download={filename}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Download File
+        </a>
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>{documentName ? `Preview: ${documentName}` : 'Document Preview'}</DialogTitle>
+        </DialogHeader>
+        <div className="relative w-full h-[80vh] flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
+          {renderLegacyPreview()}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Keep the old name for backward compatibility with legacy interface
+export const InvoicePreview = LegacyDocumentPreview; 
