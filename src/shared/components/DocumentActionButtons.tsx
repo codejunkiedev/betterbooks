@@ -1,26 +1,26 @@
 import { Button } from "@/shared/components/Button";
-import { Download, Eye, Trash2 } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import { Document } from "@/shared/types/document";
 import { useDocumentActions } from "./documentUtils";
 
 interface DocumentActionButtonsProps {
     document: Document;
-    onDelete?: (documentId: string) => void;
+    // onDelete?: (documentId: string) => void;
     onPreview?: (document: Document) => void;
     showPreview?: boolean;
     showDownload?: boolean;
-    showDelete?: boolean;
+    // showDelete?: boolean;
     size?: "sm" | "default" | "lg";
     variant?: "ghost" | "outline" | "default";
 }
 
 export const DocumentActionButtons = ({
     document,
-    onDelete,
+    // onDelete,
     onPreview,
     showPreview = true,
     showDownload = true,
-    showDelete = true,
+    // showDelete = true,
     size = "sm",
     variant = "ghost"
 }: DocumentActionButtonsProps) => {
@@ -32,11 +32,11 @@ export const DocumentActionButtons = ({
         }
     };
 
-    const handleDeleteClick = () => {
-        if (onDelete) {
-            onDelete(document.id);
-        }
-    };
+    // const handleDeleteClick = () => {
+    //     if (onDelete) {
+    //         onDelete(document.id);
+    //     }
+    // };
 
     return (
         <div className="flex items-center gap-2">
@@ -64,7 +64,7 @@ export const DocumentActionButtons = ({
                 </Button>
             )}
 
-            {showDelete && onDelete && (
+            {/* {showDelete && onDelete && (
                 <Button
                     variant={variant}
                     size={size}
@@ -74,7 +74,7 @@ export const DocumentActionButtons = ({
                 >
                     <Trash2 className="h-4 w-4" />
                 </Button>
-            )}
+            )} */}
         </div>
     );
 }; 

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/shared/components/Input";
 import { Label } from "@/shared/components/Label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/Dialog";
-import { getPaginatedDocuments, deleteDocument } from "@/shared/services/supabase/document";
+import { getPaginatedDocuments } from "@/shared/services/supabase/document";
 import { DocumentType, DocumentStatus } from "@/shared/constants/documents";
 import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
@@ -88,37 +88,37 @@ const DocumentsList = () => {
         }
     };
 
-    const handleDelete = async (documentId: string) => {
-        if (!confirm('Are you sure you want to delete this document?')) {
-            return;
-        }
+    // const handleDelete = async (documentId: string) => {
+    //     if (!confirm('Are you sure you want to delete this document?')) {
+    //         return;
+    //     }
 
-        try {
-            const { error } = await deleteDocument(documentId);
-            if (error) {
-                throw error;
-            }
+    //     try {
+    //         const { error } = await deleteDocument(documentId);
+    //         if (error) {
+    //             throw error;
+    //         }
 
-            toast({
-                title: "Document deleted",
-                description: "The document has been deleted successfully.",
-            });
+    //         toast({
+    //             title: "Document deleted",
+    //             description: "The document has been deleted successfully.",
+    //         });
 
-            // If we're on the last page and it becomes empty, go to previous page
-            if (documents.length === 1 && currentPage > 1) {
-                setCurrentPage(currentPage - 1);
-            } else {
-                loadDocuments();
-            }
-        } catch (error) {
-            console.error('Error deleting document:', error);
-            toast({
-                title: "Delete failed",
-                description: "Failed to delete the document. Please try again.",
-                variant: "destructive",
-            });
-        }
-    };
+    //         // If we're on the last page and it becomes empty, go to previous page
+    //         if (documents.length === 1 && currentPage > 1) {
+    //             setCurrentPage(currentPage - 1);
+    //         } else {
+    //             loadDocuments();
+    //         }
+    //     } catch (error) {
+    //         console.error('Error deleting document:', error);
+    //         toast({
+    //             title: "Delete failed",
+    //             description: "Failed to delete the document. Please try again.",
+    //             variant: "destructive",
+    //         });
+    //     }
+    // };
 
     const handlePageChange = (newPage: number) => {
         const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -264,7 +264,7 @@ const DocumentsList = () => {
                                         <DocumentActionButtons
                                             document={doc}
                                             onPreview={handlePreview}
-                                            onDelete={handleDelete}
+                                        // onDelete={handleDelete}
                                         />
                                     </div>
                                 </div>
