@@ -1,4 +1,4 @@
-import { Button } from "@/shared/components/button";
+import { Button } from "@/shared/components/Button";
 import { Download, Eye, Trash2 } from "lucide-react";
 import { Document } from "@/shared/types/document";
 import { useDocumentActions } from "./documentUtils";

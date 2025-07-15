@@ -1,9 +1,13 @@
-import { supabase } from '@/services/supabase/client';
-import { getCurrentUser } from '@/services/supabase/auth';
+import { supabase } from '@/shared/services/supabase/client';
+import { getCurrentUser } from '@/shared/services/supabase/auth';
 export const processInvoice = async () => {
   try {
-    const user = await getCurrentUser();
+    const { user, error } = await getCurrentUser();
     const { data: { session } } = await supabase.auth.getSession();
+
+    if (error || !user) {
+      throw new Error('User not authenticated');
+    }
 
     if (!session?.access_token) {
       throw new Error('No active session found');

@@ -1,10 +1,7 @@
 export const COMPANY_TYPES = [
-  "sole_proprietorship",
-  "partnership",
-  "corporation",
-  "llc",
-  "nonprofit",
-  "other"
+  "INDEPENDENT_WORKER",
+  "PROFESSIONAL_SERVICES",
+  "SMALL_BUSINESS"
 ] as const;
 
 export type CompanyType = typeof COMPANY_TYPES[number]; 
