@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
+import { useNavigate } from 'react-router-dom';
 import {
     Users,
     FileText,
@@ -10,10 +11,13 @@ import {
     Clock,
     TrendingUp,
     DollarSign,
-    Building
+    Building,
+    Landmark
 } from 'lucide-react';
 
 export default function AccountantDashboard() {
+    const navigate = useNavigate();
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -22,10 +26,16 @@ export default function AccountantDashboard() {
                     <h1 className="text-2xl font-bold text-gray-900">Accountant Dashboard</h1>
                     <p className="text-gray-600">Manage client accounts and review financial documents</p>
                 </div>
-                <Button>
-                    <Users className="w-4 h-4 mr-2" />
-                    View All Clients
-                </Button>
+                <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => navigate('/accountant/bank-statements')}>
+                        <Landmark className="w-4 h-4 mr-2" />
+                        Bank Statements
+                    </Button>
+                    <Button onClick={() => navigate('/accountant/clients')}>
+                        <Users className="w-4 h-4 mr-2" />
+                        View All Clients
+                    </Button>
+                </div>
             </div>
 
             {/* Stats Grid */}
@@ -182,6 +192,62 @@ export default function AccountantDashboard() {
                         <div className="text-center">
                             <p className="text-3xl font-bold text-purple-600">156</p>
                             <p className="text-sm text-gray-600">Documents Processed This Month</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Quick Access */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center">
+                        <Landmark className="w-5 h-5 mr-2 text-blue-600" />
+                        Bank Statements Management
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                            <h4 className="font-medium text-gray-900">Quick Actions</h4>
+                            <div className="space-y-2">
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-start"
+                                    onClick={() => navigate('/accountant/bank-statements')}
+                                >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    View All Bank Statements
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-start"
+                                    onClick={() => navigate('/accountant/clients')}
+                                >
+                                    <Users className="w-4 h-4 mr-2" />
+                                    Manage Clients
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <h4 className="font-medium text-gray-900">Features</h4>
+                            <ul className="space-y-2 text-sm text-gray-600">
+                                <li className="flex items-center">
+                                    <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                    View bank statements by client
+                                </li>
+                                <li className="flex items-center">
+                                    <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                    In-browser document preview
+                                </li>
+                                <li className="flex items-center">
+                                    <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                    Download all statements as ZIP
+                                </li>
+                                <li className="flex items-center">
+                                    <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                    Track document status
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </CardContent>

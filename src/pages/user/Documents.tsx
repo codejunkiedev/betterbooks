@@ -13,7 +13,7 @@ import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft
 import { format } from "date-fns";
 import { Document, DocumentFilters } from "@/shared/types/document";
 import { DocumentPreview } from "@/shared/components/DocumentPreview";
-import { useDocumentActions } from "@/shared/components/documentUtils";
+
 import { DocumentActionButtons } from "@/shared/components/DocumentActionButtons";
 
 const ITEMS_PER_PAGE = 5;
@@ -33,12 +33,12 @@ const DocumentsList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [tempFilters, setTempFilters] = useState<FilterState>({});
     const { toast } = useToast();
-    const { handlePreview: getPreviewUrl } = useDocumentActions();
+
 
     const loadDocuments = useCallback(async () => {
         try {
@@ -80,12 +80,8 @@ const DocumentsList = () => {
     }, [isFilterModalOpen, filters]);
 
     const handlePreview = async (doc: Document) => {
-        const previewUrl = await getPreviewUrl(doc);
-        if (previewUrl) {
-            setPreviewUrl(previewUrl);
-            setPreviewDocument(doc);
-            setIsPreviewOpen(true);
-        }
+        setPreviewDocument(doc);
+        setIsPreviewOpen(true);
     };
 
     // const handleDelete = async (documentId: string) => {
@@ -400,12 +396,13 @@ const DocumentsList = () => {
             </Dialog>
 
             {/* Document Preview Modal */}
-            <DocumentPreview
-                isOpen={isPreviewOpen}
-                onClose={() => setIsPreviewOpen(false)}
-                previewUrl={previewUrl}
-                documentName={previewDocument?.original_filename || ''}
-            />
+            {previewDocument && (
+                <DocumentPreview
+                    isOpen={isPreviewOpen}
+                    onClose={() => setIsPreviewOpen(false)}
+                    document={previewDocument}
+                />
+            )}
         </div>
     );
 };
