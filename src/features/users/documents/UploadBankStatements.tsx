@@ -16,7 +16,7 @@ const UploadBankStatements = () => {
     const validateFiles = useCallback((fileList: FileList): File[] => {
         const validFiles: File[] = [];
         const maxSize = 10 * 1024 * 1024; // 10MB
-        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+        const allowedTypes = ['application/pdf', 'text/csv', 'application/vnd.intu.qfx'];
 
         for (let i = 0; i < fileList.length; i++) {
             const file = fileList[i];
@@ -32,7 +32,7 @@ const UploadBankStatements = () => {
             if (!allowedTypes.includes(file.type)) {
                 toast({
                     title: "Unsupported file type",
-                    description: `${file.name} is not a supported file type. Please select PNG, JPEG, or PDF files.`,
+                    description: `${file.name} is not a supported file type. Please select PDF, CSV, or QFX files.`,
                     variant: "destructive",
                 });
                 continue;
@@ -193,14 +193,14 @@ const UploadBankStatements = () => {
                                         or click to browse your files
                                     </p>
                                     <p className="text-sm text-gray-500">
-                                        Supported formats: PNG, JPEG, PDF (max 10MB per file)
+                                        Supported formats: PDF, CSV, QFX (max 10MB per file)
                                     </p>
                                 </div>
                             </div>
                             <input
                                 type="file"
                                 multiple
-                                accept=".png,.jpg,.jpeg,.pdf"
+                                accept=".pdf,.csv,.qfx"
                                 onChange={handleFileSelect}
                                 className="hidden"
                                 id="file-upload"
