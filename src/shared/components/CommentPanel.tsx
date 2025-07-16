@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, MessageSquare, Send, Edit2, Trash2, Clock } from 'lucide-react';
 import { Button } from '@/shared/components/Button';
 import { Textarea } from '@/shared/components/Textarea';
@@ -37,14 +37,7 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const { toast } = useToast();
 
-    // Load comments when panel opens
-    useEffect(() => {
-        if (isOpen && documentId) {
-            loadComments();
-        }
-    }, [isOpen, documentId]);
-
-    const loadComments = async () => {
+    const loadComments = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await getCommentsByDocumentId(documentId);
@@ -64,7 +57,14 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
         } finally {
             setLoading(false);
         }
-    };
+    }, [documentId, toast]);
+
+    // Load comments when panel opens
+    useEffect(() => {
+        if (isOpen && documentId) {
+            loadComments();
+        }
+    }, [isOpen, documentId, loadComments]);
 
     const handleAddComment = async () => {
         if (!newComment.trim()) return;
@@ -195,14 +195,15 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                className="fixed inset-0 bg-black bg-opacity-50 z-[9999]"
                 onClick={onClose}
+                style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
             />
 
             {/* Panel */}
-            <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-xl z-50 flex flex-col">
+            <div className="fixed right-0 top-0 h-screen w-96 bg-white shadow-xl z-[10000] flex flex-col" style={{ position: 'fixed', top: 0, right: 0, height: '100vh', width: '24rem' }}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+                <div className="flex items-center justify-between p-4 border-b bg-gray-50 flex-shrink-0">
                     <div className="flex items-center gap-2">
                         <MessageSquare className="w-5 h-5 text-blue-600" />
                         <div>
@@ -216,7 +217,7 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
                 </div>
 
                 {/* Comments List */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
                     {loading ? (
                         <div className="flex items-center justify-center py-8">
                             <div className="text-gray-500">Loading comments...</div>
@@ -308,7 +309,7 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
                 </div>
 
                 {/* Add Comment Form */}
-                <div className="border-t p-4 space-y-3">
+                <div className="border-t p-4 space-y-3 flex-shrink-0">
                     <Textarea
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}

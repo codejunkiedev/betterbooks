@@ -66,14 +66,7 @@ export default function TaxDocuments() {
         loadClients();
     }, [toast]);
 
-    // Load tax documents when client is selected and on the view tab
-    useEffect(() => {
-        if (selectedClient && activeTab === "view") {
-            loadTaxDocuments();
-        }
-    }, [selectedClient, activeTab]);
-
-    const loadTaxDocuments = async () => {
+    const loadTaxDocuments = useCallback(async () => {
         if (!selectedClient) return;
 
         try {
@@ -100,7 +93,14 @@ export default function TaxDocuments() {
         } finally {
             setIsLoadingDocuments(false);
         }
-    };
+    }, [selectedClient, toast]);
+
+    // Load tax documents when client is selected and on the view tab
+    useEffect(() => {
+        if (selectedClient && activeTab === "view") {
+            loadTaxDocuments();
+        }
+    }, [selectedClient, activeTab, loadTaxDocuments]);
 
     const validateFiles = useCallback((fileList: FileList): File[] => {
         const validFiles: File[] = [];
