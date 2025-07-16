@@ -42,6 +42,67 @@ export const uploadDocuments = async (request: DocumentUploadRequest): Promise<D
     }
 };
 
+// Upload documents for a specific company (for accountants uploading for clients)
+export const uploadDocumentsForCompany = async (
+    request: DocumentUploadRequest & { companyId: string }
+): Promise<DocumentListResponse> => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        // Verify this is an accountant and they have access to this company
+        const { data: accountant, error: accountantError } = await supabase
+            .from('accountants')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+        if (accountantError || !accountant) {
+            throw new Error('Only accountants can upload documents for clients');
+        }
+
+        // Verify the company is assigned to this accountant
+        const { data: company, error: companyError } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('id', request.companyId)
+            .eq('assigned_accountant_id', accountant.id)
+            .maybeSingle();
+
+        if (companyError || !company) {
+            throw new Error('Company not found or not assigned to this accountant');
+        }
+
+        // Dynamically select folder based on document type
+        const folder = DOCUMENT_TYPE_FOLDER[request.type];
+        const { data: uploadedFiles, error: uploadError } = await uploadFiles(request.files, folder);
+        if (uploadError) throw uploadError;
+
+        const documents = (uploadedFiles as UploadedFile[]).map(file => ({
+            company_id: request.companyId,
+            uploaded_by_user_id: user.id,
+            file_path: file.path,
+            original_filename: file.name,
+            type: request.type,
+            status: 'COMPLETED' as DocumentStatus // Tax documents uploaded by accountants are automatically completed
+        }));
+
+        const { data, error: insertError } = await supabase
+            .from(DOCUMENTS_TABLE)
+            .insert(documents)
+            .select();
+
+        if (insertError) {
+            throw insertError;
+        }
+
+        return { data, error: null };
+    } catch (error) {
+        return { data: null, error: error as Error };
+    }
+};
+
 export const getDocuments = async (filters?: DocumentFilters): Promise<DocumentListResponse> => {
     try {
         let query = supabase
@@ -223,5 +284,88 @@ export const getDocumentsByUser = async (userId: string, filters?: DocumentFilte
         return { data, error: null };
     } catch (error) {
         return { data: null, error: error as Error };
+    }
+};
+
+// Get documents by company ID (for accountants to view client documents)
+export const getDocumentsByCompanyId = async (companyId: string, filters?: DocumentFilters): Promise<DocumentListResponse> => {
+    try {
+        let query = supabase
+            .from(DOCUMENTS_TABLE)
+            .select('*')
+            .eq('company_id', companyId)
+            .order('uploaded_at', { ascending: false });
+
+        if (filters?.type) {
+            query = query.eq('type', filters.type);
+        }
+
+        if (filters?.status) {
+            query = query.eq('status', filters.status);
+        }
+
+        if (filters?.date_from) {
+            query = query.gte('uploaded_at', filters.date_from);
+        }
+
+        if (filters?.date_to) {
+            query = query.lte('uploaded_at', filters.date_to);
+        }
+
+        const { data } = await query;
+
+        return { data, error: null };
+    } catch (error) {
+        return { data: null, error: error as Error };
+    }
+};
+
+// Get bank statements for a specific company
+export const getBankStatementsByCompanyId = async (companyId: string): Promise<DocumentListResponse> => {
+    return getDocumentsByCompanyId(companyId, { type: 'BANK_STATEMENT' });
+};
+
+// Download multiple documents as ZIP
+export const downloadDocumentsAsZip = async (documents: Document[], zipFileName: string = 'documents.zip'): Promise<void> => {
+    try {
+        // Dynamically import JSZip
+        const JSZip = (await import('jszip')).default;
+
+        const zip = new JSZip();
+
+        // Add each document to the ZIP
+        for (const doc of documents) {
+            try {
+                const downloadUrl = await getDocumentDownloadUrl(doc.file_path);
+                if (downloadUrl) {
+                    const response = await fetch(downloadUrl);
+                    const blob = await response.blob();
+                    zip.file(doc.original_filename, blob);
+                }
+            } catch (error) {
+                console.error(`Error adding ${doc.original_filename} to ZIP:`, error);
+                // Continue with other files even if one fails
+            }
+        }
+
+        // Generate the ZIP file
+        const content = await zip.generateAsync({ type: 'blob' });
+
+        // Create download link
+        const url = window.URL.createObjectURL(content);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = zipFileName;
+        link.style.display = 'none';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Error creating ZIP file:', error);
+        throw new Error('Failed to create ZIP file');
     }
 }; 

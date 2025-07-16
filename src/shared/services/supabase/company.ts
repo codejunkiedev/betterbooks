@@ -78,4 +78,45 @@ export async function deleteCompanyById(companyId: string) {
   }
 
   return { success: true };
+}
+
+// Get companies assigned to a specific accountant
+export async function getCompaniesByAccountantId(accountantId: string) {
+  const { data, error } = await supabase
+    .from("companies")
+    .select("*")
+    .eq("assigned_accountant_id", accountantId)
+    .eq("is_active", true);
+
+  if (error) {
+    console.error("Error fetching companies by accountant:", error);
+    throw error;
+  }
+  return data;
+}
+
+// Get companies assigned to the current accountant user
+export async function getMyClientCompanies() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // First get the accountant record for the current user
+    const { data: accountant, error: accountantError } = await supabase
+      .from('accountants')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (accountantError || !accountant) {
+      throw new Error('Accountant record not found');
+    }
+
+    // Then get companies assigned to this accountant
+    return await getCompaniesByAccountantId(accountant.id);
+  } catch (error) {
+    console.error("Error fetching client companies:", error);
+    throw error;
+  }
 } 

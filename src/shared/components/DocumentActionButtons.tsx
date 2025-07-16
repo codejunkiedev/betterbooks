@@ -1,26 +1,30 @@
 import { Button } from "@/shared/components/Button";
-import { Download, Eye, Trash2 } from "lucide-react";
+import { Download, Eye, MessageSquare } from "lucide-react";
 import { Document } from "@/shared/types/document";
 import { useDocumentActions } from "./documentUtils";
 
 interface DocumentActionButtonsProps {
     document: Document;
-    onDelete?: (documentId: string) => void;
+    // onDelete?: (documentId: string) => void;
     onPreview?: (document: Document) => void;
+    onComments?: (document: Document) => void;
     showPreview?: boolean;
     showDownload?: boolean;
-    showDelete?: boolean;
+    showComments?: boolean;
+    // showDelete?: boolean;
     size?: "sm" | "default" | "lg";
     variant?: "ghost" | "outline" | "default";
 }
 
 export const DocumentActionButtons = ({
     document,
-    onDelete,
+    // onDelete,
     onPreview,
+    onComments,
     showPreview = true,
     showDownload = true,
-    showDelete = true,
+    showComments = true,
+    // showDelete = true,
     size = "sm",
     variant = "ghost"
 }: DocumentActionButtonsProps) => {
@@ -32,11 +36,17 @@ export const DocumentActionButtons = ({
         }
     };
 
-    const handleDeleteClick = () => {
-        if (onDelete) {
-            onDelete(document.id);
+    const handleCommentsClick = () => {
+        if (onComments) {
+            onComments(document);
         }
     };
+
+    // const handleDeleteClick = () => {
+    //     if (onDelete) {
+    //         onDelete(document.id);
+    //     }
+    // };
 
     return (
         <div className="flex items-center gap-2">
@@ -64,7 +74,19 @@ export const DocumentActionButtons = ({
                 </Button>
             )}
 
-            {showDelete && onDelete && (
+            {showComments && (
+                <Button
+                    variant={variant}
+                    size={size}
+                    onClick={handleCommentsClick}
+                    className="h-8 w-8 p-0"
+                    title="View comments"
+                >
+                    <MessageSquare className="h-4 w-4" />
+                </Button>
+            )}
+
+            {/* {showDelete && onDelete && (
                 <Button
                     variant={variant}
                     size={size}
@@ -74,7 +96,7 @@ export const DocumentActionButtons = ({
                 >
                     <Trash2 className="h-4 w-4" />
                 </Button>
-            )}
+            )} */}
         </div>
     );
 }; 

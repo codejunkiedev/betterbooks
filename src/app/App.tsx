@@ -26,6 +26,8 @@ import CompanySetup from "@/pages/user/CompanySetup";
 // Accountant Pages
 import AccountantDashboard from "@/pages/accountant/Dashboard";
 import AccountantClients from "@/pages/accountant/Clients";
+import AccountantBankStatements from "@/pages/accountant/BankStatements";
+import AccountantTaxDocuments from "@/pages/accountant/TaxDocuments";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard";
@@ -103,7 +105,9 @@ export default function App() {
       children: [
         { path: "", element: <AccountantDashboard /> },
         { path: "clients", element: <AccountantClients /> },
+        { path: "bank-statements", element: <AccountantBankStatements /> },
         { path: "documents", element: <div>Accountant Documents</div> },
+        { path: "tax-documents", element: <AccountantTaxDocuments /> },
         { path: "reviews", element: <div>Document Reviews</div> },
         { path: "reports", element: <div>Reports</div> },
         { path: "billing", element: <div>Billing</div> },

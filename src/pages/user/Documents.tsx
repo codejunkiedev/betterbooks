@@ -7,13 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/shared/components/Input";
 import { Label } from "@/shared/components/Label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/Dialog";
-import { getPaginatedDocuments, deleteDocument } from "@/shared/services/supabase/document";
+import { getPaginatedDocuments } from "@/shared/services/supabase/document";
 import { DocumentType, DocumentStatus } from "@/shared/constants/documents";
-import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, Receipt, CreditCard, Building2, Calendar, Filter, ChevronLeft, ChevronRight, Calculator } from "lucide-react";
 import { format } from "date-fns";
 import { Document, DocumentFilters } from "@/shared/types/document";
 import { DocumentPreview } from "@/shared/components/DocumentPreview";
-import { useDocumentActions } from "@/shared/components/documentUtils";
+import { CommentPanel } from "@/shared/components/CommentPanel";
 import { DocumentActionButtons } from "@/shared/components/DocumentActionButtons";
 
 const ITEMS_PER_PAGE = 5;
@@ -33,12 +33,13 @@ const DocumentsList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
+    const [commentDocument, setCommentDocument] = useState<Document | null>(null);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [tempFilters, setTempFilters] = useState<FilterState>({});
     const { toast } = useToast();
-    const { handlePreview: getPreviewUrl } = useDocumentActions();
+
 
     const loadDocuments = useCallback(async () => {
         try {
@@ -80,45 +81,45 @@ const DocumentsList = () => {
     }, [isFilterModalOpen, filters]);
 
     const handlePreview = async (doc: Document) => {
-        const previewUrl = await getPreviewUrl(doc);
-        if (previewUrl) {
-            setPreviewUrl(previewUrl);
-            setPreviewDocument(doc);
-            setIsPreviewOpen(true);
-        }
+        setPreviewDocument(doc);
+        setIsPreviewOpen(true);
     };
 
-    const handleDelete = async (documentId: string) => {
-        if (!confirm('Are you sure you want to delete this document?')) {
-            return;
-        }
-
-        try {
-            const { error } = await deleteDocument(documentId);
-            if (error) {
-                throw error;
-            }
-
-            toast({
-                title: "Document deleted",
-                description: "The document has been deleted successfully.",
-            });
-
-            // If we're on the last page and it becomes empty, go to previous page
-            if (documents.length === 1 && currentPage > 1) {
-                setCurrentPage(currentPage - 1);
-            } else {
-                loadDocuments();
-            }
-        } catch (error) {
-            console.error('Error deleting document:', error);
-            toast({
-                title: "Delete failed",
-                description: "Failed to delete the document. Please try again.",
-                variant: "destructive",
-            });
-        }
+    const handleCommentsDocument = (document: Document) => {
+        setCommentDocument(document);
     };
+
+    // const handleDelete = async (documentId: string) => {
+    //     if (!confirm('Are you sure you want to delete this document?')) {
+    //         return;
+    //     }
+
+    //     try {
+    //         const { error } = await deleteDocument(documentId);
+    //         if (error) {
+    //             throw error;
+    //         }
+
+    //         toast({
+    //             title: "Document deleted",
+    //             description: "The document has been deleted successfully.",
+    //         });
+
+    //         // If we're on the last page and it becomes empty, go to previous page
+    //         if (documents.length === 1 && currentPage > 1) {
+    //             setCurrentPage(currentPage - 1);
+    //         } else {
+    //             loadDocuments();
+    //         }
+    //     } catch (error) {
+    //         console.error('Error deleting document:', error);
+    //         toast({
+    //             title: "Delete failed",
+    //             description: "Failed to delete the document. Please try again.",
+    //             variant: "destructive",
+    //         });
+    //     }
+    // };
 
     const handlePageChange = (newPage: number) => {
         const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -177,6 +178,9 @@ const DocumentsList = () => {
             INVOICE: Receipt,
             RECEIPT: CreditCard,
             BANK_STATEMENT: Building2,
+            TAX_RETURN: Calculator,
+            TAX_VOUCHER: Calculator,
+            TAX_SUMMARY: Calculator,
             OTHER: FileText,
         };
 
@@ -189,6 +193,9 @@ const DocumentsList = () => {
             INVOICE: 'Invoice',
             RECEIPT: 'Receipt',
             BANK_STATEMENT: 'Bank Statement',
+            TAX_RETURN: 'Tax Return',
+            TAX_VOUCHER: 'Tax Voucher',
+            TAX_SUMMARY: 'Tax Summary',
             OTHER: 'Other',
         };
 
@@ -219,6 +226,58 @@ const DocumentsList = () => {
                         )}
                     </Button>
                 </div>
+
+                {/* Quick Filter Section for Tax Documents */}
+                <Card className="p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Calculator className="h-5 w-5 text-blue-600" />
+                            <h3 className="font-semibold text-gray-900">Tax Documents</h3>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant={filters.type === 'TAX_RETURN' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                    setFilters({ type: 'TAX_RETURN' });
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                Tax Returns
+                            </Button>
+                            <Button
+                                variant={filters.type === 'TAX_VOUCHER' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                    setFilters({ type: 'TAX_VOUCHER' });
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                Tax Vouchers
+                            </Button>
+                            <Button
+                                variant={filters.type === 'TAX_SUMMARY' ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                    setFilters({ type: 'TAX_SUMMARY' });
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                Tax Summaries
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setFilters({});
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                View All
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
 
                 {/* Documents List */}
                 <Card className="p-6">
@@ -264,7 +323,9 @@ const DocumentsList = () => {
                                         <DocumentActionButtons
                                             document={doc}
                                             onPreview={handlePreview}
-                                            onDelete={handleDelete}
+                                            onComments={handleCommentsDocument}
+                                            showComments={true}
+                                        // onDelete={handleDelete}
                                         />
                                     </div>
                                 </div>
@@ -331,6 +392,9 @@ const DocumentsList = () => {
                                     <SelectItem value="INVOICE">Invoice</SelectItem>
                                     <SelectItem value="RECEIPT">Receipt</SelectItem>
                                     <SelectItem value="BANK_STATEMENT">Bank Statement</SelectItem>
+                                    <SelectItem value="TAX_RETURN">Tax Return</SelectItem>
+                                    <SelectItem value="TAX_VOUCHER">Tax Voucher</SelectItem>
+                                    <SelectItem value="TAX_SUMMARY">Tax Summary</SelectItem>
                                     <SelectItem value="OTHER">Other</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -400,12 +464,23 @@ const DocumentsList = () => {
             </Dialog>
 
             {/* Document Preview Modal */}
-            <DocumentPreview
-                isOpen={isPreviewOpen}
-                onClose={() => setIsPreviewOpen(false)}
-                previewUrl={previewUrl}
-                documentName={previewDocument?.original_filename || ''}
-            />
+            {previewDocument && (
+                <DocumentPreview
+                    isOpen={isPreviewOpen}
+                    onClose={() => setIsPreviewOpen(false)}
+                    document={previewDocument}
+                />
+            )}
+
+            {/* Comment Panel */}
+            {commentDocument && (
+                <CommentPanel
+                    isOpen={!!commentDocument}
+                    onClose={() => setCommentDocument(null)}
+                    documentId={commentDocument.id}
+                    documentName={commentDocument.original_filename}
+                />
+            )}
         </div>
     );
 };
