@@ -54,7 +54,7 @@ export function ReviewStep({
                 </div>
 
                 <p className="text-gray-600 text-sm">
-                    Click the button below to complete your company setup. All information will be saved to your account.
+                    Click below to complete your company setup.
                 </p>
             </CardContent>
         </Card>

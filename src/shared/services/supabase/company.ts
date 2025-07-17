@@ -34,6 +34,11 @@ export async function createCompany({
       user_id,
       name,
       type,
+      account_balance: 0.00,
+      opening_balance: 0.00,
+      closing_balance: 0.00,
+      total_debit: 0.00,
+      total_credit: 0.00,
     })
     .select()
     .single();

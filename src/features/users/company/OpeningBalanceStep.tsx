@@ -12,6 +12,19 @@ interface OpeningBalanceStepProps {
     isLoading: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
+export const validateOpeningBalance = (cashBalance: string, balanceDate: string, skipBalance: boolean): boolean => {
+    if (skipBalance) return true;
+
+    if (!cashBalance || !balanceDate) return false;
+
+    const amount = parseFloat(cashBalance);
+    const date = new Date(balanceDate);
+    const today = new Date();
+
+    return amount > 0 && date <= today;
+};
+
 export function OpeningBalanceStep({
     cashBalance,
     balanceDate,
@@ -22,8 +35,53 @@ export function OpeningBalanceStep({
     isLoading
 }: OpeningBalanceStepProps) {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onFieldChange(e.target.name, e.target.value);
+        const value = e.target.value;
+
+        // For cash balance field, prevent negative values
+        if (e.target.name === 'cash_balance') {
+            const numValue = parseFloat(value);
+            if (numValue < 0) {
+                return; // Don't update if negative
+            }
+        }
+
+        onFieldChange(e.target.name, value);
     };
+
+
+
+    const getValidationMessage = () => {
+        if (skipBalance) return null;
+
+        if (!cashBalance || !balanceDate) {
+            if (!cashBalance && !balanceDate) {
+                return "Please enter both cash balance and date";
+            }
+            if (!cashBalance) {
+                return "Please enter cash balance";
+            }
+            if (!balanceDate) {
+                return "Please select a date";
+            }
+        }
+
+        const amount = parseFloat(cashBalance);
+        const date = new Date(balanceDate);
+        const today = new Date();
+
+        if (amount < 0) {
+            return "Opening balance cannot be negative";
+        }
+        if (amount === 0 && cashBalance) {
+            return "Opening balance must be greater than 0";
+        }
+        if (date > today) {
+            return "Opening balance date cannot be in the future";
+        }
+        return null;
+    };
+
+    const validationMessage = getValidationMessage();
 
     return (
         <Card className="shadow-lg border-0">
@@ -46,6 +104,7 @@ export function OpeningBalanceStep({
                                 name="cash_balance"
                                 type="number"
                                 step="0.01"
+                                min="0"
                                 placeholder="0.00"
                                 value={cashBalance}
                                 onChange={handleChange}
@@ -68,6 +127,12 @@ export function OpeningBalanceStep({
                                 className="w-full appearance-none px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                             />
                         </div>
+                    </div>
+                )}
+
+                {validationMessage && (
+                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                        <p className="text-sm text-red-600">{validationMessage}</p>
                     </div>
                 )}
 

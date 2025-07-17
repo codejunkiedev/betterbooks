@@ -53,6 +53,7 @@ export default function Profile() {
     }, [userState.user?.id]);
 
     const handleCompanySubmit = async (e: React.FormEvent) => {
+        console.log("handleCompanySubmit", { formData });
         e.preventDefault();
         setIsLoading(true);
 
