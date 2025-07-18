@@ -46,6 +46,7 @@ export default function RoleGuard({
     // Show loading while checking authentication or role
     if (loading || roleLoading) {
         return (
+
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <LoadingSpinner />
             </div>
