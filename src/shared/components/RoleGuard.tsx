@@ -47,7 +47,7 @@ export default function RoleGuard({
     if (loading || roleLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <LoadingSpinner text="Checking permissions..." />
+                <LoadingSpinner />
             </div>
         );
     }

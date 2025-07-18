@@ -2,6 +2,8 @@ import { supabase } from "@/shared/services/supabase/client";
 
 // Get the company for a user by user ID
 export async function getCompanyByUserId(userId: string) {
+  console.log("getCompanyByUserId: Checking for company with userId:", userId);
+
   const { data, error } = await supabase
     .from("companies")
     .select("*")
@@ -10,11 +12,14 @@ export async function getCompanyByUserId(userId: string) {
 
   if (error) {
     if (error.code === 'PGRST116') { // Record not found
+      console.log("getCompanyByUserId: No company found for user");
       return null;
     }
     console.error("Error fetching company:", error);
     throw error;
   }
+
+  console.log("getCompanyByUserId: Company found:", data);
   return data;
 }
 
@@ -23,17 +28,28 @@ export async function createCompany({
   user_id,
   name,
   type,
+  tax_id_number,
+  filing_status,
+  tax_year_end,
 }: {
   user_id: string;
   name: string;
   type: string;
+  tax_id_number?: string;
+  filing_status?: string;
+  tax_year_end?: string;
 }) {
+  console.log("createCompany: Creating company with data:", { user_id, name, type, tax_id_number, filing_status, tax_year_end });
+
   const { data, error } = await supabase
     .from("companies")
     .insert({
       user_id,
       name,
       type,
+      tax_id_number,
+      filing_status,
+      tax_year_end,
       account_balance: 0.00,
       opening_balance: 0.00,
       closing_balance: 0.00,
@@ -48,6 +64,7 @@ export async function createCompany({
     throw error;
   }
 
+  console.log("createCompany: Company created successfully:", data);
   return data;
 }
 
@@ -57,6 +74,9 @@ export async function updateCompany(
   updates: Partial<{
     name: string;
     type: string;
+    tax_id_number: string;
+    filing_status: string;
+    tax_year_end: string;
   }>
 ) {
   const { data, error } = await supabase

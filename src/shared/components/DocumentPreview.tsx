@@ -60,7 +60,7 @@ export const DocumentPreview = ({ isOpen, onClose, document }: DocumentPreviewPr
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full">
-          <LoadingSpinner text="Loading preview..." />
+          <LoadingSpinner />
         </div>
       );
     }
@@ -154,7 +154,7 @@ const LegacyDocumentPreview = ({ isOpen, onClose, previewUrl, documentName }: Le
 
   const renderLegacyPreview = () => {
     if (!previewUrl) {
-      return <LoadingSpinner text="Loading preview..." />;
+      return <LoadingSpinner />;
     }
 
     const filename = documentName || '';
@@ -174,7 +174,7 @@ const LegacyDocumentPreview = ({ isOpen, onClose, previewUrl, documentName }: Le
         <>
           {isImageLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              <LoadingSpinner text="Loading preview..." />
+              <LoadingSpinner />
             </div>
           )}
           <img
