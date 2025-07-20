@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
+import { Card, CardContent } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { FileText, ArrowLeft, Download } from 'lucide-react';
@@ -29,7 +29,6 @@ interface SelectedClientProps {
     setPreviewDocument: (doc: Document | null) => void;
     commentDocument: Document | null;
     setCommentDocument: (doc: Document | null) => void;
-    getStatusBadge: (isActive: boolean) => React.ReactNode;
 }
 
 const SelectedClient: React.FC<SelectedClientProps> = ({
@@ -43,8 +42,7 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
     previewDocument,
     setPreviewDocument,
     commentDocument,
-    setCommentDocument,
-    getStatusBadge
+    setCommentDocument
 }) => {
     return (
         <div className="space-y-6">

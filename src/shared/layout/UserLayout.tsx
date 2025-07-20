@@ -51,11 +51,6 @@ const UserLayout = () => {
             const companyData = await getCompanyByUserId(user.id);
             setCompany(companyData);
             setIsLoading(false);
-
-            if (!companyData) {
-                navigate("/company-setup");
-                return;
-            }
         } catch (error) {
             console.error("Error fetching company details:", error);
             toast({
@@ -65,7 +60,7 @@ const UserLayout = () => {
             });
             setIsLoading(false);
         }
-    }, [user, navigate, toast]);
+    }, [user, toast]);
 
     useEffect(() => {
         fetchCompanyDetails();
@@ -115,7 +110,7 @@ const UserLayout = () => {
                         <SheetPortal>
                             <SheetOverlay className="z-[100]" />
                             <SheetContent side="left" className="z-[101] w-[240px] p-0 bg-gray-900 border-r border-gray-800">
-                                <SidebarContent isActive={isActive} onNavigate={() => setIsOpen(false)} isDark company={company} />
+                                <SidebarContent isActive={isActive} onNavigate={() => setIsOpen(false)} isDark />
                             </SheetContent>
                         </SheetPortal>
                     </Sheet>
@@ -174,7 +169,7 @@ const UserLayout = () => {
             <div className="flex h-[calc(100vh-5rem)]">
                 {/* Sidebar */}
                 <aside className={`hidden md:flex flex-col border-r border-gray-800 bg-gray-900 justify-between transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
-                    <SidebarContent isActive={isActive} isCollapsed={isCollapsed} isDark company={company} />
+                    <SidebarContent isActive={isActive} isCollapsed={isCollapsed} isDark />
                     <div className="flex items-center justify-end px-3 py-2.5 border-t border-gray-800">
                         <Button
                             variant="ghost"
@@ -201,20 +196,9 @@ type SidebarContentProps = {
     onNavigate?: () => void;
     isCollapsed?: boolean;
     isDark?: boolean;
-    company?: Company | null | undefined;
 };
-function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false, company }: SidebarContentProps) {
-    const { toast } = useToast();
-
-    const handleNavigation = (path: string) => {
-        if (!company && path !== '/profile') {
-            toast({
-                title: "Action Required",
-                description: "Please complete your company profile first.",
-                variant: "destructive",
-            });
-            return;
-        }
+function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false }: SidebarContentProps) {
+    const handleNavigation = () => {
         onNavigate();
     };
 
@@ -226,40 +210,36 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     icon={<Home className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
                     label="Home"
                     active={isActive("/")}
-                    onNavigate={() => handleNavigation('/')}
+                    onNavigate={handleNavigation}
                     isCollapsed={isCollapsed}
                     isDark={isDark}
-                    company={company ?? null}
                 />
                 <SidebarLink
                     to="/upload"
                     icon={<Upload className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
                     label="Upload Documents"
                     active={isActive("/upload")}
-                    onNavigate={() => handleNavigation('/upload')}
+                    onNavigate={handleNavigation}
                     isCollapsed={isCollapsed}
                     isDark={isDark}
-                    company={company ?? null}
                 />
                 <SidebarLink
                     to="/documents"
                     icon={<FileText className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
                     label="Documents"
                     active={isActive("/documents")}
-                    onNavigate={() => handleNavigation('/documents')}
+                    onNavigate={handleNavigation}
                     isCollapsed={isCollapsed}
                     isDark={isDark}
-                    company={company ?? null}
                 />
                 <SidebarLink
                     to="/ai-suggestion"
                     icon={<Sparkles className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
                     label="AI Suggestion"
                     active={isActive("/ai-suggestion")}
-                    onNavigate={() => handleNavigation('/ai-suggestion')}
+                    onNavigate={handleNavigation}
                     isCollapsed={isCollapsed}
                     isDark={isDark}
-                    company={company ?? null}
                 />
             </div>
         </nav>
@@ -274,14 +254,9 @@ type SidebarLinkProps = {
     onNavigate: () => void;
     isCollapsed?: boolean;
     isDark?: boolean;
-    company?: Company | null | undefined;
 };
-function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false, isDark = false, company }: SidebarLinkProps) {
-    const handleClick = (e: React.MouseEvent) => {
-        if (!company && to !== '/profile') {
-            e.preventDefault();
-            return;
-        }
+function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false, isDark = false }: SidebarLinkProps) {
+    const handleClick = () => {
         onNavigate();
     };
 
@@ -292,8 +267,7 @@ function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false,
             className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${active
                 ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black')
                 : (isDark ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-black')
-                } ${isCollapsed ? 'justify-center px-0' : ''} ${!company && to !== '/profile' ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                } ${isCollapsed ? 'justify-center px-0' : ''}`}
             style={isCollapsed ? { width: '100%', justifyContent: 'center' } : {}}
         >
             {icon}

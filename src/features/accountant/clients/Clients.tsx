@@ -21,7 +21,7 @@ interface ClientsProps {
     getStatusBadge: (isActive: boolean) => React.ReactNode;
 }
 
-const Clients: React.FC<ClientsProps> = ({ filteredClients, clients, handleClientSelect, handleDownloadAll, getStatusBadge }) => {
+const Clients: React.FC<ClientsProps> = ({ filteredClients, clients, handleClientSelect, getStatusBadge }) => {
     return (
         <>
             {filteredClients.length === 0 ? (

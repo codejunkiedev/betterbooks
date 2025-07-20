@@ -5,7 +5,7 @@ import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
 import { useToast } from '@/shared/hooks/useToast';
 import {
-    Search    
+    Search
 } from 'lucide-react';
 import { getMyClientCompanies } from '@/shared/services/supabase/company';
 import { getBankStatementsByCompanyId, downloadDocumentsAsZip } from '@/shared/services/supabase/document';
@@ -162,7 +162,6 @@ export default function AccountantClients() {
                 setPreviewDocument={setPreviewDocument}
                 commentDocument={commentDocument}
                 setCommentDocument={setCommentDocument}
-                getStatusBadge={getStatusBadge}
             />
         );
     }

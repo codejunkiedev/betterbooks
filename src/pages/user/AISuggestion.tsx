@@ -516,7 +516,7 @@ const InvoiceSuggestion = () => {
               </Button>
               <Button onClick={() => handleSave(editingId!)} disabled={isSaving}>
                 {isSaving ? (
-                  <LoadingSpinner size="sm" text="Saving..." />
+                  <LoadingSpinner size="sm" />
                 ) : (
                   "Save Changes"
                 )}
