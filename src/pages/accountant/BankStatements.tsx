@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
+import { Card, CardContent} from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { useToast } from '@/shared/hooks/useToast';
@@ -7,19 +7,16 @@ import { DocumentActionButtons } from '@/shared/components/DocumentActionButtons
 import { DocumentPreview } from '@/shared/components/DocumentPreview';
 import { CommentPanel } from '@/shared/components/CommentPanel';
 import {
-    Building,
     FileText,
     ArrowLeft,
     Download,
-    Users,
-    Clock
 } from 'lucide-react';
 import { getMyClientCompanies } from '@/shared/services/supabase/company';
 import { getBankStatementsByCompanyId, downloadDocumentsAsZip } from '@/shared/services/supabase/document';
 import { Document } from '@/shared/types/document';
-import StatsCards from '@/features/accountant/StatsCards';
-import Filter from '@/features/accountant/Filter';
-import ClientsList from '@/features/accountant/ClientsList';
+import StatsCards from '@/features/accountant/bank-statments/StatsCards';
+import Filter from '@/features/accountant/bank-statments/Filter';
+import ClientsList from '@/features/accountant/bank-statments/ClientsList';
 
 interface Company {
     id: string;

@@ -4,21 +4,14 @@ import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
 import { useToast } from '@/shared/hooks/useToast';
-import { DocumentActionButtons } from '@/shared/components/DocumentActionButtons';
-import { DocumentPreview } from '@/shared/components/DocumentPreview';
-import { CommentPanel } from '@/shared/components/CommentPanel';
 import {
-    Search,
-    FileText,
-    ArrowLeft,
-    Download,
-    
+    Search    
 } from 'lucide-react';
 import { getMyClientCompanies } from '@/shared/services/supabase/company';
 import { getBankStatementsByCompanyId, downloadDocumentsAsZip } from '@/shared/services/supabase/document';
 import { Document } from '@/shared/types/document';
-import Clients from '@/features/accountant/Clients';
-import SelectedClient from '@/features/accountant/SelectedClient';
+import SelectedClient from '@/features/accountant/text-documents/SelectedClient';
+import Clients from '@/features/accountant/clients/Clients';
 
 interface Company {
     id: string;
