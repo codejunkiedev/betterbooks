@@ -8,9 +8,6 @@ const corsHeaders = {
 
 interface NotificationRequest {
     document_id: string;
-    comment_content: string;
-    author_name: string;
-    document_name: string;
 }
 
 serve(async (req) => {
@@ -26,7 +23,7 @@ serve(async (req) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
-        const { document_id, comment_content, author_name, document_name }: NotificationRequest = await req.json()
+        const { document_id }: NotificationRequest = await req.json()
 
         // Get document and company information
         const { data: documentData, error: documentError } = await supabaseClient
@@ -49,7 +46,33 @@ serve(async (req) => {
             throw new Error(`Failed to fetch document: ${documentError.message}`)
         }
 
+        // Get the latest comment for this document
+        const { data: commentData, error: commentError } = await supabaseClient
+            .from('document_comments')
+            .select(`
+                id,
+                content,
+                author_id,
+                created_at,
+                auth.users!inner (
+                    email,
+                    user_metadata
+                )
+            `)
+            .eq('document_id', document_id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single()
+
+        if (commentError) {
+            throw new Error(`Failed to fetch comment: ${commentError.message}`)
+        }
+
         const company = documentData.companies
+        const document_name = documentData.original_filename
+        const comment_content = commentData.content
+        const author_name = commentData.auth.users.user_metadata?.full_name || 'User'
+
         const recipients: string[] = []
 
         // Get company owner email
@@ -108,37 +131,32 @@ serve(async (req) => {
         `,
             }
 
-            // Here you would integrate with your email service (SendGrid, Resend, etc.)
-            // For now, we'll log the email that would be sent
-            console.log(`Email notification would be sent to: ${email}`)
-            console.log('Email content:', emailData)
-
-            // If you're using Supabase's built-in email service or want to integrate with a service like Resend:
-            /*
+            // Send email using Resend
             const emailResponse = await fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                from: 'notifications@betterbooks.com',
-                to: [email],
-                subject: emailData.subject,
-                html: emailData.html,
-              }),
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    from: 'notifications@betterbooks.com',
+                    to: [email],
+                    subject: emailData.subject,
+                    html: emailData.html,
+                }),
             })
-      
+
             if (!emailResponse.ok) {
-              console.error(`Failed to send email to ${email}:`, await emailResponse.text())
+                console.error(`Failed to send email to ${email}:`, await emailResponse.text())
+            } else {
+                console.log(`Email notification sent successfully to: ${email}`)
             }
-            */
         }
 
         return new Response(
             JSON.stringify({
                 success: true,
-                message: `Notifications would be sent to ${uniqueRecipients.length} recipients`,
+                message: `Email notifications sent to ${uniqueRecipients.length} recipients`,
                 recipients: uniqueRecipients
             }),
             {
