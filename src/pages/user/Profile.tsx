@@ -5,6 +5,7 @@ import { createCompany, updateCompany, getCompanyByUserId } from "@/shared/servi
 import { useSelector } from "react-redux";
 import { RootState } from "@/shared/services/store";
 import { useState, useEffect } from "react";
+import { FILING_STATUSES } from "@/shared/constants/company";
 
 interface Company {
     id: string;
@@ -13,6 +14,9 @@ interface Company {
     user_id: string;
     is_active: boolean;
     created_at: string;
+    tax_id_number?: string;
+    filing_status?: string;
+    tax_year_end?: string;
 }
 
 const ProfileSkeleton = () => (
@@ -30,6 +34,9 @@ export default function Profile() {
     const [company, setCompany] = useState<Company | null>(null);
     const [formData, setFormData] = useState({
         company_name: "",
+        tax_id_number: "",
+        filing_status: "",
+        tax_year_end: "",
     });
 
     useEffect(() => {
@@ -41,6 +48,9 @@ export default function Profile() {
                         setCompany(companyData);
                         setFormData({
                             company_name: companyData.name || "",
+                            tax_id_number: companyData.tax_id_number || "",
+                            filing_status: companyData.filing_status || "",
+                            tax_year_end: companyData.tax_year_end || "",
                         });
                     }
                 } catch (error) {
@@ -80,6 +90,9 @@ export default function Profile() {
                 // Update existing company
                 await updateCompany(company.id, {
                     name: formData.company_name,
+                    tax_id_number: formData.tax_id_number,
+                    filing_status: formData.filing_status,
+                    tax_year_end: formData.tax_year_end,
                 });
 
                 // Refresh company data
@@ -124,9 +137,9 @@ export default function Profile() {
     return (
         <div className="container mx-auto py-8 px-4">
             <div className="max-w-2xl mx-auto">
-                <h2 className="text-2xl font-semibold mb-2">Company Information</h2>
+                <h2 className="text-2xl font-semibold mb-2">Company & Tax Information</h2>
                 <p className="text-gray-500 mb-6">
-                    Set up your company information
+                    Manage your company and tax information
                 </p>
                 <div className="space-y-6 border border-gray-200 rounded-lg bg-white p-6 shadow-sm">
                     <form onSubmit={handleCompanySubmit} className="space-y-4">
@@ -142,6 +155,58 @@ export default function Profile() {
                                 required
                                 disabled={isLoading}
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label htmlFor="taxIdNumber" className="text-sm font-medium">
+                                Tax ID Number
+                            </label>
+                            <Input
+                                id="taxIdNumber"
+                                placeholder="EIN, SSN, or other tax ID"
+                                value={formData.tax_id_number}
+                                onChange={e => setFormData(prev => ({ ...prev, tax_id_number: e.target.value }))}
+                                disabled={isLoading}
+                            />
+                            <p className="text-xs text-gray-500">
+                                Enter your Employer Identification Number (EIN), Social Security Number (SSN), or other tax identification number.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label htmlFor="filingStatus" className="text-sm font-medium">
+                                Filing Status
+                            </label>
+                            <select
+                                id="filingStatus"
+                                value={formData.filing_status}
+                                onChange={e => setFormData(prev => ({ ...prev, filing_status: e.target.value }))}
+                                disabled={isLoading}
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
+                            >
+                                <option value="">Select Filing Status</option>
+                                {FILING_STATUSES.map(status => (
+                                    <option key={status} value={status}>
+                                        {status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label htmlFor="taxYearEnd" className="text-sm font-medium">
+                                Tax Year End
+                            </label>
+                            <Input
+                                id="taxYearEnd"
+                                type="date"
+                                value={formData.tax_year_end}
+                                onChange={e => setFormData(prev => ({ ...prev, tax_year_end: e.target.value }))}
+                                disabled={isLoading}
+                            />
+                            <p className="text-xs text-gray-500">
+                                The end date of your tax year (typically December 31st for calendar year filers).
+                            </p>
                         </div>
                         <Button type="submit" className="w-full" disabled={isLoading}>
                             {isLoading ? "Saving..." : (company?.id ? "Save Changes" : "Create Company Profile")}

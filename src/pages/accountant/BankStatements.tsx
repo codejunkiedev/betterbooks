@@ -1,24 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
+import { Card, CardContent} from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
-import { Input } from '@/shared/components/Input';
 import { useToast } from '@/shared/hooks/useToast';
 import { DocumentActionButtons } from '@/shared/components/DocumentActionButtons';
 import { DocumentPreview } from '@/shared/components/DocumentPreview';
 import { CommentPanel } from '@/shared/components/CommentPanel';
 import {
-    Search,
-    Building,
     FileText,
     ArrowLeft,
     Download,
-    Users,
-    Clock
 } from 'lucide-react';
 import { getMyClientCompanies } from '@/shared/services/supabase/company';
 import { getBankStatementsByCompanyId, downloadDocumentsAsZip } from '@/shared/services/supabase/document';
 import { Document } from '@/shared/types/document';
+import StatsCards from '@/features/accountant/bank-statments/StatsCards';
+import Filter from '@/features/accountant/bank-statments/Filter';
+import ClientsList from '@/features/accountant/bank-statments/ClientsList';
 
 interface Company {
     id: string;
@@ -253,142 +251,22 @@ export default function BankStatements() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Total Clients</p>
-                                <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
-                            </div>
-                            <div className="p-3 bg-blue-100 rounded-full">
-                                <Users className="w-6 h-6 text-blue-600" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Clients with Statements</p>
-                                <p className="text-2xl font-bold text-gray-900">{clientsWithStatements}</p>
-                            </div>
-                            <div className="p-3 bg-green-100 rounded-full">
-                                <Building className="w-6 h-6 text-green-600" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Total Statements</p>
-                                <p className="text-2xl font-bold text-gray-900">{totalStatements}</p>
-                            </div>
-                            <div className="p-3 bg-purple-100 rounded-full">
-                                <FileText className="w-6 h-6 text-purple-600" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            <StatsCards 
+                clientsLength={clients.length}
+                clientsWithStatements={clientsWithStatements}
+                totalStatements={totalStatements}
+            />
 
             {/* Search and Filters */}
-            <Card>
-                <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                <Input
-                                    placeholder="Search clients..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            <Filter searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
             {/* Clients List */}
-            {filteredClients.length === 0 ? (
-                <Card>
-                    <CardContent className="p-12 text-center">
-                        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No clients found</h3>
-                        <p className="text-gray-600">
-                            {clients.length === 0
-                                ? "You don't have any assigned clients yet."
-                                : "No clients match your search criteria."
-                            }
-                        </p>
-                    </CardContent>
-                </Card>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredClients.map((client) => (
-                        <Card key={client.id} className="hover:shadow-md transition-shadow">
-                            <CardHeader className="pb-3">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-blue-100 rounded-lg">
-                                            <Building className="w-5 h-5 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <CardTitle className="text-lg">{client.name}</CardTitle>
-                                            <p className="text-sm text-gray-600 capitalize">{client.type}</p>
-                                        </div>
-                                    </div>
-                                    <Badge
-                                        className={client.statementsCount > 0
-                                            ? "bg-green-100 text-green-800"
-                                            : "bg-gray-100 text-gray-800"
-                                        }
-                                    >
-                                        {client.statementsCount} statements
-                                    </Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="pt-0">
-                                <div className="space-y-2 mb-4">
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <Clock className="w-4 h-4 mr-2" />
-                                        {client.lastUpload
-                                            ? `Last upload: ${new Date(client.lastUpload).toLocaleDateString()}`
-                                            : 'No uploads yet'
-                                        }
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleClientSelect(client)}
-                                    >
-                                        <FileText className="w-4 h-4 mr-2" />
-                                        View Statements
-                                    </Button>
-                                    {client.statementsCount > 0 && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDownloadAll(client.bankStatements, client.name)}
-                                        >
-                                            <Download className="w-4 h-4" />
-                                        </Button>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            )}
+            <ClientsList
+                filteredClients={filteredClients}
+                clients={clients}
+                handleClientSelect={handleClientSelect}
+                handleDownloadAll={handleDownloadAll}
+            />
         </div>
     );
 } 

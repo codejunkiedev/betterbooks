@@ -1,18 +1,22 @@
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/shared/hooks/useToast";
+import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
 import { createCompany } from "@/shared/services/supabase/company";
+import { setCurrentCompany } from "@/shared/services/store/companySlice";
 import { createOpeningBalanceJournalEntry } from "@/shared/services/supabase/journal";
-import { supabase } from "@/shared/services/supabase/client";
 import {
     StepIndicator,
     CompanyInfoStep,
     OpeningBalanceStep,
+    TaxInformationStep,
     ReviewStep,
     NavigationButtons,
     validateOpeningBalance,
+    validateTaxInformation,
 } from "@/features/users/company";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { copyCOATemplateToCompany } from "@/shared/services/supabase/coa";
+import logo from "@/assets/logo.png";
 
 interface CompanySetupData {
     company_name: string;
@@ -20,12 +24,17 @@ interface CompanySetupData {
     cash_balance: string;
     balance_date: string;
     skip_balance: boolean;
+    tax_id_number: string;
+    filing_status: string;
+    tax_year_end: string;
+    skip_tax_info: boolean;
 }
 
-export default function CompanySetup() {
+export default function Onboarding() {
     const navigate = useNavigate();
     const { toast } = useToast();
-    const [user, setUser] = useState<{ id: string } | null>(null);
+    const dispatch = useAppDispatch();
+    const { user } = useAppSelector(state => state.user);
 
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState<CompanySetupData>({
@@ -34,38 +43,15 @@ export default function CompanySetup() {
         cash_balance: "",
         balance_date: "",
         skip_balance: false,
+        tax_id_number: "",
+        filing_status: "",
+        tax_year_end: "",
+        skip_tax_info: false,
     });
     const [isLoading, setIsLoading] = useState(false);
 
-    // Get current user and check if company already exists
-    useEffect(() => {
-        const getCurrentUser = async () => {
-            try {
-                const { data: { user: currentUser } } = await supabase.auth.getUser();
-                if (!currentUser) {
-                    navigate("/login", { replace: true });
-                    return;
-                }
-                setUser(currentUser);
 
-                // Check if company already exists
-                const { data: company } = await supabase
-                    .from("companies")
-                    .select("*")
-                    .eq("user_id", currentUser.id)
-                    .maybeSingle();
 
-                if (company) {
-                    navigate("/", { replace: true });
-                }
-            } catch (error) {
-                console.error("Error checking user/company:", error);
-                navigate("/login", { replace: true });
-            }
-        };
-
-        getCurrentUser();
-    }, [navigate]);
 
 
     const handleFieldChange = (field: string, value: string) => {
@@ -80,8 +66,16 @@ export default function CompanySetup() {
         setFormData(prev => ({ ...prev, skip_balance: false }));
     };
 
+    const handleSkipTaxInfo = () => {
+        setFormData(prev => ({ ...prev, skip_tax_info: true }));
+    };
+
+    const handleAddTaxInfo = () => {
+        setFormData(prev => ({ ...prev, skip_tax_info: false }));
+    };
+
     const nextStep = () => {
-        if (currentStep < 3) {
+        if (currentStep < 4) {
             setCurrentStep(currentStep + 1);
         }
     };
@@ -122,11 +116,29 @@ export default function CompanySetup() {
             }
 
             // Create company first
-            const company = await createCompany({
+            const companyData: {
+                user_id: string;
+                name: string;
+                type: string;
+                tax_id_number?: string;
+                filing_status?: string;
+                tax_year_end?: string;
+            } = {
                 user_id: user.id,
                 name: formData.company_name,
                 type: formData.company_type,
-            });
+            };
+
+            if (!formData.skip_tax_info) {
+                if (formData.tax_id_number) companyData.tax_id_number = formData.tax_id_number;
+                if (formData.filing_status) companyData.filing_status = formData.filing_status;
+                if (formData.tax_year_end) companyData.tax_year_end = formData.tax_year_end;
+            }
+
+            const company = await createCompany(companyData);
+
+            // Update Redux store with the new company
+            dispatch(setCurrentCompany(company));
 
             await copyCOATemplateToCompany(company.id);
 
@@ -149,6 +161,7 @@ export default function CompanySetup() {
             });
 
             navigate("/");
+
         } catch (error) {
             console.error("Error setting up company:", error);
             toast({
@@ -186,12 +199,29 @@ export default function CompanySetup() {
                 );
             case 3:
                 return (
+                    <TaxInformationStep
+                        taxIdNumber={formData.tax_id_number}
+                        filingStatus={formData.filing_status}
+                        taxYearEnd={formData.tax_year_end}
+                        skipTaxInfo={formData.skip_tax_info}
+                        onFieldChange={handleFieldChange}
+                        onSkipTaxInfo={handleSkipTaxInfo}
+                        onAddTaxInfo={handleAddTaxInfo}
+                        isLoading={isLoading}
+                    />
+                );
+            case 4:
+                return (
                     <ReviewStep
                         companyName={formData.company_name}
                         companyType={formData.company_type}
                         skipBalance={formData.skip_balance}
                         cashBalance={formData.cash_balance}
                         balanceDate={formData.balance_date}
+                        skipTaxInfo={formData.skip_tax_info}
+                        taxIdNumber={formData.tax_id_number}
+                        filingStatus={formData.filing_status}
+                        taxYearEnd={formData.tax_year_end}
                     />
                 );
             default:
@@ -199,30 +229,51 @@ export default function CompanySetup() {
         }
     };
 
+
+
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-4xl mx-auto px-4">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Company Setup</h1>
-                    <p className="text-gray-600">Let's get your company set up in BetterBooks</p>
+        <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <div className="bg-white shadow-sm border-b">
+                <div className="max-w-4xl mx-auto px-4 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                            <img src={logo} alt="BetterBooks" className="h-8 w-auto" />
+                            <h1 className="text-xl font-semibold text-gray-900">BetterBooks</h1>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                            Welcome! Let's get you set up
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <StepIndicator currentStep={currentStep} totalSteps={3} />
+            {/* Main Content */}
+            <div className="py-8">
+                <div className="max-w-4xl mx-auto px-4">
+                    <div className="mb-8">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Company Setup</h2>
+                        <p className="text-gray-600">Let's get your company set up in BetterBooks</p>
+                    </div>
 
-                <div className="mt-8">
-                    {renderCurrentStep()}
+                    <StepIndicator currentStep={currentStep} totalSteps={4} />
+
+                    <div className="mt-8">
+                        {renderCurrentStep()}
+                    </div>
+
+                    <NavigationButtons
+                        currentStep={currentStep}
+                        totalSteps={4}
+                        onPrevious={prevStep}
+                        onNext={nextStep}
+                        onSubmit={handleSubmit}
+                        isLoading={isLoading}
+                        canProceed={currentStep === 1 ? !!(formData.company_name && formData.company_type) :
+                            currentStep === 2 ? validateOpeningBalance(formData.cash_balance, formData.balance_date, formData.skip_balance) :
+                                currentStep === 3 ? validateTaxInformation(formData.tax_id_number, formData.filing_status, formData.tax_year_end, formData.skip_tax_info) : true}
+                    />
                 </div>
-
-                <NavigationButtons
-                    currentStep={currentStep}
-                    totalSteps={3}
-                    onPrevious={prevStep}
-                    onNext={nextStep}
-                    onSubmit={handleSubmit}
-                    isLoading={isLoading}
-                    canProceed={currentStep === 1 ? !!(formData.company_name && formData.company_type) :
-                        currentStep === 2 ? validateOpeningBalance(formData.cash_balance, formData.balance_date, formData.skip_balance) : true}
-                />
             </div>
         </div>
     );

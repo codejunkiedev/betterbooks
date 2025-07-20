@@ -46,10 +46,8 @@ export const setupAuthListener = createAsyncThunk(
     try {
       const { supabase } = await import('@/shared/services/supabase/client');
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      supabase.auth.onAuthStateChange(
         async (event, session) => {
-          console.log('Auth state changed:', event, session);
-
           if (event === 'SIGNED_OUT') {
             dispatch(clearAuth());
           } else {
@@ -58,7 +56,7 @@ export const setupAuthListener = createAsyncThunk(
         }
       );
 
-      return subscription;
+      return { success: true };
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to setup auth listener');
     }

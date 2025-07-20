@@ -6,6 +6,10 @@ interface ReviewStepProps {
     skipBalance: boolean;
     cashBalance: string;
     balanceDate: string;
+    skipTaxInfo: boolean;
+    taxIdNumber: string;
+    filingStatus: string;
+    taxYearEnd: string;
 }
 
 export function ReviewStep({
@@ -13,7 +17,11 @@ export function ReviewStep({
     companyType,
     skipBalance,
     cashBalance,
-    balanceDate
+    balanceDate,
+    skipTaxInfo,
+    taxIdNumber,
+    filingStatus,
+    taxYearEnd
 }: ReviewStepProps) {
     const formatCompanyType = (type: string) => {
         return type
@@ -27,6 +35,17 @@ export function ReviewStep({
             return "Skipped (will be set to $0.00)";
         }
         return `$${parseFloat(cashBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })} as of ${new Date(balanceDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+    };
+
+    const getTaxInfoDisplay = () => {
+        if (skipTaxInfo) {
+            return "Skipped (can be added later)";
+        }
+        const parts = [];
+        if (taxIdNumber) parts.push(`Tax ID: ${taxIdNumber}`);
+        if (filingStatus) parts.push(`Filing Status: ${filingStatus.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}`);
+        if (taxYearEnd) parts.push(`Tax Year End: ${new Date(taxYearEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
+        return parts.length > 0 ? parts.join(', ') : "Not provided";
     };
 
     return (
@@ -49,6 +68,10 @@ export function ReviewStep({
                         <div className="flex justify-between">
                             <span className="font-medium">Opening Balance:</span>
                             <span>{getBalanceDisplay()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="font-medium">Tax Information:</span>
+                            <span>{getTaxInfoDisplay()}</span>
                         </div>
                     </div>
                 </div>

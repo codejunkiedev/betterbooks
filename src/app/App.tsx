@@ -1,10 +1,12 @@
-import { useRoutes } from "react-router-dom";
+import { useRoutes, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks/useRedux";
 import { initializeAuth, setupAuthListener } from "@/shared/services/store/userSlice";
-import { LoadingSpinner } from "@/shared/components/Loading";
+
+
+import { LoadingScreen } from "@/shared/components/Loading";
 import { SignUp, ForgotPassword, ResetPassword, LoginPortal } from "@/pages/shared/auth";
-import NotFound from "@/shared/components/NotFound";
+
 import Unauthorized from "@/shared/components/Unauthorized";
 
 // Role-specific login pages
@@ -19,9 +21,9 @@ import { UserLayout, AccountantLayout, AdminLayout } from "@/shared/layout";
 import UserDashboard from "@/pages/user/Dashboard";
 import UploadDocuments from "@/pages/user/UploadDocuments";
 import DocumentsList from "@/pages/user/Documents";
-import AISuggestion from "@/pages/user/AISuggestion";
+
 import Profile from "@/pages/user/Profile";
-import CompanySetup from "@/pages/user/CompanySetup";
+import Onboarding from "@/pages/user/Onboarding";
 
 // Accountant Pages
 import AccountantDashboard from "@/pages/accountant/Dashboard";
@@ -37,41 +39,34 @@ import RoleManagement from "@/pages/admin/RoleManagement";
 // Role Guards
 import { UserGuard, AccountantGuard, AdminGuard } from "@/shared/components/RoleGuard";
 
+import AuthGuard from "@/shared/components/AuthGuard";
+
+
+
 export default function App() {
   const dispatch = useAppDispatch();
-  const { isInitialized, loading } = useAppSelector(state => state.user);
+  const { isInitialized } = useAppSelector(state => state.user);
 
   useEffect(() => {
-    let subscription: { unsubscribe: () => void } | null = null;
-
     const initialize = async () => {
       // Initialize auth state
       await dispatch(initializeAuth());
 
       // Set up auth listener
-      const result = await dispatch(setupAuthListener());
-      if (setupAuthListener.fulfilled.match(result)) {
-        subscription = result.payload;
-      }
+      await dispatch(setupAuthListener());
     };
 
     initialize();
-
-    // Cleanup function
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
   }, [dispatch]);
+
 
   const routes = useRoutes([
     // Public Routes
     { path: "/portal", element: <LoginPortal /> }, // Login portal selection
-    { path: "/signup", element: <SignUp /> },
-    { path: "/login", element: <UserLogin /> }, // Default user login
-    { path: "/accountant/login", element: <AccountantLogin /> },
-    { path: "/admin/login", element: <AdminLogin /> },
+    { path: "/signup", element: <AuthGuard><SignUp /></AuthGuard> },
+    { path: "/login", element: <AuthGuard><UserLogin /></AuthGuard> }, // Default user login
+    { path: "/accountant/login", element: <AuthGuard><AccountantLogin /></AuthGuard> },
+    { path: "/admin/login", element: <AuthGuard><AdminLogin /></AuthGuard> },
     { path: "/forgot-password", element: <ForgotPassword /> },
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/unauthorized", element: <Unauthorized /> },
@@ -88,10 +83,18 @@ export default function App() {
         { path: "", element: <UserDashboard /> },
         { path: "upload", element: <UploadDocuments /> },
         { path: "documents", element: <DocumentsList /> },
-        { path: "ai-suggestion", element: <AISuggestion /> },
         { path: "profile", element: <Profile /> },
-        { path: "company-setup", element: <CompanySetup /> },
       ],
+    },
+
+    // Onboarding Route (Protected by UserGuard)
+    {
+      path: "/onboarding",
+      element: (
+        <UserGuard>
+          <Onboarding />
+        </UserGuard>
+      ),
     },
 
     // Accountant Routes (Protected)
@@ -106,12 +109,7 @@ export default function App() {
         { path: "", element: <AccountantDashboard /> },
         { path: "clients", element: <AccountantClients /> },
         { path: "bank-statements", element: <AccountantBankStatements /> },
-        { path: "documents", element: <div>Accountant Documents</div> },
         { path: "tax-documents", element: <AccountantTaxDocuments /> },
-        { path: "reviews", element: <div>Document Reviews</div> },
-        { path: "reports", element: <div>Reports</div> },
-        { path: "billing", element: <div>Billing</div> },
-        { path: "settings", element: <div>Settings</div> },
       ],
     },
 
@@ -127,27 +125,16 @@ export default function App() {
         { path: "", element: <AdminDashboard /> },
         { path: "users", element: <AdminUserManagement /> },
         { path: "roles", element: <RoleManagement /> },
-        { path: "companies", element: <div>Company Management</div> },
-        { path: "system", element: <div>System Health</div> },
-        { path: "analytics", element: <div>Analytics</div> },
-        { path: "security", element: <div>Security</div> },
-        { path: "database", element: <div>Database Management</div> },
-        { path: "logs", element: <div>System Logs</div> },
-        { path: "settings", element: <div>Admin Settings</div> },
       ],
     },
 
-    // Catch-all
-    { path: "*", element: <NotFound /> },
+    // Catch-all - Simple redirect to dashboard
+    { path: "*", element: <Navigate to="/" replace /> },
   ]);
 
-  // Show loading spinner while initializing
-  if (!isInitialized || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner text="Initializing application..." />
-      </div>
-    );
+  // Show loading spinner only during initial app setup
+  if (!isInitialized) {
+    return <LoadingScreen />;
   }
 
   return <>{routes}</>;

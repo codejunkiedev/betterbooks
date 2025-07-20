@@ -99,9 +99,6 @@ export const createComment = async (commentData: CreateCommentData): Promise<Com
                 await supabase.functions.invoke('send-comment-notification', {
                     body: {
                         document_id: commentData.document_id,
-                        comment_content: commentData.content,
-                        author_name: userData.user.email?.split('@')[0] || 'User',
-                        document_name: documentData.original_filename,
                     },
                 });
             }

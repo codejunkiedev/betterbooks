@@ -6,7 +6,7 @@ export async function getCompanyByUserId(userId: string) {
     .from("companies")
     .select("*")
     .eq("user_id", userId)
-    .maybeSingle();
+    .single();
 
   if (error) {
     if (error.code === 'PGRST116') { // Record not found
@@ -23,10 +23,16 @@ export async function createCompany({
   user_id,
   name,
   type,
+  tax_id_number,
+  filing_status,
+  tax_year_end,
 }: {
   user_id: string;
   name: string;
   type: string;
+  tax_id_number?: string;
+  filing_status?: string;
+  tax_year_end?: string;
 }) {
   const { data, error } = await supabase
     .from("companies")
@@ -34,6 +40,9 @@ export async function createCompany({
       user_id,
       name,
       type,
+      tax_id_number,
+      filing_status,
+      tax_year_end,
       account_balance: 0.00,
       opening_balance: 0.00,
       closing_balance: 0.00,
@@ -57,6 +66,9 @@ export async function updateCompany(
   updates: Partial<{
     name: string;
     type: string;
+    tax_id_number: string;
+    filing_status: string;
+    tax_year_end: string;
   }>
 ) {
   const { data, error } = await supabase
