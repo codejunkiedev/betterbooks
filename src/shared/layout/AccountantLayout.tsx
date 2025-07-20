@@ -22,7 +22,7 @@ import {
     SheetPortal,
     SheetTrigger,
 } from "@/shared/components/Sheet";
-import { Menu, Home, Users, FileText, ClipboardCheck, BarChart3, CreditCard, Settings, User, ChevronLeft, Landmark, Calculator } from "lucide-react";
+import { Menu, Home, Users, User, ChevronLeft, Landmark, Calculator } from "lucide-react";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
@@ -189,55 +189,10 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     isDark={isDark}
                 />
                 <SidebarLink
-                    to="/accountant/documents"
-                    icon={<FileText className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Documents"
-                    active={isActive("/accountant/documents")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
                     to="/accountant/tax-documents"
                     icon={<Calculator className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
                     label="Tax Documents"
                     active={isActive("/accountant/tax-documents")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/accountant/reviews"
-                    icon={<ClipboardCheck className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Reviews"
-                    active={isActive("/accountant/reviews")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/accountant/reports"
-                    icon={<BarChart3 className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Reports"
-                    active={isActive("/accountant/reports")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/accountant/billing"
-                    icon={<CreditCard className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Billing"
-                    active={isActive("/accountant/billing")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/accountant/settings"
-                    icon={<Settings className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Settings"
-                    active={isActive("/accountant/settings")}
                     onNavigate={onNavigate}
                     isCollapsed={isCollapsed}
                     isDark={isDark}

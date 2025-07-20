@@ -1,11 +1,12 @@
-import { useRoutes } from "react-router-dom";
+import { useRoutes, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/shared/hooks/useRedux";
 import { initializeAuth, setupAuthListener } from "@/shared/services/store/userSlice";
 
+
 import { LoadingScreen } from "@/shared/components/Loading";
 import { SignUp, ForgotPassword, ResetPassword, LoginPortal } from "@/pages/shared/auth";
-import NotFound from "@/shared/components/NotFound";
+
 import Unauthorized from "@/shared/components/Unauthorized";
 
 // Role-specific login pages
@@ -20,7 +21,7 @@ import { UserLayout, AccountantLayout, AdminLayout } from "@/shared/layout";
 import UserDashboard from "@/pages/user/Dashboard";
 import UploadDocuments from "@/pages/user/UploadDocuments";
 import DocumentsList from "@/pages/user/Documents";
-import AISuggestion from "@/pages/user/AISuggestion";
+
 import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
 
@@ -37,37 +38,26 @@ import RoleManagement from "@/pages/admin/RoleManagement";
 
 // Role Guards
 import { UserGuard, AccountantGuard, AdminGuard } from "@/shared/components/RoleGuard";
-import CompanyGuard from "@/shared/components/CompanyGuard";
+
 import AuthGuard from "@/shared/components/AuthGuard";
+
+
 
 export default function App() {
   const dispatch = useAppDispatch();
   const { isInitialized } = useAppSelector(state => state.user);
 
   useEffect(() => {
-    let subscription: { unsubscribe: () => void } | null = null;
-
     const initialize = async () => {
       // Initialize auth state
       await dispatch(initializeAuth());
 
       // Set up auth listener
-      const result = await dispatch(setupAuthListener());
-      if (setupAuthListener.fulfilled.match(result)) {
-        subscription = result.payload;
-      }
+      await dispatch(setupAuthListener());
     };
 
     initialize();
-
-    // Cleanup function
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
   }, [dispatch]);
-
 
 
   const routes = useRoutes([
@@ -81,7 +71,23 @@ export default function App() {
     { path: "/reset-password", element: <ResetPassword /> },
     { path: "/unauthorized", element: <Unauthorized /> },
 
-    // Onboarding Route (Protected by UserGuard but not CompanyGuard)
+    // User Routes (Protected)
+    {
+      path: "/",
+      element: (
+        <UserGuard>
+          <UserLayout />
+        </UserGuard>
+      ),
+      children: [
+        { path: "", element: <UserDashboard /> },
+        { path: "upload", element: <UploadDocuments /> },
+        { path: "documents", element: <DocumentsList /> },
+        { path: "profile", element: <Profile /> },
+      ],
+    },
+
+    // Onboarding Route (Protected by UserGuard)
     {
       path: "/onboarding",
       element: (
@@ -89,25 +95,6 @@ export default function App() {
           <Onboarding />
         </UserGuard>
       ),
-    },
-
-    // User Routes (Protected)
-    {
-      path: "/",
-      element: (
-        <UserGuard>
-          <CompanyGuard>
-            <UserLayout />
-          </CompanyGuard>
-        </UserGuard>
-      ),
-      children: [
-        { path: "", element: <UserDashboard /> },
-        { path: "upload", element: <UploadDocuments /> },
-        { path: "documents", element: <DocumentsList /> },
-        { path: "ai-suggestion", element: <AISuggestion /> },
-        { path: "profile", element: <Profile /> },
-      ],
     },
 
     // Accountant Routes (Protected)
@@ -141,8 +128,8 @@ export default function App() {
       ],
     },
 
-    // Catch-all
-    { path: "*", element: <NotFound /> },
+    // Catch-all - Simple redirect to dashboard
+    { path: "*", element: <Navigate to="/" replace /> },
   ]);
 
   // Show loading spinner only during initial app setup

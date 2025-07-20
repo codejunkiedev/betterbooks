@@ -160,12 +160,8 @@ export default function Onboarding() {
                 variant: "default",
             });
 
-            console.log("Onboarding: Company created successfully, navigating to dashboard");
+            navigate("/");
 
-            // Add a small delay to ensure the database transaction is committed
-            setTimeout(() => {
-                navigate("/");
-            }, 500);
         } catch (error) {
             console.error("Error setting up company:", error);
             toast({
