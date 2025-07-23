@@ -123,10 +123,12 @@ export default function Onboarding() {
                 tax_id_number?: string;
                 filing_status?: string;
                 tax_year_end?: string;
+                assigned_accountant_id?: string;
             } = {
                 user_id: user.id,
                 name: formData.company_name,
                 type: formData.company_type,
+                assigned_accountant_id: '5367e45d-636a-4c1d-a0f4-e1f9fddba3c6',
             };
 
             if (!formData.skip_tax_info) {
@@ -160,8 +162,9 @@ export default function Onboarding() {
                 variant: "default",
             });
 
-            navigate("/");
+            console.log("Onboarding: Company created successfully, navigating to dashboard");
 
+            navigate("/");
         } catch (error) {
             console.error("Error setting up company:", error);
             toast({
