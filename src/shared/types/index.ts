@@ -11,4 +11,5 @@ export * from './line-item';
 export * from './profile';
 export * from './storage';
 export * from './suggestion';
-export * from './comment'; 
+export * from './comment';
+export * from './notification';

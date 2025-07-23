@@ -6,158 +6,94 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const resendApiKey = Deno.env.get('RESEND_API_KEY') ?? 're_Jsj8dd3F_BTEpTZ9PfdzmpbtWrAjjZWwG';
+
 interface NotificationRequest {
-    document_id: string;
+    company_id: string,
+    sender_id: string,
+    recipient_id: string,
+    related_document_id: string,
+    content: string,
+    is_read: boolean;
 }
 
 serve(async (req) => {
-    // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
     }
 
     try {
-        // Create Supabase client
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
-        const { document_id }: NotificationRequest = await req.json()
+        const { sender_id, recipient_id, related_document_id, content }: NotificationRequest = await req.json()
 
-        // Get document and company information
-        const { data: documentData, error: documentError } = await supabaseClient
-            .from('documents')
-            .select(`
-        id,
-        original_filename,
-        company_id,
-        companies!inner (
-          id,
-          name,
-          user_id,
-          assigned_accountant_id
-        )
-      `)
-            .eq('id', document_id)
-            .single()
+        // Get all data in parallel using Promise.all
+        const [
+            { data: senderData },
+            { data: receiverData },
+            { data: documentData }
+        ] = await Promise.all([
+            supabaseClient.auth.admin.getUserById(sender_id),
+            supabaseClient.auth.admin.getUserById(recipient_id!),
+            supabaseClient.from('documents').select('original_filename, companies!inner(name)').eq('id', related_document_id).single()
+        ]);
 
-        if (documentError) {
-            throw new Error(`Failed to fetch document: ${documentError.message}`)
+        console.log({
+            senderData,
+            receiverData,
+            documentData
+        });
+
+        if (!senderData.user?.email) {
+            throw new Error('Sender email not found')
         }
 
-        // Get the latest comment for this document
-        const { data: commentData, error: commentError } = await supabaseClient
-            .from('document_comments')
-            .select(`
-                id,
-                content,
-                author_id,
-                created_at,
-                auth.users!inner (
-                    email,
-                    user_metadata
-                )
-            `)
-            .eq('document_id', document_id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single()
-
-        if (commentError) {
-            throw new Error(`Failed to fetch comment: ${commentError.message}`)
+        if (!receiverData.user?.email) {
+            throw new Error('Receiver email not found')
         }
 
-        const company = documentData.companies
-        const document_name = documentData.original_filename
-        const comment_content = commentData.content
-        const author_name = commentData.auth.users.user_metadata?.full_name || 'User'
-
-        const recipients: string[] = []
-
-        // Get company owner email
-        const { data: ownerData } = await supabaseClient.auth.admin.getUserById(company.user_id)
-        if (ownerData.user && ownerData.user.email) {
-            recipients.push(ownerData.user.email)
-        }
-
-        // Get assigned accountant email if exists
-        if (company.assigned_accountant_id) {
-            const { data: accountantData } = await supabaseClient
-                .from('accountants')
-                .select('user_id')
-                .eq('id', company.assigned_accountant_id)
-                .single()
-
-            if (accountantData) {
-                const { data: accountantUserData } = await supabaseClient.auth.admin.getUserById(accountantData.user_id)
-                if (accountantUserData.user && accountantUserData.user.email) {
-                    recipients.push(accountantUserData.user.email)
-                }
-            }
-        }
-
-        // Remove duplicates
-        const uniqueRecipients = [...new Set(recipients)]
-
-        // Send email notifications to each recipient
-        for (const email of uniqueRecipients) {
-            const emailData = {
-                to: [email],
-                subject: `New Comment on Bank Statement: ${document_name}`,
+        // Send email
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${resendApiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                from: senderData.user.email,
+                to: [receiverData.user.email],
+                subject: `New Comment on Document: ${documentData.original_filename}`,
                 html: `
-          <h2>New Comment Added</h2>
-          <p>A new comment has been added to a bank statement for <strong>${company.name}</strong>.</p>
-          
-          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
-            <h3>Document Details:</h3>
-            <p><strong>File:</strong> ${document_name}</p>
-            <p><strong>Company:</strong> ${company.name}</p>
-          </div>
+                    <h2>New Comment Added</h2>
+                    <p>A new comment has been added to <strong>${documentData.original_filename}</strong> for <strong>${documentData.companies.name}</strong>.</p>
+                    <div style="background-color: #e8f4fd; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                        <h3>Comment:</h3>
+                        <p style="font-style: italic;">"${content}"</p>
+                    </div>
+                    <p>Please log in to your account to view the full comment thread.</p>
+                    <div style="margin-top: 20px;">
+                        <a href="https://betterbooks-two.vercel.app/" 
+                           style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                            View in BetterBooks
+                        </a>
+                    </div>
+                `,
+            }),
+        })
 
-          <div style="background-color: #e8f4fd; padding: 15px; border-radius: 5px; margin: 15px 0;">
-            <h3>Comment by ${author_name}:</h3>
-            <p style="font-style: italic;">"${comment_content}"</p>
-          </div>
-
-          <p>Please log in to your account to view the full comment thread and respond if needed.</p>
-          
-          <div style="margin-top: 20px;">
-            <a href="${Deno.env.get('FRONTEND_URL') || 'https://your-app.com'}" 
-               style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-              View in BetterBooks
-            </a>
-          </div>
-        `,
-            }
-
-            // Send email using Resend
-            const emailResponse = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    from: 'notifications@betterbooks.com',
-                    to: [email],
-                    subject: emailData.subject,
-                    html: emailData.html,
-                }),
-            })
-
-            if (!emailResponse.ok) {
-                console.error(`Failed to send email to ${email}:`, await emailResponse.text())
-            } else {
-                console.log(`Email notification sent successfully to: ${email}`)
-            }
+        if (!emailResponse.ok) {
+            throw new Error(`Failed to send email: ${await emailResponse.text()}`)
         }
 
         return new Response(
             JSON.stringify({
                 success: true,
-                message: `Email notifications sent to ${uniqueRecipients.length} recipients`,
-                recipients: uniqueRecipients
+                message: `Email sent from ${senderData.user.email} to ${receiverData.user.email}`,
+                from: senderData.user.email,
+                to: receiverData.user.email
             }),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },

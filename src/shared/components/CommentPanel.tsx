@@ -5,16 +5,16 @@ import { Textarea } from '@/shared/components/Textarea';
 import { Avatar, AvatarFallback } from '@/shared/components/Avatar';
 import { useToast } from '@/shared/hooks/useToast';
 import {
-    DocumentComment,
-    CreateCommentData,
-    UpdateCommentData
-} from '@/shared/types/comment';
+    DocumentMessage,
+    CreateDocumentMessageData,
+    UpdateMessageData
+} from '@/shared/types/message';
 import {
-    getCommentsByDocumentId,
-    createComment,
-    updateComment,
-    deleteComment
-} from '@/shared/services/supabase/comment';
+    getDocumentMessages,
+    createDocumentMessage,
+    updateMessage,
+    deleteMessage
+} from '@/shared/services/supabase/message';
 
 interface CommentPanelProps {
     isOpen: boolean;
@@ -29,29 +29,29 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
     documentId,
     documentName,
 }) => {
-    const [comments, setComments] = useState<DocumentComment[]>([]);
+    const [messages, setMessages] = useState<DocumentMessage[]>([]);
     const [loading, setLoading] = useState(false);
-    const [newComment, setNewComment] = useState('');
-    const [editingComment, setEditingComment] = useState<string | null>(null);
+    const [newMessage, setNewMessage] = useState('');
+    const [editingMessage, setEditingMessage] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const { toast } = useToast();
 
-    const loadComments = useCallback(async () => {
+    const loadMessages = useCallback(async () => {
         setLoading(true);
         try {
-            const { data, error } = await getCommentsByDocumentId(documentId);
+            const { data, error } = await getDocumentMessages(documentId);
 
             if (error) {
                 throw error;
             }
 
-            setComments(data || []);
+            setMessages(data || []);
         } catch (error) {
-            console.error('Error loading comments:', error);
+            console.error('Error loading messages:', error);
             toast({
                 title: 'Error',
-                description: 'Failed to load comments',
+                description: 'Failed to load messages',
                 variant: 'destructive',
             });
         } finally {
@@ -59,42 +59,42 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
         }
     }, [documentId, toast]);
 
-    // Load comments when panel opens
+    // Load messages when panel opens
     useEffect(() => {
         if (isOpen && documentId) {
-            loadComments();
+            loadMessages();
         }
-    }, [isOpen, documentId, loadComments]);
+    }, [isOpen, documentId, loadMessages]);
 
-    const handleAddComment = async () => {
-        if (!newComment.trim()) return;
+    const handleAddMessage = async () => {
+        if (!newMessage.trim()) return;
 
         setSubmitting(true);
         try {
-            const commentData: CreateCommentData = {
+            const messageData: CreateDocumentMessageData = {
                 document_id: documentId,
-                content: newComment.trim(),
+                content: newMessage.trim(),
             };
 
-            const { data, error } = await createComment(commentData);
+            const { data, error } = await createDocumentMessage(messageData);
 
             if (error) {
                 throw error;
             }
 
             if (data) {
-                setComments(prev => [...prev, data]);
-                setNewComment('');
+                setMessages(prev => [...prev, data as DocumentMessage]);
+                setNewMessage('');
                 toast({
-                    title: 'Comment added',
-                    description: 'Your comment has been posted successfully',
+                    title: 'Message added',
+                    description: 'Your message has been posted successfully',
                 });
             }
         } catch (error) {
-            console.error('Error adding comment:', error);
+            console.error('Error adding message:', error);
             toast({
                 title: 'Error',
-                description: 'Failed to add comment',
+                description: 'Failed to add message',
                 variant: 'destructive',
             });
         } finally {
@@ -102,37 +102,37 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
         }
     };
 
-    const handleEditComment = async (commentId: string) => {
+    const handleEditMessage = async (messageId: string) => {
         if (!editContent.trim()) return;
 
         setSubmitting(true);
         try {
-            const updateData: UpdateCommentData = {
+            const updateData: UpdateMessageData = {
                 content: editContent.trim(),
             };
 
-            const { data, error } = await updateComment(commentId, updateData);
+            const { data, error } = await updateMessage(messageId, updateData);
 
             if (error) {
                 throw error;
             }
 
             if (data) {
-                setComments(prev => prev.map(comment =>
-                    comment.id === commentId ? data : comment
+                setMessages(prev => prev.map(message =>
+                    message.id === messageId ? data as DocumentMessage : message
                 ));
-                setEditingComment(null);
+                setEditingMessage(null);
                 setEditContent('');
                 toast({
-                    title: 'Comment updated',
-                    description: 'Your comment has been updated successfully',
+                    title: 'Message updated',
+                    description: 'Your message has been updated successfully',
                 });
             }
         } catch (error) {
-            console.error('Error updating comment:', error);
+            console.error('Error updating message:', error);
             toast({
                 title: 'Error',
-                description: 'Failed to update comment',
+                description: 'Failed to update message',
                 variant: 'destructive',
             });
         } finally {
@@ -140,38 +140,38 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
         }
     };
 
-    const handleDeleteComment = async (commentId: string) => {
-        if (!confirm('Are you sure you want to delete this comment?')) return;
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!confirm('Are you sure you want to delete this message?')) return;
 
         try {
-            const { error } = await deleteComment(commentId);
+            const { error } = await deleteMessage(messageId);
 
             if (error) {
                 throw error;
             }
 
-            setComments(prev => prev.filter(comment => comment.id !== commentId));
+            setMessages(prev => prev.filter(message => message.id !== messageId));
             toast({
-                title: 'Comment deleted',
-                description: 'Comment has been deleted successfully',
+                title: 'Message deleted',
+                description: 'Message has been deleted successfully',
             });
         } catch (error) {
-            console.error('Error deleting comment:', error);
+            console.error('Error deleting message:', error);
             toast({
                 title: 'Error',
-                description: 'Failed to delete comment',
+                description: 'Failed to delete message',
                 variant: 'destructive',
             });
         }
     };
 
-    const startEdit = (comment: DocumentComment) => {
-        setEditingComment(comment.id);
-        setEditContent(comment.content);
+    const startEdit = (message: DocumentMessage) => {
+        setEditingMessage(message.id);
+        setEditContent(message.content);
     };
 
     const cancelEdit = () => {
-        setEditingComment(null);
+        setEditingMessage(null);
         setEditContent('');
     };
 
@@ -216,47 +216,47 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
                     </Button>
                 </div>
 
-                {/* Comments List */}
+                {/* Messages List */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
                     {loading ? (
                         <div className="flex items-center justify-center py-8">
-                            <div className="text-gray-500">Loading comments...</div>
+                            <div className="text-gray-500">Loading messages...</div>
                         </div>
-                    ) : comments.length === 0 ? (
+                    ) : messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 text-gray-500">
                             <MessageSquare className="w-12 h-12 mb-2" />
-                            <p>No comments yet</p>
-                            <p className="text-sm">Be the first to add a comment</p>
+                            <p>No messages yet</p>
+                            <p className="text-sm">Be the first to add a message</p>
                         </div>
                     ) : (
-                        comments.map((comment) => (
-                            <div key={comment.id} className="border rounded-lg p-3 space-y-2">
+                        messages.map((message) => (
+                            <div key={message.id} className="border rounded-lg p-3 space-y-2">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-2">
                                         <Avatar className="w-8 h-8">
                                             <AvatarFallback className="text-xs">
-                                                {getInitials(comment.author_name || 'U')}
+                                                {getInitials(message.sender_name || 'U')}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <p className="font-medium text-sm text-gray-900">
-                                                {comment.author_name || 'Unknown User'}
+                                                {message.sender_name || 'R'}
                                             </p>
                                             <div className="flex items-center gap-1 text-xs text-gray-500">
                                                 <Clock className="w-3 h-3" />
-                                                {formatDateTime(comment.created_at)}
-                                                {comment.updated_at !== comment.created_at && (
+                                                {formatDateTime(message.created_at)}
+                                                {message.updated_at !== message.created_at && (
                                                     <span className="ml-1">(edited)</span>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
-                                    {comment.is_own_comment && (
+                                    {message.is_own_message && (
                                         <div className="flex gap-1">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => startEdit(comment)}
+                                                onClick={() => startEdit(message)}
                                                 className="h-6 w-6 p-0"
                                             >
                                                 <Edit2 className="w-3 h-3" />
@@ -264,7 +264,7 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => handleDeleteComment(comment.id)}
+                                                onClick={() => handleDeleteMessage(message.id)}
                                                 className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
                                             >
                                                 <Trash2 className="w-3 h-3" />
@@ -273,18 +273,18 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
                                     )}
                                 </div>
 
-                                {editingComment === comment.id ? (
+                                {editingMessage === message.id ? (
                                     <div className="space-y-2">
                                         <Textarea
                                             value={editContent}
                                             onChange={(e) => setEditContent(e.target.value)}
-                                            placeholder="Edit your comment..."
+                                            placeholder="Edit your message..."
                                             className="min-h-[60px] text-sm"
                                         />
                                         <div className="flex gap-2">
                                             <Button
                                                 size="sm"
-                                                onClick={() => handleEditComment(comment.id)}
+                                                onClick={() => handleEditMessage(message.id)}
                                                 disabled={submitting || !editContent.trim()}
                                             >
                                                 Save
@@ -300,7 +300,7 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
                                     </div>
                                 ) : (
                                     <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                        {comment.content}
+                                        {message.content}
                                     </p>
                                 )}
                             </div>
@@ -308,26 +308,26 @@ export const CommentPanel: React.FC<CommentPanelProps> = ({
                     )}
                 </div>
 
-                {/* Add Comment Form */}
+                {/* Add Message Form */}
                 <div className="border-t p-4 space-y-3 flex-shrink-0">
                     <Textarea
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Add a comment..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Add a message..."
                         className="min-h-[80px] resize-none"
                         maxLength={2000}
                     />
                     <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">
-                            {newComment.length}/2000
+                            {newMessage.length}/2000
                         </span>
                         <Button
-                            onClick={handleAddComment}
-                            disabled={submitting || !newComment.trim()}
+                            onClick={handleAddMessage}
+                            disabled={submitting || !newMessage.trim()}
                             size="sm"
                         >
                             <Send className="w-4 h-4 mr-2" />
-                            Post Comment
+                            Post Message
                         </Button>
                     </div>
                 </div>
