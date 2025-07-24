@@ -1,18 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Card, CardContent } from '@/shared/components/Card';
+
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
-import { Input } from '@/shared/components/Input';
 import { useToast } from '@/shared/hooks/useToast';
-import {
-    Search
-} from 'lucide-react';
-import { getMyClientCompanies } from '@/shared/services/supabase/company';
+import { getPaginatedAccountantClients } from '@/shared/services/supabase/company';
 import { getBankStatementsByCompanyId, downloadDocumentsAsZip } from '@/shared/services/supabase/document';
 import { Document } from '@/shared/types/document';
 import SelectedClient from '@/features/accountant/text-documents/SelectedClient';
-import Clients from '@/features/accountant/clients/Clients';
+import { Clients, ClientFilters } from '@/features/accountant/clients';
 
 interface Company {
     id: string;
@@ -22,6 +18,8 @@ interface Company {
     created_at: string;
     user_id: string;
 }
+
+const ITEMS_PER_PAGE = 12;
 
 export default function AccountantClients() {
     const location = useLocation();
@@ -35,13 +33,35 @@ export default function AccountantClients() {
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
     const [commentDocument, setCommentDocument] = useState<Document | null>(null);
     const [journalEntryDocument, setJournalEntryDocument] = useState<Document | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const { toast } = useToast();
 
     const loadClients = useCallback(async () => {
         try {
             setIsLoading(true);
-            const companies = await getMyClientCompanies();
-            setClients(companies || []);
+
+            const filters: {
+                search?: string;
+                status?: 'all' | 'active' | 'inactive';
+            } = {};
+
+            if (searchTerm) {
+                filters.search = searchTerm;
+            }
+
+            if (statusFilter !== 'all') {
+                filters.status = statusFilter as 'active' | 'inactive';
+            }
+
+            const { data, error } = await getPaginatedAccountantClients(currentPage, ITEMS_PER_PAGE, filters);
+
+            if (error) throw error;
+
+            if (data) {
+                setClients(data.items);
+                setTotalItems(data.total);
+            }
         } catch (error) {
             console.error('Error loading clients:', error);
             toast({
@@ -52,7 +72,7 @@ export default function AccountantClients() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [currentPage, searchTerm, statusFilter, toast]);
 
     useEffect(() => {
         loadClients();
@@ -146,13 +166,25 @@ export default function AccountantClients() {
             <Badge className="bg-gray-100 text-gray-800">Inactive</Badge>;
     };
 
-    const filteredClients = clients.filter(client => {
-        const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' ||
-            (statusFilter === 'active' && client.is_active) ||
-            (statusFilter === 'inactive' && !client.is_active);
-        return matchesSearch && matchesStatus;
-    });
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value);
+        setCurrentPage(1); // Reset to first page when search changes
+    };
+
+    const handleStatusFilterChange = (value: string) => {
+        setStatusFilter(value);
+        setCurrentPage(1); // Reset to first page when filter changes
+    };
+
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setStatusFilter('all');
+        setCurrentPage(1);
+    };
 
     if (isLoading) {
         return (
@@ -198,55 +230,48 @@ export default function AccountantClients() {
             </div>
 
             {/* Filters */}
-            <Card>
-                <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                <Input
-                                    placeholder="Search clients..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button
-                                variant={statusFilter === 'all' ? 'default' : 'outline'}
-                                onClick={() => setStatusFilter('all')}
-                                size="sm"
-                            >
-                                All
-                            </Button>
-                            <Button
-                                variant={statusFilter === 'active' ? 'default' : 'outline'}
-                                onClick={() => setStatusFilter('active')}
-                                size="sm"
-                            >
-                                Active
-                            </Button>
-                            <Button
-                                variant={statusFilter === 'inactive' ? 'default' : 'outline'}
-                                onClick={() => setStatusFilter('inactive')}
-                                size="sm"
-                            >
-                                Inactive
-                            </Button>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            <ClientFilters
+                searchTerm={searchTerm}
+                onSearchChange={handleSearchChange}
+                statusFilter={statusFilter}
+                onStatusFilterChange={handleStatusFilterChange}
+                onClearFilters={handleClearFilters}
+                totalResults={totalItems}
+            />
 
             {/* Clients Grid */}
             <Clients
-                filteredClients={filteredClients}
+                filteredClients={clients}
                 clients={clients}
                 handleClientSelect={handleClientSelect}
                 handleDownloadAll={handleDownloadAll}
                 getStatusBadge={getStatusBadge}
             />
+
+            {/* Pagination */}
+            {totalItems > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                        Page {currentPage} of {Math.ceil(totalItems / ITEMS_PER_PAGE)}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage >= Math.ceil(totalItems / ITEMS_PER_PAGE)}
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
         </div>
     );
 } 

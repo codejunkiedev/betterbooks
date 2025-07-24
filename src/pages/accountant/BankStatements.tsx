@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent} from '@/shared/components/Card';
+import { Card, CardContent } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { useToast } from '@/shared/hooks/useToast';
@@ -11,12 +11,10 @@ import {
     ArrowLeft,
     Download,
 } from 'lucide-react';
-import { getMyClientCompanies } from '@/shared/services/supabase/company';
-import { getBankStatementsByCompanyId, downloadDocumentsAsZip } from '@/shared/services/supabase/document';
+import { getPaginatedBankStatementClients } from '@/shared/services/supabase/company';
+import { downloadDocumentsAsZip } from '@/shared/services/supabase/document';
 import { Document } from '@/shared/types/document';
-import StatsCards from '@/features/accountant/bank-statments/StatsCards';
-import Filter from '@/features/accountant/bank-statments/Filter';
-import ClientsList from '@/features/accountant/bank-statments/ClientsList';
+import { StatsCards, BankStatementFilters, ClientsList } from '@/features/accountant/bank-statments';
 
 interface Company {
     id: string;
@@ -28,43 +26,55 @@ interface Company {
 }
 
 interface ClientWithStatements extends Company {
-    bankStatements: Document[];
+    bankStatements: Array<{
+        id: string;
+        original_filename: string;
+        uploaded_at: string;
+        status: string;
+    }>;
     statementsCount: number;
     lastUpload?: string;
 }
 
+const ITEMS_PER_PAGE = 12;
+
 export default function BankStatements() {
     const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [selectedClient, setSelectedClient] = useState<ClientWithStatements | null>(null);
     const [clients, setClients] = useState<ClientWithStatements[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
     const [commentDocument, setCommentDocument] = useState<Document | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const { toast } = useToast();
 
     const loadClientsWithBankStatements = useCallback(async () => {
         try {
             setIsLoading(true);
-            const companies = await getMyClientCompanies();
 
-            // Load bank statements for each client
-            const clientsWithStatements = await Promise.all(
-                (companies || []).map(async (company) => {
-                    const { data: statements } = await getBankStatementsByCompanyId(company.id);
-                    const bankStatements = statements || [];
+            const filters: {
+                search?: string;
+                status?: 'all' | 'with_statements' | 'without_statements';
+            } = {};
 
-                    return {
-                        ...company,
-                        bankStatements,
-                        statementsCount: bankStatements.length,
-                        lastUpload: bankStatements.length > 0
-                            ? bankStatements[0].uploaded_at
-                            : undefined
-                    };
-                })
-            );
+            if (searchTerm) {
+                filters.search = searchTerm;
+            }
 
-            setClients(clientsWithStatements);
+            if (statusFilter !== 'all') {
+                filters.status = statusFilter as 'with_statements' | 'without_statements';
+            }
+
+            const { data, error } = await getPaginatedBankStatementClients(currentPage, ITEMS_PER_PAGE, filters);
+
+            if (error) throw error;
+
+            if (data) {
+                setClients(data.items);
+                setTotalItems(data.total);
+            }
         } catch (error) {
             console.error('Error loading clients with bank statements:', error);
             toast({
@@ -75,7 +85,7 @@ export default function BankStatements() {
         } finally {
             setIsLoading(false);
         }
-    }, [toast]);
+    }, [currentPage, searchTerm, statusFilter, toast]);
 
     useEffect(() => {
         loadClientsWithBankStatements();
@@ -126,10 +136,25 @@ export default function BankStatements() {
         setCommentDocument(document);
     };
 
-    const filteredClients = clients.filter(client => {
-        const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesSearch;
-    });
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value);
+        setCurrentPage(1); // Reset to first page when search changes
+    };
+
+    const handleStatusFilterChange = (value: string) => {
+        setStatusFilter(value);
+        setCurrentPage(1); // Reset to first page when filter changes
+    };
+
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setStatusFilter('all');
+        setCurrentPage(1);
+    };
 
     const totalStatements = clients.reduce((sum, client) => sum + client.statementsCount, 0);
     const clientsWithStatements = clients.filter(client => client.statementsCount > 0).length;
@@ -164,7 +189,7 @@ export default function BankStatements() {
                         </div>
                     </div>
                     {selectedClient.statementsCount > 0 && (
-                        <Button onClick={() => handleDownloadAll(selectedClient.bankStatements, selectedClient.name)}>
+                        <Button onClick={() => handleDownloadAll(selectedClient.bankStatements as Document[], selectedClient.name)}>
                             <Download className="w-4 h-4 mr-2" />
                             Download All as ZIP
                         </Button>
@@ -200,7 +225,7 @@ export default function BankStatements() {
                                                 {statement.status.replace('_', ' ').toLowerCase()}
                                             </Badge>
                                             <DocumentActionButtons
-                                                document={statement}
+                                                document={statement as Document}
                                                 onPreview={handlePreviewDocument}
                                                 onComments={handleCommentsDocument}
                                                 showPreview={true}
@@ -251,22 +276,54 @@ export default function BankStatements() {
             </div>
 
             {/* Stats Cards */}
-            <StatsCards 
-                clientsLength={clients.length}
+            <StatsCards
+                clientsLength={totalItems}
                 clientsWithStatements={clientsWithStatements}
                 totalStatements={totalStatements}
             />
 
             {/* Search and Filters */}
-            <Filter searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            <BankStatementFilters
+                searchTerm={searchTerm}
+                onSearchChange={handleSearchChange}
+                statusFilter={statusFilter}
+                onStatusFilterChange={handleStatusFilterChange}
+                onClearFilters={handleClearFilters}
+                totalResults={totalItems}
+            />
 
             {/* Clients List */}
             <ClientsList
-                filteredClients={filteredClients}
+                filteredClients={clients}
                 clients={clients}
                 handleClientSelect={handleClientSelect}
                 handleDownloadAll={handleDownloadAll}
             />
+
+            {/* Pagination */}
+            {totalItems > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                        Page {currentPage} of {Math.ceil(totalItems / ITEMS_PER_PAGE)}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage >= Math.ceil(totalItems / ITEMS_PER_PAGE)}
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
         </div>
     );
 } 

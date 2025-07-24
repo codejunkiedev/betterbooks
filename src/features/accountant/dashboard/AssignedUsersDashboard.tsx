@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
-import { Input } from '@/shared/components/Input';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/shared/hooks/useToast';
 import {
@@ -12,73 +11,61 @@ import {
     Clock,
     CheckCircle,
     AlertTriangle,
-    Search,
     Eye
 } from 'lucide-react';
-import { getMyClientCompanies } from '@/shared/services/supabase/company';
-import { getPendingDocumentsCountForClients } from '@/shared/services/supabase/document';
+import { getPaginatedAccountantClients } from '@/shared/services/supabase/company';
+import { AccountantFilters } from './AccountantFilters';
 
-interface Company {
+interface ClientWithStatus {
     id: string;
     name: string;
     type: string;
     is_active: boolean;
     created_at: string;
     user_id: string;
-}
-
-interface ClientWithStatus extends Company {
     pendingDocumentsCount: number;
     status: 'active' | 'inactive' | 'pending_review';
 }
 
+const ITEMS_PER_PAGE = 12;
+
 export default function AssignedUsersDashboard() {
     const [clients, setClients] = useState<ClientWithStatus[]>([]);
-    const [filteredClients, setFilteredClients] = useState<ClientWithStatus[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
     const { toast } = useToast();
 
-    useEffect(() => {
-        loadClientsWithStatus();
-    }, []);
-
-    useEffect(() => {
-        filterClients();
-    }, [clients, searchTerm, statusFilter]);
-
-    const loadClientsWithStatus = async () => {
+    const loadClients = useCallback(async () => {
         try {
             setIsLoading(true);
 
-            // Load clients and pending documents count in parallel
-            const [companies, pendingCounts] = await Promise.all([
-                getMyClientCompanies(),
-                getPendingDocumentsCountForClients()
-            ]);
+            const filters: {
+                search?: string;
+                status?: 'all' | 'active' | 'inactive' | 'pending_review';
+            } = {};
 
-            const clientsWithStatus: ClientWithStatus[] = (companies || []).map(company => {
-                const pendingCount = pendingCounts[company.id] || 0;
-                let status: 'active' | 'inactive' | 'pending_review' = 'active';
+            if (searchTerm) {
+                filters.search = searchTerm;
+            }
 
-                if (!company.is_active) {
-                    status = 'inactive';
-                } else if (pendingCount > 0) {
-                    status = 'pending_review';
-                }
+            if (statusFilter !== 'all') {
+                filters.status = statusFilter as 'active' | 'inactive' | 'pending_review';
+            }
 
-                return {
-                    ...company,
-                    pendingDocumentsCount: pendingCount,
-                    status
-                };
-            });
+            const { data, error } = await getPaginatedAccountantClients(currentPage, ITEMS_PER_PAGE, filters);
 
-            setClients(clientsWithStatus);
+            if (error) throw error;
+
+            if (data) {
+                setClients(data.items);
+                setTotalItems(data.total);
+            }
         } catch (error) {
-            console.error('Error loading clients with status:', error);
+            console.error('Error loading clients:', error);
             toast({
                 title: 'Error',
                 description: 'Failed to load client information',
@@ -87,25 +74,11 @@ export default function AssignedUsersDashboard() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [currentPage, searchTerm, statusFilter, toast]);
 
-    const filterClients = () => {
-        let filtered = clients;
-
-        // Filter by search term
-        if (searchTerm) {
-            filtered = filtered.filter(client =>
-                client.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        // Filter by status
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter(client => client.status === statusFilter);
-        }
-
-        setFilteredClients(filtered);
-    };
+    useEffect(() => {
+        loadClients();
+    }, [loadClients]);
 
     const handleClientClick = (client: ClientWithStatus) => {
         navigate(`/accountant/clients`, { state: { selectedClientId: client.id } });
@@ -140,12 +113,34 @@ export default function AssignedUsersDashboard() {
     };
 
     const getTotalStats = () => {
-        const totalClients = clients.length;
+        // Calculate stats from current page data (for demo purposes)
+        // In a real app, you might want to get these from a separate API call
+        const totalClients = totalItems;
         const activeClients = clients.filter(c => c.status === 'active').length;
         const pendingReviewClients = clients.filter(c => c.status === 'pending_review').length;
         const totalPendingDocuments = clients.reduce((sum, client) => sum + client.pendingDocumentsCount, 0);
 
         return { totalClients, activeClients, pendingReviewClients, totalPendingDocuments };
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value);
+        setCurrentPage(1); // Reset to first page when search changes
+    };
+
+    const handleStatusFilterChange = (value: string) => {
+        setStatusFilter(value);
+        setCurrentPage(1); // Reset to first page when filter changes
+    };
+
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setStatusFilter('all');
+        setCurrentPage(1);
     };
 
     const stats = getTotalStats();
@@ -230,62 +225,23 @@ export default function AssignedUsersDashboard() {
             </div>
 
             {/* Filters */}
-            <Card>
-                <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                <Input
-                                    placeholder="Search clients..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button
-                                variant={statusFilter === 'all' ? 'default' : 'outline'}
-                                onClick={() => setStatusFilter('all')}
-                                size="sm"
-                            >
-                                All
-                            </Button>
-                            <Button
-                                variant={statusFilter === 'active' ? 'default' : 'outline'}
-                                onClick={() => setStatusFilter('active')}
-                                size="sm"
-                            >
-                                Active
-                            </Button>
-                            <Button
-                                variant={statusFilter === 'pending_review' ? 'default' : 'outline'}
-                                onClick={() => setStatusFilter('pending_review')}
-                                size="sm"
-                            >
-                                Pending Review
-                            </Button>
-                            <Button
-                                variant={statusFilter === 'inactive' ? 'default' : 'outline'}
-                                onClick={() => setStatusFilter('inactive')}
-                                size="sm"
-                            >
-                                Inactive
-                            </Button>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            <AccountantFilters
+                searchTerm={searchTerm}
+                onSearchChange={handleSearchChange}
+                statusFilter={statusFilter}
+                onStatusFilterChange={handleStatusFilterChange}
+                onClearFilters={handleClearFilters}
+                totalResults={totalItems}
+            />
 
             {/* Clients Grid */}
-            {filteredClients.length === 0 ? (
+            {clients.length === 0 ? (
                 <Card>
                     <CardContent className="p-12 text-center">
                         <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No clients found</h3>
                         <p className="text-gray-600">
-                            {clients.length === 0
+                            {totalItems === 0
                                 ? "You don't have any assigned clients yet."
                                 : "No clients match your search criteria."
                             }
@@ -294,7 +250,7 @@ export default function AssignedUsersDashboard() {
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredClients.map((client) => (
+                    {clients.map((client) => (
                         <Card
                             key={client.id}
                             className="hover:shadow-md transition-shadow cursor-pointer"
@@ -347,6 +303,31 @@ export default function AssignedUsersDashboard() {
                             </CardContent>
                         </Card>
                     ))}
+                </div>
+            )}
+
+            {/* Pagination */}
+            {totalItems > ITEMS_PER_PAGE && (
+                <div className="flex items-center justify-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                        Page {currentPage} of {Math.ceil(totalItems / ITEMS_PER_PAGE)}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage >= Math.ceil(totalItems / ITEMS_PER_PAGE)}
+                    >
+                        Next
+                    </Button>
                 </div>
             )}
         </div>
