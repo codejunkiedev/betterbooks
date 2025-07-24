@@ -368,4 +368,67 @@ export const downloadDocumentsAsZip = async (documents: Document[], zipFileName:
         console.error('Error creating ZIP file:', error);
         throw new Error('Failed to create ZIP file');
     }
+};
+
+// Get pending documents count for clients assigned to an accountant
+export const getPendingDocumentsCountForClients = async (): Promise<{ [companyId: string]: number }> => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        // First get the accountant record for the current user
+        const { data: accountant, error: accountantError } = await supabase
+            .from('accountants')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+        if (accountantError || !accountant) {
+            throw new Error('Accountant record not found');
+        }
+
+        // Get all companies assigned to this accountant
+        const { data: companies, error: companiesError } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('assigned_accountant_id', accountant.id)
+            .eq('is_active', true);
+
+        if (companiesError) {
+            throw companiesError;
+        }
+
+        if (!companies || companies.length === 0) {
+            return {};
+        }
+
+        // Get pending documents count for each company
+        const { data: pendingDocuments, error: documentsError } = await supabase
+            .from('documents')
+            .select('company_id, status')
+            .in('company_id', companies.map(c => c.id))
+            .eq('status', 'PENDING_REVIEW');
+
+        if (documentsError) {
+            throw documentsError;
+        }
+
+        // Count pending documents per company
+        const pendingCounts: { [companyId: string]: number } = {};
+        companies.forEach(company => {
+            pendingCounts[company.id] = 0;
+        });
+
+        pendingDocuments?.forEach(doc => {
+            if (pendingCounts[doc.company_id] !== undefined) {
+                pendingCounts[doc.company_id]++;
+            }
+        });
+
+        return pendingCounts;
+    } catch (error) {
+        console.error('Error fetching pending documents count:', error);
+        throw error;
+    }
 }; 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
@@ -23,6 +24,7 @@ interface Company {
 }
 
 export default function AccountantClients() {
+    const location = useLocation();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [clients, setClients] = useState<Company[]>([]);
@@ -32,6 +34,7 @@ export default function AccountantClients() {
     const [isBankStatementsLoading, setIsBankStatementsLoading] = useState(false);
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
     const [commentDocument, setCommentDocument] = useState<Document | null>(null);
+    const [journalEntryDocument, setJournalEntryDocument] = useState<Document | null>(null);
     const { toast } = useToast();
 
     const loadClients = useCallback(async () => {
@@ -54,6 +57,16 @@ export default function AccountantClients() {
     useEffect(() => {
         loadClients();
     }, [loadClients]);
+
+    // Handle selected client from dashboard navigation
+    useEffect(() => {
+        if (location.state?.selectedClientId && clients.length > 0) {
+            const client = clients.find(c => c.id === location.state.selectedClientId);
+            if (client) {
+                handleClientSelect(client);
+            }
+        }
+    }, [location.state?.selectedClientId, clients]);
 
     const loadBankStatements = async (companyId: string) => {
         try {
@@ -123,6 +136,10 @@ export default function AccountantClients() {
         setCommentDocument(document);
     };
 
+    const handleCreateJournalEntry = (document: Document) => {
+        setJournalEntryDocument(document);
+    };
+
     const getStatusBadge = (isActive: boolean) => {
         return isActive ?
             <Badge className="bg-green-100 text-green-800">Active</Badge> :
@@ -158,10 +175,13 @@ export default function AccountantClients() {
                 handleDownloadAll={handleDownloadAll}
                 handlePreviewDocument={handlePreviewDocument}
                 handleCommentsDocument={handleCommentsDocument}
+                handleCreateJournalEntry={handleCreateJournalEntry}
                 previewDocument={previewDocument}
                 setPreviewDocument={setPreviewDocument}
                 commentDocument={commentDocument}
                 setCommentDocument={setCommentDocument}
+                journalEntryDocument={journalEntryDocument}
+                setJournalEntryDocument={setJournalEntryDocument}
             />
         );
     }

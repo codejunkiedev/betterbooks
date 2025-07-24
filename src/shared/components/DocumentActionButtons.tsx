@@ -1,5 +1,5 @@
 import { Button } from "@/shared/components/Button";
-import { Download, Eye, MessageSquare } from "lucide-react";
+import { Download, Eye, MessageSquare, BookOpen } from "lucide-react";
 import { Document } from "@/shared/types/document";
 import { useDocumentActions } from "./documentUtils";
 
@@ -8,9 +8,11 @@ interface DocumentActionButtonsProps {
     // onDelete?: (documentId: string) => void;
     onPreview?: (document: Document) => void;
     onComments?: (document: Document) => void;
+    onCreateJournalEntry?: (document: Document) => void;
     showPreview?: boolean;
     showDownload?: boolean;
     showComments?: boolean;
+    showCreateJournalEntry?: boolean;
     // showDelete?: boolean;
     size?: "sm" | "default" | "lg";
     variant?: "ghost" | "outline" | "default";
@@ -21,9 +23,11 @@ export const DocumentActionButtons = ({
     // onDelete,
     onPreview,
     onComments,
+    onCreateJournalEntry,
     showPreview = true,
     showDownload = true,
     showComments = true,
+    showCreateJournalEntry = false,
     // showDelete = true,
     size = "sm",
     variant = "ghost"
@@ -39,6 +43,12 @@ export const DocumentActionButtons = ({
     const handleCommentsClick = () => {
         if (onComments) {
             onComments(document);
+        }
+    };
+
+    const handleCreateJournalEntryClick = () => {
+        if (onCreateJournalEntry) {
+            onCreateJournalEntry(document);
         }
     };
 
@@ -83,6 +93,18 @@ export const DocumentActionButtons = ({
                     title="View comments"
                 >
                     <MessageSquare className="h-4 w-4" />
+                </Button>
+            )}
+
+            {showCreateJournalEntry && document.status === 'PENDING_REVIEW' && (
+                <Button
+                    variant={variant}
+                    size={size}
+                    onClick={handleCreateJournalEntryClick}
+                    className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                    title="Create journal entry"
+                >
+                    <BookOpen className="h-4 w-4" />
                 </Button>
             )}
 
