@@ -176,4 +176,96 @@ export async function createOpeningBalanceJournalEntry(
     }
 
     return { entry, companyUpdated: true };
+}
+
+// Get journal entries with account names for display
+export async function getUserJournalEntries(): Promise<{
+    data: Array<{
+        id: string;
+        entry_date: string;
+        description: string;
+        is_adjusting_entry: boolean;
+        created_at: string;
+        lines: Array<{
+            id: string;
+            account_id: string;
+            account_name: string;
+            type: 'DEBIT' | 'CREDIT';
+            amount: number;
+        }>;
+    }> | null;
+    error: Error | null;
+}> {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        // Get user's company
+        const { data: company, error: companyError } = await supabase
+            .from("companies")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (companyError) throw companyError;
+        if (!company) throw new Error('Company not found');
+
+        // Get journal entries with lines
+        const { data: journalEntries, error: entriesError } = await supabase
+            .from("journal_entries")
+            .select(`
+        id,
+        entry_date,
+        description,
+        is_adjusting_entry,
+        created_at,
+        journal_entry_lines (
+          id,
+          account_id,
+          type,
+          amount
+        )
+      `)
+            .eq("company_id", company.id)
+            .order("entry_date", { ascending: false })
+            .order("created_at", { ascending: false });
+
+        if (entriesError) throw entriesError;
+
+        // Get account names for all account IDs
+        const accountIds = new Set<string>();
+        journalEntries?.forEach(entry => {
+            entry.journal_entry_lines?.forEach(line => {
+                accountIds.add(line.account_id);
+            });
+        });
+
+        const { data: accounts, error: accountsError } = await supabase
+            .from("company_coa")
+            .select("id, account_name")
+            .eq("company_id", company.id)
+            .in("id", Array.from(accountIds));
+
+        if (accountsError) throw accountsError;
+
+        // Create account name lookup
+        const accountNameMap = new Map(accounts?.map(acc => [acc.id, acc.account_name]) || []);
+
+        // Add account names to journal entries
+        const entriesWithAccountNames = journalEntries?.map(entry => ({
+            ...entry,
+            lines: entry.journal_entry_lines?.map(line => ({
+                ...line,
+                account_name: accountNameMap.get(line.account_id) || 'Unknown Account'
+            })) || []
+        })) || [];
+
+        return {
+            data: entriesWithAccountNames,
+            error: null
+        };
+    } catch (error) {
+        console.error("Error fetching user journal entries:", error);
+        return { data: null, error: error instanceof Error ? error : new Error('Unknown error') };
+    }
 } 

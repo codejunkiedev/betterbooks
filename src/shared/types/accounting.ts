@@ -30,4 +30,15 @@ export interface AccountingSummaryType {
     start: string;
     end: string;
   };
+}
+
+export interface FinancialMetrics {
+  totalRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+  cashBalance: number;
+  period: {
+    start: string;
+    end: string;
+  };
 } 
