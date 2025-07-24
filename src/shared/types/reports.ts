@@ -45,4 +45,22 @@ export interface BalanceSheetData {
     totalLiabilitiesAndEquity: number;
     isBalanced: boolean;
     difference: number;
+}
+
+export interface TrialBalanceAccount {
+    account_id: string;
+    account_name: string;
+    account_type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE' | 'COGS' | 'CONTRA_REVENUE';
+    total_debits: number;
+    total_credits: number;
+    normal_balance: 'DEBIT' | 'CREDIT';
+}
+
+export interface TrialBalanceData {
+    period: DateRange;
+    accounts: TrialBalanceAccount[];
+    totalDebits: number;
+    totalCredits: number;
+    isBalanced: boolean;
+    difference: number;
 } 

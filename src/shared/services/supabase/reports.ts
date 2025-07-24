@@ -23,6 +23,24 @@ export interface BalanceSheetData {
     difference: number;
 }
 
+export interface TrialBalanceAccount {
+    account_id: string;
+    account_name: string;
+    account_type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE' | 'COGS' | 'CONTRA_REVENUE';
+    total_debits: number;
+    total_credits: number;
+    normal_balance: 'DEBIT' | 'CREDIT';
+}
+
+export interface TrialBalanceData {
+    period: DateRange;
+    accounts: TrialBalanceAccount[];
+    totalDebits: number;
+    totalCredits: number;
+    isBalanced: boolean;
+    difference: number;
+}
+
 export const generateBalanceSheet = async (asOfDate: string): Promise<{
     data: BalanceSheetData | null;
     error: PostgrestError | null;
@@ -307,6 +325,116 @@ export const generateProfitLossStatement = async (dateRange: DateRange): Promise
         };
     } catch (error) {
         console.error("Error generating profit & loss statement:", error);
+        return { data: null, error: error as PostgrestError };
+    }
+};
+
+export const generateTrialBalance = async (dateRange: DateRange): Promise<{
+    data: TrialBalanceData | null;
+    error: PostgrestError | null;
+}> => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        // Get user's company
+        const { data: company, error: companyError } = await supabase
+            .from("companies")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (companyError) throw companyError;
+        if (!company) throw new Error('Company not found');
+
+        // Get all journal entries within the date range
+        const { data: journalEntries, error: entriesError } = await supabase
+            .from("journal_entries")
+            .select(`
+        id,
+        entry_date,
+        journal_entry_lines (
+          id,
+          account_id,
+          type,
+          amount
+        )
+      `)
+            .eq("company_id", company.id)
+            .gte("entry_date", dateRange.start)
+            .lte("entry_date", dateRange.end);
+
+        if (entriesError) throw entriesError;
+
+        // Get all accounts from COA
+        const { data: accounts, error: accountsError } = await supabase
+            .from("company_coa")
+            .select("id, account_name, account_type")
+            .eq("company_id", company.id);
+
+        if (accountsError) throw accountsError;
+
+        // Initialize trial balance accounts
+        const trialBalanceAccounts: TrialBalanceAccount[] = accounts?.map(account => ({
+            account_id: account.id,
+            account_name: account.account_name,
+            account_type: account.account_type as 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE' | 'COGS' | 'CONTRA_REVENUE',
+            total_debits: 0,
+            total_credits: 0,
+            normal_balance: account.account_type === 'ASSET' || account.account_type === 'EXPENSE' || account.account_type === 'COGS' ? 'DEBIT' : 'CREDIT'
+        })) || [];
+
+        // Calculate totals from journal entries
+        journalEntries?.forEach(entry => {
+            entry.journal_entry_lines?.forEach(line => {
+                const account = trialBalanceAccounts.find(acc => acc.account_id === line.account_id);
+                if (account) {
+                    const amount = parseFloat(line.amount.toString());
+                    if (line.type === 'DEBIT') {
+                        account.total_debits += amount;
+                    } else {
+                        account.total_credits += amount;
+                    }
+                }
+            });
+        });
+
+        // Filter out accounts with zero activity (optional - you can remove this if you want to show all accounts)
+        const activeAccounts = trialBalanceAccounts.filter(account =>
+            account.total_debits > 0 || account.total_credits > 0
+        );
+
+        // Sort accounts by account type and then by name
+        activeAccounts.sort((a, b) => {
+            const typeOrder = { 'ASSET': 1, 'LIABILITY': 2, 'EQUITY': 3, 'REVENUE': 4, 'EXPENSE': 5, 'COGS': 6, 'CONTRA_REVENUE': 7 };
+            const aOrder = typeOrder[a.account_type] || 999;
+            const bOrder = typeOrder[b.account_type] || 999;
+
+            if (aOrder !== bOrder) {
+                return aOrder - bOrder;
+            }
+            return a.account_name.localeCompare(b.account_name);
+        });
+
+        // Calculate totals
+        const totalDebits = activeAccounts.reduce((sum, account) => sum + account.total_debits, 0);
+        const totalCredits = activeAccounts.reduce((sum, account) => sum + account.total_credits, 0);
+        const difference = Math.abs(totalDebits - totalCredits);
+        const isBalanced = difference < 0.01; // Allow for small rounding differences
+
+        return {
+            data: {
+                period: dateRange,
+                accounts: activeAccounts,
+                totalDebits,
+                totalCredits,
+                isBalanced,
+                difference
+            },
+            error: null
+        };
+    } catch (error) {
+        console.error("Error generating trial balance:", error);
         return { data: null, error: error as PostgrestError };
     }
 };
