@@ -5,6 +5,7 @@ import { FileText, ArrowLeft, Download } from 'lucide-react';
 import { DocumentActionButtons } from '@/shared/components/DocumentActionButtons';
 import { DocumentPreview } from '@/shared/components/DocumentPreview';
 import { CommentPanel } from '@/shared/components/CommentPanel';
+import CreateJournalEntryForm from '@/features/accountant/journal-entry/CreateJournalEntryForm';
 import React from 'react';
 import { Document } from '@/shared/types/document';
 
@@ -25,10 +26,13 @@ interface SelectedClientProps {
     handleDownloadAll: () => void;
     handlePreviewDocument: (document: Document) => void;
     handleCommentsDocument: (document: Document) => void;
+    handleCreateJournalEntry: (document: Document) => void;
     previewDocument: Document | null;
     setPreviewDocument: (doc: Document | null) => void;
     commentDocument: Document | null;
     setCommentDocument: (doc: Document | null) => void;
+    journalEntryDocument: Document | null;
+    setJournalEntryDocument: (doc: Document | null) => void;
 }
 
 const SelectedClient: React.FC<SelectedClientProps> = ({
@@ -39,10 +43,13 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
     handleDownloadAll,
     handlePreviewDocument,
     handleCommentsDocument,
+    handleCreateJournalEntry,
     previewDocument,
     setPreviewDocument,
     commentDocument,
-    setCommentDocument
+    setCommentDocument,
+    journalEntryDocument,
+    setJournalEntryDocument
 }) => {
     return (
         <div className="space-y-6">
@@ -105,9 +112,11 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
                                             document={statement}
                                             onPreview={handlePreviewDocument}
                                             onComments={handleCommentsDocument}
+                                            onCreateJournalEntry={handleCreateJournalEntry}
                                             showPreview={true}
                                             showDownload={true}
                                             showComments={true}
+                                            showCreateJournalEntry={true}
                                             size="sm"
                                             variant="ghost"
                                         />
@@ -135,6 +144,20 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
                     onClose={() => setCommentDocument(null)}
                     documentId={commentDocument.id}
                     documentName={commentDocument.original_filename}
+                />
+            )}
+
+            {/* Journal Entry Form */}
+            {journalEntryDocument && (
+                <CreateJournalEntryForm
+                    isOpen={!!journalEntryDocument}
+                    onClose={() => setJournalEntryDocument(null)}
+                    document={journalEntryDocument}
+                    company={selectedClient}
+                    onSuccess={() => {
+                        // Refresh the documents list or update the status
+                        window.location.reload();
+                    }}
                 />
             )}
         </div>

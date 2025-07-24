@@ -21,6 +21,8 @@ import { UserLayout, AccountantLayout, AdminLayout } from "@/shared/layout";
 import UserDashboard from "@/pages/user/Dashboard";
 import UploadDocuments from "@/pages/user/UploadDocuments";
 import DocumentsList from "@/pages/user/Documents";
+import Journal from "@/pages/user/Journal";
+import Reports from "@/pages/user/Reports";
 
 import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
@@ -83,6 +85,8 @@ export default function App() {
         { path: "", element: <UserDashboard /> },
         { path: "upload", element: <UploadDocuments /> },
         { path: "documents", element: <DocumentsList /> },
+        { path: "journal", element: <Journal /> },
+        { path: "reports", element: <Reports /> },
         { path: "profile", element: <Profile /> },
       ],
     },

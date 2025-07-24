@@ -4,13 +4,16 @@
 
 BetterBooks is an advanced book management and accounting reconciliation system that leverages cutting-edge AI technologies to automate and streamline the accounting process. The system combines Optical Character Recognition (OCR) and Large Language Models (LLM) to create an intelligent, end-to-end automated accounts reconciliation solution.
 
-### �� Key Capabilities
+### 🚀 Key Capabilities
 
 - **AI-Powered Document Processing**: OCR and LLM integration for intelligent data extraction
 - **Modern Tech Stack**: React 19, TypeScript, Vite, Supabase, and Shadcn UI
 - **Feature-Sliced Architecture**: Scalable, maintainable codebase with clear separation of concerns
 - **Real-time Collaboration**: Multi-user support with real-time updates
 - **Comprehensive Accounting**: Chart of accounts, invoice management, and financial reporting
+- **Advanced Filtering**: Backend-side filtering with modal interfaces for optimal performance
+- **Financial Reporting**: Profit & Loss, Balance Sheet, and Trial Balance reports with PDF export
+- **Multi-Role Support**: User, Accountant, and Admin roles with role-based access control
 
 ## 🏗️ Architecture
 
@@ -20,22 +23,26 @@ BetterBooks follows a **Feature-Sliced Architecture** with clear separation of c
 src/
 ├── app/                    # Application root (App.tsx, main.tsx)
 ├── pages/                  # Page-level components
+│   ├── user/              # User-specific pages
+│   ├── accountant/        # Accountant-specific pages
+│   └── admin/             # Admin-specific pages
 ├── features/              # Feature-based modules
-│   ├── auth/              # Authentication
-│   ├── dashboard/         # Dashboard & analytics
-│   ├── documents/         # Document management
-│   ├── company/           # Company setup & management
-│   └── profile/           # User profile management
+│   ├── users/             # User features (dashboard, journal, reports)
+│   ├── accountant/        # Accountant features (clients, bank statements)
+│   ├── admin/             # Admin features (user management, role management)
+│   └── shared/            # Shared features across roles
 ├── shared/                # Shared, reusable code
 │   ├── components/        # Reusable UI components
 │   ├── hooks/             # Shared hooks
 │   ├── utils/             # Utility functions
 │   ├── types/             # TypeScript types
-│   └── config/            # Configuration
-└── services/              # App-wide services
-    ├── api/               # API layer
-    ├── store/             # Redux state management
-    └── supabase/          # Supabase integration
+│   ├── config/            # Configuration
+│   ├── services/          # API and database services
+│   └── layout/            # Layout components
+└── database/              # Database schema and migrations
+    ├── schema/            # Table definitions
+    ├── migrations/        # Database migrations
+    └── procedures/        # Stored procedures
 ```
 
 For detailed architecture information, see [ARCHITECTURE.md](./ARCHITECTURE.md).
@@ -79,7 +86,15 @@ VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### 3. Start Development
+### 3. Database Setup
+
+```bash
+# Apply database migrations
+# Run the SQL files in src/database/migrations/ in order
+# Set up the database schema and initial data
+```
+
+### 4. Start Development
 
 ```bash
 # Start development server
@@ -133,23 +148,36 @@ git push origin feature/your-feature-name
 
 Each feature is self-contained with its own components, hooks, and API calls:
 
-- **`auth/`**: Authentication, login, registration, password reset
-- **`dashboard/`**: Main dashboard, analytics, recent activity
-- **`documents/`**: Document upload, processing, and management
+#### User Features (`src/features/users/`)
+- **`dashboard/`**: Financial summary, recent activity, key metrics
+- **`journal/`**: Double-entry journal with backend filtering and pagination
+- **`reports/`**: Financial reports (P&L, Balance Sheet, Trial Balance) with PDF export
 - **`company/`**: Company setup, chart of accounts, opening balances
 - **`profile/`**: User profile management and settings
+
+#### Accountant Features (`src/features/accountant/`)
+- **`dashboard/`**: Client overview with backend filtering and modal interfaces
+- **`clients/`**: Client management with advanced filtering
+- **`bank-statements/`**: Bank statement management with backend filtering
+- **`text-documents/`**: Document review and processing
+
+#### Admin Features (`src/features/admin/`)
+- **`user-management/`**: User administration and role management
+- **`role-management/`**: Role and permission management
 
 ### Shared (`src/shared/`)
 
 Reusable code across features:
 
-- **`components/`**: UI components (Button, Modal, Table, etc.)
-- **`hooks/`**: Custom React hooks
+- **`components/`**: UI components (Button, Modal, Table, Dialog, etc.)
+- **`hooks/`**: Custom React hooks (useToast, useRedux, etc.)
 - **`utils/`**: Utility functions and helpers
 - **`types/`**: TypeScript type definitions
 - **`config/`**: Application configuration
+- **`services/`**: API and database services
+- **`layout/`**: Layout components for different user roles
 
-### Services (`src/services/`)
+### Services (`src/shared/services/`)
 
 App-wide services and integrations:
 
@@ -165,11 +193,12 @@ App-wide services and integrations:
 - **Vite**: Fast build tool and dev server
 - **Tailwind CSS**: Utility-first CSS framework
 - **Shadcn UI**: Beautiful, accessible components
+- **React Router**: Client-side routing with role-based access
 
 ### Backend & Services
 - **Supabase**: PostgreSQL database, authentication, real-time
 - **Redux Toolkit**: State management
-- **React Router**: Client-side routing
+- **date-fns**: Date manipulation and formatting
 
 ### Development Tools
 - **ESLint**: Code linting
@@ -182,9 +211,10 @@ App-wide services and integrations:
 
 ```typescript
 // Import from shared components
-import { Button } from '@/shared/components/button';
-import { Card } from '@/shared/components/card';
-import { Input } from '@/shared/components/input';
+import { Button } from '@/shared/components/Button';
+import { Card } from '@/shared/components/Card';
+import { Input } from '@/shared/components/Input';
+import { Dialog } from '@/shared/components/Dialog';
 
 // Use consistent styling patterns
 <Card className="p-6">
@@ -193,12 +223,27 @@ import { Input } from '@/shared/components/input';
 </Card>
 ```
 
+### Filter Modal Pattern
+
+```typescript
+// Consistent filter modal implementation
+<Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+  <DialogContent className="max-w-md">
+    <DialogHeader>
+      <DialogTitle>Filter Options</DialogTitle>
+    </DialogHeader>
+    {/* Filter content */}
+  </DialogContent>
+</Dialog>
+```
+
 ### Styling Patterns
 
 - Use Tailwind CSS utility classes
 - Follow the design system in `shared/components/`
 - Maintain consistent spacing and typography
 - Ensure accessibility (ARIA labels, keyboard navigation)
+- Implement responsive design for all screen sizes
 
 ## 🔐 Authentication & Security
 
@@ -206,26 +251,74 @@ import { Input } from '@/shared/components/input';
 - JWT-based authentication via Supabase
 - Automatic token refresh
 - Protected routes with authentication guards
-- Role-based access control
+- Role-based access control (User, Accountant, Admin)
 
 ### Security Best Practices
 - Environment variables for sensitive data
 - Input validation with TypeScript
 - API endpoint protection
 - Secure data transmission (HTTPS)
+- Row Level Security (RLS) in database
 
 ## 📊 Database Schema
 
 The application uses PostgreSQL with the following key tables:
 
 - **`users`**: User accounts and profiles
-- **`companies`**: Company information
+- **`companies`**: Company information with accountant assignments
+- **`accountants`**: Accountant profiles and permissions
+- **`admins`**: Admin user profiles
 - **`company_coa`**: Chart of accounts
+- **`journal_entries`**: Double-entry journal entries
+- **`journal_entry_lines`**: Individual journal entry lines
 - **`invoices`**: Invoice records
 - **`line_items`**: Invoice line items
 - **`documents`**: Document storage and metadata
+- **`messages`**: Communication between users and accountants
 
 See `src/database/schema/` for detailed schema definitions.
+
+## 🚀 Key Features
+
+### 📈 Financial Dashboard
+- Real-time financial metrics calculation
+- Total Revenue, Expenses, Net Profit tracking
+- Cash balance monitoring
+- Monthly and quarterly summaries
+
+### 📖 Journal Management
+- Full double-entry journal system
+- Backend-side filtering and pagination
+- Search by description and account names
+- Date range filtering
+- CSV export functionality
+- Tooltips for better readability
+
+### 📊 Financial Reporting
+- **Profit & Loss Statement**: Revenue, expenses, and net profit calculation
+- **Balance Sheet**: Assets, liabilities, and equity with balance verification
+- **Trial Balance**: Account balances with debit/credit verification
+- **PDF Export**: Professional report generation
+- **Date Range Selection**: Flexible period reporting
+
+### 🔍 Advanced Filtering System
+- **Modal-based Filter Interfaces**: Clean, consistent filter modals across all pages
+- **Backend-side Filtering**: High-performance filtering for large datasets
+- **Real-time Search**: Debounced search functionality
+- **Status Filtering**: Filter by client status, document status, etc.
+- **Pagination**: Efficient data loading with page navigation
+
+### 👥 Multi-Role Support
+- **User Role**: Company management, document upload, financial reporting
+- **Accountant Role**: Client management, document review, bank statement processing
+- **Admin Role**: User management, role assignment, system administration
+
+### 📄 Document Management
+- AI-powered document processing
+- Bank statement upload and review
+- Invoice and expense document handling
+- Document status tracking
+- Comment and collaboration features
 
 ## 🧪 Testing Strategy
 
@@ -312,6 +405,11 @@ npm run type-check
 - Check Supabase project configuration
 - Ensure database migrations are applied
 
+**Database Connection Issues**
+- Verify Supabase credentials
+- Check RLS policies
+- Ensure proper role assignments
+
 ### Getting Help
 - Check existing issues and discussions
 - Review the architecture documentation
@@ -324,6 +422,7 @@ npm run type-check
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Detailed architecture guide
 - [Database Schema](./src/database/schema/) - Database structure
 - [Component Library](./src/shared/components/) - UI components
+- [Feature Documentation](./src/features/) - Feature-specific documentation
 
 ### Technology Stack
 - [React Documentation](https://react.dev/)
@@ -348,6 +447,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Supabase](https://supabase.io/) - Backend services
 - [Shadcn UI](https://ui.shadcn.com/) - Component library
 - [Tailwind CSS](https://tailwindcss.com/) - Styling framework
+- [date-fns](https://date-fns.org/) - Date manipulation
 
 ---
 

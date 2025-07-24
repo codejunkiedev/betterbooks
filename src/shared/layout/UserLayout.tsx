@@ -30,7 +30,7 @@ import {
     SheetPortal,
     SheetTrigger,
 } from "@/shared/components/Sheet";
-import { Menu, Home, Upload, User, ChevronLeft, FileText } from "lucide-react";
+import { Menu, Home, Upload, User, ChevronLeft, FileText, BookOpen, BarChart3 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
@@ -228,6 +228,24 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     icon={<FileText className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
                     label="Documents"
                     active={isActive("/documents")}
+                    onNavigate={handleNavigation}
+                    isCollapsed={isCollapsed}
+                    isDark={isDark}
+                />
+                <SidebarLink
+                    to="/journal"
+                    icon={<BookOpen className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                    label="Journal"
+                    active={isActive("/journal")}
+                    onNavigate={handleNavigation}
+                    isCollapsed={isCollapsed}
+                    isDark={isDark}
+                />
+                <SidebarLink
+                    to="/reports"
+                    icon={<BarChart3 className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                    label="Reports"
+                    active={isActive("/reports")}
                     onNavigate={handleNavigation}
                     isCollapsed={isCollapsed}
                     isDark={isDark}
