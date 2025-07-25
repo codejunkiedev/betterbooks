@@ -63,7 +63,7 @@ serve(async (req) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                from: 'BetterBooks <noreply@betterbooks.com>',
+                from: 'BetterBooks <noreply@usebetterbooks.com>',
                 to: [receiverData.user.email],
                 subject: `New Comment on Document: ${documentData.original_filename}`,
                 html: `
