@@ -33,6 +33,7 @@ export default function AccountantClients() {
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
     const [commentDocument, setCommentDocument] = useState<Document | null>(null);
     const [journalEntryDocument, setJournalEntryDocument] = useState<Document | null>(null);
+    const [askUserDocument, setAskUserDocument] = useState<Document | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const { toast } = useToast();
@@ -160,6 +161,10 @@ export default function AccountantClients() {
         setJournalEntryDocument(document);
     };
 
+    const handleAskUser = (document: Document) => {
+        setAskUserDocument(document);
+    };
+
     const getStatusBadge = (isActive: boolean) => {
         return isActive ?
             <Badge className="bg-green-100 text-green-800">Active</Badge> :
@@ -208,12 +213,15 @@ export default function AccountantClients() {
                 handlePreviewDocument={handlePreviewDocument}
                 handleCommentsDocument={handleCommentsDocument}
                 handleCreateJournalEntry={handleCreateJournalEntry}
+                handleAskUser={handleAskUser}
                 previewDocument={previewDocument}
                 setPreviewDocument={setPreviewDocument}
                 commentDocument={commentDocument}
                 setCommentDocument={setCommentDocument}
                 journalEntryDocument={journalEntryDocument}
                 setJournalEntryDocument={setJournalEntryDocument}
+                askUserDocument={askUserDocument}
+                setAskUserDocument={setAskUserDocument}
             />
         );
     }

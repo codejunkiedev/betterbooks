@@ -1,5 +1,5 @@
 import { Button } from "@/shared/components/Button";
-import { Download, Eye, MessageSquare, BookOpen } from "lucide-react";
+import { Download, Eye, MessageSquare, BookOpen, HelpCircle } from "lucide-react";
 import { Document } from "@/shared/types/document";
 import { useDocumentActions } from "./documentUtils";
 
@@ -9,10 +9,12 @@ interface DocumentActionButtonsProps {
     onPreview?: (document: Document) => void;
     onComments?: (document: Document) => void;
     onCreateJournalEntry?: (document: Document) => void;
+    onAskUser?: (document: Document) => void;
     showPreview?: boolean;
     showDownload?: boolean;
     showComments?: boolean;
     showCreateJournalEntry?: boolean;
+    showAskUser?: boolean;
     // showDelete?: boolean;
     size?: "sm" | "default" | "lg";
     variant?: "ghost" | "outline" | "default";
@@ -24,10 +26,12 @@ export const DocumentActionButtons = ({
     onPreview,
     onComments,
     onCreateJournalEntry,
+    onAskUser,
     showPreview = true,
     showDownload = true,
     showComments = true,
     showCreateJournalEntry = false,
+    showAskUser = false,
     // showDelete = true,
     size = "sm",
     variant = "ghost"
@@ -49,6 +53,12 @@ export const DocumentActionButtons = ({
     const handleCreateJournalEntryClick = () => {
         if (onCreateJournalEntry) {
             onCreateJournalEntry(document);
+        }
+    };
+
+    const handleAskUserClick = () => {
+        if (onAskUser) {
+            onAskUser(document);
         }
     };
 
@@ -105,6 +115,18 @@ export const DocumentActionButtons = ({
                     title="Create journal entry"
                 >
                     <BookOpen className="h-4 w-4" />
+                </Button>
+            )}
+
+            {showAskUser && (
+                <Button
+                    variant={variant}
+                    size={size}
+                    onClick={handleAskUserClick}
+                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    title="Ask user question"
+                >
+                    <HelpCircle className="h-4 w-4" />
                 </Button>
             )}
 
