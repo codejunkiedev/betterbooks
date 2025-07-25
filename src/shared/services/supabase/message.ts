@@ -153,7 +153,7 @@ export const createDocumentMessage = async (messageData: CreateDocumentMessageDa
         };
 
         try {
-            await sendCommentNotification(messagePayload);
+            sendCommentNotification(messagePayload);
 
         } catch (error) {
             console.error('Error in send notification:', error);
