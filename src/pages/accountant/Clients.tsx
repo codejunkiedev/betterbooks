@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { useToast } from '@/shared/hooks/useToast';
-import { getPaginatedAccountantClients } from '@/shared/services/supabase/company';
+import { getPaginatedAccountantClients, updateCompanyStatus } from '@/shared/services/supabase/company';
 import { getBankStatementsByCompanyId, downloadDocumentsAsZip } from '@/shared/services/supabase/document';
 import { Document } from '@/shared/types/document';
 import SelectedClient from '@/features/accountant/text-documents/SelectedClient';
@@ -191,6 +191,33 @@ export default function AccountantClients() {
         setCurrentPage(1);
     };
 
+    const handleStatusToggle = async (clientId: string, isActive: boolean) => {
+        try {
+            await updateCompanyStatus(clientId, isActive);
+
+            // Update the local state
+            setClients(prevClients =>
+                prevClients.map(client =>
+                    client.id === clientId
+                        ? { ...client, is_active: isActive }
+                        : client
+                )
+            );
+
+            toast({
+                title: 'Success',
+                description: `Client ${isActive ? 'activated' : 'deactivated'} successfully`,
+            });
+        } catch (error) {
+            console.error('Error updating client status:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to update client status',
+                variant: 'destructive',
+            });
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="space-y-6">
@@ -254,6 +281,7 @@ export default function AccountantClients() {
                 handleClientSelect={handleClientSelect}
                 handleDownloadAll={handleDownloadAll}
                 getStatusBadge={getStatusBadge}
+                onStatusToggle={handleStatusToggle}
             />
 
             {/* Pagination */}

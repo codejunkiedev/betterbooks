@@ -132,6 +132,12 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
     if (userRole === 'USER') {
         const isOnboarding = location.pathname === '/onboarding';
         const isHome = location.pathname === '/';
+        const isBlocked = location.pathname === '/blocked';
+
+        // Check if user's company is deactivated
+        if (currentCompany && !currentCompany.is_active && !isBlocked) {
+            return <Navigate to="/blocked" replace />;
+        }
 
         // If user is on onboarding page but has a company, redirect to home
         if (currentCompany && isOnboarding) {

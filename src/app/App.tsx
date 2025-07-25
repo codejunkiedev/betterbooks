@@ -26,6 +26,7 @@ import Reports from "@/pages/user/Reports";
 
 import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
+import Blocked from "@/pages/user/Blocked";
 
 // Accountant Pages
 import AccountantDashboard from "@/pages/accountant/Dashboard";
@@ -97,6 +98,16 @@ export default function App() {
       element: (
         <UserGuard>
           <Onboarding />
+        </UserGuard>
+      ),
+    },
+
+    // Blocked Route (Protected by UserGuard)
+    {
+      path: "/blocked",
+      element: (
+        <UserGuard>
+          <Blocked />
         </UserGuard>
       ),
     },

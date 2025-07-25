@@ -86,6 +86,23 @@ export async function deleteCompanyById(companyId: string) {
   return { success: true };
 }
 
+// Update company status (activate/deactivate)
+export async function updateCompanyStatus(companyId: string, isActive: boolean) {
+  const { data, error } = await supabase
+    .from("companies")
+    .update({ is_active: isActive })
+    .eq("id", companyId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating company status:", error);
+    throw error;
+  }
+
+  return data;
+}
+
 // Get companies assigned to a specific accountant
 export async function getCompaniesByAccountantId(accountantId: string) {
   const { data, error } = await supabase
