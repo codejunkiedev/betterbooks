@@ -77,25 +77,6 @@ export default function CreateJournalEntryForm({
     // Determine if this is a document-associated entry
     const isDocumentEntry = !!document;
 
-    useEffect(() => {
-        if (isOpen) {
-            loadAccounts();
-
-            if (isDocumentEntry && document) {
-                // Set default description based on document
-                setDescription(`Journal entry for ${document.original_filename}`);
-            } else {
-                // Reset form for standalone entries
-                setEntryDate(new Date().toISOString().split('T')[0]);
-                setDescription('');
-                setLines([
-                    { account_id: '', type: 'DEBIT', amount: 0 },
-                    { account_id: '', type: 'CREDIT', amount: 0 }
-                ]);
-            }
-        }
-    }, [isOpen, document, isDocumentEntry]);
-
     const loadAccounts = useCallback(async () => {
         try {
             setIsLoadingAccounts(true);
@@ -113,6 +94,25 @@ export default function CreateJournalEntryForm({
             setIsLoadingAccounts(false);
         }
     }, [company.id, toast]);
+
+    useEffect(() => {
+        if (isOpen) {
+            loadAccounts();
+
+            if (isDocumentEntry && document) {
+                // Set default description based on document
+                setDescription(`Journal entry for ${document.original_filename}`);
+            } else {
+                // Reset form for standalone entries
+                setEntryDate(new Date().toISOString().split('T')[0]);
+                setDescription('');
+                setLines([
+                    { account_id: '', type: 'DEBIT', amount: 0 },
+                    { account_id: '', type: 'CREDIT', amount: 0 }
+                ]);
+            }
+        }
+    }, [isOpen, document, isDocumentEntry, loadAccounts]);
 
     const addLine = useCallback(() => {
         setLines(prev => [...prev, { account_id: '', type: 'DEBIT', amount: 0 }]);

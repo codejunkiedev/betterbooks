@@ -1,7 +1,8 @@
 import { Card, CardContent } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
-import { FileText, ArrowLeft, Download } from 'lucide-react';
+import { FileText, ArrowLeft, Download, Activity } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { DocumentActionButtons } from '@/shared/components/DocumentActionButtons';
 import { DocumentPreview } from '@/shared/components/DocumentPreview';
 import { CommentPanel } from '@/shared/components/CommentPanel';
@@ -75,12 +76,20 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
                         </p>
                     </div>
                 </div>
-                {bankStatements.length > 0 && (
-                    <Button onClick={handleDownloadAll}>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download All as ZIP
+                <div className="flex items-center gap-2">
+                    <Button asChild variant="outline">
+                        <Link to={`/accountant/activity-log/${selectedClient.id}`}>
+                            <Activity className="w-4 h-4 mr-2" />
+                            Activity Log
+                        </Link>
                     </Button>
-                )}
+                    {bankStatements.length > 0 && (
+                        <Button onClick={handleDownloadAll}>
+                            <Download className="w-4 h-4 mr-2" />
+                            Download All as ZIP
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* Bank Statements List */}
@@ -113,12 +122,12 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Badge className={`capitalize ${statement.status === 'USER_INPUT_NEEDED'
-                                                ? 'bg-red-100 text-red-800'
-                                                : statement.status === 'COMPLETED'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : statement.status === 'IN_PROGRESS'
-                                                        ? 'bg-blue-100 text-blue-800'
-                                                        : 'bg-yellow-100 text-yellow-800'
+                                            ? 'bg-red-100 text-red-800'
+                                            : statement.status === 'COMPLETED'
+                                                ? 'bg-green-100 text-green-800'
+                                                : statement.status === 'IN_PROGRESS'
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : 'bg-yellow-100 text-yellow-800'
                                             }`}>
                                             {statement.status === 'USER_INPUT_NEEDED'
                                                 ? 'User Input Needed'

@@ -12,3 +12,4 @@ export * from './storage';
 export * from './suggestion';
 export * from './message';
 export * from './reports';
+export * from './activity';

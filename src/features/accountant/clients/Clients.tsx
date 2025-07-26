@@ -12,7 +12,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/shared/components/AlertDialog';
-import { Users, Building, FileText, MoreVertical, Calendar } from 'lucide-react';
+import { Users, Building, FileText, MoreVertical, Calendar, Activity } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/DropdownMenu';
 import React, { useState } from 'react';
 
@@ -32,6 +32,7 @@ interface ClientsProps {
     handleDownloadAll: (statements: unknown[], clientName: string) => void;
     getStatusBadge: (isActive: boolean) => React.ReactNode;
     onStatusToggle: (clientId: string, isActive: boolean) => void;
+    onViewActivityLog?: (client: Company) => void;
 }
 
 const StatusToggle: React.FC<{
@@ -97,7 +98,7 @@ const StatusToggle: React.FC<{
     );
 };
 
-const Clients: React.FC<ClientsProps> = ({ filteredClients, clients, handleClientSelect, getStatusBadge, onStatusToggle }) => {
+const Clients: React.FC<ClientsProps> = ({ filteredClients, clients, handleClientSelect, getStatusBadge, onStatusToggle, onViewActivityLog }) => {
     return (
         <>
             {filteredClients.length === 0 ? (
@@ -138,6 +139,12 @@ const Clients: React.FC<ClientsProps> = ({ filteredClients, clients, handleClien
                                             <DropdownMenuItem onClick={() => handleClientSelect(client)}>
                                                 View Bank Statements
                                             </DropdownMenuItem>
+                                            {onViewActivityLog && (
+                                                <DropdownMenuItem onClick={() => onViewActivityLog(client)}>
+                                                    <Activity className="w-4 h-4 mr-2" />
+                                                    View Activity Log
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuItem>Send Message</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>

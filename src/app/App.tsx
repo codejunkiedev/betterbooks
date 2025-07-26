@@ -33,11 +33,14 @@ import AccountantDashboard from "@/pages/accountant/Dashboard";
 import AccountantClients from "@/pages/accountant/Clients";
 import AccountantBankStatements from "@/pages/accountant/BankStatements";
 import AccountantTaxDocuments from "@/pages/accountant/TaxDocuments";
+import ActivityLog from "@/pages/accountant/ActivityLog";
+import AllActivityLogs from "@/pages/accountant/AllActivityLogs";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminUserManagement from "@/pages/admin/UserManagement";
 import RoleManagement from "@/pages/admin/RoleManagement";
+import AdminActivityLogs from "@/pages/admin/ActivityLogs";
 
 // Role Guards
 import { UserGuard, AccountantGuard, AdminGuard } from "@/shared/components/RoleGuard";
@@ -125,6 +128,8 @@ export default function App() {
         { path: "clients", element: <AccountantClients /> },
         { path: "bank-statements", element: <AccountantBankStatements /> },
         { path: "tax-documents", element: <AccountantTaxDocuments /> },
+        { path: "activity-log/:companyId", element: <ActivityLog /> },
+        { path: "activity-logs", element: <AllActivityLogs /> },
       ],
     },
 
@@ -140,6 +145,7 @@ export default function App() {
         { path: "", element: <AdminDashboard /> },
         { path: "users", element: <AdminUserManagement /> },
         { path: "roles", element: <RoleManagement /> },
+        { path: "activity-logs", element: <AdminActivityLogs /> },
       ],
     },
 

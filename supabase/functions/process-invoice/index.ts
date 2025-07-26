@@ -126,7 +126,7 @@ async function isUrlAccessible(url: string): Promise<boolean> {
 async function getAccessibleFileUrl(filePath: string): Promise<{ url: string; isAccessible: boolean; publicUrl: string }> {
   // Generate the public URL
   const { data: { publicUrl } } = adminClient.storage.from('invoices').getPublicUrl(filePath);
-  
+
   if (!publicUrl) {
     throw new Error(`Failed to generate public URL for file: ${filePath}`);
   }
@@ -135,23 +135,22 @@ async function getAccessibleFileUrl(filePath: string): Promise<{ url: string; is
   const { data: signedUrlData, error: signedUrlError } = await adminClient.storage
     .from('invoices')
     .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 1 week expiration
-    
+
   if (signedUrlError || !signedUrlData?.signedUrl) {
     throw new Error(`Failed to create signed URL: ${signedUrlError?.message || 'No URL returned'}`);
   }
-  
+
   // Check if the original public URL is accessible (just for logging purposes)
   const isAccessible = await isUrlAccessible(publicUrl);
-  
+
   // The signed URL already contains the token parameter as needed
   const accessibleUrl = signedUrlData.signedUrl;
-  
-  // Log the URL for debugging
-  console.log(`Generated signed URL for ${filePath}: ${accessibleUrl}`);
-  
+
+
+
   // Return the signed URL as the accessible URL
-  return { 
-    url: accessibleUrl, 
+  return {
+    url: accessibleUrl,
     isAccessible,
     publicUrl
   };
@@ -192,8 +191,8 @@ async function updateInvoiceStatus(id: string, status: string): Promise<boolean>
  */
 async function analyzeWithDeepSeek(imageUrl: string): Promise<DeepSeekResponse> {
   try {
-    console.log('Sending invoice analysis request to DeepSeek via OpenRouter');
-    
+
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -237,17 +236,17 @@ async function analyzeWithDeepSeek(imageUrl: string): Promise<DeepSeekResponse> 
 
     const result = await response.json();
     const content = result.choices[0].message.content;
-    
+
     try {
       // Extract JSON from the response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON object found in response');
       }
-      
+
       const jsonStr = jsonMatch[0];
       const parsedResponse = JSON.parse(jsonStr);
-      
+
       // Map the response to our expected format
       const response: DeepSeekResponse = {
         debitAccount: parsedResponse.invoice_level_debit_account,
@@ -304,7 +303,7 @@ async function updateInvoiceWithDeepSeekAnalysis(invoiceId: string, analysis: De
     // If there are line items and they are assets, save them using user client
     if (analysis.line_items && Array.isArray(analysis.line_items)) {
       const assetLineItems = analysis.line_items.filter(item => item.classification === 'Asset');
-      
+
       if (assetLineItems.length > 0) {
         if (!userClient) {
           throw new Error('User client not initialized');
@@ -352,23 +351,19 @@ async function processInvoice(invoice: Invoice): Promise<{ url: string; isAccess
   try {
     // Update status to indicate processing has started
     await updateInvoiceStatus(invoice.id, 'processing');
-    
+
     // Get an accessible URL for the invoice file
     const { url: accessibleUrl, isAccessible, publicUrl } = await getAccessibleFileUrl(invoice.file.path);
 
-    console.log(`Processing invoice ${invoice.id} with URL: ${accessibleUrl}`);
-    
+
+
     // Analyze with DeepSeek
     const accountingAnalysis = await analyzeWithDeepSeek(accessibleUrl);
 
     // Update invoice with DeepSeek analysis
     await updateInvoiceWithDeepSeekAnalysis(invoice.id, accountingAnalysis);
 
-    console.log(`Processing completed for invoice ${invoice.id}:`, {
-      invoiceId: invoice.id,
-      analysis: accountingAnalysis,
-      timestamp: new Date().toISOString()
-    });
+
 
     return { url: accessibleUrl, isAccessible, publicUrl };
 
@@ -435,7 +430,7 @@ Deno.serve(async (req) => {
 
     // Parse and validate request body
     const body: ProcessInvoiceRequest = await req.json();
-    
+
     if (!body.user_id) {
       return createResponse(
         { error: 'Missing required field: user_id' },
@@ -461,7 +456,7 @@ Deno.serve(async (req) => {
         userId: body.user_id,
         timestamp: new Date().toISOString()
       });
-      
+
       return createResponse(
         { error: 'Failed to fetch invoices. Please try again later.' },
         500
@@ -470,7 +465,7 @@ Deno.serve(async (req) => {
 
     if (!invoices || invoices.length === 0) {
       return createResponse(
-        { 
+        {
           message: 'No pending invoices found for this user',
           data: { count: 0 }
         }
@@ -478,18 +473,18 @@ Deno.serve(async (req) => {
     }
 
     // Process all invoices in parallel using Promise.allSettled
-    const processingPromises = invoices.map(invoice => 
+    const processingPromises = invoices.map(invoice =>
       processInvoice(invoice)
-        .then(({ url, isAccessible, publicUrl }) => ({ 
-          invoiceId: invoice.id, 
+        .then(({ url, isAccessible, publicUrl }) => ({
+          invoiceId: invoice.id,
           success: true,
           url,
           isAccessible,
           publicUrl
         }))
-        .catch(error => ({ 
-          invoiceId: invoice.id, 
-          success: false, 
+        .catch(error => ({
+          invoiceId: invoice.id,
+          success: false,
           error: error instanceof Error ? {
             name: error.name,
             message: error.message,
@@ -506,7 +501,7 @@ Deno.serve(async (req) => {
     );
 
     const results = await Promise.allSettled(processingPromises);
-    
+
     // Extract results from Promise.allSettled
     const processedResults = results.map(result => {
       if (result.status === 'fulfilled') {
@@ -521,7 +516,7 @@ Deno.serve(async (req) => {
     });
 
     const failedInvoices = processedResults.filter(r => !r.success);
-    
+
     if (failedInvoices.length > 0) {
       console.error('Some invoices failed to process:', {
         failedCount: failedInvoices.length,
@@ -532,9 +527,9 @@ Deno.serve(async (req) => {
     }
 
     return createResponse(
-      { 
+      {
         message: `Processing completed for ${invoices.length} invoice(s)`,
-        data: { 
+        data: {
           count: invoices.length,
           successCount: invoices.length - failedInvoices.length,
           failedCount: failedInvoices.length,
@@ -553,7 +548,7 @@ Deno.serve(async (req) => {
       } : error,
       timestamp: new Date().toISOString()
     });
-    
+
     // Handle JSON parsing errors
     if (error instanceof SyntaxError) {
       return createResponse(

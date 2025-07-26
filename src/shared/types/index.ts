@@ -14,3 +14,4 @@ export * from './comment';
 export * from './notification';
 export * from './journal';
 export * from './reports';
+export * from './activity';

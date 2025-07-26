@@ -72,6 +72,20 @@ export async function updateCompany(
   return data;
 }
 
+export async function getCompanyById(companyId: string) {
+  const { data, error } = await supabase
+    .from("companies")
+    .select("*")
+    .eq("id", companyId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching company:", error);
+    throw error;
+  }
+  return data;
+}
+
 export async function deleteCompanyById(companyId: string) {
   const { error } = await supabase
     .from("companies")

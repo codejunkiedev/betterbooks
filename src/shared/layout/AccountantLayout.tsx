@@ -22,7 +22,7 @@ import {
     SheetPortal,
     SheetTrigger,
 } from "@/shared/components/Sheet";
-import { Menu, Home, Users, User, ChevronLeft, Landmark, Calculator } from "lucide-react";
+import { Menu, Home, Users, User, ChevronLeft, Landmark, Calculator, Activity } from "lucide-react";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
@@ -193,6 +193,15 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     icon={<Calculator className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
                     label="Tax Documents"
                     active={isActive("/accountant/tax-documents")}
+                    onNavigate={onNavigate}
+                    isCollapsed={isCollapsed}
+                    isDark={isDark}
+                />
+                <SidebarLink
+                    to="/accountant/activity-logs"
+                    icon={<Activity className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                    label="Activity Logs"
+                    active={isActive("/accountant/activity-logs")}
                     onNavigate={onNavigate}
                     isCollapsed={isCollapsed}
                     isDark={isDark}
