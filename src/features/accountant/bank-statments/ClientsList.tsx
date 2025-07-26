@@ -11,7 +11,12 @@ interface Company {
     is_active: boolean;
     created_at: string;
     user_id: string;
-    bankStatements: unknown[];
+    bankStatements: Array<{
+        id: string;
+        original_filename: string;
+        uploaded_at: string;
+        status: string;
+    }>;
     statementsCount: number;
     lastUpload?: string;
 }
@@ -20,7 +25,12 @@ interface ClientsListProps {
     filteredClients: Company[];
     clients: Company[];
     handleClientSelect: (client: Company) => void;
-    handleDownloadAll: (statements: unknown[], clientName: string) => void;
+    handleDownloadAll: (statements: Array<{
+        id: string;
+        original_filename: string;
+        uploaded_at: string;
+        status: string;
+    }>, clientName: string) => void;
 }
 
 const ClientsList: React.FC<ClientsListProps> = ({ filteredClients, clients, handleClientSelect, handleDownloadAll }) => {

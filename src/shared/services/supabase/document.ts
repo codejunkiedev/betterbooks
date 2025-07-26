@@ -289,6 +289,25 @@ export const deleteDocument = async (documentId: string): Promise<{ error: Error
     }
 };
 
+export const getDocumentById = async (documentId: string): Promise<{ data: Document | null; error: Error | null }> => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        const { data, error } = await supabase
+            .from(DOCUMENTS_TABLE)
+            .select('*')
+            .eq('id', documentId)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        return { data, error: null };
+    } catch (error) {
+        return { data: null, error: error as Error };
+    }
+};
+
 export const getDocumentDownloadUrl = async (filePath: string): Promise<string | null> => {
     try {
         const { data } = await supabase.storage
