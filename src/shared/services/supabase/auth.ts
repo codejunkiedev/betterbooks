@@ -2,6 +2,9 @@ import { supabase } from './client';
 import { AuthResponse, SignInPayload, SignUpPayload, UserRole } from '@/shared/types/auth';
 import { User } from '@supabase/supabase-js';
 import { getUserRoleFromDatabase } from './roles';
+import { getCompanyByUserId } from './company';
+import { ActivityType } from '@/shared/types';
+import { logActivity } from '@/shared/utils/activity';
 
 export const signUp = async (payload: SignUpPayload): Promise<AuthResponse> => {
     const { data, error } = await supabase.auth.signUp({
@@ -13,6 +16,24 @@ export const signUp = async (payload: SignUpPayload): Promise<AuthResponse> => {
             }
         }
     });
+
+    // Log successful signup activity
+    if (data.user && !error) {
+        try {
+            // For new signups, company_id will be null since they haven't created a company yet
+            logActivity(
+                null, // company_id is null for new signup activities
+                data.user.id,
+                'USER_LOGIN', // Using USER_LOGIN for new registrations too
+                data.user.email || 'unknown',
+                'new_registration',
+                { is_new_user: true }
+            );
+        } catch (activityError) {
+            // Don't fail the signup if activity logging fails
+            console.error('Failed to log signup activity:', activityError);
+        }
+    }
 
     return {
         user: data.user,
@@ -26,6 +47,31 @@ export const signIn = async (payload: SignInPayload): Promise<AuthResponse> => {
         password: payload.password,
     });
 
+    // Log successful login activity
+    if (data.user && !error) {
+        try {
+            let companyId = null;
+            try {
+                const company = await getCompanyByUserId(data.user.id);
+                companyId = company?.id || null;
+            } catch (companyError) {
+                // User might not have a company yet, which is fine
+                console.log('User has no company or company fetch failed:', companyError);
+            }
+
+            logActivity(
+                companyId,
+                data.user.id,
+                ActivityType.USER_LOGIN,
+                data.user.email || 'unknown',
+                'email_password'
+            );
+        } catch (activityError) {
+            // Don't fail the login if activity logging fails
+            console.error('Failed to log login activity:', activityError);
+        }
+    }
+
     return {
         user: data.user,
         error: error,
@@ -33,7 +79,37 @@ export const signIn = async (payload: SignInPayload): Promise<AuthResponse> => {
 };
 
 export const signOut = async () => {
+    // Get current user before signing out
+    const { data: { user } } = await supabase.auth.getUser();
+
     const { error } = await supabase.auth.signOut();
+
+    // Log sign out activity
+    if (user && !error) {
+        try {
+            // Get user's company ID
+            let companyId = null;
+            try {
+                const company = await getCompanyByUserId(user.id);
+                companyId = company?.id || null;
+            } catch (companyError) {
+                // User might not have a company yet, which is fine
+                console.log('User has no company or company fetch failed:', companyError);
+            }
+
+            logActivity(
+                companyId, // Pass the actual company_id if available
+                user.id,
+                ActivityType.USER_LOGOUT,
+                user.email || 'unknown',
+                'logout'
+            );
+        } catch (activityError) {
+            // Don't fail the signout if activity logging fails
+            console.error('Failed to log signout activity:', activityError);
+        }
+    }
+
     return { error };
 };
 

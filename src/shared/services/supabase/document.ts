@@ -4,6 +4,8 @@ import { UploadedFile } from '@/shared/types/storage';
 import { uploadFiles } from './storage';
 import { getCompanyByUserId } from './company';
 import { DOCUMENT_TYPE_FOLDER, DOCUMENTS_TABLE, DocumentStatus } from '@/shared/constants/documents';
+import { ActivityType } from '@/shared/types/activity';
+import { logActivity } from '@/shared/utils/activity';
 
 export const uploadDocuments = async (request: DocumentUploadRequest): Promise<DocumentListResponse> => {
     try {
@@ -34,6 +36,22 @@ export const uploadDocuments = async (request: DocumentUploadRequest): Promise<D
 
         if (insertError) {
             throw insertError;
+        }
+
+        // Log activity for each uploaded document
+        for (const doc of documents) {
+            logActivity(
+                company.id,
+                user.id,
+                'DOCUMENT_UPLOADED',
+                user.email || 'unknown',
+                'document_upload',
+                {
+                    filename: doc.original_filename,
+                    document_type: doc.type,
+                    document_id: doc.file_path
+                }
+            );
         }
 
         return { data, error: null };
@@ -95,6 +113,22 @@ export const uploadDocumentsForCompany = async (
 
         if (insertError) {
             throw insertError;
+        }
+
+        // Log activity for each uploaded document
+        for (const doc of documents) {
+            logActivity(
+                request.companyId,
+                user.id,
+                'DOCUMENT_UPLOADED',
+                user.email || 'unknown',
+                'document_upload',
+                {
+                    filename: doc.original_filename,
+                    document_type: doc.type,
+                    document_id: doc.file_path
+                }
+            );
         }
 
         return { data, error: null };
@@ -217,9 +251,12 @@ export const updateDocumentStatus = async (request: DocumentStatusUpdateRequest)
 
 export const deleteDocument = async (documentId: string): Promise<{ error: Error | null }> => {
     try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
         const { data: document, error: fetchError } = await supabase
             .from(DOCUMENTS_TABLE)
-            .select('file_path')
+            .select('file_path, company_id, original_filename')
             .eq('id', documentId)
             .single();
 
@@ -238,9 +275,43 @@ export const deleteDocument = async (documentId: string): Promise<{ error: Error
             .delete()
             .eq('id', documentId);
 
+        // Log activity for document deletion
+        if (document?.company_id) {
+            logActivity(
+                document.company_id,
+                user.id,
+                ActivityType.DOCUMENT_DELETED,
+                user.email || 'unknown',
+                'document_delete',
+                {
+                    filename: document.original_filename,
+                    document_id: documentId
+                }
+            );
+        }
+
         return { error: null };
     } catch (error) {
         return { error: error as Error };
+    }
+};
+
+export const getDocumentById = async (documentId: string): Promise<{ data: Document | null; error: Error | null }> => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        const { data, error } = await supabase
+            .from(DOCUMENTS_TABLE)
+            .select('*')
+            .eq('id', documentId)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        return { data, error: null };
+    } catch (error) {
+        return { data: null, error: error as Error };
     }
 };
 

@@ -41,11 +41,7 @@ serve(async (req) => {
             supabaseClient.from('documents').select('original_filename, companies!inner(name)').eq('id', related_document_id).single()
         ]);
 
-        console.log({
-            senderData,
-            receiverData,
-            documentData
-        });
+
 
         if (!senderData.user?.email) {
             throw new Error('Sender email not found')

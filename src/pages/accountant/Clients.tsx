@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
 import { useToast } from '@/shared/hooks/useToast';
-import { getPaginatedAccountantClients } from '@/shared/services/supabase/company';
+import { Activity } from 'lucide-react';
+import { getPaginatedAccountantClients, updateCompanyStatus } from '@/shared/services/supabase/company';
 import { getBankStatementsByCompanyId, downloadDocumentsAsZip } from '@/shared/services/supabase/document';
 import { Document } from '@/shared/types/document';
 import SelectedClient from '@/features/accountant/text-documents/SelectedClient';
@@ -23,6 +24,7 @@ const ITEMS_PER_PAGE = 12;
 
 export default function AccountantClients() {
     const location = useLocation();
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [clients, setClients] = useState<Company[]>([]);
@@ -33,6 +35,7 @@ export default function AccountantClients() {
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
     const [commentDocument, setCommentDocument] = useState<Document | null>(null);
     const [journalEntryDocument, setJournalEntryDocument] = useState<Document | null>(null);
+    const [askUserDocument, setAskUserDocument] = useState<Document | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const { toast } = useToast();
@@ -74,21 +77,7 @@ export default function AccountantClients() {
         }
     }, [currentPage, searchTerm, statusFilter, toast]);
 
-    useEffect(() => {
-        loadClients();
-    }, [loadClients]);
-
-    // Handle selected client from dashboard navigation
-    useEffect(() => {
-        if (location.state?.selectedClientId && clients.length > 0) {
-            const client = clients.find(c => c.id === location.state.selectedClientId);
-            if (client) {
-                handleClientSelect(client);
-            }
-        }
-    }, [location.state?.selectedClientId, clients]);
-
-    const loadBankStatements = async (companyId: string) => {
+    const loadBankStatements = useCallback(async (companyId: string) => {
         try {
             setIsBankStatementsLoading(true);
             const { data, error } = await getBankStatementsByCompanyId(companyId);
@@ -108,12 +97,26 @@ export default function AccountantClients() {
         } finally {
             setIsBankStatementsLoading(false);
         }
-    };
+    }, [toast]);
 
-    const handleClientSelect = (client: Company) => {
+    const handleClientSelect = useCallback((client: Company) => {
         setSelectedClient(client);
         loadBankStatements(client.id);
-    };
+    }, [loadBankStatements]);
+
+    useEffect(() => {
+        loadClients();
+    }, [loadClients]);
+
+    // Handle selected client from dashboard navigation
+    useEffect(() => {
+        if (location.state?.selectedClientId && clients.length > 0) {
+            const client = clients.find(c => c.id === location.state.selectedClientId);
+            if (client) {
+                handleClientSelect(client);
+            }
+        }
+    }, [location.state?.selectedClientId, clients, handleClientSelect]);
 
     const handleBackToClients = () => {
         setSelectedClient(null);
@@ -160,6 +163,14 @@ export default function AccountantClients() {
         setJournalEntryDocument(document);
     };
 
+    const handleAskUser = (document: Document) => {
+        setAskUserDocument(document);
+    };
+
+    const handleViewActivityLog = (client: Company) => {
+        navigate(`/accountant/activity-log/${client.id}`);
+    };
+
     const getStatusBadge = (isActive: boolean) => {
         return isActive ?
             <Badge className="bg-green-100 text-green-800">Active</Badge> :
@@ -186,6 +197,33 @@ export default function AccountantClients() {
         setCurrentPage(1);
     };
 
+    const handleStatusToggle = async (clientId: string, isActive: boolean) => {
+        try {
+            await updateCompanyStatus(clientId, isActive);
+
+            // Update the local state
+            setClients(prevClients =>
+                prevClients.map(client =>
+                    client.id === clientId
+                        ? { ...client, is_active: isActive }
+                        : client
+                )
+            );
+
+            toast({
+                title: 'Success',
+                description: `Client ${isActive ? 'activated' : 'deactivated'} successfully`,
+            });
+        } catch (error) {
+            console.error('Error updating client status:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to update client status',
+                variant: 'destructive',
+            });
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="space-y-6">
@@ -208,12 +246,15 @@ export default function AccountantClients() {
                 handlePreviewDocument={handlePreviewDocument}
                 handleCommentsDocument={handleCommentsDocument}
                 handleCreateJournalEntry={handleCreateJournalEntry}
+                handleAskUser={handleAskUser}
                 previewDocument={previewDocument}
                 setPreviewDocument={setPreviewDocument}
                 commentDocument={commentDocument}
                 setCommentDocument={setCommentDocument}
                 journalEntryDocument={journalEntryDocument}
                 setJournalEntryDocument={setJournalEntryDocument}
+                askUserDocument={askUserDocument}
+                setAskUserDocument={setAskUserDocument}
             />
         );
     }
@@ -226,6 +267,15 @@ export default function AccountantClients() {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Client Management</h1>
                     <p className="text-gray-600">Manage your client accounts and view their documents</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate('/accountant/activity-logs')}
+                    >
+                        <Activity className="w-4 h-4 mr-2" />
+                        Activity Logs
+                    </Button>
                 </div>
             </div>
 
@@ -246,6 +296,8 @@ export default function AccountantClients() {
                 handleClientSelect={handleClientSelect}
                 handleDownloadAll={handleDownloadAll}
                 getStatusBadge={getStatusBadge}
+                onStatusToggle={handleStatusToggle}
+                onViewActivityLog={handleViewActivityLog}
             />
 
             {/* Pagination */}

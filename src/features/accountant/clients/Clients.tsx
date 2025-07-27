@@ -1,8 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
-import { Users, Building, FileText, MoreVertical, Calendar } from 'lucide-react';
+import { Switch } from '@/shared/components/Switch';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/shared/components/AlertDialog';
+import { Users, Building, FileText, MoreVertical, Calendar, Activity } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/components/DropdownMenu';
-import React from 'react';
+import React, { useState } from 'react';
 
 interface Company {
     id: string;
@@ -17,11 +29,76 @@ interface ClientsProps {
     filteredClients: Company[];
     clients: Company[];
     handleClientSelect: (client: Company) => void;
-    handleDownloadAll: (statements: any[], clientName: string) => void;
+    handleDownloadAll: (statements: unknown[], clientName: string) => void;
     getStatusBadge: (isActive: boolean) => React.ReactNode;
+    onStatusToggle: (clientId: string, isActive: boolean) => void;
+    onViewActivityLog?: (client: Company) => void;
 }
 
-const Clients: React.FC<ClientsProps> = ({ filteredClients, clients, handleClientSelect, getStatusBadge }) => {
+const StatusToggle: React.FC<{
+    clientId: string;
+    isActive: boolean;
+    clientName: string;
+    onToggle: (clientId: string, isActive: boolean) => void;
+}> = ({ clientId, isActive, clientName, onToggle }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleToggle = async () => {
+        setIsLoading(true);
+        try {
+            await onToggle(clientId, !isActive);
+            setIsOpen(false);
+        } catch {
+            // Error is handled by the parent component
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+            <AlertDialogTrigger asChild>
+                <div className="flex items-center gap-2 cursor-pointer">
+                    <Switch
+                        checked={isActive}
+                        className={`data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-red-500 ${isLoading ? 'opacity-50' : ''}`}
+                        disabled={isLoading}
+                    />
+                    <span className={`text-sm ${isActive ? 'text-gray-600' : 'text-red-600'}`}>
+                        {isActive ? 'Active' : 'Inactive'}
+                    </span>
+                </div>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>
+                        {isActive ? 'Deactivate' : 'Activate'} Client Account
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to {isActive ? 'deactivate' : 'activate'} the account for <strong>{clientName}</strong>?
+                        {isActive
+                            ? ' This will prevent the client from logging in but preserve all their data.'
+                            : ' This will restore the client\'s login access.'
+                        }
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={handleToggle}
+                        disabled={isLoading}
+                        className={isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+                    >
+                        {isLoading ? 'Updating...' : (isActive ? 'Deactivate' : 'Activate')}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+};
+
+const Clients: React.FC<ClientsProps> = ({ filteredClients, clients, handleClientSelect, getStatusBadge, onStatusToggle, onViewActivityLog }) => {
     return (
         <>
             {filteredClients.length === 0 ? (
@@ -62,6 +139,12 @@ const Clients: React.FC<ClientsProps> = ({ filteredClients, clients, handleClien
                                             <DropdownMenuItem onClick={() => handleClientSelect(client)}>
                                                 View Bank Statements
                                             </DropdownMenuItem>
+                                            {onViewActivityLog && (
+                                                <DropdownMenuItem onClick={() => onViewActivityLog(client)}>
+                                                    <Activity className="w-4 h-4 mr-2" />
+                                                    View Activity Log
+                                                </DropdownMenuItem>
+                                            )}
                                             <DropdownMenuItem>Send Message</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -74,16 +157,27 @@ const Clients: React.FC<ClientsProps> = ({ filteredClients, clients, handleClien
                                         Created {new Date(client.created_at).toLocaleDateString()}
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between pt-4">
-                                    {getStatusBadge(client.is_active)}
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleClientSelect(client)}
-                                    >
-                                        <FileText className="w-4 h-4 mr-2" />
-                                        View Documents
-                                    </Button>
+                                <div className="space-y-4 pt-4">
+                                    <div className="flex items-center justify-between">
+                                        {getStatusBadge(client.is_active)}
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleClientSelect(client)}
+                                        >
+                                            <FileText className="w-4 h-4 mr-2" />
+                                            View Documents
+                                        </Button>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                                        <span className="text-sm font-medium text-gray-700">Account Status:</span>
+                                        <StatusToggle
+                                            clientId={client.id}
+                                            isActive={client.is_active}
+                                            clientName={client.name}
+                                            onToggle={onStatusToggle}
+                                        />
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

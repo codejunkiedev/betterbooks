@@ -12,7 +12,7 @@ import {
     Download,
 } from 'lucide-react';
 import { getPaginatedBankStatementClients } from '@/shared/services/supabase/company';
-import { downloadDocumentsAsZip } from '@/shared/services/supabase/document';
+import { downloadDocumentsAsZip, getDocumentById } from '@/shared/services/supabase/document';
 import { Document } from '@/shared/types/document';
 import { StatsCards, BankStatementFilters, ClientsList } from '@/features/accountant/bank-statments';
 
@@ -101,7 +101,12 @@ export default function BankStatements() {
         setCommentDocument(null);
     };
 
-    const handleDownloadAll = async (statements: Document[], clientName: string) => {
+    const handleDownloadAll = async (statements: Array<{
+        id: string;
+        original_filename: string;
+        uploaded_at: string;
+        status: string;
+    }>, clientName: string) => {
         if (statements.length === 0) {
             toast({
                 title: 'No documents',
@@ -112,8 +117,26 @@ export default function BankStatements() {
         }
 
         try {
+            // Fetch full document data for the statements
+            const fullDocuments: Document[] = [];
+            for (const statement of statements) {
+                const { data, error } = await getDocumentById(statement.id);
+                if (data && !error) {
+                    fullDocuments.push(data);
+                }
+            }
+
+            if (fullDocuments.length === 0) {
+                toast({
+                    title: 'Error',
+                    description: 'Failed to fetch document data for download',
+                    variant: 'destructive',
+                });
+                return;
+            }
+
             const fileName = `${clientName}_bank_statements.zip`;
-            await downloadDocumentsAsZip(statements, fileName);
+            await downloadDocumentsAsZip(fullDocuments, fileName);
             toast({
                 title: 'Download started',
                 description: 'Bank statements are being downloaded as ZIP file',

@@ -32,6 +32,7 @@ export * from './DocumentActionButtons';
 export * from './DocumentPreview';
 export * from './documentUtils';
 export * from './CommentPanel';
+export * from './AskUserModal';
 
 // Auth and Role components
 export { default as RoleGuard } from './RoleGuard';

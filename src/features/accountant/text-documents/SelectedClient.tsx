@@ -1,10 +1,12 @@
 import { Card, CardContent } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { Button } from '@/shared/components/Button';
-import { FileText, ArrowLeft, Download } from 'lucide-react';
+import { FileText, ArrowLeft, Download, Activity } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { DocumentActionButtons } from '@/shared/components/DocumentActionButtons';
 import { DocumentPreview } from '@/shared/components/DocumentPreview';
 import { CommentPanel } from '@/shared/components/CommentPanel';
+import { AskUserModal } from '@/shared/components/AskUserModal';
 import CreateJournalEntryForm from '@/features/accountant/journal-entry/CreateJournalEntryForm';
 import React from 'react';
 import { Document } from '@/shared/types/document';
@@ -27,12 +29,15 @@ interface SelectedClientProps {
     handlePreviewDocument: (document: Document) => void;
     handleCommentsDocument: (document: Document) => void;
     handleCreateJournalEntry: (document: Document) => void;
+    handleAskUser: (document: Document) => void;
     previewDocument: Document | null;
     setPreviewDocument: (doc: Document | null) => void;
     commentDocument: Document | null;
     setCommentDocument: (doc: Document | null) => void;
     journalEntryDocument: Document | null;
     setJournalEntryDocument: (doc: Document | null) => void;
+    askUserDocument: Document | null;
+    setAskUserDocument: (doc: Document | null) => void;
 }
 
 const SelectedClient: React.FC<SelectedClientProps> = ({
@@ -44,12 +49,15 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
     handlePreviewDocument,
     handleCommentsDocument,
     handleCreateJournalEntry,
+    handleAskUser,
     previewDocument,
     setPreviewDocument,
     commentDocument,
     setCommentDocument,
     journalEntryDocument,
-    setJournalEntryDocument
+    setJournalEntryDocument,
+    askUserDocument,
+    setAskUserDocument
 }) => {
     return (
         <div className="space-y-6">
@@ -68,12 +76,20 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
                         </p>
                     </div>
                 </div>
-                {bankStatements.length > 0 && (
-                    <Button onClick={handleDownloadAll}>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download All as ZIP
+                <div className="flex items-center gap-2">
+                    <Button asChild variant="outline">
+                        <Link to={`/accountant/activity-log/${selectedClient.id}`}>
+                            <Activity className="w-4 h-4 mr-2" />
+                            Activity Log
+                        </Link>
                     </Button>
-                )}
+                    {bankStatements.length > 0 && (
+                        <Button onClick={handleDownloadAll}>
+                            <Download className="w-4 h-4 mr-2" />
+                            Download All as ZIP
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* Bank Statements List */}
@@ -105,18 +121,30 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <Badge className="bg-yellow-100 text-yellow-800 capitalize">
-                                            {statement.status.replace('_', ' ').toLowerCase()}
+                                        <Badge className={`capitalize ${statement.status === 'USER_INPUT_NEEDED'
+                                            ? 'bg-red-100 text-red-800'
+                                            : statement.status === 'COMPLETED'
+                                                ? 'bg-green-100 text-green-800'
+                                                : statement.status === 'IN_PROGRESS'
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : 'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                            {statement.status === 'USER_INPUT_NEEDED'
+                                                ? 'User Input Needed'
+                                                : statement.status.replace('_', ' ').toLowerCase()
+                                            }
                                         </Badge>
                                         <DocumentActionButtons
                                             document={statement}
                                             onPreview={handlePreviewDocument}
                                             onComments={handleCommentsDocument}
                                             onCreateJournalEntry={handleCreateJournalEntry}
+                                            onAskUser={handleAskUser}
                                             showPreview={true}
                                             showDownload={true}
                                             showComments={true}
                                             showCreateJournalEntry={true}
+                                            showAskUser={true}
                                             size="sm"
                                             variant="ghost"
                                         />
@@ -158,6 +186,15 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
                         // Refresh the documents list or update the status
                         window.location.reload();
                     }}
+                />
+            )}
+
+            {/* Ask User Modal */}
+            {askUserDocument && (
+                <AskUserModal
+                    isOpen={!!askUserDocument}
+                    onClose={() => setAskUserDocument(null)}
+                    document={askUserDocument}
                 />
             )}
         </div>

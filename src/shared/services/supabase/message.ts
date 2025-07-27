@@ -22,10 +22,10 @@ const getDocumentMessageRecipient = async (userId: string, documentId: string) =
         .select('id')
         .eq('user_id', userId)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
     // Get document and company information
-    const { data: documentData } = await supabase
+    const { data: documentData, error: documentError } = await supabase
         .from('documents')
         .select(`
             company_id,
@@ -37,7 +37,7 @@ const getDocumentMessageRecipient = async (userId: string, documentId: string) =
         .eq('id', documentId)
         .single();
 
-    if (!documentData) {
+    if (documentError || !documentData) {
         throw new Error('Document not found');
     }
 

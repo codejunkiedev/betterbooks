@@ -150,22 +150,26 @@ const DocumentsList = () => {
             PENDING_REVIEW: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Pending Review' },
             IN_PROGRESS: { color: 'bg-blue-100 text-blue-800 border-blue-200', label: 'In Progress' },
             COMPLETED: { color: 'bg-green-100 text-green-800 border-green-200', label: 'Completed' },
+            USER_INPUT_NEEDED: { color: 'bg-red-100 text-red-800 border-red-200', label: 'User Input Needed' },
         };
 
-        const config = statusConfig[status];
+        const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-800 border-gray-200', label: status.replace('_', ' ').toLowerCase() };
         return (
             <Badge
                 className={`${config.color} border hover:bg-opacity-100 hover:no-underline`}
                 style={{
                     backgroundColor: status === 'PENDING_REVIEW' ? '#fef3c7' :
                         status === 'IN_PROGRESS' ? '#dbeafe' :
-                            status === 'COMPLETED' ? '#dcfce7' : '#f3f4f6',
+                            status === 'COMPLETED' ? '#dcfce7' :
+                                status === 'USER_INPUT_NEEDED' ? '#fee2e2' : '#f3f4f6',
                     color: status === 'PENDING_REVIEW' ? '#92400e' :
                         status === 'IN_PROGRESS' ? '#1e40af' :
-                            status === 'COMPLETED' ? '#166534' : '#374151',
+                            status === 'COMPLETED' ? '#166534' :
+                                status === 'USER_INPUT_NEEDED' ? '#991b1b' : '#374151',
                     borderColor: status === 'PENDING_REVIEW' ? '#fde68a' :
                         status === 'IN_PROGRESS' ? '#bfdbfe' :
-                            status === 'COMPLETED' ? '#bbf7d0' : '#d1d5db'
+                            status === 'COMPLETED' ? '#bbf7d0' :
+                                status === 'USER_INPUT_NEEDED' ? '#fecaca' : '#d1d5db'
                 }}
             >
                 {config.label}

@@ -186,10 +186,9 @@ const Login: React.FC = () => {
                             alt="BetterBooks"
                             className="h-20 w-auto mx-auto mb-6"
                             onError={(e) => {
-                                console.log('Logo failed to load');
                                 e.currentTarget.style.display = 'none';
                             }}
-                            onLoad={() => console.log('Logo loaded successfully')}
+                            onLoad={() => { }}
                         />
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">BetterBooks</h2>
                         <p className="text-lg sm:text-xl text-gray-600 mb-6 lg:mb-8">

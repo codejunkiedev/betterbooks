@@ -26,12 +26,14 @@ import Reports from "@/pages/user/Reports";
 
 import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
+import Blocked from "@/pages/user/Blocked";
 
 // Accountant Pages
 import AccountantDashboard from "@/pages/accountant/Dashboard";
 import AccountantClients from "@/pages/accountant/Clients";
 import AccountantBankStatements from "@/pages/accountant/BankStatements";
 import AccountantTaxDocuments from "@/pages/accountant/TaxDocuments";
+import AccountantActivityLogs from "@/pages/accountant/ActivityLogs";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard";
@@ -101,6 +103,16 @@ export default function App() {
       ),
     },
 
+    // Blocked Route (Protected by UserGuard)
+    {
+      path: "/blocked",
+      element: (
+        <UserGuard>
+          <Blocked />
+        </UserGuard>
+      ),
+    },
+
     // Accountant Routes (Protected)
     {
       path: "/accountant",
@@ -114,6 +126,7 @@ export default function App() {
         { path: "clients", element: <AccountantClients /> },
         { path: "bank-statements", element: <AccountantBankStatements /> },
         { path: "tax-documents", element: <AccountantTaxDocuments /> },
+        { path: "activity-logs", element: <AccountantActivityLogs /> },
       ],
     },
 

@@ -299,6 +299,8 @@ export default function AssignedUsersDashboard() {
                                             View Details
                                         </Button>
                                     </div>
+
+
                                 </div>
                             </CardContent>
                         </Card>

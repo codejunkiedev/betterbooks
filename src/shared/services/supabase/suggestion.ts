@@ -7,7 +7,7 @@ import { PostgrestError } from "@supabase/supabase-js";
 export const fetchInvoiceSuggestions = async (page: number = 1, pageSize: number = 10): Promise<{ data: PaginatedResponse | null; error: PostgrestError | null }> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     // First, get the total count
     const { count, error: countError } = await supabase
       .from("invoices")
@@ -28,12 +28,12 @@ export const fetchInvoiceSuggestions = async (page: number = 1, pageSize: number
 
     if (error) throw error;
 
-    return { 
-      data: { 
-        items: data || [], 
-        total: count || 0 
-      }, 
-      error: null 
+    return {
+      data: {
+        items: data || [],
+        total: count || 0
+      },
+      error: null
     };
   } catch (error) {
     console.error("Error fetching invoice suggestions:", error);
@@ -78,7 +78,7 @@ export const approveInvoiceSuggestion = async (
     if (companyError) throw companyError;
     if (!companyData) throw new Error("Company data not found");
 
-    console.log({companyData, suggestion});
+
     // Calculate new balances
     const currentBalance = companyData.account_balance;
     const amount = suggestion.deepseek_response.amount;
@@ -106,13 +106,13 @@ export const approveInvoiceSuggestion = async (
     // Update company account balance
     const { error: updateCompanyError } = await supabase
       .from('companies')
-      .update({ 
+      .update({
         account_balance: newAccountBalance,
         opening_balance: newOpeningBalance,
         closing_balance: newClosingBalance,
         ...(suggestion.type === 'debit' && { total_debit: companyData?.total_debit + amount }),
         ...(suggestion.type === 'credit' && { total_credit: companyData?.total_credit + amount }),
-       })
+      })
       .eq('id', companyData.id)
       .eq('user_id', user.id);
 

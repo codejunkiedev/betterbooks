@@ -1,4 +1,6 @@
 import { supabase } from '@/shared/services/supabase/client';
+import { ActivityType } from '@/shared/types/activity';
+import { logActivity } from '@/shared/utils/activity';
 
 export async function getCompanyByUserId(userId: string) {
   const { data, error } = await supabase
@@ -72,6 +74,20 @@ export async function updateCompany(
   return data;
 }
 
+export async function getCompanyById(companyId: string) {
+  const { data, error } = await supabase
+    .from("companies")
+    .select("*")
+    .eq("id", companyId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching company:", error);
+    throw error;
+  }
+  return data;
+}
+
 export async function deleteCompanyById(companyId: string) {
   const { error } = await supabase
     .from("companies")
@@ -84,6 +100,47 @@ export async function deleteCompanyById(companyId: string) {
   }
 
   return { success: true };
+}
+
+// Update company status (activate/deactivate)
+export async function updateCompanyStatus(companyId: string, isActive: boolean) {
+  // Get current user for activity logging
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data, error } = await supabase
+    .from("companies")
+    .update({ is_active: isActive })
+    .eq("id", companyId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating company status:", error);
+    throw error;
+  }
+
+  // Log activity for company status change
+  try {
+    const activityType = isActive ? ActivityType.COMPANY_ACTIVATED : ActivityType.COMPANY_DEACTIVATED;
+    await logActivity(
+      companyId,
+      user?.id || null,
+      activityType,
+      user?.email || 'unknown',
+      'company_status_update',
+      {
+        company_name: data.name,
+        previous_status: !isActive,
+        new_status: isActive,
+        updated_by: user?.email || 'Unknown'
+      }
+    );
+  } catch (activityError) {
+    // Don't fail the status update if activity logging fails
+    console.error('Failed to log company status change activity:', activityError);
+  }
+
+  return data;
 }
 
 // Get companies assigned to a specific accountant

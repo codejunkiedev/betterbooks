@@ -162,7 +162,7 @@ export default function Onboarding() {
                 variant: "default",
             });
 
-            console.log("Onboarding: Company created successfully, navigating to dashboard");
+
 
             navigate("/");
         } catch (error) {

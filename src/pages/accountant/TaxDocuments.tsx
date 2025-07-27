@@ -17,6 +17,7 @@ import { Document } from "@/shared/types/document";
 import { DocumentPreview } from "@/shared/components/DocumentPreview";
 import { CommentPanel } from "@/shared/components/CommentPanel";
 import { DocumentActionButtons } from "@/shared/components/DocumentActionButtons";
+import { AskUserModal } from "@/shared/components/AskUserModal";
 import { format } from "date-fns";
 
 interface Company {
@@ -40,6 +41,7 @@ export default function TaxDocuments() {
     const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
     const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
     const [commentDocument, setCommentDocument] = useState<Document | null>(null);
+    const [askUserDocument, setAskUserDocument] = useState<Document | null>(null);
     const [activeTab, setActiveTab] = useState("upload");
 
     const { toast } = useToast();
@@ -242,6 +244,10 @@ export default function TaxDocuments() {
         setCommentDocument(document);
     };
 
+    const handleAskUser = (document: Document) => {
+        setAskUserDocument(document);
+    };
+
     const getDocumentIcon = (type: DocumentType) => {
         const iconConfig = {
             TAX_RETURN: Calculator,
@@ -265,13 +271,13 @@ export default function TaxDocuments() {
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
-            PENDING: { variant: "secondary" as const, label: "Pending" },
-            PROCESSING: { variant: "secondary" as const, label: "Processing" },
-            PROCESSED: { variant: "default" as const, label: "Processed" },
-            FAILED: { variant: "destructive" as const, label: "Failed" },
+            PENDING_REVIEW: { variant: "secondary" as const, label: "Pending Review" },
+            IN_PROGRESS: { variant: "default" as const, label: "In Progress" },
+            COMPLETED: { variant: "default" as const, label: "Completed" },
+            USER_INPUT_NEEDED: { variant: "destructive" as const, label: "User Input Needed" },
         };
 
-        const config = statusConfig[status as keyof typeof statusConfig] || { variant: "secondary" as const, label: status };
+        const config = statusConfig[status as keyof typeof statusConfig] || { variant: "secondary" as const, label: status.replace('_', ' ').toLowerCase() };
         return (
             <Badge variant={config.variant} className="capitalize">
                 {config.label}
@@ -586,9 +592,11 @@ export default function TaxDocuments() {
                                                         document={doc}
                                                         onPreview={handlePreviewDocument}
                                                         onComments={handleCommentsDocument}
+                                                        onAskUser={handleAskUser}
                                                         showPreview={true}
                                                         showDownload={true}
                                                         showComments={true}
+                                                        showAskUser={true}
                                                         size="sm"
                                                         variant="ghost"
                                                     />
@@ -619,6 +627,15 @@ export default function TaxDocuments() {
                     onClose={() => setCommentDocument(null)}
                     documentId={commentDocument.id}
                     documentName={commentDocument.original_filename}
+                />
+            )}
+
+            {/* Ask User Modal */}
+            {askUserDocument && (
+                <AskUserModal
+                    isOpen={!!askUserDocument}
+                    onClose={() => setAskUserDocument(null)}
+                    document={askUserDocument}
                 />
             )}
         </div>
