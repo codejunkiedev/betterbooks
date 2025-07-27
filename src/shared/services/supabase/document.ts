@@ -4,7 +4,8 @@ import { UploadedFile } from '@/shared/types/storage';
 import { uploadFiles } from './storage';
 import { getCompanyByUserId } from './company';
 import { DOCUMENT_TYPE_FOLDER, DOCUMENTS_TABLE, DocumentStatus } from '@/shared/constants/documents';
-import { createActivityLog } from './activity';
+import { ActivityType } from '@/shared/types/activity';
+import { logActivity } from '@/shared/utils/activity';
 
 export const uploadDocuments = async (request: DocumentUploadRequest): Promise<DocumentListResponse> => {
     try {
@@ -39,10 +40,12 @@ export const uploadDocuments = async (request: DocumentUploadRequest): Promise<D
 
         // Log activity for each uploaded document
         for (const doc of documents) {
-            await createActivityLog(
+            logActivity(
                 company.id,
                 user.id,
                 'DOCUMENT_UPLOADED',
+                user.email || 'unknown',
+                'document_upload',
                 {
                     filename: doc.original_filename,
                     document_type: doc.type,
@@ -114,10 +117,12 @@ export const uploadDocumentsForCompany = async (
 
         // Log activity for each uploaded document
         for (const doc of documents) {
-            await createActivityLog(
+            logActivity(
                 request.companyId,
                 user.id,
                 'DOCUMENT_UPLOADED',
+                user.email || 'unknown',
+                'document_upload',
                 {
                     filename: doc.original_filename,
                     document_type: doc.type,
@@ -272,10 +277,12 @@ export const deleteDocument = async (documentId: string): Promise<{ error: Error
 
         // Log activity for document deletion
         if (document?.company_id) {
-            await createActivityLog(
+            logActivity(
                 document.company_id,
                 user.id,
-                'DOCUMENT_DELETED',
+                ActivityType.DOCUMENT_DELETED,
+                user.email || 'unknown',
+                'document_delete',
                 {
                     filename: document.original_filename,
                     document_id: documentId

@@ -12,14 +12,33 @@ async function getUserDetails(userId: string | null): Promise<{ name: string; em
             .eq('id', userId)
             .single();
 
-        if (profile?.full_name) {
-            return { name: profile.full_name, email: '' };
-        }
-
-        return { name: 'Unknown User', email: '' };
+        const name = profile?.full_name || 'Unknown User';
+        return { name, email: '' };
     } catch (error) {
         console.error('Error fetching user details:', error);
         return { name: 'Unknown User', email: '' };
+    }
+}
+
+// Helper function to get company details
+async function getCompanyDetails(companyId: string | null): Promise<{ name: string }> {
+    if (!companyId) return { name: 'Unknown Company' };
+
+    try {
+        const { data: company } = await supabase
+            .from('companies')
+            .select('name')
+            .eq('id', companyId)
+            .single();
+
+        if (company?.name) {
+            return { name: company.name };
+        }
+
+        return { name: 'Unknown Company' };
+    } catch (error) {
+        console.error('Error fetching company details:', error);
+        return { name: 'Unknown Company' };
     }
 }
 
@@ -80,6 +99,27 @@ export async function getActivityLogs(
 
         for (const item of data || []) {
             const userDetails = await getUserDetails(item.actor_id);
+            const companyDetails = await getCompanyDetails(item.company_id);
+
+            // Extract email from details if available
+            let email = '';
+            if (item.details) {
+                try {
+                    // Handle both object and string cases
+                    const details = typeof item.details === 'string' ? JSON.parse(item.details) : item.details;
+                    if (details && typeof details === 'object' && details.email) {
+                        email = String(details.email);
+                    }
+                } catch (error) {
+                    console.error('Error parsing activity log details:', error);
+                }
+            }
+
+            // If no email found in details, use empty string (don't fall back to userDetails.email which is always empty)
+            if (!email) {
+                email = '';
+            }
+
             transformedData.push({
                 id: item.id,
                 company_id: item.company_id,
@@ -88,8 +128,8 @@ export async function getActivityLogs(
                 details: item.details,
                 created_at: item.created_at,
                 actor_name: userDetails.name,
-                actor_email: userDetails.email,
-                company_name: item.companies?.name || 'Unknown Company',
+                actor_email: email,
+                company_name: companyDetails.name,
             });
         }
 
@@ -197,6 +237,131 @@ export async function getActivityLogStats(companyId?: string): Promise<{ data: R
         };
     } catch (error) {
         console.error('Error fetching activity stats:', error);
+        return {
+            data: null,
+            error: error as Error,
+        };
+    }
+}
+
+// Get activity logs for a specific user
+export async function getUserActivityLogs(
+    userId: string,
+    page: number = 1,
+    pageSize: number = 20,
+    filters: Omit<ActivityLogFilters, 'actor_id'> = {}
+): Promise<{ data: ActivityLogResponse | null; error: Error | null }> {
+    return getActivityLogs(page, pageSize, { ...filters, actor_id: userId });
+}
+
+// Get recent activity logs (last N days)
+export async function getRecentActivityLogs(
+    days: number = 7,
+    companyId?: string,
+    page: number = 1,
+    pageSize: number = 20
+): Promise<{ data: ActivityLogResponse | null; error: Error | null }> {
+    try {
+        const dateFrom = new Date();
+        dateFrom.setDate(dateFrom.getDate() - days);
+
+        return getActivityLogs(page, pageSize, {
+            date_from: dateFrom.toISOString(),
+            company_id: companyId || null,
+        });
+    } catch (error) {
+        console.error('Error fetching recent activity logs:', error);
+        return {
+            data: null,
+            error: error as Error,
+        };
+    }
+}
+
+// Delete activity log (admin only)
+export async function deleteActivityLog(
+    logId: number
+): Promise<{ data: boolean | null; error: Error | null }> {
+    try {
+        const { error } = await supabase
+            .from('activity_logs')
+            .delete()
+            .eq('id', logId);
+
+        if (error) {
+            throw error;
+        }
+
+        return { data: true, error: null };
+    } catch (error) {
+        console.error('Error deleting activity log:', error);
+        return {
+            data: null,
+            error: error as Error,
+        };
+    }
+}
+
+// Bulk delete activity logs (admin only)
+export async function bulkDeleteActivityLogs(
+    logIds: number[]
+): Promise<{ data: boolean | null; error: Error | null }> {
+    try {
+        const { error } = await supabase
+            .from('activity_logs')
+            .delete()
+            .in('id', logIds);
+
+        if (error) {
+            throw error;
+        }
+
+        return { data: true, error: null };
+    } catch (error) {
+        console.error('Error bulk deleting activity logs:', error);
+        return {
+            data: null,
+            error: error as Error,
+        };
+    }
+}
+
+// Export activity logs to CSV
+export async function exportActivityLogs(
+    filters: ActivityLogFilters = {},
+    format: 'csv' | 'json' = 'csv'
+): Promise<{ data: string | null; error: Error | null }> {
+    try {
+        // Get all logs without pagination for export
+        const { data, error } = await getActivityLogs(1, 10000, filters);
+
+        if (error || !data) {
+            throw error || new Error('Failed to fetch activity logs');
+        }
+
+        if (format === 'json') {
+            return { data: JSON.stringify(data.items, null, 2), error: null };
+        }
+
+        // Convert to CSV
+        const headers = ['ID', 'Company', 'Actor', 'Activity', 'Details', 'Created At'];
+        const csvRows = [headers.join(',')];
+
+        for (const log of data.items) {
+            const row = [
+                log.id,
+                log.company_name || 'Unknown',
+                log.actor_name || 'Unknown',
+                log.activity,
+                JSON.stringify(log.details || {}),
+                log.created_at || '',
+            ].map(field => `"${field}"`).join(',');
+            csvRows.push(row);
+        }
+
+        return { data: csvRows.join('\n'), error: null };
+    } catch (error) {
+        console.error('Error exporting activity logs:', error);
         return {
             data: null,
             error: error as Error,

@@ -1,6 +1,8 @@
 import { supabase } from "./client";
 import { PostgrestError } from "@supabase/supabase-js";
 import { DateRange, PLAccount, ProfitLossData } from "@/shared/types/reports";
+import { ActivityType } from '@/shared/types/activity';
+import { logActivity } from '@/shared/utils/activity';
 
 export interface BalanceSheetAccount {
     account_id: string;
@@ -173,7 +175,7 @@ export const generateBalanceSheet = async (asOfDate: string): Promise<{
         const difference = Math.abs(totalAssets - totalLiabilitiesAndEquity);
         const isBalanced = difference < 0.01; // Allow for small rounding differences
 
-        return {
+        const result = {
             data: {
                 asOfDate,
                 assets,
@@ -188,6 +190,30 @@ export const generateBalanceSheet = async (asOfDate: string): Promise<{
             },
             error: null
         };
+
+        // Log activity for report generation
+        try {
+            await logActivity(
+                company.id,
+                user.id,
+                ActivityType.REPORT_GENERATED,
+                user.email || 'unknown',
+                'report_generation',
+                {
+                    report_type: 'Balance Sheet',
+                    as_of_date: asOfDate,
+                    total_assets: totalAssets,
+                    total_liabilities: totalLiabilities,
+                    total_equity: totalEquity,
+                    is_balanced: isBalanced
+                }
+            );
+        } catch (activityError) {
+            // Don't fail the report generation if activity logging fails
+            console.error('Failed to log report generation activity:', activityError);
+        }
+
+        return result;
     } catch (error) {
         console.error("Error generating balance sheet:", error);
         return { data: null, error: error as PostgrestError };
@@ -311,7 +337,7 @@ export const generateProfitLossStatement = async (dateRange: DateRange): Promise
         const netProfit = totalRevenue - totalExpenses;
         const grossProfit = totalRevenue; // For P&L, gross profit is typically revenue
 
-        return {
+        const result = {
             data: {
                 period: dateRange,
                 revenue,
@@ -323,6 +349,30 @@ export const generateProfitLossStatement = async (dateRange: DateRange): Promise
             },
             error: null
         };
+
+        // Log activity for report generation
+        try {
+            await logActivity(
+                company.id,
+                user.id,
+                ActivityType.REPORT_GENERATED,
+                user.email || 'unknown',
+                'report_generation',
+                {
+                    report_type: 'Profit & Loss Statement',
+                    period_start: dateRange.start,
+                    period_end: dateRange.end,
+                    total_revenue: totalRevenue,
+                    total_expenses: totalExpenses,
+                    net_profit: netProfit
+                }
+            );
+        } catch (activityError) {
+            // Don't fail the report generation if activity logging fails
+            console.error('Failed to log report generation activity:', activityError);
+        }
+
+        return result;
     } catch (error) {
         console.error("Error generating profit & loss statement:", error);
         return { data: null, error: error as PostgrestError };
@@ -422,7 +472,7 @@ export const generateTrialBalance = async (dateRange: DateRange): Promise<{
         const difference = Math.abs(totalDebits - totalCredits);
         const isBalanced = difference < 0.01; // Allow for small rounding differences
 
-        return {
+        const result = {
             data: {
                 period: dateRange,
                 accounts: activeAccounts,
@@ -433,6 +483,31 @@ export const generateTrialBalance = async (dateRange: DateRange): Promise<{
             },
             error: null
         };
+
+        // Log activity for report generation
+        try {
+            await logActivity(
+                company.id,
+                user.id,
+                ActivityType.REPORT_GENERATED,
+                user.email || 'unknown',
+                'report_generation',
+                {
+                    report_type: 'Trial Balance',
+                    period_start: dateRange.start,
+                    period_end: dateRange.end,
+                    total_debits: totalDebits,
+                    total_credits: totalCredits,
+                    is_balanced: isBalanced,
+                    accounts_count: activeAccounts.length
+                }
+            );
+        } catch (activityError) {
+            // Don't fail the report generation if activity logging fails
+            console.error('Failed to log report generation activity:', activityError);
+        }
+
+        return result;
     } catch (error) {
         console.error("Error generating trial balance:", error);
         return { data: null, error: error as PostgrestError };

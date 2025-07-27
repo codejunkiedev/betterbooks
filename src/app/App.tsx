@@ -33,6 +33,7 @@ import AccountantDashboard from "@/pages/accountant/Dashboard";
 import AccountantClients from "@/pages/accountant/Clients";
 import AccountantBankStatements from "@/pages/accountant/BankStatements";
 import AccountantTaxDocuments from "@/pages/accountant/TaxDocuments";
+import AccountantActivityLogs from "@/pages/accountant/ActivityLogs";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard";
@@ -125,6 +126,7 @@ export default function App() {
         { path: "clients", element: <AccountantClients /> },
         { path: "bank-statements", element: <AccountantBankStatements /> },
         { path: "tax-documents", element: <AccountantTaxDocuments /> },
+        { path: "activity-logs", element: <AccountantActivityLogs /> },
       ],
     },
 

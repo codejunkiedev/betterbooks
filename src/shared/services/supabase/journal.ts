@@ -1,4 +1,6 @@
 import { supabase } from "@/shared/services/supabase/client";
+import { ActivityType } from '@/shared/types/activity';
+import { logActivity } from '@/shared/utils/activity';
 
 export interface JournalEntry {
     id: string;
@@ -38,6 +40,9 @@ export interface CreateJournalEntryParams {
 export async function createJournalEntry(params: CreateJournalEntryParams): Promise<JournalEntry> {
     const { lines, ...entryData } = params;
 
+    // Get current user for activity logging
+    const { data: { user } } = await supabase.auth.getUser();
+
     // Start a transaction
     const { data: entry, error: entryError } = await supabase
         .from("journal_entries")
@@ -63,6 +68,123 @@ export async function createJournalEntry(params: CreateJournalEntryParams): Prom
     if (linesError) {
         console.error("Error creating journal entry lines:", linesError);
         throw linesError;
+    }
+
+    // Log activity for journal entry creation
+    try {
+        await logActivity(
+            entryData.company_id,
+            entryData.created_by || null,
+            ActivityType.JOURNAL_ENTRY_CREATED,
+            user?.email || 'unknown',
+            'journal_entry_create',
+            {
+                entry_id: entry.id,
+                description: entryData.description,
+                entry_date: entryData.entry_date,
+                is_adjusting_entry: entryData.is_adjusting_entry || false,
+                lines_count: lines.length
+            }
+        );
+    } catch (activityError) {
+        // Don't fail the journal entry creation if activity logging fails
+        console.error('Failed to log journal entry creation activity:', activityError);
+    }
+
+    return entry;
+}
+
+// Update an existing journal entry
+export async function updateJournalEntry(
+    entryId: string,
+    updates: Partial<{
+        entry_date: string;
+        description: string;
+        is_adjusting_entry: boolean;
+    }>,
+    lines?: Array<{
+        account_id: string;
+        type: 'DEBIT' | 'CREDIT';
+        amount: number;
+    }>
+): Promise<JournalEntry> {
+    // Get current user for activity logging
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Verify the entry exists before updating
+    const { error: fetchError } = await supabase
+        .from("journal_entries")
+        .select("id")
+        .eq("id", entryId)
+        .single();
+
+    if (fetchError) {
+        console.error("Error fetching current journal entry:", fetchError);
+        throw fetchError;
+    }
+
+    // Update the journal entry
+    const { data: entry, error: entryError } = await supabase
+        .from("journal_entries")
+        .update(updates)
+        .eq("id", entryId)
+        .select()
+        .single();
+
+    if (entryError) {
+        console.error("Error updating journal entry:", entryError);
+        throw entryError;
+    }
+
+    // Update lines if provided
+    if (lines) {
+        // Delete existing lines
+        const { error: deleteError } = await supabase
+            .from("journal_entry_lines")
+            .delete()
+            .eq("journal_entry_id", entryId);
+
+        if (deleteError) {
+            console.error("Error deleting existing journal entry lines:", deleteError);
+            throw deleteError;
+        }
+
+        // Insert new lines
+        const linesWithEntryId = lines.map(line => ({
+            ...line,
+            journal_entry_id: entryId,
+        }));
+
+        const { error: linesError } = await supabase
+            .from("journal_entry_lines")
+            .insert(linesWithEntryId);
+
+        if (linesError) {
+            console.error("Error creating new journal entry lines:", linesError);
+            throw linesError;
+        }
+    }
+
+    // Log activity for journal entry update
+    try {
+        await logActivity(
+            entry.company_id,
+            entry.created_by_user_id || entry.created_by_accountant_id || null,
+            ActivityType.JOURNAL_ENTRY_UPDATED,
+            user?.email || 'unknown',
+            'journal_entry_update',
+            {
+                entry_id: entry.id,
+                description: entry.description,
+                entry_date: entry.entry_date,
+                is_adjusting_entry: entry.is_adjusting_entry,
+                lines_count: lines ? lines.length : undefined,
+                updated_fields: Object.keys(updates)
+            }
+        );
+    } catch (activityError) {
+        // Don't fail the journal entry update if activity logging fails
+        console.error('Failed to log journal entry update activity:', activityError);
     }
 
     return entry;

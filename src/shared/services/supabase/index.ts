@@ -7,6 +7,7 @@ export * from './company';
 export * from './document';
 export * from './invoice';
 export * from './line-item';
+export * from './journal';
 export * from './profile';
 export * from './storage';
 export * from './suggestion';
