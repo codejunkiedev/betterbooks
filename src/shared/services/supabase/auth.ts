@@ -6,6 +6,28 @@ import { getCompanyByUserId } from './company';
 import { ActivityType } from '@/shared/types';
 import { logActivity } from '@/shared/utils/activity';
 
+// Test Supabase connection on first auth service import
+let connectionTested = false;
+const testSupabaseConnection = async () => {
+    if (connectionTested) return;
+
+    try {
+        const { error } = await supabase.auth.getSession();
+        if (error) {
+            console.log('🗄️ Supabase: ⚠️ Connected but auth limited');
+        } else {
+            console.log('🗄️ Supabase: ✅ Connected successfully');
+        }
+        connectionTested = true;
+    } catch (error) {
+        console.error('🗄️ Supabase: ❌ Connection failed', error);
+        connectionTested = true;
+    }
+};
+
+// Test connection when auth service is first imported
+testSupabaseConnection();
+
 export const signUp = async (payload: SignUpPayload): Promise<AuthResponse> => {
     const { data, error } = await supabase.auth.signUp({
         email: payload.email,
