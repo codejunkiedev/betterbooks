@@ -128,7 +128,7 @@ export default function Onboarding() {
                 user_id: user.id,
                 name: formData.company_name,
                 type: formData.company_type,
-                assigned_accountant_id: '5367e45d-636a-4c1d-a0f4-e1f9fddba3c6',
+                assigned_accountant_id: '',
             };
 
             if (!formData.skip_tax_info) {
