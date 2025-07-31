@@ -90,5 +90,5 @@ export const getEnvironmentInfo = () => ({
 });
 
 // Log current environment when config is imported
-console.log('🌍 Environment:', import.meta.env.MODE, '| App Env:', config.VITE_APP_ENV);
+console.log('🌍 Environment:', config.VITE_APP_ENV);
 
