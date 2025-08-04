@@ -23,6 +23,7 @@ import UploadDocuments from "@/pages/user/UploadDocuments";
 import DocumentsList from "@/pages/user/Documents";
 import Journal from "@/pages/user/Journal";
 import Reports from "@/pages/user/Reports";
+import Messages from "@/pages/user/Messages";
 
 import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
@@ -89,6 +90,7 @@ export default function App() {
         { path: "documents", element: <DocumentsList /> },
         { path: "journal", element: <Journal /> },
         { path: "reports", element: <Reports /> },
+        { path: "messages", element: <Messages /> },
         { path: "profile", element: <Profile /> },
       ],
     },
