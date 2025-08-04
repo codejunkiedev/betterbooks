@@ -1,6 +1,12 @@
 {
-    "rewrites": [
-      { "source": "/(.*)", "destination": "/" }
-    ]
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "dev": true
+    }
+  },
+  "buildCommand": "./build.sh",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
 }
-  
