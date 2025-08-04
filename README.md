@@ -94,7 +94,99 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 # Set up the database schema and initial data
 ```
 
-### 4. Start Development
+### 4. Database Management
+
+#### Pull (Export Schema from Main)
+```bash
+# Pull schema from main database to local
+npx supabase db pull --db-url "postgresql://postgres:%23dntQQ7FXLtbsWU@db.bfmmxsrzuzklexrfrqwb.supabase.co:5432/postgres?sslmode=require"
+```
+
+#### Push (Apply Schema to Dev)
+```bash
+# Push local schema to development database
+npx supabase db push --db-url "postgresql://postgres:%23dntQQ7FXLtbsWU@DEV_BRANCH_HOST:6543/postgres?sslmode=require"
+```
+
+#### Database Permissions Management
+
+When working with different environments, you may need to grant permissions to Supabase roles. Here are three options:
+
+**Option 1: Generate GRANT Statements (for review before executing)**
+```sql
+-- This generates all the GRANT statements for you to review and execute
+SELECT 
+  'GRANT ALL ON ' || schemaname || '.' || tablename || ' TO anon;' AS grant_statement
+FROM pg_tables 
+WHERE schemaname = 'public'
+
+UNION ALL
+
+SELECT 
+  'GRANT ALL ON ' || schemaname || '.' || tablename || ' TO authenticated;'
+FROM pg_tables 
+WHERE schemaname = 'public'
+
+UNION ALL
+
+SELECT 
+  'GRANT ALL ON ' || schemaname || '.' || tablename || ' TO service_role;'
+FROM pg_tables 
+WHERE schemaname = 'public'
+
+ORDER BY grant_statement;
+```
+
+**Option 2: Execute Directly with DO Block**
+```sql
+-- This executes all GRANT statements immediately
+DO $$
+DECLARE 
+    table_record RECORD;
+BEGIN
+    -- Loop through all tables in public schema
+    FOR table_record IN 
+        SELECT tablename 
+        FROM pg_tables 
+        WHERE schemaname = 'public'
+    LOOP
+        -- Grant to anon
+        EXECUTE 'GRANT ALL ON public.' || table_record.tablename || ' TO anon';
+        
+        -- Grant to authenticated  
+        EXECUTE 'GRANT ALL ON public.' || table_record.tablename || ' TO authenticated';
+        
+        -- Grant to service_role
+        EXECUTE 'GRANT ALL ON public.' || table_record.tablename || ' TO service_role';
+        
+        RAISE NOTICE 'Granted permissions on table: %', table_record.tablename;
+    END LOOP;
+END $$;
+```
+
+**Option 3: Simple One-liner for Each Role**
+```sql
+-- Grant to anon for all tables
+SELECT 'GRANT ALL ON ' || string_agg(tablename, ' TO anon; GRANT ALL ON ') || ' TO anon;' 
+FROM pg_tables WHERE schemaname = 'public';
+
+-- Grant to authenticated for all tables  
+SELECT 'GRANT ALL ON ' || string_agg(tablename, ' TO authenticated; GRANT ALL ON ') || ' TO authenticated;'
+FROM pg_tables WHERE schemaname = 'public';
+
+-- Grant to service_role for all tables
+SELECT 'GRANT ALL ON ' || string_agg(tablename, ' TO service_role; GRANT ALL ON ') || ' TO service_role;'
+FROM pg_tables WHERE schemaname = 'public';
+```
+
+**Important Notes:**
+- Replace `DEV_BRANCH_HOST` with your actual development database hostname
+- Use Option 1 to review permissions before applying them
+- Option 2 is safer for production as it provides feedback
+- Option 3 is quickest but provides less visibility
+- Always backup your database before applying permission changes
+
+### 5. Start Development
 
 ```bash
 # Start development server
@@ -399,9 +491,14 @@ npm install
 # Run type checking
 npm run type-check
 ```
-For upload the schema from local to dev 
+**Database Management Issues**
+```bash
+# Pull schema from main database
+npx supabase db pull --db-url "postgresql://postgres:%23dntQQ7FXLtbsWU@db.bfmmxsrzuzklexrfrqwb.supabase.co:5432/postgres?sslmode=require"
 
-npx supabase db push --db-url "postgresql://postgres:%23dntQQ7FXLtbsWU@db.ulydsrntiequinppiwuc.supabase.co:6543/postgres?sslmode=require"
+# Push schema to development database
+npx supabase db push --db-url "postgresql://postgres:%23dntQQ7FXLtbsWU@DEV_BRANCH_HOST:6543/postgres?sslmode=require"
+```
 
 
 **Environment Issues**
