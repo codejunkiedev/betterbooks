@@ -3,6 +3,7 @@ export { default as UploadDocuments } from "./UploadDocuments";
 export { default as DocumentsList } from "./Documents";
 export { default as Journal } from "./Journal";
 export { default as Reports } from "./Reports";
+export { default as Messages } from "./Messages";
 
 export { default as Profile } from "./Profile";
 export { default as Onboarding } from "./Onboarding";
