@@ -399,6 +399,10 @@ npm install
 # Run type checking
 npm run type-check
 ```
+For upload the schema from local to dev 
+
+npx supabase db push --db-url "postgresql://postgres:%23dntQQ7FXLtbsWU@db.ulydsrntiequinppiwuc.supabase.co:6543/postgres?sslmode=require"
+
 
 **Environment Issues**
 - Verify all environment variables are set

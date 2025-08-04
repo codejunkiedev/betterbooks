@@ -7,7 +7,7 @@ export async function getCompanyByUserId(userId: string) {
     .from("companies")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error fetching company:", error);
@@ -79,7 +79,7 @@ export async function getCompanyById(companyId: string) {
     .from("companies")
     .select("*")
     .eq("id", companyId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error fetching company:", error);
@@ -112,7 +112,7 @@ export async function updateCompanyStatus(companyId: string, isActive: boolean) 
     .update({ is_active: isActive })
     .eq("id", companyId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error updating company status:", error);
@@ -129,7 +129,7 @@ export async function updateCompanyStatus(companyId: string, isActive: boolean) 
       user?.email || 'unknown',
       'company_status_update',
       {
-        company_name: data.name,
+        company_name: data?.name || 'Unknown Company',
         previous_status: !isActive,
         new_status: isActive,
         updated_by: user?.email || 'Unknown'
