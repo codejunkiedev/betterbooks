@@ -2,10 +2,11 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "dev": true
+      "dev": true, 
+      "staging": true
     }
   },
-  "buildCommand": "./build.sh",
+  "buildCommand": "npm run build",
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ]
