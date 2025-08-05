@@ -57,7 +57,7 @@ const CORS_HEADERS = {
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
-const openRouterApiKey = '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' // Deno.env.get('OPENROUTER_API_KEY');
+const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
 
 if (!supabaseUrl || !supabaseKey || !openRouterApiKey) {
   throw new Error('Missing required environment variables: SUPABASE_URL, SUPABASE_ANON_KEY, or OPENROUTER_API_KEY');
