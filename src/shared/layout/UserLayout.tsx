@@ -5,6 +5,8 @@ import { supabase } from "@/shared/services/supabase/client";
 import { getCompanyByUserId } from "@/shared/services/supabase/company";
 import { useAppSelector } from "@/shared/hooks/useRedux";
 import { Button } from "@/shared/components/Button";
+import { useNotifications } from "@/shared/hooks/useNotifications";
+import { NotificationBadge } from "@/shared/components/NotificationBadge";
 
 interface Company {
     id: string;
@@ -30,7 +32,7 @@ import {
     SheetPortal,
     SheetTrigger,
 } from "@/shared/components/Sheet";
-import { Menu, Home, Upload, User, ChevronLeft, FileText, BookOpen, BarChart3 } from "lucide-react";
+import { Menu, Home, Upload, User, ChevronLeft, FileText, BookOpen, BarChart3, MessageCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
@@ -198,6 +200,8 @@ type SidebarContentProps = {
     isDark?: boolean;
 };
 function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false }: SidebarContentProps) {
+    const { unreadCount } = useNotifications();
+    
     const handleNavigation = () => {
         onNavigate();
     };
@@ -213,6 +217,7 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     onNavigate={handleNavigation}
                     isCollapsed={isCollapsed}
                     isDark={isDark}
+                    notificationCount={unreadCount}
                 />
                 <SidebarLink
                     to="/upload"
@@ -250,6 +255,16 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     isCollapsed={isCollapsed}
                     isDark={isDark}
                 />
+                <SidebarLink
+                    to="/messages"
+                    icon={<MessageCircle className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                    label="Messages"
+                    active={isActive("/messages")}
+                    onNavigate={handleNavigation}
+                    isCollapsed={isCollapsed}
+                    isDark={isDark}
+                    notificationCount={unreadCount}
+                />
 
             </div>
         </nav>
@@ -264,8 +279,9 @@ type SidebarLinkProps = {
     onNavigate: () => void;
     isCollapsed?: boolean;
     isDark?: boolean;
+    notificationCount?: number;
 };
-function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false, isDark = false }: SidebarLinkProps) {
+function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false, isDark = false, notificationCount }: SidebarLinkProps) {
     const handleClick = () => {
         onNavigate();
     };
@@ -274,13 +290,18 @@ function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false,
         <Link
             to={to}
             onClick={handleClick}
-            className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${active
+            className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${active
                 ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black')
                 : (isDark ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-black')
                 } ${isCollapsed ? 'justify-center px-0' : ''}`}
             style={isCollapsed ? { width: '100%', justifyContent: 'center' } : {}}
         >
-            {icon}
+            <div className="relative">
+                {icon}
+                {notificationCount && notificationCount > 0 && (
+                    <NotificationBadge count={notificationCount} />
+                )}
+            </div>
             {!isCollapsed && <span className="transition-opacity duration-200">{label}</span>}
         </Link>
     );

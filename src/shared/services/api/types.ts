@@ -18,7 +18,6 @@ export interface RequestConfig {
     params?: Record<string, string | number | boolean>;
     headers?: Record<string, string>;
     timeout?: number;
-    VITE_API_TIMEOUT?: number;
 }
 
 export interface HttpClient {

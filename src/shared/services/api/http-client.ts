@@ -104,7 +104,7 @@ export class SupabaseHttpClient implements HttpClient {
         const { supabase } = await import('@/shared/services/supabase/client');
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), config.timeout || config.VITE_API_TIMEOUT);
+        const timeoutId = setTimeout(() => controller.abort(), config.timeout || 30000);
 
         try {
             logger.debug('Making HTTP request', {

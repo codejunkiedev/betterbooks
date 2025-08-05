@@ -1,5 +1,6 @@
 import { FinancialSummary } from "@/features/users/dashboard/FinancialSummary";
 import { AccountingSummary } from "@/features/users/dashboard/AccountingSummary";
+import { AccountantQuestions } from "@/features/users/dashboard/AccountantQuestions";
 
 const Dashboard = () => {
   return (
@@ -17,6 +18,9 @@ const Dashboard = () => {
 
         {/* Accounting Summary */}
         <AccountingSummary />
+
+        {/* Questions from Accountant */}
+        <AccountantQuestions />
       </div>
     </div>
   );

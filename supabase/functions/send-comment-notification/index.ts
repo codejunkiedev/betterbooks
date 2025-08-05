@@ -6,7 +6,7 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const resendApiKey = Deno.env.get('RESEND_API_KEY') ?? 're_Jsj8dd3F_BTEpTZ9PfdzmpbtWrAjjZWwG';
+const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
 interface NotificationRequest {
     company_id: string,
@@ -23,10 +23,14 @@ serve(async (req) => {
     }
 
     try {
-        const supabaseClient = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        )
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            throw new Error('Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+        }
+
+        const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
         const { sender_id, recipient_id, related_document_id, content }: NotificationRequest = await req.json()
 
@@ -82,6 +86,10 @@ serve(async (req) => {
 
         if (!emailResponse.ok) {
             throw new Error(`Failed to send email: ${await emailResponse.text()}`)
+        }
+
+        if (!resendApiKey) {
+            throw new Error('Missing RESEND_API_KEY environment variable');
         }
 
         return new Response(

@@ -70,21 +70,58 @@ npm install
 
 ### 2. Environment Configuration
 
-```bash
-# Copy environment templates
-cp .env.example .env.development
-cp .env.example .env.production
+The application supports three environments: **development**, **staging**, and **production**.
 
-# Edit .env.development with your Supabase credentials
+#### Quick Setup
+
+```bash
+# Environment files are already created:
+# .env.development - Development environment
+# .env.staging - Staging environment  
+# .env.production - Production environment
+
+# Edit each environment file with appropriate credentials
 ```
 
-Required environment variables:
+#### Environment Variables
+
+**Required variables for all environments:**
 ```env
-VITE_APP_ENV=development
-VITE_API_URL=your_api_url
+VITE_APP_ENV=development|staging|production
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+**Optional variables:**
+```env
+VITE_APP_NAME=BetterBooks
+VITE_APP_VERSION=1.0.0
+```
+
+#### Running Different Environments
+
+```bash
+# Development
+npm run dev
+
+# Staging
+npm run dev:staging
+
+# Production build
+npm run build:prod
+```
+
+#### Environment-Specific Features
+
+- **Development**: Source maps enabled, debug logging, "BetterBooks Dev" branding
+- **Staging**: Source maps enabled for debugging, "BetterBooks Staging" branding  
+- **Production**: Minified builds, optimized performance, "BetterBooks" branding
+
+#### Security Notes
+
+- All API keys are now properly managed through environment variables
+- Hardcoded API keys have been removed from Supabase functions
+- Environment validation is performed on application startup
 
 ### 3. Database Setup
 
