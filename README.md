@@ -126,8 +126,8 @@ npm run build:prod
 ### 3. Database Setup
 
 ```bash
-# Apply database migrations
-# Run the SQL files in src/database/migrations/ in order
+# Apply database migrations using Supabase CLI
+npx supabase db push
 # Set up the database schema and initial data
 ```
 
@@ -405,7 +405,7 @@ The application uses PostgreSQL with the following key tables:
 - **`documents`**: Document storage and metadata
 - **`messages`**: Communication between users and accountants
 
-See `src/database/schema/` for detailed schema definitions.
+See `supabase/migrations/` for detailed schema definitions.
 
 ## 🚀 Key Features
 
@@ -558,7 +558,7 @@ npx supabase db push --db-url "postgresql://postgres:%23dntQQ7FXLtbsWU@DEV_BRANC
 
 ### Project-Specific
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Detailed architecture guide
-- [Database Schema](./src/database/schema/) - Database structure
+- [Database Schema](./supabase/migrations/) - Database structure
 - [Component Library](./src/shared/components/) - UI components
 - [Feature Documentation](./src/features/) - Feature-specific documentation
 
