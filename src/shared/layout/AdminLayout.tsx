@@ -22,7 +22,7 @@ import {
     SheetPortal,
     SheetTrigger,
 } from "@/shared/components/Sheet";
-import { Menu, Home, Users, Building, Activity, BarChart3, Shield, Database, Settings, User, ChevronLeft } from "lucide-react";
+import { Menu, Home, Users, User, ChevronLeft } from "lucide-react";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
@@ -176,69 +176,6 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     icon={<Users className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
                     label="Users"
                     active={isActive("/admin/users")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/admin/companies"
-                    icon={<Building className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Companies"
-                    active={isActive("/admin/companies")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/admin/system"
-                    icon={<Activity className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="System Health"
-                    active={isActive("/admin/system")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/admin/analytics"
-                    icon={<BarChart3 className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Analytics"
-                    active={isActive("/admin/analytics")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/admin/security"
-                    icon={<Shield className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Security"
-                    active={isActive("/admin/security")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/admin/database"
-                    icon={<Database className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Database"
-                    active={isActive("/admin/database")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/admin/activity-logs"
-                    icon={<Activity className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Activity Logs"
-                    active={isActive("/admin/activity-logs")}
-                    onNavigate={onNavigate}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/admin/settings"
-                    icon={<Settings className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Settings"
-                    active={isActive("/admin/settings")}
                     onNavigate={onNavigate}
                     isCollapsed={isCollapsed}
                     isDark={isDark}
