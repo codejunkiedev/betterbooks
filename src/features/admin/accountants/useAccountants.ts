@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/shared/services/supabase/client';
 import { useToast } from '@/shared/hooks/useToast';
-import type { Accountant } from './types';
+import { Accountant } from '@/shared/types/accountant';
 
 export function useAccountants() {
     const { toast } = useToast();
