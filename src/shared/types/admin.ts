@@ -80,7 +80,7 @@ export interface DetailedUserInfo {
         id: string;
         fullName: string;
         email: string;
-        assignedDate: string;
+        assignedDate?: string;
     } | null;
     activeModules: string[];
     documentsCount: number;

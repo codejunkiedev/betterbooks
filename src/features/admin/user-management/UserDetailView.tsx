@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { getDetailedUserInfo, updateUserModules } from '@/shared/services/supabase/admin';
 import type { DetailedUserInfo } from '@/shared/types/admin';
+import { SuspendAccountDialog } from './SuspendAccountDialog';
 import { EditUserModal } from './EditUserModal';
 import { formatCompanyType } from '@/shared/utils';
 
@@ -33,6 +34,7 @@ export const UserDetailView = () => {
     const [loading, setLoading] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
     const [moduleUpdating, setModuleUpdating] = useState<string | null>(null);
+    const [isSuspendDialogOpen, setIsSuspendDialogOpen] = useState(false);
 
     useEffect(() => {
         if (userId) {
@@ -220,6 +222,14 @@ export const UserDetailView = () => {
                         <Edit className="w-4 h-4 mr-2" />
                         Edit User
                     </Button>
+                    {userInfo && (
+                        <Button
+                            variant={userInfo.status === 'suspended' ? 'default' : 'destructive'}
+                            onClick={() => setIsSuspendDialogOpen(true)}
+                        >
+                            {userInfo.status === 'suspended' ? 'Reactivate Account' : 'Suspend Account'}
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -386,7 +396,7 @@ export const UserDetailView = () => {
                                     <div>
                                         <p className="text-sm text-gray-600">Assigned Date</p>
                                         <p className="font-medium">
-                                            {formatDate(userInfo.assignedAccountant.assignedDate)}
+                                            {userInfo.assignedAccountant.assignedDate ? formatDate(userInfo.assignedAccountant.assignedDate) : 'N/A'}
                                         </p>
                                     </div>
                                     <Button variant="outline" size="sm" className="w-full">
@@ -494,6 +504,17 @@ export const UserDetailView = () => {
                             description: "User information updated successfully",
                         });
                     }}
+                />
+            )}
+            {/* Suspend/Reactivate Dialog */}
+            {userInfo && userInfo.company && (
+                <SuspendAccountDialog
+                    open={isSuspendDialogOpen}
+                    onOpenChange={setIsSuspendDialogOpen}
+                    userId={userInfo.id}
+                    companyId={userInfo.company.id}
+                    currentStatus={userInfo.status}
+                    onCompleted={fetchUserDetails}
                 />
             )}
         </div>

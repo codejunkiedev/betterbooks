@@ -236,6 +236,7 @@ export async function getAdminUsers(
     }
 }
 
+// Deprecated: prefer manage-user-status edge function for audit+emails
 export async function updateUserStatus(userId: string, status: Status) {
     try {
         // Update company status instead since we don't have admin access to auth.users
@@ -357,16 +358,15 @@ export async function getDetailedUserInfo(userId: string): Promise<DetailedUserR
         if (company.assigned_accountant_id) {
             const { data: accountant } = await supabase
                 .from('accountants')
-                .select('id, full_name, user_id, created_at')
+                .select('id, full_name, user_id')
                 .eq('id', company.assigned_accountant_id)
                 .maybeSingle();
 
             if (accountant) {
                 assignedAccountant = {
-                    id: accountant.id,
-                    fullName: accountant.full_name,
-                    email: `${accountant.full_name.toLowerCase().replace(' ', '.')}@betterbooks.com`,
-                    assignedDate: accountant.created_at
+                    id: String(accountant.id),
+                    fullName: String(accountant.full_name),
+                    email: `${String(accountant.full_name).toLowerCase().replace(' ', '.')}@betterbooks.com`,
                 };
             }
         }

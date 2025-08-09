@@ -7,9 +7,6 @@ import {
     DropdownMenuTrigger,
 } from '@/shared/components/DropdownMenu';
 import {
-    Mail,
-    Edit,
-    Trash2,
     MoreVertical,
     CheckCircle,
     XCircle,
@@ -169,18 +166,6 @@ export const UserTable = ({ users }: UserTableProps) => {
                                         <DropdownMenuItem onClick={() => navigate(`/admin/users/${user.id}`)}>
                                             <Eye className="mr-2 h-4 w-4" />
                                             View Details
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem>
-                                            <Edit className="mr-2 h-4 w-4" />
-                                            Edit User
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem>
-                                            <Mail className="mr-2 h-4 w-4" />
-                                            Send Message
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="text-red-600">
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Suspend User
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
