@@ -41,6 +41,8 @@ import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminUserManagement from "@/pages/admin/UserManagement";
 import UserDetail from "@/pages/admin/UserDetail";
 import RoleManagement from "@/pages/admin/RoleManagement";
+import AccountantsManagement from "@/pages/admin/Accountants";
+import AccountantDetail from "@/pages/admin/AccountantDetail";
 
 // Role Guards
 import { UserGuard, AccountantGuard, AdminGuard } from "@/shared/components/RoleGuard";
@@ -146,6 +148,8 @@ export default function App() {
         { path: "users", element: <AdminUserManagement /> },
         { path: "users/:userId", element: <UserDetail /> },
         { path: "roles", element: <RoleManagement /> },
+        { path: "accountants", element: <AccountantsManagement /> },
+        { path: "accountants/:accountantId", element: <AccountantDetail /> },
       ],
     },
 

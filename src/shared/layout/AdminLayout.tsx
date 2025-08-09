@@ -180,6 +180,15 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     isCollapsed={isCollapsed}
                     isDark={isDark}
                 />
+                <SidebarLink
+                    to="/admin/accountants"
+                    icon={<User className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                    label="Accountants"
+                    active={isActive("/admin/accountants")}
+                    onNavigate={onNavigate}
+                    isCollapsed={isCollapsed}
+                    isDark={isDark}
+                />
             </div>
         </nav>
     );

@@ -11,6 +11,7 @@ export const activityTypeLabels: Record<ActivityType, string> = {
     COMPANY_ACTIVATED: "Company Activated",
     COMPANY_DEACTIVATED: "Company Deactivated",
     REPORT_GENERATED: "Report Generated",
+    ACCOUNTANT_CREATED: "Accountant Created",
 };
 
 // Activity type colors for badges
@@ -24,6 +25,7 @@ export const activityTypeColors: Record<ActivityType, string> = {
     COMPANY_ACTIVATED: "bg-emerald-100 text-emerald-800",
     COMPANY_DEACTIVATED: "bg-red-100 text-red-800",
     REPORT_GENERATED: "bg-indigo-100 text-indigo-800",
+    ACCOUNTANT_CREATED: "bg-teal-100 text-teal-800",
 };
 
 // Default filters
@@ -46,6 +48,7 @@ export const activityTypeOptions = [
     { value: "COMPANY_ACTIVATED", label: "Company Activated" },
     { value: "COMPANY_DEACTIVATED", label: "Company Deactivated" },
     { value: "REPORT_GENERATED", label: "Report Generated" },
+    { value: "ACCOUNTANT_CREATED", label: "Accountant Created" },
 ];
 
 // Page size options
