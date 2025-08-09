@@ -57,4 +57,56 @@ export interface AdminUsersResponse {
         totalPages: number;
     } | null;
     error: Error | null;
+}
+
+export interface DetailedUserInfo {
+    id: string;
+    email: string;
+    phone?: string | undefined;
+    createdAt: string;
+    lastSignInAt?: string;
+    role: UserRole;
+    status: Status;
+    company?: {
+        id: string;
+        name: string;
+        type: string;
+        isActive: boolean;
+        createdAt: string;
+        primaryContactName?: string;
+        phoneNumber?: string | undefined;
+    } | null;
+    assignedAccountant?: {
+        id: string;
+        fullName: string;
+        email: string;
+        assignedDate: string;
+    } | null;
+    activeModules: string[];
+    documentsCount: number;
+    lastActivity?: string;
+    usageStats?: {
+        loginCount: number;
+        documentsProcessed: number;
+        reportsGenerated: number;
+    };
+    billing?: {
+        plan: string;
+        status: string;
+        documentsUsed: number;
+        documentsLimit: number | null;
+        storageUsed: string;
+        storageLimit: string | null;
+    };
+    supportHistory?: {
+        totalTickets: number;
+        openTickets: number;
+        resolvedTickets: number;
+        avgResolutionTime: string;
+    };
+}
+
+export interface DetailedUserResponse {
+    data: DetailedUserInfo | null;
+    error: Error | null;
 } 

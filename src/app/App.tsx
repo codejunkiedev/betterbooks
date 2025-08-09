@@ -39,6 +39,7 @@ import AccountantActivityLogs from "@/pages/accountant/ActivityLogs";
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminUserManagement from "@/pages/admin/UserManagement";
+import UserDetail from "@/pages/admin/UserDetail";
 import RoleManagement from "@/pages/admin/RoleManagement";
 
 // Role Guards
@@ -143,6 +144,7 @@ export default function App() {
       children: [
         { path: "", element: <AdminDashboard /> },
         { path: "users", element: <AdminUserManagement /> },
+        { path: "users/:userId", element: <UserDetail /> },
         { path: "roles", element: <RoleManagement /> },
       ],
     },

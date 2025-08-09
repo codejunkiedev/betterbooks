@@ -18,12 +18,15 @@ import {
 } from 'lucide-react';
 import { AdminUser } from '@/shared/types/admin';
 import { formatCompanyType } from '@/shared/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface UserTableProps {
     users: AdminUser[];
 }
 
 export const UserTable = ({ users }: UserTableProps) => {
+    const navigate = useNavigate();
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -119,7 +122,7 @@ export const UserTable = ({ users }: UserTableProps) => {
                             </td>
                             <td className="p-4">
                                 <span className="text-sm text-gray-900">
-                                    {user.phone || 'N/A'}
+                                    {user.company?.phone_number || user.phone || 'N/A'}
                                 </span>
                             </td>
                             <td className="p-4">
@@ -163,7 +166,7 @@ export const UserTable = ({ users }: UserTableProps) => {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => navigate(`/admin/users/${user.id}`)}>
                                             <Eye className="mr-2 h-4 w-4" />
                                             View Details
                                         </DropdownMenuItem>

@@ -1,5 +1,5 @@
 import { supabase } from '@/shared/services/supabase/client';
-import { AdminUsersFilters, AdminUsersResponse, Status } from '@/shared/types/admin';
+import { AdminUsersFilters, AdminUsersResponse, Status, DetailedUserResponse, DetailedUserInfo } from '@/shared/types/admin';
 
 export async function getAdminUsers(
     page: number = 1,
@@ -29,7 +29,8 @@ export async function getAdminUsers(
                     id,
                     full_name,
                     avatar_url,
-                    is_active
+                    is_active,
+                    phone_number
                 )
             `);
 
@@ -154,7 +155,7 @@ export async function getAdminUsers(
                     created_at: company.created_at,
                     assigned_accountant_id: company.assigned_accountant_id,
                     primary_contact_name: profile?.full_name || 'N/A',
-                    phone_number: 'N/A'
+                    phone_number: profile?.phone_number || 'N/A'
                 },
                 assigned_accountant: assignedAccountant ? {
                     id: assignedAccountant.id,
@@ -305,5 +306,212 @@ export async function getAccountantsList() {
     } catch (error) {
         console.error("Error fetching accountants list:", error);
         throw error;
+    }
+}
+
+export async function getDetailedUserInfo(userId: string): Promise<DetailedUserResponse> {
+    try {
+        // Get company with basic info
+        const { data: company, error: companyError } = await supabase
+            .from('companies')
+            .select(`
+                id,
+                user_id,
+                name,
+                type,
+                is_active,
+                created_at,
+                assigned_accountant_id,
+                                 profiles!inner(
+                    id,
+                    full_name,
+                    phone_number
+                )
+            `)
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (companyError) throw companyError;
+
+        if (!company) {
+            return {
+                data: null,
+                error: new Error('User not found')
+            };
+        }
+
+        // Get auth details
+        const { data: authUserData, error: authError } = await supabase.functions.invoke('get-admin-users', {
+            body: {
+                action: 'get_user_auth_details',
+                user_id: userId
+            }
+        });
+
+        if (authError) {
+            console.warn(`Failed to get auth details for user ${userId}:`, authError);
+        }
+
+        // Get assigned accountant details
+        let assignedAccountant = null;
+        if (company.assigned_accountant_id) {
+            const { data: accountant } = await supabase
+                .from('accountants')
+                .select('id, full_name, user_id, created_at')
+                .eq('id', company.assigned_accountant_id)
+                .maybeSingle();
+
+            if (accountant) {
+                assignedAccountant = {
+                    id: accountant.id,
+                    fullName: accountant.full_name,
+                    email: `${accountant.full_name.toLowerCase().replace(' ', '.')}@betterbooks.com`,
+                    assignedDate: accountant.created_at
+                };
+            }
+        }
+
+        // Get documents count
+        const { data: documents } = await supabase
+            .from('documents')
+            .select('id')
+            .eq('company_id', company.id);
+
+        // Get activity logs for usage stats
+        const { data: activityLogs } = await supabase
+            .from('activity_logs')
+            .select('activity, created_at')
+            .eq('company_id', company.id)
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        // Calculate usage statistics
+        const loginCount = activityLogs?.filter(log => log.activity === 'user_login').length || 0;
+        const documentsProcessed = documents?.length || 0;
+        const reportsGenerated = activityLogs?.filter(log => log.activity === 'report_generated').length || 0;
+
+        // Get last activity
+        const lastActivity = activityLogs && activityLogs.length > 0 ? activityLogs[0].created_at : undefined;
+
+        // Handle profile data (can be array or object)
+        const profile = Array.isArray(company.profiles) ? company.profiles[0] : company.profiles;
+
+        // Determine status
+        let status: Status = 'active';
+        if (!company.is_active) {
+            status = 'suspended';
+        }
+
+        const detailedUserInfo: DetailedUserInfo = {
+            id: userId,
+            email: authUserData?.email || 'N/A',
+            phone: profile?.phone_number || undefined,
+            createdAt: company.created_at,
+            lastSignInAt: authUserData?.last_sign_in_at,
+            role: 'USER',
+            status,
+            company: {
+                id: company.id,
+                name: company.name,
+                type: company.type,
+                isActive: company.is_active,
+                createdAt: company.created_at,
+                primaryContactName: profile?.full_name,
+                phoneNumber: profile?.phone_number || undefined
+            },
+            assignedAccountant,
+            activeModules: ['Accounting'], // Default modules - this should be enhanced
+            documentsCount: documents?.length || 0,
+            lastActivity,
+            usageStats: {
+                loginCount,
+                documentsProcessed,
+                reportsGenerated
+            },
+            billing: {
+                plan: 'Free',
+                status: 'active',
+                documentsUsed: documentsProcessed,
+                documentsLimit: null,
+                storageUsed: '0 MB',
+                storageLimit: null
+            },
+            supportHistory: {
+                totalTickets: 0,
+                openTickets: 0,
+                resolvedTickets: 0,
+                avgResolutionTime: 'N/A'
+            }
+        };
+
+        return {
+            data: detailedUserInfo,
+            error: null
+        };
+
+    } catch (error) {
+        console.error("Error fetching detailed user info:", error);
+        return {
+            data: null,
+            error: error instanceof Error ? error : new Error('Unknown error')
+        };
+    }
+}
+
+export async function updateUserModules(userId: string, modules: string[]): Promise<{ success: boolean; error?: Error }> {
+    try {
+        // For now, we'll just return success since we don't have a modules table
+        // In a real implementation, you would update a user_modules table
+        console.log(`Updating modules for user ${userId}:`, modules);
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error updating user modules:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error : new Error('Unknown error')
+        };
+    }
+}
+
+export async function updateUserInfo(userId: string, userInfo: Partial<DetailedUserInfo>): Promise<{ success: boolean; error?: Error }> {
+    try {
+        // Update company information if provided
+        if (userInfo.company) {
+            const { error: companyError } = await supabase
+                .from('companies')
+                .update({
+                    name: userInfo.company.name,
+                    type: userInfo.company.type,
+                    is_active: userInfo.company.isActive
+                })
+                .eq('user_id', userId);
+
+            if (companyError) throw companyError;
+        }
+
+        // Update profile information if provided
+        if (userInfo.company) {
+            const profileUpdate = {
+                ...(userInfo.company.primaryContactName !== undefined && { full_name: userInfo.company.primaryContactName }),
+                ...(userInfo.company.phoneNumber !== undefined && { phone_number: userInfo.company.phoneNumber }),
+            };
+
+            if (Object.keys(profileUpdate).length > 0) {
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .update(profileUpdate)
+                    .eq('id', userId);
+                if (profileError) throw profileError;
+            }
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error("Error updating user info:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error : new Error('Unknown error')
+        };
     }
 } 
