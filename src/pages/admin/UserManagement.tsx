@@ -15,13 +15,14 @@ import { getAdminUsers } from '@/shared/services/supabase/admin';
 export default function UserManagement() {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState<AdminUsersFilters>({});
     const [page, setPage] = useState(1);
     const [totalUsers, setTotalUsers] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const itemsPerPage = 25;
+
     const { toast } = useToast();
 
     // Fetch users data
@@ -95,6 +96,7 @@ export default function UserManagement() {
                 activeUsers={activeUsers}
                 suspendedUsers={suspendedUsers}
                 pendingUsers={pendingUsers}
+                isLoading={loading}
             />
 
             {/* Users Table */}
@@ -114,30 +116,24 @@ export default function UserManagement() {
                 <CardContent className="p-0">
                     {loading ? (
                         <UserTableSkeleton />
-                    ) : error ? (
-                        <div className="text-center py-12">
-                            <p className="text-red-600">{error}</p>
-                        </div>
-                    ) : users.length === 0 ? (
-                        <EmptyState
-                            searchTerm={searchTerm}
-                            filters={filters}
-                            onClearFilters={handleClearFilters}
-                        />
+                    ) : users.length > 0 ? (
+                        <UserTable users={users} />
                     ) : (
-                        <>
-                            <UserTable users={users} />
-                            <Pagination
-                                currentPage={page}
-                                totalPages={totalPages}
-                                totalUsers={totalUsers}
-                                itemsPerPage={itemsPerPage}
-                                onPageChange={handlePageChange}
-                            />
-                        </>
+                        <EmptyState searchTerm={searchTerm} filters={filters} onClearFilters={handleClearFilters} />
                     )}
                 </CardContent>
             </Card>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    totalUsers={totalUsers}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={handlePageChange}
+                />
+            )}
         </div>
     );
 } 

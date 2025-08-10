@@ -33,7 +33,7 @@ export default function AccountantsManagement() {
     return (
         <div className="space-y-6">
             {/* Stats Cards */}
-            <AccountantsStatsCards total={stats.total} active={stats.active} inactive={stats.inactive} />
+            <AccountantsStatsCards total={stats.total} active={stats.active} inactive={stats.inactive} isLoading={loading} />
 
             {/* Table */}
             <Card>

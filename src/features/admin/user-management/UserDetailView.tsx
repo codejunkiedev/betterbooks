@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
@@ -37,7 +37,8 @@ export const UserDetailView = () => {
     const [userInfo, setUserInfo] = useState<DetailedUserInfo | null>(null);
     const [loading, setLoading] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [moduleUpdating, setModuleUpdating] = useState<string | null>(null);
+    const [moduleUpdating, setModuleUpdating] = useState<ModuleName | null>(null);
+    const moduleSavingTimerRef = useRef<number | null>(null);
     const [isSuspendDialogOpen, setIsSuspendDialogOpen] = useState(false);
 
     // Assigned accountant modal state
@@ -182,7 +183,16 @@ export const UserDetailView = () => {
 
     const saveModules = async (payload: Array<{ name: ModuleName; enabled: boolean; settings?: Record<string, unknown> }>) => {
         if (!userId) return;
-        setModuleUpdating('saving');
+        setModuleUpdating(payload[0]?.name ?? null);
+        if (moduleSavingTimerRef.current) {
+            window.clearTimeout(moduleSavingTimerRef.current);
+        }
+        moduleSavingTimerRef.current = window.setTimeout(() => {
+            if (moduleUpdating) {
+                setModuleUpdating(null);
+                toast({ title: 'Timeout', description: 'Save took too long. Please try again.', variant: 'destructive' });
+            }
+        }, 15000);
         try {
             const resp = await updateUserModules(userId, payload);
             if (!resp.success) throw resp.error || new Error('Failed to update modules');
@@ -192,6 +202,10 @@ export const UserDetailView = () => {
         } catch (e) {
             toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to update modules', variant: 'destructive' });
         } finally {
+            if (moduleSavingTimerRef.current) {
+                window.clearTimeout(moduleSavingTimerRef.current);
+                moduleSavingTimerRef.current = null;
+            }
             setModuleUpdating(null);
         }
     };
@@ -411,7 +425,7 @@ export const UserDetailView = () => {
                                             <h4 className="font-medium text-gray-900">Accounting</h4>
                                             <p className="text-sm text-gray-600">Basic/Advanced tiers</p>
                                         </div>
-                                        <Switch checked={isModuleEnabled(MODULES.ACCOUNTING)} onCheckedChange={(v) => handleToggleModule(MODULES.ACCOUNTING, v)} disabled={!!moduleUpdating} />
+                                        <Switch checked={isModuleEnabled(MODULES.ACCOUNTING)} onCheckedChange={(v) => handleToggleModule(MODULES.ACCOUNTING, v)} disabled={moduleUpdating === MODULES.ACCOUNTING} />
                                     </div>
                                     {isModuleEnabled(MODULES.ACCOUNTING) && (
                                         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -430,9 +444,9 @@ export const UserDetailView = () => {
                                                 <Button
                                                     size="sm"
                                                     onClick={() => saveModules([{ name: MODULES.ACCOUNTING, enabled: true, settings: { tier: accountingTier } }])}
-                                                    disabled={!!moduleUpdating}
+                                                    disabled={moduleUpdating === MODULES.ACCOUNTING}
                                                 >
-                                                    {moduleUpdating ? (
+                                                    {moduleUpdating === MODULES.ACCOUNTING ? (
                                                         <span className="inline-flex items-center gap-2">
                                                             <LoadingSpinner size="sm" className="border-white" />
                                                             Saving...
@@ -440,7 +454,8 @@ export const UserDetailView = () => {
                                                     ) : (
                                                         'Save'
                                                     )}
-                                                </Button>
+                                                </Button
+                                                >
                                             </div>
                                         </div>
                                     )}
@@ -453,7 +468,7 @@ export const UserDetailView = () => {
                                             <h4 className="font-medium text-gray-900">Tax Filing</h4>
                                             <p className="text-sm text-gray-600">Individual/Corporate</p>
                                         </div>
-                                        <Switch checked={isModuleEnabled(MODULES.TAX_FILING)} onCheckedChange={(v) => handleToggleModule(MODULES.TAX_FILING, v)} disabled={!!moduleUpdating} />
+                                        <Switch checked={isModuleEnabled(MODULES.TAX_FILING)} onCheckedChange={(v) => handleToggleModule(MODULES.TAX_FILING, v)} disabled={moduleUpdating === MODULES.TAX_FILING} />
                                     </div>
                                     {isModuleEnabled(MODULES.TAX_FILING) && (
                                         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -472,9 +487,9 @@ export const UserDetailView = () => {
                                                 <Button
                                                     size="sm"
                                                     onClick={() => saveModules([{ name: MODULES.TAX_FILING, enabled: true, settings: { type: taxType } }])}
-                                                    disabled={!!moduleUpdating}
+                                                    disabled={moduleUpdating === MODULES.TAX_FILING}
                                                 >
-                                                    {moduleUpdating ? (
+                                                    {moduleUpdating === MODULES.TAX_FILING ? (
                                                         <span className="inline-flex items-center gap-2">
                                                             <LoadingSpinner size="sm" className="border-white" />
                                                             Saving...
@@ -495,7 +510,7 @@ export const UserDetailView = () => {
                                             <h4 className="font-medium text-gray-900">PRAL Digital Invoicing</h4>
                                             <p className="text-sm text-gray-600">Environment, limits and restrictions</p>
                                         </div>
-                                        <Switch checked={isModuleEnabled(MODULES.PRAL_INVOICING)} onCheckedChange={(v) => handleToggleModule(MODULES.PRAL_INVOICING, v)} disabled={!!moduleUpdating} />
+                                        <Switch checked={isModuleEnabled(MODULES.PRAL_INVOICING)} onCheckedChange={(v) => handleToggleModule(MODULES.PRAL_INVOICING, v)} disabled={moduleUpdating === MODULES.PRAL_INVOICING} />
                                     </div>
                                     {isModuleEnabled(MODULES.PRAL_INVOICING) && (
                                         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -555,9 +570,9 @@ export const UserDetailView = () => {
                                                 <Button
                                                     size="sm"
                                                     onClick={() => saveModules([{ name: MODULES.PRAL_INVOICING, enabled: true, settings: pralSettings }])}
-                                                    disabled={!!moduleUpdating}
+                                                    disabled={moduleUpdating === MODULES.PRAL_INVOICING}
                                                 >
-                                                    {moduleUpdating ? (
+                                                    {moduleUpdating === MODULES.PRAL_INVOICING ? (
                                                         <span className="inline-flex items-center gap-2">
                                                             <LoadingSpinner size="sm" className="border-white" />
                                                             Saving...

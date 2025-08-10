@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/shared/components/Card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/Tabs";
 import { Receipt, Building2 } from "lucide-react";
 import { UploadBankStatements, UploadInvoicesExpenses } from "@/features/users/upload-document";
+import { useModules } from "@/shared/hooks/useModules";
 
 const UploadDocuments = () => {
-    const [activeTab, setActiveTab] = useState("invoices-expenses");
+    const { accountingTier } = useModules();
+    const hasAdvanced = accountingTier === 'Advanced';
+    const [activeTab, setActiveTab] = useState(hasAdvanced ? "invoices-expenses" : "invoices-expenses");
+
+    useEffect(() => {
+        if (!hasAdvanced && activeTab === 'bank-statements') {
+            setActiveTab('invoices-expenses');
+        }
+    }, [hasAdvanced, activeTab]);
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -22,19 +31,23 @@ const UploadDocuments = () => {
                                 <Receipt className="h-4 w-4" />
                                 Invoices & Expenses
                             </TabsTrigger>
-                            <TabsTrigger value="bank-statements" className="flex items-center gap-2">
-                                <Building2 className="h-4 w-4" />
-                                Bank Statements
-                            </TabsTrigger>
+                            {hasAdvanced && (
+                                <TabsTrigger value="bank-statements" className="flex items-center gap-2">
+                                    <Building2 className="h-4 w-4" />
+                                    Bank Statements
+                                </TabsTrigger>
+                            )}
                         </TabsList>
 
                         <TabsContent value="invoices-expenses" className="space-y-6">
                             <UploadInvoicesExpenses />
                         </TabsContent>
 
-                        <TabsContent value="bank-statements" className="space-y-6">
-                            <UploadBankStatements />
-                        </TabsContent>
+                        {hasAdvanced && (
+                            <TabsContent value="bank-statements" className="space-y-6">
+                                <UploadBankStatements />
+                            </TabsContent>
+                        )}
                     </Tabs>
                 </Card>
             </div>

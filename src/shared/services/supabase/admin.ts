@@ -150,6 +150,31 @@ export async function getAdminUsers(
             accountantsMap.set(accountant.id, accountant);
         });
 
+        // Fetch active modules for all users in one query
+        const userIds = companies.map((c: { user_id: string }) => c.user_id);
+        const { data: modulesRows } = await supabase
+            .from('user_modules')
+            .select('user_id,module,enabled,settings')
+            .in('user_id', userIds);
+
+        const modulesMap = new Map<string, string[]>();
+        (modulesRows || []).forEach((row: { user_id: string; module: ModuleName; enabled: boolean; settings: Record<string, unknown> | null }) => {
+            if (!row.enabled) return;
+            let label = row.module === MODULES.ACCOUNTING ? 'Accounting'
+                : row.module === MODULES.TAX_FILING ? 'Tax Filing'
+                    : row.module === MODULES.PRAL_INVOICING ? 'PRAL Invoicing'
+                        : String(row.module);
+            if (row.module === MODULES.ACCOUNTING) {
+                const tier = (row.settings as { tier?: string } | null)?.tier;
+                if (tier === 'Basic' || tier === 'Advanced') {
+                    label = `${label} (${tier})`;
+                }
+            }
+            const list = modulesMap.get(row.user_id) || [];
+            list.push(label);
+            modulesMap.set(row.user_id, list);
+        });
+
         let processedUsers = companies.map((company) => {
             const assignedAccountant = company.assigned_accountant_id
                 ? accountantsMap.get(company.assigned_accountant_id)
@@ -187,7 +212,7 @@ export async function getAdminUsers(
                     id: assignedAccountant.id,
                     full_name: assignedAccountant.full_name,
                 } : null,
-                active_modules: ['Accounting'],
+                active_modules: modulesMap.get(company.user_id) || [],
                 documents_count: documentsCountMap.get(company.id) || 0,
                 last_activity: undefined
             };
@@ -582,6 +607,28 @@ export async function getDetailedUserInfo(userId: string): Promise<DetailedUserR
             status = 'suspended';
         }
 
+        // Fetch active modules for this user
+        const { data: myModules } = await supabase
+            .from('user_modules')
+            .select('module,enabled,settings')
+            .eq('user_id', userId);
+
+        const activeModules: string[] = (myModules || [])
+            .filter((m: { enabled: boolean }) => !!m.enabled)
+            .map((m: { module: ModuleName; settings: Record<string, unknown> | null }) => {
+                let label = m.module === MODULES.ACCOUNTING ? 'Accounting'
+                    : m.module === MODULES.TAX_FILING ? 'Tax Filing'
+                        : m.module === MODULES.PRAL_INVOICING ? 'PRAL Invoicing'
+                            : String(m.module);
+                if (m.module === MODULES.ACCOUNTING) {
+                    const tier = (m.settings as { tier?: string } | null)?.tier;
+                    if (tier === 'Basic' || tier === 'Advanced') {
+                        label = `${label} (${tier})`;
+                    }
+                }
+                return label;
+            });
+
         const detailedUserInfo: DetailedUserInfo = {
             id: userId,
             email: (authUserData as { email?: string } | undefined)?.email || 'N/A',
@@ -600,7 +647,7 @@ export async function getDetailedUserInfo(userId: string): Promise<DetailedUserR
                 phoneNumber: profile?.phone_number || undefined
             },
             assignedAccountant,
-            activeModules: ['Accounting'], // Default modules - this should be enhanced
+            activeModules,
             documentsCount: documents?.length || 0,
             lastActivity,
             usageStats: {
@@ -682,18 +729,17 @@ export async function updateUserModules(
                 details: { settings: d.settings ?? null }
             });
 
-            try {
-                await supabase.functions.invoke('notify-module-change', {
-                    body: {
-                        user_id: userId,
-                        module: d.name,
-                        enabled: d.enabled,
-                        settings: d.settings ?? null,
-                    }
-                });
-            } catch (e) {
+            // Fire-and-forget notification; do not block UI on edge function latency
+            supabase.functions.invoke('notify-module-change', {
+                body: {
+                    user_id: userId,
+                    module: d.name,
+                    enabled: d.enabled,
+                    settings: d.settings ?? null,
+                }
+            }).catch((e) => {
                 console.warn('notify-module-change failed (non-blocking):', e);
-            }
+            });
         }
 
         return { success: true };

@@ -48,7 +48,8 @@ import AccountantDetail from "@/pages/admin/AccountantDetail";
 import { UserGuard, AccountantGuard, AdminGuard } from "@/shared/components/RoleGuard";
 
 import AuthGuard from "@/shared/components/AuthGuard";
-
+import ModuleGuard from "@/shared/components/ModuleGuard";
+import { MODULES } from "@/shared/constants/modules";
 
 
 export default function App() {
@@ -89,10 +90,34 @@ export default function App() {
       ),
       children: [
         { path: "", element: <UserDashboard /> },
-        { path: "upload", element: <UploadDocuments /> },
-        { path: "documents", element: <DocumentsList /> },
-        { path: "journal", element: <Journal /> },
-        { path: "reports", element: <Reports /> },
+        {
+          path: "upload", element: (
+            <ModuleGuard module={MODULES.ACCOUNTING}>
+              <UploadDocuments />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "documents", element: (
+            <ModuleGuard module={MODULES.ACCOUNTING}>
+              <DocumentsList />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "journal", element: (
+            <ModuleGuard module={MODULES.ACCOUNTING} requiredTier="Basic">
+              <Journal />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "reports", element: (
+            <ModuleGuard module={MODULES.ACCOUNTING} requiredTier="Advanced">
+              <Reports />
+            </ModuleGuard>
+          )
+        },
         { path: "messages", element: <Messages /> },
         { path: "profile", element: <Profile /> },
       ],
