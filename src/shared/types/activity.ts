@@ -9,6 +9,7 @@ export const ActivityType = {
     COMPANY_DEACTIVATED: 'COMPANY_DEACTIVATED',
     REPORT_GENERATED: 'REPORT_GENERATED',
     ACCOUNTANT_CREATED: 'ACCOUNTANT_CREATED',
+    ACCOUNTANT_ASSIGNED: 'ACCOUNTANT_ASSIGNED',
 } as const;
 
 export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];

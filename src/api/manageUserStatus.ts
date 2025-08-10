@@ -30,4 +30,22 @@ export async function manageUserStatus(payload: ManageUserStatusPayload) {
 
     if (response.error) throw new Error(response.error.message);
     return response.data;
+}
+
+export async function sendAssignmentNotification(params: {
+    companyId: string;
+    userId: string; // user who owns the company
+    newAccountantUserId: string; // supabase auth user id of accountant
+    previousAccountantUserId?: string | null;
+}) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) throw new Error('No active session');
+
+    const { error } = await supabase.functions.invoke('send-accountant-assignment-notification', {
+        body: params,
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+    });
+
+    if (error) throw new Error(error.message);
+    return { success: true };
 } 

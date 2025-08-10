@@ -44,7 +44,7 @@ export function getCorsHeaders(req?: Request): Record<string, string> {
 }
 
 export function handleCorsOptions(req: Request): Response {
-    return new Response('ok', { status: 204, headers: getCorsHeaders(req) });
+    return new Response(null, { status: 204, headers: getCorsHeaders(req) });
 }
 
 export function getAppBaseUrl(): string {

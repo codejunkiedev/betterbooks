@@ -1,4 +1,4 @@
-import type { Accountant } from './types';
+import type { Accountant } from '@/shared/types/accountant';
 
 interface Props {
     accountants: Accountant[];

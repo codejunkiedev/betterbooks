@@ -607,3 +607,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Welcome to BetterBooks! We're excited to have you contribute to building the future of automated accounting.** 🚀
+
+## Supabase deployment
+
+```bash
+npx supabase@latest db push --project-ref gtesmfavszkjspaofacu | cat
+
+npx supabase@latest link --project-ref gtesmfavszkjspaofacu | cat
+
+npx supabase@latest functions deploy send-accountant-assignment-notification --no-verify-jwt --project-ref gtesmfavszkjspaofacu | cat
+```

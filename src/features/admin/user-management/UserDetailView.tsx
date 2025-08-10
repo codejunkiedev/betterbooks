@@ -10,20 +10,18 @@ import {
     Edit,
     Building,
     User,
-    CreditCard,
-    HelpCircle,
-    CheckCircle,
-    XCircle,
-    Clock,
     UserCheck,
     BarChart3,
     Settings
 } from 'lucide-react';
-import { getDetailedUserInfo, updateUserModules } from '@/shared/services/supabase/admin';
+import { getDetailedUserInfo, updateUserModules, assignAccountantToUser, getAccountantsWithCapacityAndSpecialization, getAssignmentHistoryByCompany } from '@/shared/services/supabase/admin';
 import type { DetailedUserInfo } from '@/shared/types/admin';
 import { SuspendAccountDialog } from './SuspendAccountDialog';
 import { EditUserModal } from './EditUserModal';
-import { formatCompanyType } from '@/shared/utils';
+import { formatDate } from '@/shared/utils/formatters';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/Dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/Select';
+import { formatCompanyType } from '@/shared/utils/formatters';
 
 export const UserDetailView = () => {
     const { userId } = useParams<{ userId: string }>();
@@ -35,6 +33,28 @@ export const UserDetailView = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [moduleUpdating, setModuleUpdating] = useState<string | null>(null);
     const [isSuspendDialogOpen, setIsSuspendDialogOpen] = useState(false);
+
+    // Assigned accountant modal state
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [assignModalLoading, setAssignModalLoading] = useState(false);
+    const [accountants, setAccountants] = useState<Array<{
+        id: string;
+        full_name: string;
+        email: string;
+        max_client_capacity: number | null;
+        current_clients: number;
+        specialization: string[] | null;
+        availability_status: 'Available' | 'Busy' | 'On Leave' | null;
+    }>>([]);
+    const [selectedAccountantId, setSelectedAccountantId] = useState<string>('');
+    const [assigning, setAssigning] = useState(false);
+    const [assignmentHistory, setAssignmentHistory] = useState<Array<{
+        id: string;
+        created_at: string | null;
+        previous_accountant_name: string | null;
+        new_accountant_name: string | null;
+    }>>([]);
+    const [notifyOnChange, setNotifyOnChange] = useState<boolean>(true);
 
     useEffect(() => {
         if (userId) {
@@ -59,6 +79,18 @@ export const UserDetailView = () => {
             }
 
             setUserInfo(response.data);
+
+            // Load assignment history
+            if (response.data?.company?.id) {
+                try {
+                    const history = await getAssignmentHistoryByCompany(response.data.company.id);
+                    setAssignmentHistory(history);
+                } catch {
+                    setAssignmentHistory([]);
+                }
+            } else {
+                setAssignmentHistory([]);
+            }
         } catch {
             toast({
                 title: "Error",
@@ -67,6 +99,37 @@ export const UserDetailView = () => {
             });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleOpenAssignModal = async () => {
+        // Open immediately and show loading state while fetching
+        setIsAssignModalOpen(true);
+        setAssignModalLoading(true);
+        try {
+            const list = await getAccountantsWithCapacityAndSpecialization();
+            setAccountants(list);
+            setSelectedAccountantId(userInfo?.assignedAccountant?.id || '');
+        } catch {
+            toast({ title: 'Error', description: 'Failed to load accountants', variant: 'destructive' });
+        } finally {
+            setAssignModalLoading(false);
+        }
+    };
+
+    const handleConfirmAssignment = async () => {
+        if (!userId || !selectedAccountantId) return;
+        try {
+            setAssigning(true);
+            await assignAccountantToUser(userId, selectedAccountantId, notifyOnChange);
+            toast({ title: 'Updated', description: 'Assigned accountant updated.' });
+            setIsAssignModalOpen(false);
+            await fetchUserDetails();
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to assign accountant';
+            toast({ title: 'Error', description: message, variant: 'destructive' });
+        } finally {
+            setAssigning(false);
         }
     };
 
@@ -114,40 +177,24 @@ export const UserDetailView = () => {
             active: {
                 label: 'Active',
                 className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200',
-                icon: CheckCircle,
-                iconColor: 'text-green-600'
             },
             suspended: {
                 label: 'Suspended',
                 className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200',
-                icon: XCircle,
-                iconColor: 'text-red-600'
             },
             pending_verification: {
                 label: 'Pending Verification',
                 className: 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200',
-                icon: Clock,
-                iconColor: 'text-yellow-600'
             }
-        };
+        } as const;
 
         const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
-        const Icon = config.icon;
 
         return (
             <Badge className={`flex items-center gap-1 ${config.className}`}>
-                <Icon className={`w-3 h-3 ${config.iconColor}`} />
                 {config.label}
             </Badge>
         );
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
     };
 
     const formatLastActivity = (dateString?: string) => {
@@ -162,6 +209,9 @@ export const UserDetailView = () => {
         if (diffInHours < 168) return `${Math.floor(diffInHours / 24)} days ago`;
         return formatDate(dateString);
     };
+
+    // Derived details for selected accountant
+    const selectedAccountant = accountants.find(acc => acc.id === selectedAccountantId) || null;
 
     if (loading) {
         return (
@@ -209,7 +259,6 @@ export const UserDetailView = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
                             {userInfo.company?.name || 'User Details'}
@@ -383,7 +432,7 @@ export const UserDetailView = () => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {userInfo.assignedAccountant ? (
+                            {userInfo?.assignedAccountant ? (
                                 <div className="space-y-3">
                                     <div>
                                         <p className="font-medium text-gray-900">
@@ -399,95 +448,120 @@ export const UserDetailView = () => {
                                             {userInfo.assignedAccountant.assignedDate ? formatDate(userInfo.assignedAccountant.assignedDate) : 'N/A'}
                                         </p>
                                     </div>
-                                    <Button variant="outline" size="sm" className="w-full">
+                                    <Button variant="outline" size="sm" className="w-full" onClick={handleOpenAssignModal}>
                                         Change Accountant
                                     </Button>
                                 </div>
                             ) : (
                                 <div className="text-center py-4">
-                                    <p className="text-gray-600 mb-3">No accountant assigned</p>
-                                    <Button variant="outline" size="sm">
-                                        Assign Accountant
-                                    </Button>
+                                    <p className="text-sm text-gray-600 mb-2">No accountant assigned.</p>
+                                    <Button size="sm" onClick={handleOpenAssignModal}>Assign Accountant</Button>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
 
-                    {/* Billing Information */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <CreditCard className="w-5 h-5" />
-                                Billing Information
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <label className="text-sm font-medium text-gray-700">Subscription Plan</label>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                                        {userInfo.billing?.plan || 'Free'}
-                                    </Badge>
-                                    {userInfo.billing?.status === 'active' && (
-                                        <CheckCircle className="w-4 h-4 text-green-600" />
-                                    )}
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700">Payment Status</label>
-                                <p className="text-gray-900 capitalize">{userInfo.billing?.status || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700">Usage Limits</label>
-                                <div className="text-sm text-gray-600 space-y-1">
-                                    <p>Documents: {userInfo.billing?.documentsUsed || 0}/{userInfo.billing?.documentsLimit || 'Unlimited'}</p>
-                                    <p>Storage: {userInfo.billing?.storageUsed || '0 MB'}/{userInfo.billing?.storageLimit || 'Unlimited'}</p>
-                                </div>
+                            {/* Assignment History */}
+                            <div className="mt-6">
+                                <p className="text-sm font-medium text-gray-900 mb-2">Assignment History</p>
+                                {assignmentHistory.length === 0 ? (
+                                    <p className="text-sm text-gray-600">No history yet.</p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {assignmentHistory.map(item => (
+                                            <li key={item.id} className="text-sm text-gray-700">
+                                                <span className="font-medium">{item.new_accountant_name || 'Unknown'}</span> assigned
+                                                {item.previous_accountant_name ? (
+                                                    <>
+                                                        , replacing <span className="font-medium">{item.previous_accountant_name}</span>
+                                                    </>
+                                                ) : null}
+                                                {item.created_at ? (
+                                                    <span className="text-gray-500"> • {formatDate(item.created_at)}</span>
+                                                ) : null}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Support History */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <HelpCircle className="w-5 h-5" />
-                                Support History
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="text-center space-y-2">
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {userInfo.supportHistory?.totalTickets || 0}
-                                </p>
-                                <p className="text-sm text-gray-600">Total Tickets</p>
+                    {/* Assign Accountant Modal */}
+                    <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Change Accountant</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                                {assignModalLoading ? (
+                                    <div className="py-6 text-sm text-gray-600">Loading accountants...</div>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <Select value={selectedAccountantId} onValueChange={setSelectedAccountantId}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select an accountant" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {accountants.map(acc => {
+                                                        const atCapacity = acc.max_client_capacity !== null && acc.current_clients >= acc.max_client_capacity;
+                                                        const label = `${acc.full_name} ${acc.specialization && acc.specialization.length ? '• ' + acc.specialization.join(', ') : ''}`;
+                                                        return (
+                                                            <SelectItem key={acc.id} value={acc.id} disabled={atCapacity}>
+                                                                <div className="flex flex-col">
+                                                                    <span className={atCapacity ? 'text-gray-400' : ''}>{label}</span>
+                                                                    <span className="text-xs text-gray-500">
+                                                                        Clients: {acc.current_clients}{acc.max_client_capacity !== null ? ` / ${acc.max_client_capacity}` : ''} • Availability: {acc.availability_status || 'Unknown'}
+                                                                        {atCapacity ? ' • Capacity Full' : ''}
+                                                                    </span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        );
+                                                    })}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        {selectedAccountant && (
+                                            <div className="rounded-lg border p-3 text-sm text-gray-700">
+                                                <div className="font-medium text-gray-900 mb-1">Selected Accountant Details</div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    <div>
+                                                        <span className="text-gray-600">Name:</span> {selectedAccountant.full_name}
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600">Clients:</span> {selectedAccountant.current_clients}{selectedAccountant.max_client_capacity !== null ? ` / ${selectedAccountant.max_client_capacity}` : ''}
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600">Availability:</span> {selectedAccountant.availability_status || 'Unknown'}
+                                                    </div>
+                                                    {selectedAccountant.specialization && selectedAccountant.specialization.length > 0 && (
+                                                        <div className="sm:col-span-2">
+                                                            <span className="text-gray-600">Specialization:</span> {selectedAccountant.specialization.join(', ')}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between rounded-lg border p-3">
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-900">Send notifications</div>
+                                                <div className="text-xs text-gray-600">Email the user and accountant about this change.</div>
+                                            </div>
+                                            <Switch checked={notifyOnChange} onCheckedChange={setNotifyOnChange} />
+                                        </div>
+                                    </>
+                                )}
+
+                                <div className="flex justify-end gap-2">
+                                    <Button variant="outline" onClick={() => setIsAssignModalOpen(false)} disabled={assigning}>Cancel</Button>
+                                    <Button onClick={handleConfirmAssignment} disabled={!selectedAccountantId || assigning || assignModalLoading}>
+                                        {assigning ? 'Assigning...' : 'Confirm'}
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Open:</span>
-                                    <span className="font-medium text-orange-600">
-                                        {userInfo.supportHistory?.openTickets || 0}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Resolved:</span>
-                                    <span className="font-medium text-green-600">
-                                        {userInfo.supportHistory?.resolvedTickets || 0}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Avg. Resolution:</span>
-                                    <span className="font-medium">
-                                        {userInfo.supportHistory?.avgResolutionTime || 'N/A'}
-                                    </span>
-                                </div>
-                            </div>
-                            <Button variant="outline" size="sm" className="w-full">
-                                View Support History
-                            </Button>
-                        </CardContent>
-                    </Card>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
 
@@ -506,6 +580,7 @@ export const UserDetailView = () => {
                     }}
                 />
             )}
+
             {/* Suspend/Reactivate Dialog */}
             {userInfo && userInfo.company && (
                 <SuspendAccountDialog

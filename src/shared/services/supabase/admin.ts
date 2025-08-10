@@ -1,5 +1,7 @@
 import { supabase } from '@/shared/services/supabase/client';
 import { AdminUsersFilters, AdminUsersResponse, Status, DetailedUserResponse, DetailedUserInfo } from '@/shared/types/admin';
+import { logActivity } from '@/shared/utils/activity';
+import { ActivityType } from '@/shared/types/activity';
 
 export async function getAdminUsers(
     page: number = 1,
@@ -270,15 +272,86 @@ export async function updateUserStatus(userId: string, status: Status) {
     }
 }
 
-export async function assignAccountantToUser(userId: string, accountantId: string) {
+export async function assignAccountantToUser(userId: string, accountantId: string, notify: boolean = true) {
     try {
+        // Get company and current assignment
+        const { data: company, error: companyError } = await supabase
+            .from('companies')
+            .select('id, assigned_accountant_id')
+            .eq('user_id', userId)
+            .maybeSingle();
+        if (companyError) throw companyError;
+        if (!company) throw new Error('Company not found for user');
+
+        const previousAccountantId: string | null = (company as { id: string; assigned_accountant_id: string | null }).assigned_accountant_id;
+
+        // Update assignment
         const { error } = await supabase
             .from('companies')
             .update({ assigned_accountant_id: accountantId })
             .eq('user_id', userId);
-
         if (error) throw error;
-        return { success: true };
+
+        // Fetch actor and emails for notifications
+        const { data: { user: actor } } = await supabase.auth.getUser();
+
+        // Fetch new accountant details
+        const { data: newAcc } = await supabase
+            .from('accountants')
+            .select('id, full_name, user_id')
+            .eq('id', accountantId)
+            .maybeSingle();
+
+        // Fetch previous accountant details if any
+        let prevAcc: { id: string; full_name: string; user_id: string } | null = null;
+        if (previousAccountantId) {
+            const { data: prev } = await supabase
+                .from('accountants')
+                .select('id, full_name, user_id')
+                .eq('id', previousAccountantId)
+                .maybeSingle();
+            if (prev) {
+                prevAcc = prev as { id: string; full_name: string; user_id: string };
+            }
+        }
+
+        // Log activity
+        try {
+            await logActivity(
+                (company as { id: string }).id,
+                actor?.id || null,
+                ActivityType.ACCOUNTANT_ASSIGNED,
+                actor?.email || 'unknown',
+                'assign_accountant',
+                {
+                    previous_accountant_id: previousAccountantId || null,
+                    previous_accountant_name: prevAcc?.full_name || null,
+                    new_accountant_id: newAcc?.id || accountantId,
+                    new_accountant_name: newAcc?.full_name || 'Unknown',
+                    notifications_sent: notify,
+                }
+            );
+        } catch (e) {
+            console.error('Failed to log assignment activity', e);
+        }
+
+        // Fire-and-forget email notifications via Edge Function
+        if (notify) {
+            try {
+                await supabase.functions.invoke('send-accountant-assignment-notification', {
+                    body: {
+                        companyId: (company as { id: string }).id,
+                        userId,
+                        newAccountantUserId: (newAcc as { user_id: string } | null)?.user_id || null,
+                        previousAccountantUserId: (prevAcc as { user_id: string } | null)?.user_id || null,
+                    }
+                });
+            } catch (notifyErr) {
+                console.warn('Assignment notification failed (non-blocking):', notifyErr);
+            }
+        }
+
+        return { success: true, companyId: (company as { id: string }).id, previousAccountantId };
     } catch (error) {
         console.error("Error assigning accountant:", error);
         throw error;
@@ -308,6 +381,75 @@ export async function getAccountantsList() {
         console.error("Error fetching accountants list:", error);
         throw error;
     }
+}
+
+export async function getAccountantsWithCapacityAndSpecialization(): Promise<Array<{
+    id: string;
+    full_name: string;
+    email: string;
+    max_client_capacity: number | null;
+    current_clients: number;
+    specialization: string[] | null;
+    availability_status: 'Available' | 'Busy' | 'On Leave' | null;
+}>> {
+    // Fetch active accountants and their current client counts
+    const { data: accountants, error } = await supabase
+        .from('accountants')
+        .select('id, full_name, user_id, specialization, max_client_capacity, availability_status')
+        .eq('is_active', true);
+    if (error) throw error;
+
+    const accountantIds: string[] = (accountants || []).map(a => a.id as string);
+    const clientCounts = new Map<string, number>();
+
+    if (accountantIds.length > 0) {
+        const { data: companies, error: companiesError } = await supabase
+            .from('companies')
+            .select('assigned_accountant_id')
+            .in('assigned_accountant_id', accountantIds);
+        if (companiesError) throw companiesError;
+        for (const c of (companies || []) as Array<{ assigned_accountant_id: string | null }>) {
+            if (!c.assigned_accountant_id) continue;
+            const key = c.assigned_accountant_id;
+            clientCounts.set(key, (clientCounts.get(key) || 0) + 1);
+        }
+    }
+
+    return (accountants || []).map(a => ({
+        id: a.id as string,
+        full_name: a.full_name as string,
+        email: `accountant-${a.id}@example.com`,
+        max_client_capacity: (a as { max_client_capacity: number | null }).max_client_capacity ?? null,
+        current_clients: clientCounts.get(a.id as string) || 0,
+        specialization: (a as { specialization: string[] | null }).specialization ?? null,
+        availability_status: (a as { availability_status: 'Available' | 'Busy' | 'On Leave' | null }).availability_status ?? null,
+    }));
+}
+
+export async function getAssignmentHistoryByCompany(companyId: string): Promise<Array<{
+    id: string;
+    created_at: string | null;
+    previous_accountant_name: string | null;
+    new_accountant_name: string | null;
+}>> {
+    // Pull from activity logs of type ACCOUNTANT_ASSIGNED
+    const { data, error } = await supabase
+        .from('activity_logs')
+        .select('id, activity, details, created_at')
+        .eq('company_id', companyId)
+        .eq('activity', ActivityType.ACCOUNTANT_ASSIGNED)
+        .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    return ((data || []) as Array<{ id: string | number; details: Record<string, unknown> | null; created_at: string | null }>).map((row) => {
+        const details = (row.details || {}) as { previous_accountant_name?: string | null; new_accountant_name?: string | null };
+        return {
+            id: String(row.id),
+            created_at: row.created_at,
+            previous_accountant_name: details.previous_accountant_name ?? null,
+            new_accountant_name: details.new_accountant_name ?? null,
+        };
+    });
 }
 
 export async function getDetailedUserInfo(userId: string): Promise<DetailedUserResponse> {
@@ -354,12 +496,12 @@ export async function getDetailedUserInfo(userId: string): Promise<DetailedUserR
         }
 
         // Get assigned accountant details
-        let assignedAccountant = null;
-        if (company.assigned_accountant_id) {
+        let assignedAccountant: DetailedUserInfo['assignedAccountant'] = null;
+        if ((company as { assigned_accountant_id: string | null }).assigned_accountant_id) {
             const { data: accountant } = await supabase
                 .from('accountants')
                 .select('id, full_name, user_id')
-                .eq('id', company.assigned_accountant_id)
+                .eq('id', (company as { assigned_accountant_id: string }).assigned_accountant_id)
                 .maybeSingle();
 
             if (accountant) {
@@ -368,6 +510,18 @@ export async function getDetailedUserInfo(userId: string): Promise<DetailedUserR
                     fullName: String(accountant.full_name),
                     email: `${String(accountant.full_name).toLowerCase().replace(' ', '.')}@betterbooks.com`,
                 };
+                // Fetch last assignment date for this company
+                const { data: lastAssign } = await supabase
+                    .from('activity_logs')
+                    .select('created_at')
+                    .eq('company_id', (company as { id: string }).id)
+                    .eq('activity', ActivityType.ACCOUNTANT_ASSIGNED)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                if (lastAssign?.created_at) {
+                    assignedAccountant.assignedDate = lastAssign.created_at as string;
+                }
             }
         }
 
@@ -375,13 +529,13 @@ export async function getDetailedUserInfo(userId: string): Promise<DetailedUserR
         const { data: documents } = await supabase
             .from('documents')
             .select('id')
-            .eq('company_id', company.id);
+            .eq('company_id', (company as { id: string }).id);
 
         // Get activity logs for usage stats
         const { data: activityLogs } = await supabase
             .from('activity_logs')
             .select('activity, created_at')
-            .eq('company_id', company.id)
+            .eq('company_id', (company as { id: string }).id)
             .order('created_at', { ascending: false })
             .limit(100);
 
@@ -394,29 +548,31 @@ export async function getDetailedUserInfo(userId: string): Promise<DetailedUserR
         const lastActivity = activityLogs && activityLogs.length > 0 ? activityLogs[0].created_at : undefined;
 
         // Handle profile data (can be array or object)
-        const profile = Array.isArray(company.profiles) ? company.profiles[0] : company.profiles;
+        type ProfileRow = { id: string; full_name?: string; phone_number?: string | null };
+        const rawProfiles = (company as { profiles: ProfileRow[] | ProfileRow }).profiles;
+        const profile: ProfileRow | null = Array.isArray(rawProfiles) ? (rawProfiles[0] || null) : (rawProfiles || null);
 
         // Determine status
         let status: Status = 'active';
-        if (!company.is_active) {
+        if (!(company as { is_active: boolean }).is_active) {
             status = 'suspended';
         }
 
         const detailedUserInfo: DetailedUserInfo = {
             id: userId,
-            email: authUserData?.email || 'N/A',
+            email: (authUserData as { email?: string } | undefined)?.email || 'N/A',
             phone: profile?.phone_number || undefined,
-            createdAt: company.created_at,
-            lastSignInAt: authUserData?.last_sign_in_at,
+            createdAt: (company as { created_at: string }).created_at,
+            lastSignInAt: (authUserData as { last_sign_in_at?: string } | undefined)?.last_sign_in_at || '',
             role: 'USER',
             status,
             company: {
-                id: company.id,
-                name: company.name,
-                type: company.type,
-                isActive: company.is_active,
-                createdAt: company.created_at,
-                primaryContactName: profile?.full_name,
+                id: (company as { id: string }).id,
+                name: (company as { name: string }).name,
+                type: (company as { type: string }).type,
+                isActive: (company as { is_active: boolean }).is_active,
+                createdAt: (company as { created_at: string }).created_at,
+                primaryContactName: profile?.full_name || 'N/A',
                 phoneNumber: profile?.phone_number || undefined
             },
             assignedAccountant,
