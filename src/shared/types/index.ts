@@ -16,3 +16,4 @@ export * from './journal';
 export * from './reports';
 export * from './activity';
 export * from './environment';
+export * from './admin';

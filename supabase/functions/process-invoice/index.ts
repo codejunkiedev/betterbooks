@@ -7,6 +7,8 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// CORS helpers
+import { getCorsHeaders, handleCorsOptions } from '../_shared/utils.ts'
 
 // Type definitions
 export interface ProcessInvoiceRequest {
@@ -46,14 +48,6 @@ interface DeepSeekResponse {
   line_items?: LineItemSuggestion[];
 }
 
-// Constants
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Credentials': 'true',
-} as const;
-
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
@@ -84,12 +78,14 @@ function initUserClient(jwt: string) {
 const createResponse = <T = unknown>(
   body: ApiResponse<T>,
   status: number = 200,
-  additionalHeaders: Record<string, string> = {}
+  additionalHeaders: Record<string, string> = {},
+  req?: Request
 ): Response => {
+  const cors = getCorsHeaders(req)
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...CORS_HEADERS,
+      ...cors,
       'Content-Type': 'application/json',
       ...additionalHeaders,
     },
@@ -402,16 +398,16 @@ async function processInvoice(invoice: Invoice): Promise<{ url: string; isAccess
 Deno.serve(async (req) => {
   // Handle preflight CORS request
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: CORS_HEADERS,
-    });
+    return handleCorsOptions(req);
   }
 
   // Validate HTTP method
   if (req.method !== 'POST') {
     return createResponse(
       { error: 'Method not allowed. Use POST.' },
-      405
+      405,
+      {},
+      req
     );
   }
 
@@ -421,7 +417,9 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return createResponse(
         { error: 'Missing Authorization header' },
-        401
+        401,
+        {},
+        req
       );
     }
 
@@ -434,7 +432,9 @@ Deno.serve(async (req) => {
     if (!body.user_id) {
       return createResponse(
         { error: 'Missing required field: user_id' },
-        400
+        400,
+        {},
+        req
       );
     }
 
@@ -459,7 +459,9 @@ Deno.serve(async (req) => {
 
       return createResponse(
         { error: 'Failed to fetch invoices. Please try again later.' },
-        500
+        500,
+        {},
+        req
       );
     }
 
@@ -468,7 +470,10 @@ Deno.serve(async (req) => {
         {
           message: 'No pending invoices found for this user',
           data: { count: 0 }
-        }
+        },
+        200,
+        {},
+        req
       );
     }
 
@@ -536,7 +541,9 @@ Deno.serve(async (req) => {
           results: processedResults
         }
       },
-      200 // OK - processing has been completed
+      200,
+      {},
+      req
     );
 
   } catch (error) {
@@ -553,14 +560,18 @@ Deno.serve(async (req) => {
     if (error instanceof SyntaxError) {
       return createResponse(
         { error: 'Invalid JSON in request body' },
-        400
+        400,
+        {},
+        req
       );
     }
 
     // Generic error handler
     return createResponse(
       { error: 'Internal server error' },
-      500
+      500,
+      {},
+      req
     );
   }
 });

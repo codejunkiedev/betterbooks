@@ -1,0 +1,28 @@
+# Supabase project configuration
+# Declaring functions here enables automatic deploys on branch/preview builds.
+
+[functions]
+
+[functions.create-accountant]
+verify_jwt = true
+
+[functions.get-admin-users]
+verify_jwt = true
+
+[functions.manage-user-status]
+verify_jwt = true
+
+[functions.notify-module-change]
+verify_jwt = true
+
+[functions.process-invoice]
+verify_jwt = true
+
+[functions.send-accountant-assignment-notification]
+verify_jwt = true
+
+[functions.send-comment-notification]
+verify_jwt = true
+
+[functions.send-profile-update-notification]
+verify_jwt = true

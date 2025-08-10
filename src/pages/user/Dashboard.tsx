@@ -1,8 +1,10 @@
 import { FinancialSummary } from "@/features/users/dashboard/FinancialSummary";
 import { AccountingSummary } from "@/features/users/dashboard/AccountingSummary";
 import { AccountantQuestions } from "@/features/users/dashboard/AccountantQuestions";
+import { useModules } from "@/shared/hooks/useModules";
 
 const Dashboard = () => {
+  const { hasAccounting } = useModules();
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -17,7 +19,7 @@ const Dashboard = () => {
         <FinancialSummary />
 
         {/* Accounting Summary */}
-        <AccountingSummary />
+        {hasAccounting && <AccountingSummary />}
 
         {/* Questions from Accountant */}
         <AccountantQuestions />

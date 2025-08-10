@@ -7,6 +7,7 @@ import { useAppSelector } from "@/shared/hooks/useRedux";
 import { Button } from "@/shared/components/Button";
 import { useNotifications } from "@/shared/hooks/useNotifications";
 import { NotificationBadge } from "@/shared/components/NotificationBadge";
+import { useModules } from "@/shared/hooks/useModules";
 
 interface Company {
     id: string;
@@ -201,7 +202,8 @@ type SidebarContentProps = {
 };
 function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false }: SidebarContentProps) {
     const { unreadCount } = useNotifications();
-    
+    const { hasAccounting, accountingTier } = useModules();
+
     const handleNavigation = () => {
         onNavigate();
     };
@@ -219,42 +221,50 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     isDark={isDark}
                     notificationCount={unreadCount}
                 />
-                <SidebarLink
-                    to="/upload"
-                    icon={<Upload className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Upload Documents"
-                    active={isActive("/upload")}
-                    onNavigate={handleNavigation}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/documents"
-                    icon={<FileText className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Documents"
-                    active={isActive("/documents")}
-                    onNavigate={handleNavigation}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/journal"
-                    icon={<BookOpen className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Journal"
-                    active={isActive("/journal")}
-                    onNavigate={handleNavigation}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
-                <SidebarLink
-                    to="/reports"
-                    icon={<BarChart3 className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
-                    label="Reports"
-                    active={isActive("/reports")}
-                    onNavigate={handleNavigation}
-                    isCollapsed={isCollapsed}
-                    isDark={isDark}
-                />
+                {hasAccounting && (
+                    <SidebarLink
+                        to="/upload"
+                        icon={<Upload className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                        label="Upload Documents"
+                        active={isActive("/upload")}
+                        onNavigate={handleNavigation}
+                        isCollapsed={isCollapsed}
+                        isDark={isDark}
+                    />
+                )}
+                {hasAccounting && (
+                    <SidebarLink
+                        to="/documents"
+                        icon={<FileText className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                        label="Documents"
+                        active={isActive("/documents")}
+                        onNavigate={handleNavigation}
+                        isCollapsed={isCollapsed}
+                        isDark={isDark}
+                    />
+                )}
+                {hasAccounting && (
+                    <SidebarLink
+                        to="/journal"
+                        icon={<BookOpen className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                        label="Journal"
+                        active={isActive("/journal")}
+                        onNavigate={handleNavigation}
+                        isCollapsed={isCollapsed}
+                        isDark={isDark}
+                    />
+                )}
+                {hasAccounting && accountingTier === 'Advanced' && (
+                    <SidebarLink
+                        to="/reports"
+                        icon={<BarChart3 className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                        label="Reports"
+                        active={isActive("/reports")}
+                        onNavigate={handleNavigation}
+                        isCollapsed={isCollapsed}
+                        isDark={isDark}
+                    />
+                )}
                 <SidebarLink
                     to="/messages"
                     icon={<MessageCircle className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
