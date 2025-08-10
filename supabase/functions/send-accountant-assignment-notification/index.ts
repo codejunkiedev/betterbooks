@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { getCorsHeaders, handleCorsOptions, getAppBaseUrl } from '../_shared/utils.ts'
+import { getCorsHeaders, handleCorsOptions, getAppBaseUrl, sleep, sendEmailWithRetry } from '../_shared/utils.ts'
 
 interface AssignBody {
     companyId: string;
@@ -47,27 +47,6 @@ serve(async (req) => {
 
         const appBaseUrl = getAppBaseUrl();
 
-        const sendEmail = async (to: string, subject: string, html: string) => {
-            const resp = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${resendApiKey}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    from: 'BetterBooks <noreply@usebetterbooks.com>',
-                    to: [to],
-                    subject,
-                    html,
-                }),
-            });
-            if (!resp.ok) {
-                const text = await resp.text();
-                throw new Error(`Failed to send email: ${text}`);
-            }
-        };
-
-        // Compose emails
         const userHtml = `
       <h2>Your accountant has changed</h2>
       <p>We've assigned a new accountant to your account to better support your needs.</p>
@@ -85,19 +64,29 @@ serve(async (req) => {
       </div>
     `;
 
-        // Send emails where emails exist
-        const tasks: Promise<void>[] = [];
-        if (userEmail) tasks.push(sendEmail(userEmail, 'Your accountant has been assigned', userHtml));
-        if (newAccEmail) tasks.push(sendEmail(newAccEmail, 'A new client has been assigned to you', accHtml));
+        // Send emails sequentially with small delays to respect 2 req/s rate limit
+        let sent = 0;
+        const sendAndMaybeDelay = async (fn: () => Promise<void>) => {
+            if (sent > 0) {
+                await sleep(650); // ~2 req/s
+            }
+            await fn();
+            sent++;
+        };
+
+        if (userEmail) {
+            await sendAndMaybeDelay(() => sendEmailWithRetry(userEmail, 'Your accountant has been assigned', userHtml));
+        }
+        if (newAccEmail) {
+            await sendAndMaybeDelay(() => sendEmailWithRetry(newAccEmail, 'A new client has been assigned to you', accHtml));
+        }
         if (prevAccEmail) {
             const prevHtml = `
         <h2>Client reassigned</h2>
         <p>This is to inform you that a client has been reassigned to another accountant.</p>
       `;
-            tasks.push(sendEmail(prevAccEmail, 'Client reassigned', prevHtml));
+            await sendAndMaybeDelay(() => sendEmailWithRetry(prevAccEmail, 'Client reassigned', prevHtml));
         }
-
-        await Promise.all(tasks);
 
         return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } });
     } catch (error) {
