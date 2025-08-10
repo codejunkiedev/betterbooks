@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, AuthError } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { getCorsHeaders, handleCorsOptions, getAppBaseUrl } from '../_shared/utils.ts'
 
 interface CreateAccountantRequest {
     full_name: string
@@ -30,8 +30,10 @@ function generateAccountantCode(): string {
 
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return handleCorsOptions(req)
     }
+
+    const cors = getCorsHeaders(req)
 
     try {
         const body: CreateAccountantRequest = await req.json()
@@ -59,13 +61,13 @@ serve(async (req) => {
             const isDup = lower.includes('exists') || lower.includes('already') || lower.includes('duplicate')
             return new Response(
                 JSON.stringify({ error: isDup ? 'Email already exists in the system' : message, code: isDup ? 'EMAIL_EXISTS' : 'CREATE_USER_FAILED' }),
-                { status: isDup ? 409 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                { status: isDup ? 409 : 400, headers: { ...cors, 'Content-Type': 'application/json' } }
             )
         }
 
         const userId = createdUser?.user?.id
         if (!userId) {
-            return new Response(JSON.stringify({ error: 'User creation failed' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+            return new Response(JSON.stringify({ error: 'User creation failed' }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
         }
 
         // Upsert profile (full_name, phone)
@@ -114,6 +116,7 @@ serve(async (req) => {
 
         // Send welcome email with credentials
         try {
+            const appBaseUrl = getAppBaseUrl()
             const emailResponse = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: {
@@ -133,7 +136,7 @@ serve(async (req) => {
             </div>
             <p>Please sign in and change your password immediately.</p>
             <div style="margin-top:16px">
-              <a href="https://betterbooks-two.vercel.app/accountant/login" style="background:#111827;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none">Sign in</a>
+              <a href="${appBaseUrl}/accountant/login" style="background:#111827;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none">Sign in</a>
             </div>
           `,
                 }),
@@ -147,13 +150,13 @@ serve(async (req) => {
 
         return new Response(
             JSON.stringify({ success: true, data: { accountant, user_id: userId } }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } }
         )
     } catch (error) {
         console.error('create-accountant error:', error)
         return new Response(
             JSON.stringify({ error: (error as Error).message ?? 'Unknown error' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
         )
     }
 }) 

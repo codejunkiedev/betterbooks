@@ -2,7 +2,7 @@ import { EnvironmentType } from '../types/environment';
 import type { EnvironmentTypeValue, EnvironmentConfig } from '../types/environment';
 
 
-const requiredEnvVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'] as const;
+const requiredEnvVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'VITE_APP_BASE_URL'] as const;
 
 function validateEnvironment(): void {
     const missingVars = requiredEnvVars.filter(varName => !import.meta.env[varName]);
@@ -29,6 +29,7 @@ export const config: EnvironmentConfig = {
     VITE_APP_NAME: import.meta.env.VITE_APP_NAME || 'BetterBooks',
     VITE_APP_VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
     VITE_APP_ENV: import.meta.env.VITE_APP_ENV || mode,
+    VITE_APP_BASE_URL: import.meta.env.VITE_APP_BASE_URL!,
 };
 
 validateEnvironment();
@@ -47,5 +48,5 @@ export const getEnvironmentInfo = () => ({
     version: config.VITE_APP_VERSION,
 });
 
-console.log('🌍 Environment:', config.VITE_APP_ENV);
+console.log('🌍 Environment:', config.VITE_APP_ENV, 'Base URL:', config.VITE_APP_BASE_URL);
 

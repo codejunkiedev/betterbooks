@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { getCorsHeaders, handleCorsOptions } from '../_shared/utils.ts'
 
 console.log("get-admin-users function started")
 
@@ -12,8 +12,10 @@ interface RequestBody {
 serve(async (req) => {
     // Handle CORS preflight requests
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return handleCorsOptions(req)
     }
+
+    const cors = getCorsHeaders(req)
 
     try {
         const { action, user_id }: RequestBody = await req.json()
@@ -43,7 +45,7 @@ serve(async (req) => {
                     }),
                     {
                         status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                        headers: { ...cors, 'Content-Type': 'application/json' }
                     }
                 )
             }
@@ -55,7 +57,7 @@ serve(async (req) => {
                     }),
                     {
                         status: 404,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                        headers: { ...cors, 'Content-Type': 'application/json' }
                     }
                 )
             }
@@ -73,7 +75,7 @@ serve(async (req) => {
                 JSON.stringify(authDetails),
                 {
                     status: 200,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...cors, 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -83,7 +85,7 @@ serve(async (req) => {
             JSON.stringify({ error: 'Invalid action' }),
             {
                 status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                headers: { ...cors, 'Content-Type': 'application/json' }
             }
         )
 
@@ -92,11 +94,11 @@ serve(async (req) => {
         return new Response(
             JSON.stringify({
                 error: 'Internal server error',
-                details: error.message
+                details: (error as Error).message
             }),
             {
                 status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                headers: { ...cors, 'Content-Type': 'application/json' }
             }
         )
     }

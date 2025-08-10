@@ -218,7 +218,7 @@ export const UserDetailView = () => {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setShowEditModal(true)}>
+                    <Button className="bg-gray-900 hover:bg-gray-800 text-white" onClick={() => setShowEditModal(true)}>
                         <Edit className="w-4 h-4 mr-2" />
                         Edit User
                     </Button>

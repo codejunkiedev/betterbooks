@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { getCorsHeaders, handleCorsOptions } from '../_shared/utils.ts'
 
 interface RequestBody {
     action: 'suspend' | 'reactivate'
@@ -15,8 +15,10 @@ interface RequestBody {
 
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return handleCorsOptions(req)
     }
+
+    const cors = getCorsHeaders(req)
 
     try {
         const { action, user_id, company_id, reason, notes, notify_user, notify_accountant, actor_id }: RequestBody = await req.json()
@@ -113,9 +115,9 @@ serve(async (req) => {
             }
         }
 
-        return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } })
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error'
-        return new Response(JSON.stringify({ error: message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        return new Response(JSON.stringify({ error: message }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
     }
 }) 

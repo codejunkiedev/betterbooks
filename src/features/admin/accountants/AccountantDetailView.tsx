@@ -3,12 +3,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
 import { Badge } from '@/shared/components/Badge';
-import { ArrowLeft, User, Phone, Calendar, IdCard, Briefcase, Users } from 'lucide-react';
+import { ArrowLeft, User, Phone, Calendar, IdCard, Briefcase, Users, Edit } from 'lucide-react';
 import { supabase } from '@/shared/services/supabase/client';
 import type { Accountant } from '@/shared/types/accountant';
+import { EditAccountantModal } from '@/shared/components/accountants';
 
 interface AccountantDetail extends Accountant {
     assigned_clients_count: number;
+    email?: string | null;
+    assigned_clients?: Array<{ id: string; name: string }>
 }
 
 export function AccountantDetailView() {
@@ -16,6 +19,7 @@ export function AccountantDetailView() {
     const { accountantId } = useParams<{ accountantId: string }>();
     const [loading, setLoading] = useState(true);
     const [accountant, setAccountant] = useState<AccountantDetail | null>(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
     useEffect(() => {
         const fetchAccountant = async () => {
@@ -30,17 +34,33 @@ export function AccountantDetailView() {
 
                 if (error) throw error;
 
-                let assignedClientsCount = 0;
-                const { count } = await supabase
-                    .from('companies')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('assigned_accountant_id', accountantId);
+                const [{ count }, { data: companies }] = await Promise.all([
+                    supabase
+                        .from('companies')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('assigned_accountant_id', accountantId),
+                    supabase
+                        .from('companies')
+                        .select('id, name')
+                        .eq('assigned_accountant_id', accountantId)
+                ]);
 
-                assignedClientsCount = count || 0;
+                let email: string | null = null;
+                if (data?.user_id) {
+                    const { data: authDetails } = await supabase.functions.invoke('get-admin-users', {
+                        body: { action: 'get_user_auth_details', user_id: data.user_id }
+                    });
+                    email = authDetails?.email ?? null;
+                }
 
-                setAccountant(data ? { ...(data as Accountant), assigned_clients_count: assignedClientsCount } : null);
-            } catch (e) {
-                // noop for now
+                setAccountant(data ? {
+                    ...(data as Accountant),
+                    assigned_clients_count: count || 0,
+                    assigned_clients: companies || [],
+                    email
+                } : null);
+            } catch {
+                // ignore
             } finally {
                 setLoading(false);
             }
@@ -87,10 +107,12 @@ export function AccountantDetailView() {
                         <p className="text-gray-600">Complete accountant profile and stats</p>
                     </div>
                 </div>
-                <Button variant="outline" onClick={() => navigate('/admin/accountants')}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={() => setIsEditOpen(true)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Profile
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -99,7 +121,7 @@ export function AccountantDetailView() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <IdCard className="w-5 h-5" />
-                                Profile Information
+                                Personal Information
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -109,8 +131,8 @@ export function AccountantDetailView() {
                                     <p className="text-gray-900">{accountant.full_name}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Accountant Code</label>
-                                    <p className="text-gray-900">{accountant.accountant_code ?? 'N/A'}</p>
+                                    <label className="text-sm font-medium text-gray-700">Email Address</label>
+                                    <p className="text-gray-900">{accountant.email ?? 'N/A'}</p>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium text-gray-700">Phone Number</label>
@@ -119,27 +141,11 @@ export function AccountantDetailView() {
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700">Employment Type</label>
-                                    <p className="text-gray-900 flex items-center gap-2">
-                                        <Briefcase className="w-4 h-4 text-gray-500" /> {accountant.employment_type ?? 'N/A'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-700">Max Client Capacity</label>
-                                    <p className="text-gray-900">{accountant.max_client_capacity ?? 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-700">Start Date</label>
-                                    <p className="text-gray-900 flex items-center gap-2">
-                                        <Calendar className="w-4 h-4 text-gray-500" /> {accountant.start_date ? new Date(accountant.start_date).toLocaleDateString() : 'N/A'}
-                                    </p>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="text-sm font-medium text-gray-700">Professional Qualifications</label>
+                                    <label className="text-sm font-medium text-gray-700">Qualifications</label>
                                     <p className="text-gray-900">{accountant.professional_qualifications ?? 'N/A'}</p>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="text-sm font-medium text-gray-700">Specializations</label>
+                                    <label className="text-sm font-medium text-gray-700">Specializations and Certifications</label>
                                     <div className="flex flex-wrap gap-2">
                                         {(accountant.specialization ?? []).length > 0 ? (
                                             (accountant.specialization as string[]).map((s) => (
@@ -153,21 +159,58 @@ export function AccountantDetailView() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Users className="w-5 h-5" />
+                                Current Client Assignments
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <p className="text-sm text-gray-600">Total: {accountant.assigned_clients_count}</p>
+                            <ul className="list-disc pl-5 space-y-1">
+                                {(accountant.assigned_clients ?? []).map(c => (
+                                    <li key={c.id}>{c.name}</li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Users className="w-5 h-5" />
-                                Assignment & Status
+                                <Briefcase className="w-5 h-5" />
+                                Employment & Availability
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <label className="text-sm font-medium text-gray-700">Assigned Clients</label>
-                                <p className="text-gray-900">{accountant.assigned_clients_count}</p>
+                                <label className="text-sm font-medium text-gray-700">Employment Type</label>
+                                <p className="text-gray-900">{accountant.employment_type ?? 'N/A'}</p>
                             </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700">Start Date</label>
+                                <p className="text-gray-900 flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-gray-500" /> {accountant.start_date ? new Date(accountant.start_date).toLocaleDateString() : 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700">Max Client Capacity</label>
+                                <p className="text-gray-900">{accountant.max_client_capacity ?? 'N/A'}</p>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-gray-700">Availability Status</label>
+                                <p className="text-gray-900">{accountant.availability_status ?? 'Available'}</p>
+                            </div>
+                            {accountant.employment_type?.toLowerCase().includes('consultant') && (
+                                <div>
+                                    <label className="text-sm font-medium text-gray-700">Hourly Rate</label>
+                                    <p className="text-gray-900">{accountant.hourly_rate != null ? `$${accountant.hourly_rate.toFixed(2)}` : 'N/A'}</p>
+                                </div>
+                            )}
                             <div>
                                 <label className="text-sm font-medium text-gray-700">Status</label>
                                 <div className="mt-1">
@@ -180,6 +223,13 @@ export function AccountantDetailView() {
                     </Card>
                 </div>
             </div>
+
+            <EditAccountantModal
+                isOpen={isEditOpen}
+                onClose={() => setIsEditOpen(false)}
+                accountant={accountant}
+                onSaved={(updated) => setAccountant(prev => prev ? { ...prev, ...updated } : prev)}
+            />
         </div>
     );
 } 

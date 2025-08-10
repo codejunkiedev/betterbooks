@@ -10,6 +10,8 @@ export interface Accountant {
     max_client_capacity?: number | null;
     start_date?: string | null;
     accountant_code?: string | null;
+    availability_status?: 'Available' | 'Busy' | 'On Leave' | null;
+    hourly_rate?: number | null;
 }
 
 export interface AccountantFilters {
