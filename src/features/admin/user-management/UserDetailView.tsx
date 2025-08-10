@@ -22,6 +22,12 @@ import { formatDate } from '@/shared/utils/formatters';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/Dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/Select';
 import { formatCompanyType } from '@/shared/utils/formatters';
+import { MODULES, ModuleName } from '@/shared/constants/modules';
+import type { UserModuleState } from '@/shared/services/supabase/admin';
+import { getUserModulesForUser } from '@/shared/services/supabase/admin';
+import { Label } from '@/shared/components/Label';
+import { Input } from '@/shared/components/Input';
+import { LoadingSpinner } from '@/shared/components/Loading';
 
 export const UserDetailView = () => {
     const { userId } = useParams<{ userId: string }>();
@@ -55,6 +61,13 @@ export const UserDetailView = () => {
         new_accountant_name: string | null;
     }>>([]);
     const [notifyOnChange, setNotifyOnChange] = useState<boolean>(true);
+
+    // Module access settings
+    const [userModules, setUserModules] = useState<UserModuleState[]>([]);
+    const [pralSettings, setPralSettings] = useState<{ environment: 'Sandbox' | 'Production'; monthly_limit: number; rate_limit: number; restrictions: string }>({ environment: 'Sandbox', monthly_limit: 100, rate_limit: 2, restrictions: '' });
+    const [accountingTier, setAccountingTier] = useState<'Basic' | 'Advanced'>('Basic');
+    const [taxType, setTaxType] = useState<'Individual' | 'Corporate'>('Individual');
+    const [confirmDisable, setConfirmDisable] = useState<{ open: boolean; module?: ModuleName }>({ open: false });
 
     useEffect(() => {
         if (userId) {
@@ -91,6 +104,38 @@ export const UserDetailView = () => {
             } else {
                 setAssignmentHistory([]);
             }
+
+            // Fetch module states
+            try {
+                const mods = await getUserModulesForUser(userId);
+                setUserModules(mods);
+                const acc = mods.find(m => m.name === MODULES.ACCOUNTING);
+                if (acc && acc.settings) {
+                    const tier = (acc.settings as { tier?: 'Basic' | 'Advanced' }).tier;
+                    if (tier === 'Basic' || tier === 'Advanced') {
+                        setAccountingTier(tier);
+                    }
+                }
+                const tax = mods.find(m => m.name === MODULES.TAX_FILING);
+                if (tax && tax.settings) {
+                    const type = (tax.settings as { type?: 'Individual' | 'Corporate' }).type;
+                    if (type === 'Individual' || type === 'Corporate') {
+                        setTaxType(type);
+                    }
+                }
+                const pral = mods.find(m => m.name === MODULES.PRAL_INVOICING);
+                if (pral && pral.settings) {
+                    const rs = pral.settings as Record<string, unknown>;
+                    const environment = rs.environment === 'Production' ? 'Production' : 'Sandbox';
+                    const monthly_limit = typeof rs.monthly_limit === 'number' ? rs.monthly_limit as number : Number(rs.monthly_limit ?? 100);
+                    const rate_limit = typeof rs.rate_limit === 'number' ? rs.rate_limit as number : Number(rs.rate_limit ?? 2);
+                    const restrictions = typeof rs.restrictions === 'string' ? (rs.restrictions as string) : String(rs.restrictions ?? '');
+                    setPralSettings({ environment, monthly_limit, rate_limit, restrictions });
+                }
+            } catch {
+                setUserModules([]);
+            }
+
         } catch {
             toast({
                 title: "Error",
@@ -133,43 +178,42 @@ export const UserDetailView = () => {
         }
     };
 
-    const handleModuleToggle = async (moduleName: string, enabled: boolean) => {
-        if (!userId || !userInfo) return;
+    const isModuleEnabled = (name: ModuleName) => userModules.some(m => m.name === name && m.enabled);
 
-        setModuleUpdating(moduleName);
-
+    const saveModules = async (payload: Array<{ name: ModuleName; enabled: boolean; settings?: Record<string, unknown> }>) => {
+        if (!userId) return;
+        setModuleUpdating('saving');
         try {
-            const updatedModules = enabled
-                ? [...userInfo.activeModules, moduleName]
-                : userInfo.activeModules.filter(m => m !== moduleName);
-
-            const response = await updateUserModules(userId, updatedModules);
-
-            if (response.error) {
-                toast({
-                    title: "Error",
-                    description: response.error.message,
-                    variant: "destructive",
-                });
-                return;
-            }
-
-            setUserInfo(prev => prev ? { ...prev, activeModules: updatedModules } : null);
-
-            toast({
-                title: "Success",
-                description: `Module ${moduleName} ${enabled ? 'enabled' : 'disabled'} successfully`,
-            });
-
-        } catch {
-            toast({
-                title: "Error",
-                description: "Failed to update module access",
-                variant: "destructive",
-            });
+            const resp = await updateUserModules(userId, payload);
+            if (!resp.success) throw resp.error || new Error('Failed to update modules');
+            toast({ title: 'Updated', description: 'Modules updated.' });
+            const mods = await getUserModulesForUser(userId);
+            setUserModules(mods);
+        } catch (e) {
+            toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to update modules', variant: 'destructive' });
         } finally {
             setModuleUpdating(null);
         }
+    };
+
+    const handleToggleModule = (name: ModuleName, enabled: boolean) => {
+        if (!enabled) {
+            setConfirmDisable({ open: true, module: name });
+            return;
+        }
+        if (name === MODULES.ACCOUNTING) {
+            saveModules([{ name, enabled: true, settings: { tier: accountingTier } }]);
+        } else if (name === MODULES.TAX_FILING) {
+            saveModules([{ name, enabled: true, settings: { type: taxType } }]);
+        } else if (name === MODULES.PRAL_INVOICING) {
+            saveModules([{ name, enabled: true, settings: pralSettings }]);
+        }
+    };
+
+    const confirmDisableModule = () => {
+        if (!confirmDisable.module) return;
+        saveModules([{ name: confirmDisable.module, enabled: false, settings: {} }]);
+        setConfirmDisable({ open: false });
     };
 
     const getStatusBadge = (status: string) => {
@@ -250,9 +294,7 @@ export const UserDetailView = () => {
         );
     }
 
-    const availableModules = [
-        { name: 'Accounting', description: 'Accounting and bookkeeping features' }
-    ];
+    // removed unused availableModules
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto p-6">
@@ -361,26 +403,189 @@ export const UserDetailView = () => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {availableModules.map((module) => {
-                                    const isEnabled = userInfo.activeModules.includes(module.name);
-                                    const isUpdating = moduleUpdating === module.name;
-
-                                    return (
-                                        <div key={module.name} className="flex items-center justify-between p-3 border rounded-lg">
-                                            <div className="flex-1">
-                                                <h4 className="font-medium text-gray-900">{module.name}</h4>
-                                                <p className="text-sm text-gray-600">{module.description}</p>
-                                            </div>
-                                            <Switch
-                                                checked={isEnabled}
-                                                onCheckedChange={(checked) => handleModuleToggle(module.name, checked)}
-                                                disabled={isUpdating}
-                                            />
+                            <div className="space-y-3">
+                                {/* Accounting Module */}
+                                <div className="p-3 border rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-medium text-gray-900">Accounting</h4>
+                                            <p className="text-sm text-gray-600">Basic/Advanced tiers</p>
                                         </div>
-                                    );
-                                })}
+                                        <Switch checked={isModuleEnabled(MODULES.ACCOUNTING)} onCheckedChange={(v) => handleToggleModule(MODULES.ACCOUNTING, v)} disabled={!!moduleUpdating} />
+                                    </div>
+                                    {isModuleEnabled(MODULES.ACCOUNTING) && (
+                                        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <Label>Tier</Label>
+                                                <Select value={accountingTier} onValueChange={(v) => setAccountingTier(v as 'Basic' | 'Advanced')}>
+                                                    <SelectTrigger className="w-full"><SelectValue placeholder="Select tier" /></SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Basic">Basic</SelectItem>
+                                                        <SelectItem value="Advanced">Advanced</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <p className="text-xs text-gray-500 mt-1">Choose feature level for accounting.</p>
+                                            </div>
+                                            <div className="flex items-end justify-end">
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => saveModules([{ name: MODULES.ACCOUNTING, enabled: true, settings: { tier: accountingTier } }])}
+                                                    disabled={!!moduleUpdating}
+                                                >
+                                                    {moduleUpdating ? (
+                                                        <span className="inline-flex items-center gap-2">
+                                                            <LoadingSpinner size="sm" className="border-white" />
+                                                            Saving...
+                                                        </span>
+                                                    ) : (
+                                                        'Save'
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Tax Filing Module */}
+                                <div className="p-3 border rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-medium text-gray-900">Tax Filing</h4>
+                                            <p className="text-sm text-gray-600">Individual/Corporate</p>
+                                        </div>
+                                        <Switch checked={isModuleEnabled(MODULES.TAX_FILING)} onCheckedChange={(v) => handleToggleModule(MODULES.TAX_FILING, v)} disabled={!!moduleUpdating} />
+                                    </div>
+                                    {isModuleEnabled(MODULES.TAX_FILING) && (
+                                        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <Label>Filing type</Label>
+                                                <Select value={taxType} onValueChange={(v) => setTaxType(v as 'Individual' | 'Corporate')}>
+                                                    <SelectTrigger className="w-full"><SelectValue placeholder="Select type" /></SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Individual">Individual</SelectItem>
+                                                        <SelectItem value="Corporate">Corporate</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <p className="text-xs text-gray-500 mt-1">Determines available tax workflows.</p>
+                                            </div>
+                                            <div className="flex items-end justify-end">
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => saveModules([{ name: MODULES.TAX_FILING, enabled: true, settings: { type: taxType } }])}
+                                                    disabled={!!moduleUpdating}
+                                                >
+                                                    {moduleUpdating ? (
+                                                        <span className="inline-flex items-center gap-2">
+                                                            <LoadingSpinner size="sm" className="border-white" />
+                                                            Saving...
+                                                        </span>
+                                                    ) : (
+                                                        'Save'
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* PRAL Digital Invoicing */}
+                                <div className="p-3 border rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-medium text-gray-900">PRAL Digital Invoicing</h4>
+                                            <p className="text-sm text-gray-600">Environment, limits and restrictions</p>
+                                        </div>
+                                        <Switch checked={isModuleEnabled(MODULES.PRAL_INVOICING)} onCheckedChange={(v) => handleToggleModule(MODULES.PRAL_INVOICING, v)} disabled={!!moduleUpdating} />
+                                    </div>
+                                    {isModuleEnabled(MODULES.PRAL_INVOICING) && (
+                                        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                            <div>
+                                                <Label>Environment</Label>
+                                                <Select value={pralSettings.environment} onValueChange={(v) => setPralSettings({ ...pralSettings, environment: v as 'Sandbox' | 'Production' })}>
+                                                    <SelectTrigger className="w-full"><SelectValue placeholder="Select environment" /></SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Sandbox">Sandbox</SelectItem>
+                                                        <SelectItem value="Production">Production</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <p className="text-xs text-gray-500 mt-1">Choose where PRAL API calls are sent.</p>
+                                            </div>
+                                            <div>
+                                                <Label>Monthly limit</Label>
+                                                <div className="relative">
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        step={1}
+                                                        className="text-right pr-14"
+                                                        value={pralSettings.monthly_limit}
+                                                        onChange={(e) => setPralSettings({ ...pralSettings, monthly_limit: Number(e.target.value) })}
+                                                        placeholder="e.g. 100"
+                                                    />
+                                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">invoices</span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">Max invoices per month.</p>
+                                            </div>
+                                            <div>
+                                                <Label>API rate limit</Label>
+                                                <div className="relative">
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        step={1}
+                                                        className="text-right pr-12"
+                                                        value={pralSettings.rate_limit}
+                                                        onChange={(e) => setPralSettings({ ...pralSettings, rate_limit: Number(e.target.value) })}
+                                                        placeholder="e.g. 5"
+                                                    />
+                                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">req/s</span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">API requests per second.</p>
+                                            </div>
+                                            <div>
+                                                <Label>Restrictions</Label>
+                                                <Input
+                                                    value={pralSettings.restrictions}
+                                                    onChange={(e) => setPralSettings({ ...pralSettings, restrictions: e.target.value })}
+                                                    placeholder="Comma-separated rules"
+                                                />
+                                                <p className="text-xs text-gray-500 mt-1">Optional restrictions, comma-separated.</p>
+                                            </div>
+                                            <div className="col-span-full flex justify-end">
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => saveModules([{ name: MODULES.PRAL_INVOICING, enabled: true, settings: pralSettings }])}
+                                                    disabled={!!moduleUpdating}
+                                                >
+                                                    {moduleUpdating ? (
+                                                        <span className="inline-flex items-center gap-2">
+                                                            <LoadingSpinner size="sm" className="border-white" />
+                                                            Saving...
+                                                        </span>
+                                                    ) : (
+                                                        'Save'
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+                            {/* Disable confirmation */}
+                            <Dialog open={confirmDisable.open} onOpenChange={(o) => setConfirmDisable({ open: o })}>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Disable module?</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-2 text-sm text-gray-700">
+                                        <p>Disabling a module will immediately remove access. Existing data is preserved but new entries will be restricted.</p>
+                                    </div>
+                                    <div className="flex justify-end gap-2">
+                                        <Button variant="outline" onClick={() => setConfirmDisable({ open: false })}>Cancel</Button>
+                                        <Button variant="destructive" onClick={confirmDisableModule}>Disable</Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
                         </CardContent>
                     </Card>
 

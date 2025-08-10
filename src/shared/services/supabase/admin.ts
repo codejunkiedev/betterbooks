@@ -2,6 +2,30 @@ import { supabase } from '@/shared/services/supabase/client';
 import { AdminUsersFilters, AdminUsersResponse, Status, DetailedUserResponse, DetailedUserInfo } from '@/shared/types/admin';
 import { logActivity } from '@/shared/utils/activity';
 import { ActivityType } from '@/shared/types/activity';
+import { MODULES, ModuleName, isModuleName } from '@/shared/constants/modules';
+
+export type AccountingModuleTier = 'Basic' | 'Advanced';
+export type TaxModuleType = 'Individual' | 'Corporate';
+export type PralEnvironment = 'Sandbox' | 'Production';
+
+export type UserModuleState = {
+    name: ModuleName;
+    enabled: boolean;
+    settings: Record<string, unknown>;
+};
+
+export async function getUserModulesForUser(userId: string): Promise<UserModuleState[]> {
+    const { data, error } = await supabase
+        .from('user_modules')
+        .select('module, enabled, settings')
+        .eq('user_id', userId);
+    if (error) throw error;
+    return (data || []).map((row: { module: ModuleName; enabled: boolean; settings: Record<string, unknown> | null }) => ({
+        name: row.module,
+        enabled: !!row.enabled,
+        settings: row.settings ?? {},
+    }));
+}
 
 export async function getAdminUsers(
     page: number = 1,
@@ -614,19 +638,68 @@ export async function getDetailedUserInfo(userId: string): Promise<DetailedUserR
     }
 }
 
-export async function updateUserModules(userId: string, modules: string[]): Promise<{ success: boolean; error?: Error }> {
+export async function updateUserModules(
+    userId: string,
+    modules: Array<string | { name: string; enabled: boolean; settings?: Record<string, unknown> }>
+): Promise<{ success: boolean; error?: Error }> {
     try {
-        // For now, we'll just return success since we don't have a modules table
-        // In a real implementation, you would update a user_modules table
-        console.log(`Updating modules for user ${userId}:`, modules);
+        const toModuleName = (name: string): ModuleName => {
+            const up = name.toUpperCase();
+            return isModuleName(up) ? (up as ModuleName) : MODULES.ACCOUNTING;
+        };
+
+        const desired: Array<{ name: ModuleName; enabled: boolean; settings: Record<string, unknown> }> = modules.map((m) => {
+            if (typeof m === 'string') {
+                return { name: toModuleName(m), enabled: true, settings: {} };
+            }
+            return { name: toModuleName(m.name || ''), enabled: !!m.enabled, settings: m.settings ?? {} };
+        });
+
+        const { data: current, error: fetchErr } = await supabase
+            .from('user_modules')
+            .select('id,module,enabled,settings')
+            .eq('user_id', userId);
+        if (fetchErr) throw fetchErr;
+
+        type UserModuleRow = { id: string; module: ModuleName; enabled: boolean; settings: Record<string, unknown> | null };
+        const currentMap = new Map<string, { enabled: boolean; settings: Record<string, unknown> | null }>();
+        (current as UserModuleRow[] | null | undefined)?.forEach((row) => currentMap.set(row.module, { enabled: !!row.enabled, settings: row.settings || null }));
+
+        for (const d of desired) {
+            const prev = currentMap.get(d.name);
+            const changed = !prev || prev.enabled !== d.enabled || JSON.stringify(prev.settings || null) !== JSON.stringify(d.settings || null);
+            if (!changed) continue;
+
+            const { error: upsertErr } = await supabase
+                .from('user_modules')
+                .upsert({ user_id: userId, module: d.name, enabled: d.enabled, settings: d.settings ?? {} }, { onConflict: 'user_id,module' });
+            if (upsertErr) throw upsertErr;
+
+            await supabase.from('billing_events').insert({
+                user_id: userId,
+                module: d.name,
+                action: d.enabled ? 'MODULE_ENABLED' : 'MODULE_DISABLED',
+                details: { settings: d.settings ?? null }
+            });
+
+            try {
+                await supabase.functions.invoke('notify-module-change', {
+                    body: {
+                        user_id: userId,
+                        module: d.name,
+                        enabled: d.enabled,
+                        settings: d.settings ?? null,
+                    }
+                });
+            } catch (e) {
+                console.warn('notify-module-change failed (non-blocking):', e);
+            }
+        }
 
         return { success: true };
     } catch (error) {
-        console.error("Error updating user modules:", error);
-        return {
-            success: false,
-            error: error instanceof Error ? error : new Error('Unknown error')
-        };
+        console.error('Error updating user modules:', error);
+        return { success: false, error: error instanceof Error ? error : new Error('Unknown error') };
     }
 }
 
