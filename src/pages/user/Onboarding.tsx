@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/shared/hooks/useToast";
 import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
 import { createCompany } from "@/shared/services/supabase/company";
+import { CompanyType } from "@/shared/constants/company";
 import { setCurrentCompany } from "@/shared/services/store/companySlice";
 import { createOpeningBalanceJournalEntry } from "@/shared/services/supabase/journal";
 import {
@@ -119,7 +120,7 @@ export default function Onboarding() {
             const companyData: {
                 user_id: string;
                 name: string;
-                type: string;
+                type: CompanyType;
                 tax_id_number?: string;
                 filing_status?: string;
                 tax_year_end?: string;
@@ -127,7 +128,7 @@ export default function Onboarding() {
             } = {
                 user_id: user.id,
                 name: formData.company_name,
-                type: formData.company_type,
+                type: formData.company_type as CompanyType,
                 assigned_accountant_id: '',
             };
 
