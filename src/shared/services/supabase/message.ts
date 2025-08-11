@@ -44,15 +44,48 @@ const getDocumentMessageRecipient = async (userId: string, documentId: string) =
     const company = documentData?.companies as unknown as CompanyData;
     const isAccountant = !!accountantData;
 
+    console.log('Document data:', documentData);
+    console.log('Company data:', company);
+    console.log('Is accountant:', isAccountant);
+    console.log('Accountant data:', accountantData);
+
     let recipientId: string;
 
     if (isAccountant) {
         // Author is accountant, send to company owner
+        if (!company.user_id) {
+            throw new Error('Company owner not found');
+        }
         recipientId = company.user_id;
     } else {
         // Author is user, send to assigned accountant
-        recipientId = company.assigned_accountant_id || company.user_id;
+        // For user replies, we should send to the assigned accountant if they exist
+        if (company.assigned_accountant_id) {
+            // Get the accountant's user ID
+            const { data: accountantUserData, error: accountantUserError } = await supabase
+                .from('accountants')
+                .select('user_id')
+                .eq('id', company.assigned_accountant_id)
+                .eq('is_active', true)
+                .single();
+
+            if (accountantUserError || !accountantUserData) {
+                throw new Error('Assigned accountant not found or inactive');
+            }
+            recipientId = accountantUserData.user_id;
+        } else {
+            // If no accountant assigned, this shouldn't happen for user replies
+            // but fallback to company owner
+            if (company.user_id) {
+                recipientId = company.user_id;
+            } else {
+                throw new Error('No valid recipient found for this message');
+            }
+        }
     }
+
+    console.log('Final recipientId:', recipientId);
+    console.log('Final companyId:', documentData.company_id);
 
     return {
         companyId: documentData.company_id,
@@ -107,22 +140,47 @@ export const getDocumentMessages = async (documentId: string): Promise<{ data: D
 // Create a new document message (comment)
 export const createDocumentMessage = async (messageData: CreateDocumentMessageData): Promise<MessageResponse> => {
     try {
+        console.log('Starting createDocumentMessage with data:', messageData);
+        
         const { data: userData } = await supabase.auth.getUser();
         if (!userData.user) {
             throw new Error('User not authenticated');
         }
 
+        console.log('Current user authenticated:', userData.user.id);
+
         // Get recipient information
         const { companyId, recipientId } = await getDocumentMessageRecipient(userData.user.id, messageData.document_id);
+
+        console.log('Retrieved companyId:', companyId);
+        console.log('Retrieved recipientId:', recipientId);
+        console.log('Document ID:', messageData.document_id);
+        console.log('Current user ID:', userData.user.id);
+
+        // Validate all required fields
+        if (!companyId) {
+            throw new Error('Company ID not found');
+        }
+        if (!recipientId) {
+            throw new Error('Recipient ID not found');
+        }
+        if (!messageData.document_id) {
+            throw new Error('Document ID is required');
+        }
+        if (!messageData.content?.trim()) {
+            throw new Error('Message content is required');
+        }
 
         const messagePayload = {
             company_id: companyId,
             sender_id: userData.user.id,
             recipient_id: recipientId,
             related_document_id: messageData.document_id,
-            content: messageData.content,
+            content: messageData.content.trim(),
             is_read: false,
         }
+
+        console.log('Creating message with payload:', messagePayload);
 
         const { data, error } = await supabase
             .from('messages')
@@ -142,8 +200,15 @@ export const createDocumentMessage = async (messageData: CreateDocumentMessageDa
 
         if (error) {
             console.error('Error creating document message:', error);
+            console.error('Message payload that failed:', messagePayload);
+            console.error('User ID:', userData.user.id);
+            console.error('Company ID:', companyId);
+            console.error('Recipient ID:', recipientId);
+            console.error('Document ID:', messageData.document_id);
             return { data: null, error };
         }
+
+        console.log('Message created successfully:', data);
 
         const enrichedMessage: DocumentMessage = {
             ...data,
@@ -152,12 +217,11 @@ export const createDocumentMessage = async (messageData: CreateDocumentMessageDa
             is_own_message: true,
         };
 
-        try {
-            sendCommentNotification(messagePayload);
-
-        } catch (error) {
-            console.error('Error in send notification:', error);
-        }
+        // Send notification asynchronously - don't block the message creation
+        sendCommentNotification(messagePayload).catch((notificationError) => {
+            console.error('Error sending comment notification (non-blocking):', notificationError);
+            // Don't throw error here as the message was created successfully
+        });
 
         return { data: enrichedMessage, error: null };
     } catch (err) {
