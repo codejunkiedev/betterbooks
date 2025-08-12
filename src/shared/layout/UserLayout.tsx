@@ -308,7 +308,7 @@ function SidebarLink({ to, icon, label, active, onNavigate, isCollapsed = false,
         >
             <div className="relative">
                 {icon}
-                {notificationCount && notificationCount > 0 && (
+                {typeof notificationCount === 'number' && notificationCount > 0 && (
                     <NotificationBadge count={notificationCount} />
                 )}
             </div>
