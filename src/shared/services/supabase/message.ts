@@ -1,4 +1,4 @@
-import { sendCommentNotification } from '@/api/sendCommentNotification';
+import { sendCommentNotification } from '@/shared/services/api';
 import { supabase } from './client';
 import {
     Message,
@@ -141,7 +141,7 @@ export const getDocumentMessages = async (documentId: string): Promise<{ data: D
 export const createDocumentMessage = async (messageData: CreateDocumentMessageData): Promise<MessageResponse> => {
     try {
         console.log('Starting createDocumentMessage with data:', messageData);
-        
+
         const { data: userData } = await supabase.auth.getUser();
         if (!userData.user) {
             throw new Error('User not authenticated');
@@ -218,7 +218,7 @@ export const createDocumentMessage = async (messageData: CreateDocumentMessageDa
         };
 
         // Send notification asynchronously - don't block the message creation
-        sendCommentNotification(messagePayload).catch((notificationError) => {
+        sendCommentNotification(messagePayload).catch((notificationError: unknown) => {
             console.error('Error sending comment notification (non-blocking):', notificationError);
             // Don't throw error here as the message was created successfully
         });

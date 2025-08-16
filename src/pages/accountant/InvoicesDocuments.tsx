@@ -47,7 +47,7 @@ const InvoicesDocuments = () => {
             try {
                 const { data, error } = await getPaginatedAccountantClients(1, 100, {});
                 if (error) throw error;
-                
+
                 if (data) {
                     setClients(data.items.map(client => ({
                         id: client.id,
@@ -68,7 +68,7 @@ const InvoicesDocuments = () => {
 
     const loadDocuments = useCallback(async () => {
         if (!selectedClient) return;
-        
+
         try {
             setIsLoading(true);
             // Convert FilterState to DocumentFilters by filtering out undefined values
@@ -100,7 +100,7 @@ const InvoicesDocuments = () => {
         if (selectedClient) {
             loadDocuments();
         }
-    }, [loadDocuments]);
+    }, [selectedClient, loadDocuments]);
 
     // Initialize temp filters when modal opens
     useEffect(() => {
@@ -171,13 +171,13 @@ const InvoicesDocuments = () => {
                         <h1 className="text-3xl font-bold tracking-tight">Invoices & Documents</h1>
                         <p className="text-gray-500 text-lg">View and manage client documents</p>
                     </div>
-                    
+
                     <Card className="p-6">
                         <div className="text-center space-y-4">
                             <FileText className="h-16 w-16 text-gray-400 mx-auto" />
                             <h3 className="text-lg font-medium text-gray-900">Select a Client</h3>
                             <p className="text-gray-500">Choose a client to view their invoices and documents</p>
-                            
+
                             <Select value={selectedClient} onValueChange={setSelectedClient}>
                                 <SelectTrigger className="w-64 mx-auto">
                                     <SelectValue placeholder="Select a client" />
@@ -207,7 +207,7 @@ const InvoicesDocuments = () => {
                             Viewing documents for {clients.find(c => c.id === selectedClient)?.name}
                         </p>
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
                         <Button
                             variant="outline"
@@ -217,7 +217,7 @@ const InvoicesDocuments = () => {
                             <Filter className="h-4 w-4" />
                             Filters
                         </Button>
-                        
+
                         <Select value={selectedClient} onValueChange={setSelectedClient}>
                             <SelectTrigger className="w-48">
                                 <SelectValue />
@@ -248,7 +248,7 @@ const InvoicesDocuments = () => {
                             </div>
                         </div>
                     </Card>
-                    
+
                     <Card className="p-6">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-green-100 rounded-lg">
@@ -262,7 +262,7 @@ const InvoicesDocuments = () => {
                             </div>
                         </div>
                     </Card>
-                    
+
                     <Card className="p-6">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-yellow-100 rounded-lg">
@@ -276,7 +276,7 @@ const InvoicesDocuments = () => {
                             </div>
                         </div>
                     </Card>
-                    
+
                     <Card className="p-6">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-purple-100 rounded-lg">
@@ -424,7 +424,7 @@ const InvoicesDocuments = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        
+
                         <div>
                             <Label htmlFor="status">Status</Label>
                             <Select value={tempFilters.status || ''} onValueChange={(value) => setTempFilters(prev => ({ ...prev, status: value as DocumentStatus }))}>
@@ -440,7 +440,7 @@ const InvoicesDocuments = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="date_from">From Date</Label>
@@ -461,7 +461,7 @@ const InvoicesDocuments = () => {
                                 />
                             </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-3 pt-4">
                             <Button onClick={handleFilterApply} className="flex-1">
                                 Apply Filters

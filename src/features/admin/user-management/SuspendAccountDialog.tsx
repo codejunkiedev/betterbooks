@@ -6,7 +6,7 @@ import { Textarea } from '@/shared/components/Textarea';
 import { Switch } from '@/shared/components/Switch';
 import { useToast } from '@/shared/hooks/useToast';
 import { Status } from '@/shared/types/admin';
-import { manageUserStatus } from '@/api/manageUserStatus';
+import { manageUserStatus } from '@/shared/services/api';
 
 interface SuspendAccountDialogProps {
     open: boolean;

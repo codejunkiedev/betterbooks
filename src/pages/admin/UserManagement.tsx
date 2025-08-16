@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/shared/components/Card';
 import { AdminUser, AdminUsersFilters } from '@/shared/types/admin';
 import { useToast } from '@/shared/hooks/useToast';
@@ -26,7 +26,7 @@ export default function UserManagement() {
     const { toast } = useToast();
 
     // Fetch users data
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -58,12 +58,12 @@ export default function UserManagement() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, itemsPerPage, filters, searchTerm, toast]);
 
     // Load users on component mount and when dependencies change
     useEffect(() => {
         fetchUsers();
-    }, [page, filters, searchTerm]);
+    }, [page, filters, searchTerm, fetchUsers]);
 
     // Handle search
     const handleSearch = () => {
