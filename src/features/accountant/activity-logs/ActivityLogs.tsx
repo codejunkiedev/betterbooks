@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/Ca
 import { Button } from '@/shared/components/Button';
 import { Badge } from '@/shared/components/Badge';
 import { Filter } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/shared/hooks/useToast';
 import { getActivityLogs } from '@/shared/services/supabase/activity';
 import { getMyClientCompanies } from '@/shared/services/supabase/company';
@@ -40,7 +40,7 @@ const ActivityLogs = () => {
 
     const pageSize = DEFAULT_PAGE_SIZE;
 
-    const fetchCompanies = async () => {
+    const fetchCompanies = useCallback(async () => {
         try {
             setLoadingCompanies(true);
             const companiesData = await getMyClientCompanies();
@@ -55,9 +55,9 @@ const ActivityLogs = () => {
         } finally {
             setLoadingCompanies(false);
         }
-    };
+    }, [toast]);
 
-    const fetchActivityLogs = async () => {
+    const fetchActivityLogs = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await getActivityLogs(currentPage, pageSize, {
@@ -86,15 +86,15 @@ const ActivityLogs = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, pageSize, filters, toast]);
 
     useEffect(() => {
         fetchCompanies();
-    }, []);
+    }, [fetchCompanies]);
 
     useEffect(() => {
         fetchActivityLogs();
-    }, [currentPage, filters]);
+    }, [currentPage, filters, fetchActivityLogs]);
 
     // Initialize temp filters when modal opens
     useEffect(() => {

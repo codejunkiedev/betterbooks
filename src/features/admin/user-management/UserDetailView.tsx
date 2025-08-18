@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
@@ -74,9 +74,9 @@ export const UserDetailView = () => {
         if (userId) {
             fetchUserDetails();
         }
-    }, [userId]);
+    }, [userId, fetchUserDetails]);
 
-    const fetchUserDetails = async () => {
+    const fetchUserDetails = useCallback(async () => {
         if (!userId) return;
 
         try {
@@ -146,7 +146,7 @@ export const UserDetailView = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [userId, toast]);
 
     const handleOpenAssignModal = async () => {
         // Open immediately and show loading state while fetching
