@@ -47,7 +47,8 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
                                     {stepNumber === 1 && "Company Info"}
                                     {stepNumber === 2 && "Opening Balance"}
                                     {stepNumber === 3 && "Tax Information"}
-                                    {stepNumber === 4 && "Review"}
+                                    {stepNumber === 4 && "FBR Profile"}
+                                    {stepNumber === 5 && "Review"}
                                 </span>
                             </div>
                         );

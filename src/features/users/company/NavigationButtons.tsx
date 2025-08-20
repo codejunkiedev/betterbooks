@@ -20,7 +20,7 @@ export function NavigationButtons({
     canProceed
 }: NavigationButtonsProps) {
     return (
-        <div className="flex gap-3">
+        <div className="flex gap-3 mt-4">
             {currentStep > 1 && (
                 <Button
                     type="button"

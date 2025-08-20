@@ -70,12 +70,6 @@ export const UserDetailView = () => {
     const [taxType, setTaxType] = useState<'Individual' | 'Corporate'>('Individual');
     const [confirmDisable, setConfirmDisable] = useState<{ open: boolean; module?: ModuleName }>({ open: false });
 
-    useEffect(() => {
-        if (userId) {
-            fetchUserDetails();
-        }
-    }, [userId, fetchUserDetails]);
-
     const fetchUserDetails = useCallback(async () => {
         if (!userId) return;
 
@@ -147,6 +141,12 @@ export const UserDetailView = () => {
             setLoading(false);
         }
     }, [userId, toast]);
+
+    useEffect(() => {
+        if (userId) {
+            fetchUserDetails();
+        }
+    }, [userId, fetchUserDetails]);
 
     const handleOpenAssignModal = async () => {
         // Open immediately and show loading state while fetching
