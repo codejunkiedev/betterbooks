@@ -8,6 +8,7 @@ import { Button } from "@/shared/components/Button";
 import { useNotifications } from "@/shared/hooks/useNotifications";
 import { NotificationBadge } from "@/shared/components/NotificationBadge";
 import { useModules } from "@/shared/hooks/useModules";
+import { MODULES } from "@/shared/constants/modules";
 
 interface Company {
     id: string;
@@ -33,7 +34,7 @@ import {
     SheetPortal,
     SheetTrigger,
 } from "@/shared/components/Sheet";
-import { Menu, Home, Upload, User, ChevronLeft, FileText, BookOpen, BarChart3, MessageCircle } from "lucide-react";
+import { Menu, Home, Upload, User, ChevronLeft, FileText, BookOpen, BarChart3, MessageCircle, Settings } from "lucide-react";
 import logo from "@/assets/logo.png";
 import userAvatar from "@/assets/user-avatar.jpeg";
 
@@ -202,7 +203,7 @@ type SidebarContentProps = {
 };
 function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false }: SidebarContentProps) {
     const { unreadCount } = useNotifications();
-    const { hasAccounting, accountingTier } = useModules();
+    const { hasAccounting, accountingTier, isModuleEnabled } = useModules();
 
     const handleNavigation = () => {
         onNavigate();
@@ -275,6 +276,17 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                     isDark={isDark}
                     notificationCount={unreadCount}
                 />
+                {isModuleEnabled(MODULES.TAX_FILING) && (
+                    <SidebarLink
+                        to="/fbr/api-config"
+                        icon={<Settings className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                        label="FBR Config"
+                        active={isActive("/fbr/api-config")}
+                        onNavigate={handleNavigation}
+                        isCollapsed={isCollapsed}
+                        isDark={isDark}
+                    />
+                )}
 
             </div>
         </nav>

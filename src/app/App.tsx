@@ -28,7 +28,6 @@ import Messages from "@/pages/user/Messages";
 import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
 import Blocked from "@/pages/user/Blocked";
-import FbrProfile from "@/pages/user/FbrProfile";
 import FbrApiConfig from "@/pages/user/FbrApiConfig";
 
 // Accountant Pages
@@ -123,8 +122,14 @@ export default function App() {
         },
         { path: "messages", element: <Messages /> },
         { path: "profile", element: <Profile /> },
-        { path: "fbr/profile", element: <FbrProfile /> },
-        { path: "fbr/api-config", element: <FbrApiConfig /> },
+        {
+          path: "fbr/api-config",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <FbrApiConfig />
+            </ModuleGuard>
+          )
+        },
       ],
     },
 

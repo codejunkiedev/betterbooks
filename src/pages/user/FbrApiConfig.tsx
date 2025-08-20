@@ -1,170 +1,381 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/shared/services/store";
 import { useToast } from "@/shared/hooks/useToast";
-import { getFbrProfileByUser } from "@/shared/services/supabase/fbr";
+import { FBR_API_STATUS, type FbrApiStatus } from "@/shared/constants/fbr";
+import { testFbrConnection, saveFbrApiCredentials } from "@/shared/services/api/fbr";
+import { getFbrConfigStatus } from "@/shared/services/supabase/fbr";
+import { AlertCircle, CheckCircle, Info, Loader2, ExternalLink } from "lucide-react";
 
 export default function FbrApiConfig() {
 	const { user } = useSelector((s: RootState) => s.user);
 	const { toast } = useToast();
-	const [allowed, setAllowed] = useState(false);
 
 	const [sandboxKey, setSandboxKey] = useState("");
 	const [productionKey, setProductionKey] = useState("");
-	const [sandboxStatus, setSandboxStatus] = useState<"Not tested" | "Connected" | "Failed">("Not tested");
-	const [productionStatus, setProductionStatus] = useState<"Not tested" | "Connected" | "Failed">("Not tested");
+	const [hasSandboxKey, setHasSandboxKey] = useState(false);
+	const [hasProductionKey, setHasProductionKey] = useState(false);
+	const [sandboxStatus, setSandboxStatus] = useState<FbrApiStatus>(FBR_API_STATUS.NOT_CONFIGURED);
+	const [productionStatus, setProductionStatus] = useState<FbrApiStatus>(FBR_API_STATUS.NOT_CONFIGURED);
 	const [testingSandbox, setTestingSandbox] = useState(false);
 	const [testingProduction, setTestingProduction] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [loading, setLoading] = useState(true);
+	const [lastSandboxTest, setLastSandboxTest] = useState<string | undefined>();
+	const [lastProductionTest, setLastProductionTest] = useState<string | undefined>();
 
+	// Load existing configuration on component mount
 	useEffect(() => {
-		const run = async () => {
-			if (!user?.id) return;
-			try {
-				const { data } = await getFbrProfileByUser(user.id);
-				if (!data) {
-					toast({ title: "Complete FBR Profile", description: "Please complete your FBR profile first.", variant: "destructive" });
-					window.location.href = "/fbr/profile";
-					return;
-				}
-				setAllowed(true);
-			} catch {
-				setAllowed(true); // allow UI even if profile check fails
+		loadConfigStatus();
+	}, []);
+
+	const loadConfigStatus = async () => {
+		if (!user?.id) {
+			setLoading(false);
+			return;
+		}
+
+		try {
+			const config = await getFbrConfigStatus(user.id);
+			setSandboxStatus(config.sandbox_status as FbrApiStatus);
+			setProductionStatus(config.production_status as FbrApiStatus);
+			setLastSandboxTest(config.last_sandbox_test);
+			setLastProductionTest(config.last_production_test);
+			setHasSandboxKey(!!config.sandbox_api_key);
+			setHasProductionKey(!!config.production_api_key);
+
+			// Set the decrypted API keys in the input fields
+			if (config.sandbox_api_key) {
+				setSandboxKey(config.sandbox_api_key);
 			}
-		};
-		run();
-	}, [user?.id, toast]);
+			if (config.production_api_key) {
+				setProductionKey(config.production_api_key);
+			}
+		} catch (error) {
+			console.error('Failed to load FBR config status:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const getStatusDisplay = (status: FbrApiStatus) => {
+		switch (status) {
+			case FBR_API_STATUS.CONNECTED:
+				return {
+					text: "Connected",
+					className: "bg-green-100 text-green-800 border-green-200",
+					icon: <CheckCircle className="h-4 w-4" />
+				};
+			case FBR_API_STATUS.FAILED:
+				return {
+					text: "Failed",
+					className: "bg-red-100 text-red-800 border-red-200",
+					icon: <AlertCircle className="h-4 w-4" />
+				};
+			case FBR_API_STATUS.NOT_CONFIGURED:
+			default:
+				return {
+					text: "Not Configured",
+					className: "bg-gray-100 text-gray-800 border-gray-200",
+					icon: <Info className="h-4 w-4" />
+				};
+		}
+	};
+
+	const formatLastTest = (timestamp?: string) => {
+		if (!timestamp) return null;
+		try {
+			return new Date(timestamp).toLocaleString();
+		} catch {
+			return null;
+		}
+	};
 
 	async function testConnection(env: "sandbox" | "production") {
 		const key = env === "sandbox" ? sandboxKey : productionKey;
 		if (!key) {
-			toast({ title: "API key required", description: `Please enter the ${env} API key first.`, variant: "destructive" });
+			toast({
+				title: "API key required",
+				description: `Please enter the ${env} API key first.`,
+				variant: "destructive"
+			});
 			return;
 		}
+
 		try {
-			if (env === "sandbox") setTestingSandbox(true); else setTestingProduction(true);
-			const res = await fetch("/api/fbr/test-connection", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ apiKey: key, environment: env, userId: typeof user?.id === 'string' ? user.id : undefined }),
+			if (env === "sandbox") setTestingSandbox(true);
+			else setTestingProduction(true);
+
+			const response = await testFbrConnection({
+				apiKey: key,
+				environment: env,
+				userId: typeof user?.id === 'string' ? user.id : undefined
 			});
-			const data = await res.json();
-			if (data?.success) {
-				if (env === "sandbox") setSandboxStatus("Connected"); else setProductionStatus("Connected");
-				toast({ title: "Success", description: data.message || "Connection Successful" });
+
+			if (response.success) {
+				// Update local state with the saved status from database
+				const responseData = response.data as { status: string; configStatus?: { sandbox_status: FbrApiStatus; production_status: FbrApiStatus; last_sandbox_test?: string; last_production_test?: string } };
+				if (responseData?.configStatus) {
+					const configStatus = responseData.configStatus;
+					setSandboxStatus(configStatus.sandbox_status);
+					setProductionStatus(configStatus.production_status);
+					setLastSandboxTest(configStatus.last_sandbox_test);
+					setLastProductionTest(configStatus.last_production_test);
+				} else {
+					// Fallback to local state update if no config status returned
+					if (env === "sandbox") {
+						setSandboxStatus(FBR_API_STATUS.CONNECTED);
+						setLastSandboxTest(new Date().toISOString());
+					} else {
+						setProductionStatus(FBR_API_STATUS.CONNECTED);
+						setLastProductionTest(new Date().toISOString());
+					}
+				}
+				toast({
+					title: "Connection Successful",
+					description: response.message || "FBR API is accessible"
+				});
 			} else {
-				if (env === "sandbox") setSandboxStatus("Failed"); else setProductionStatus("Failed");
-				toast({ title: "Connection failed", description: data?.message || "Unable to connect", variant: "destructive" });
+				// Update local state with the saved status from database
+				const responseData = response.data as { status: string; configStatus?: { sandbox_status: FbrApiStatus; production_status: FbrApiStatus; last_sandbox_test?: string; last_production_test?: string } };
+				if (responseData?.configStatus) {
+					const configStatus = responseData.configStatus;
+					setSandboxStatus(configStatus.sandbox_status);
+					setProductionStatus(configStatus.production_status);
+					setLastSandboxTest(configStatus.last_sandbox_test);
+					setLastProductionTest(configStatus.last_production_test);
+				} else {
+					// Fallback to local state update if no config status returned
+					if (env === "sandbox") setSandboxStatus(FBR_API_STATUS.FAILED);
+					else setProductionStatus(FBR_API_STATUS.FAILED);
+				}
+				toast({
+					title: "Connection Failed",
+					description: response.message || "Unable to connect",
+					variant: "destructive"
+				});
 			}
 		} catch {
-			if (env === "sandbox") setSandboxStatus("Failed"); else setProductionStatus("Failed");
-			toast({ title: "Connection failed", description: "Network error while testing connection", variant: "destructive" });
+			if (env === "sandbox") setSandboxStatus(FBR_API_STATUS.FAILED);
+			else setProductionStatus(FBR_API_STATUS.FAILED);
+			toast({
+				title: "Connection Failed",
+				description: "Network error while testing connection",
+				variant: "destructive"
+			});
 		} finally {
-			if (env === "sandbox") setTestingSandbox(false); else setTestingProduction(false);
+			if (env === "sandbox") setTestingSandbox(false);
+			else setTestingProduction(false);
 		}
 	}
 
 	async function saveCredentials() {
 		const userId = user?.id;
 		if (typeof userId !== 'string' || userId.length === 0) {
-			toast({ title: "Cannot save credentials", description: "User id is not available.", variant: "destructive" });
+			toast({
+				title: "Cannot save credentials",
+				description: "User id is not available.",
+				variant: "destructive"
+			});
 			return;
 		}
 		if (!sandboxKey && !productionKey) {
-			toast({ title: "Nothing to save", description: "Enter at least one API key.", variant: "destructive" });
+			toast({
+				title: "Nothing to save",
+				description: "Enter at least one API key.",
+				variant: "destructive"
+			});
 			return;
 		}
 		setSaving(true);
 		try {
-			const res = await fetch("/api/fbr/save-credentials", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ sandboxKey: sandboxKey || undefined, productionKey: productionKey || undefined, userId }),
+			const response = await saveFbrApiCredentials({
+				sandboxKey: sandboxKey || undefined,
+				productionKey: productionKey || undefined,
+				userId
 			});
-			const data = await res.json();
-			if (data?.success) {
-				toast({ title: "Saved", description: "Credentials saved successfully" });
+
+			if (response.success) {
+				toast({
+					title: "Credentials Saved",
+					description: "credentials have been saved successfully"
+				});
+				// Reload configuration to update the UI
+				await loadConfigStatus();
 			} else {
-				toast({ title: "Save failed", description: data?.message || "Unable to save credentials", variant: "destructive" });
+				toast({
+					title: "Save Failed",
+					description: response.message || "Unable to save credentials",
+					variant: "destructive"
+				});
 			}
 		} catch {
-			toast({ title: "Save failed", description: "Network error while saving credentials", variant: "destructive" });
+			toast({
+				title: "Save Failed",
+				description: "Network error while saving credentials",
+				variant: "destructive"
+			});
 		} finally {
 			setSaving(false);
 		}
 	}
 
-	if (!allowed) return null;
+	if (loading) {
+		return (
+			<div className="max-w-2xl p-6 space-y-6">
+				<div className="flex items-center justify-center py-12">
+					<Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+					<span className="ml-2 text-gray-600">Loading FBR configuration...</span>
+				</div>
+			</div>
+		);
+	}
 
 	return (
-		<div className="max-w-2xl p-6 space-y-6">
-			<h2 className="text-2xl font-semibold">FBR API Configuration</h2>
-			<div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-				To get your FBR API keys, log in to the FBR Developer Portal and register your business. Once approved, FBR will provide Sandbox and Production keys.
+		<div className="max-w-4xl p-6 space-y-6">
+			<div className="space-y-2">
+				<h2 className="text-2xl font-semibold">FBR API Configuration</h2>
+				<p className="text-gray-600">Configure your FBR API credentials to enable invoice creation and tax filing.</p>
 			</div>
-			<div className="grid gap-6">
-				{/* Sandbox */}
-				<div className="rounded-lg border border-gray-200 p-4 space-y-3">
-					<div className="flex items-center justify-between">
-						<h3 className="text-lg font-medium">Sandbox</h3>
-						<span className="text-sm px-2 py-1 rounded-full border">{sandboxStatus}</span>
+
+			{/* Instructions Card */}
+			<div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+				<div className="flex items-start space-x-3">
+					<Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+					<div className="space-y-2">
+						<h3 className="font-medium text-blue-900">How to Get Your FBR API Keys</h3>
+						<ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
+							<li>Visit the <a href="https://fbr.gov.pk" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900 inline-flex items-center">FBR Developer Portal <ExternalLink className="h-3 w-3 ml-1" /></a></li>
+							<li>Register your business and complete the verification process</li>
+							<li>Submit required documentation for API access approval</li>
+							<li>Once approved, FBR will provide your Sandbox and Production API keys</li>
+							<li>Test your Sandbox key first before using Production</li>
+						</ol>
 					</div>
-					<label className="block text-sm font-medium">Sandbox API Key</label>
-					<input
-						type="password"
-						className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-						placeholder="Enter sandbox API key"
-						value={sandboxKey}
-						onChange={(e) => setSandboxKey(e.target.value)}
-					/>
+				</div>
+			</div>
+
+
+
+			<div className="grid gap-6">
+				{/* Sandbox Configuration */}
+				<div className="rounded-lg border border-gray-200 p-6 space-y-4">
+					<div className="flex items-center justify-between">
+						<div>
+							<h3 className="text-lg font-medium">Sandbox Environment</h3>
+							<p className="text-sm text-gray-600">Use for testing and development</p>
+						</div>
+						<div className="flex items-center space-x-2">
+							{(() => {
+								const status = getStatusDisplay(sandboxStatus);
+								return (
+									<span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${status.className}`}>
+										{status.icon}
+										<span className="ml-1">{status.text}</span>
+									</span>
+								);
+							})()}
+						</div>
+					</div>
+
+					{lastSandboxTest && (
+						<p className="text-xs text-gray-500">
+							Last tested: {formatLastTest(lastSandboxTest)}
+						</p>
+					)}
+
+					<div className="space-y-2">
+						<label className="block text-sm font-medium text-gray-700">Sandbox API Key</label>
+						<input
+							type="password"
+							className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+							placeholder={hasSandboxKey ? "API key saved - enter new key to update" : "Enter your FBR Sandbox API key"}
+							value={sandboxKey}
+							onChange={(e) => setSandboxKey(e.target.value)}
+						/>
+						<p className="text-xs text-gray-500">
+							{hasSandboxKey ? "API key saved ✓" : "Your API key will be encrypted and stored securely"}
+						</p>
+					</div>
+
 					<div className="flex justify-end">
 						<button
 							onClick={() => testConnection("sandbox")}
-							disabled={testingSandbox}
-							className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
+							disabled={testingSandbox || !sandboxKey.trim()}
+							className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
 						>
+							{testingSandbox && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
 							{testingSandbox ? "Testing..." : "Test Sandbox Connection"}
 						</button>
 					</div>
 				</div>
 
-				{/* Production */}
-				<div className="rounded-lg border border-gray-200 p-4 space-y-3">
+				{/* Production Configuration */}
+				<div className="rounded-lg border border-gray-200 p-6 space-y-4">
 					<div className="flex items-center justify-between">
-						<h3 className="text-lg font-medium">Production</h3>
-						<span className="text-sm px-2 py-1 rounded-full border">
-							{productionStatus}
-						</span>
+						<div>
+							<h3 className="text-lg font-medium">Production Environment</h3>
+							<p className="text-sm text-gray-600">Use for live invoice creation and tax filing</p>
+						</div>
+						<div className="flex items-center space-x-2">
+							{(() => {
+								const status = getStatusDisplay(productionStatus);
+								return (
+									<span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${status.className}`}>
+										{status.icon}
+										<span className="ml-1">{status.text}</span>
+									</span>
+								);
+							})()}
+						</div>
 					</div>
-					<label className="block text-sm font-medium">Production API Key</label>
-					<input
-						type="password"
-						className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-						placeholder="Enter production API key"
-						value={productionKey}
-						onChange={(e) => setProductionKey(e.target.value)}
-					/>
+
+					{lastProductionTest && (
+						<p className="text-xs text-gray-500">
+							Last tested: {formatLastTest(lastProductionTest)}
+						</p>
+					)}
+
+					<div className="space-y-2">
+						<label className="block text-sm font-medium text-gray-700">Production API Key</label>
+						<input
+							type="password"
+							className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+							placeholder={hasProductionKey ? "API key saved - enter new key to update" : "Enter your FBR Production API key"}
+							value={productionKey}
+							onChange={(e) => setProductionKey(e.target.value)}
+						/>
+						<p className="text-xs text-gray-500">
+							{hasProductionKey ? "API key saved ✓" : "Your API key will be encrypted and stored securely"}
+						</p>
+					</div>
+
 					<div className="flex justify-end">
 						<button
 							onClick={() => testConnection("production")}
-							disabled={testingProduction}
-							className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
+							disabled={testingProduction || !productionKey.trim()}
+							className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
 						>
+							{testingProduction && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
 							{testingProduction ? "Testing..." : "Test Production Connection"}
 						</button>
 					</div>
 				</div>
 			</div>
 
-			<div className="flex justify-end">
+			{/* Save Button */}
+			<div className="flex justify-end pt-4 border-t border-gray-200">
 				<button
 					onClick={saveCredentials}
-					disabled={saving}
-					className="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700 disabled:opacity-50"
+					disabled={saving || (!sandboxKey.trim() && !productionKey.trim())}
+					className="inline-flex items-center rounded-md bg-gray-900 px-6 py-3 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
 				>
+					{saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
 					{saving ? "Saving..." : "Save Credentials"}
 				</button>
 			</div>
+
+
 		</div>
 	);
 } 
