@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/shared/services/store";
 import { Input } from "@/shared/components/Input";
 import { Textarea } from "@/shared/components/Textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/Select";
-import { Button } from "@/shared/components/Button";
 import { useToast } from "@/shared/hooks/useToast";
-import { getProvinceCodes, getBusinessActivities, getFbrProfileByUser, upsertFbrProfile } from "@/shared/services/supabase/fbr";
+import { getProvinceCodes, getBusinessActivities } from "@/shared/services/supabase/fbr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 
 interface Province {
@@ -21,24 +18,42 @@ interface BusinessActivityRow {
 	sector: string;
 }
 
-export default function FbrProfile() {
-	const { user } = useSelector((s: RootState) => s.user);
+interface FbrProfileProps {
+	cnicNtn: string;
+	businessName: string;
+	provinceCode: string;
+	address: string;
+	mobileNumber: string;
+	activityName: string;
+	sector: string;
+	onFieldChange: (field: string, value: string) => void;
+}
+
+export default function FbrProfile({
+	cnicNtn,
+	businessName,
+	provinceCode,
+	address,
+	mobileNumber,
+	activityName,
+	sector,
+	onFieldChange
+}: FbrProfileProps) {
 	const { toast } = useToast();
 	const [loading, setLoading] = useState(true);
-	const [saving, setSaving] = useState(false);
 
 	const [provinces, setProvinces] = useState<Province[]>([]);
 	const [activityRows, setActivityRows] = useState<BusinessActivityRow[]>([]);
 
-	const [form, setForm] = useState({
-		cnic_ntn: "",
-		business_name: "",
-		province_code: "",
-		address: "",
-		mobile_number: "",
-		activity_name: "",
-		sector: "",
-	});
+	const form = {
+		cnic_ntn: cnicNtn,
+		business_name: businessName,
+		province_code: provinceCode,
+		address: address,
+		mobile_number: mobileNumber,
+		activity_name: activityName,
+		sector: sector,
+	};
 
 	const activityNames = useMemo(
 		() => Array.from(new Set(activityRows.map(a => a.business_activity))),
@@ -66,23 +81,6 @@ export default function FbrProfile() {
 				if (actErr) throw actErr;
 				setProvinces(provData || []);
 				setActivityRows(actData || []);
-
-				if (user?.id) {
-					const { data: existing, error: existingErr } = await getFbrProfileByUser(user.id);
-					if (existingErr) throw existingErr;
-					if (existing) {
-						const found = (actData || []).find((a: BusinessActivityRow) => a.id === existing.business_activity_id);
-						setForm({
-							cnic_ntn: existing.cnic_ntn || "",
-							business_name: existing.business_name || "",
-							province_code: String(existing.province_code ?? ""),
-							address: existing.address || "",
-							mobile_number: existing.mobile_number || "",
-							activity_name: found?.business_activity || "",
-							sector: found?.sector || "",
-						});
-					}
-				}
 			} catch (e) {
 				console.error(e);
 				toast({ title: "Error", description: "Failed to load FBR profile data.", variant: "destructive" });
@@ -91,7 +89,7 @@ export default function FbrProfile() {
 			}
 		};
 		run();
-	}, [user?.id, toast]);
+	}, [toast]);
 
 	const errors = useMemo(() => {
 		const errs: Record<string, string> = {};
@@ -106,34 +104,7 @@ export default function FbrProfile() {
 		return errs;
 	}, [form, selectedActivityId]);
 
-	async function onSave() {
-		if (!user?.id) return;
-		if (Object.keys(errors).length) {
-			toast({ title: "Validation error", description: "Please fix highlighted fields.", variant: "destructive" });
-			return;
-		}
-		setSaving(true);
-		try {
-			const { error } = await upsertFbrProfile({
-				user_id: user.id,
-				cnic_ntn: form.cnic_ntn,
-				business_name: form.business_name,
-				province_code: Number(form.province_code),
-				address: form.address,
-				mobile_number: form.mobile_number,
-				business_activity_id: selectedActivityId as number,
-			});
-			if (error) throw error;
-			toast({ title: "Success", description: "FBR profile saved successfully" });
-			// Navigate to API Configuration or enable access. For now, simple location change.
-			window.location.href = "/fbr/api-config";
-		} catch (e) {
-			console.error(e);
-			toast({ title: "Error", description: "Failed to save profile", variant: "destructive" });
-		} finally {
-			setSaving(false);
-		}
-	}
+
 
 	if (loading) return (
 		<Card className="shadow-lg border-0">
@@ -155,17 +126,27 @@ export default function FbrProfile() {
 				<div className="grid grid-cols-1 gap-4">
 					<div>
 						<label className="block text-sm font-medium mb-1">CNIC/NTN</label>
-						<Input value={form.cnic_ntn} onChange={e => setForm({ ...form, cnic_ntn: e.target.value.replace(/\D/g, "") })} maxLength={13} className={errors.cnic_ntn ? "border-red-500" : undefined} />
+						<Input
+							value={form.cnic_ntn}
+							onChange={e => onFieldChange("fbr_cnic_ntn", e.target.value.replace(/\D/g, ""))}
+							maxLength={13}
+							className={errors.cnic_ntn ? "border-red-500" : undefined}
+						/>
 						{errors.cnic_ntn && <p className="text-red-600 text-xs mt-1">{errors.cnic_ntn}</p>}
 					</div>
 					<div>
 						<label className="block text-sm font-medium mb-1">Business Name</label>
-						<Input value={form.business_name} onChange={e => setForm({ ...form, business_name: e.target.value })} maxLength={100} className={errors.business_name ? "border-red-500" : undefined} />
+						<Input
+							value={form.business_name}
+							onChange={e => onFieldChange("fbr_business_name", e.target.value)}
+							maxLength={100}
+							className={errors.business_name ? "border-red-500" : undefined}
+						/>
 						{errors.business_name && <p className="text-red-600 text-xs mt-1">{errors.business_name}</p>}
 					</div>
 					<div>
 						<label className="block text-sm font-medium mb-1">Province</label>
-						<Select value={form.province_code} onValueChange={v => setForm({ ...form, province_code: v })}>
+						<Select value={form.province_code} onValueChange={v => onFieldChange("fbr_province_code", v)}>
 							<SelectTrigger className={errors.province_code ? "border-red-500" : undefined}>
 								<SelectValue placeholder="Select a province" />
 							</SelectTrigger>
@@ -179,17 +160,33 @@ export default function FbrProfile() {
 					</div>
 					<div>
 						<label className="block text-sm font-medium mb-1">Address</label>
-						<Textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} maxLength={250} className={errors.address ? "border-red-500" : undefined} />
+						<Textarea
+							value={form.address}
+							onChange={e => onFieldChange("fbr_address", e.target.value)}
+							maxLength={250}
+							className={errors.address ? "border-red-500" : undefined}
+						/>
 						{errors.address && <p className="text-red-600 text-xs mt-1">{errors.address}</p>}
 					</div>
 					<div>
 						<label className="block text-sm font-medium mb-1">Mobile Number</label>
-						<Input value={form.mobile_number} onChange={e => setForm({ ...form, mobile_number: e.target.value })} placeholder="+92XXXXXXXXXX" className={errors.mobile_number ? "border-red-500" : undefined} />
+						<Input
+							value={form.mobile_number}
+							onChange={e => onFieldChange("fbr_mobile_number", e.target.value)}
+							placeholder="+92XXXXXXXXXX"
+							className={errors.mobile_number ? "border-red-500" : undefined}
+						/>
 						{errors.mobile_number && <p className="text-red-600 text-xs mt-1">{errors.mobile_number}</p>}
 					</div>
 					<div>
 						<label className="block text-sm font-medium mb-1">Business Activity</label>
-						<Select value={form.activity_name} onValueChange={v => setForm({ ...form, activity_name: v, sector: "" })}>
+						<Select
+							value={form.activity_name}
+							onValueChange={v => {
+								onFieldChange("fbr_activity_name", v);
+								onFieldChange("fbr_sector", "");
+							}}
+						>
 							<SelectTrigger className={errors.activity_name ? "border-red-500" : undefined}>
 								<SelectValue placeholder="Select activity" />
 							</SelectTrigger>
@@ -203,7 +200,11 @@ export default function FbrProfile() {
 					</div>
 					<div>
 						<label className="block text-sm font-medium mb-1">Business Sector</label>
-						<Select value={form.sector} onValueChange={v => setForm({ ...form, sector: v })} disabled={!form.activity_name}>
+						<Select
+							value={form.sector}
+							onValueChange={v => onFieldChange("fbr_sector", v)}
+							disabled={!form.activity_name}
+						>
 							<SelectTrigger className={errors.sector ? "border-red-500" : undefined}>
 								<SelectValue placeholder="Select sector" />
 							</SelectTrigger>
@@ -215,9 +216,6 @@ export default function FbrProfile() {
 						</Select>
 						{errors.sector && <p className="text-red-600 text-xs mt-1">{errors.sector}</p>}
 					</div>
-				</div>
-				<div className="pt-2">
-					<Button onClick={onSave} disabled={saving}>Save</Button>
 				</div>
 			</CardContent>
 		</Card>

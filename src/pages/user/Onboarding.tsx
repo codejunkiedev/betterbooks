@@ -17,6 +17,7 @@ import {
 } from "@/features/users/company";
 import { useState } from "react";
 import { copyCOATemplateToCompany } from "@/shared/services/supabase/coa";
+import { upsertFbrProfile, getBusinessActivities } from "@/shared/services/supabase/fbr";
 import logo from "@/assets/logo.png";
 import FbrProfile from "./FbrProfile";
 
@@ -30,6 +31,13 @@ interface CompanySetupData {
     filing_status: string;
     tax_year_end: string;
     skip_tax_info: boolean;
+    fbr_cnic_ntn: string;
+    fbr_business_name: string;
+    fbr_province_code: string;
+    fbr_address: string;
+    fbr_mobile_number: string;
+    fbr_activity_name: string;
+    fbr_sector: string;
 }
 
 export default function Onboarding() {
@@ -49,6 +57,14 @@ export default function Onboarding() {
         filing_status: "",
         tax_year_end: "",
         skip_tax_info: false,
+        // FBR Profile data
+        fbr_cnic_ntn: "",
+        fbr_business_name: "",
+        fbr_province_code: "",
+        fbr_address: "",
+        fbr_mobile_number: "",
+        fbr_activity_name: "",
+        fbr_sector: "",
     });
     const [isLoading, setIsLoading] = useState(false);
 
@@ -74,6 +90,22 @@ export default function Onboarding() {
 
     const handleAddTaxInfo = () => {
         setFormData(prev => ({ ...prev, skip_tax_info: false }));
+    };
+
+    const validateFbrProfile = (data: CompanySetupData) => {
+        return !!(
+            data.fbr_cnic_ntn &&
+            data.fbr_cnic_ntn.match(/^\d{7}$|^\d{13}$/) &&
+            data.fbr_business_name &&
+            data.fbr_business_name.length <= 100 &&
+            data.fbr_province_code &&
+            data.fbr_address &&
+            data.fbr_address.length <= 250 &&
+            data.fbr_mobile_number &&
+            data.fbr_mobile_number.match(/^\+92\d{10}$/) &&
+            data.fbr_activity_name &&
+            data.fbr_sector
+        );
     };
 
     const nextStep = () => {
@@ -158,6 +190,28 @@ export default function Onboarding() {
                 );
             }
 
+            // Save FBR profile
+            if (formData.fbr_cnic_ntn && formData.fbr_business_name) {
+                // Get business activity ID from the activity name and sector
+                const { data: activities } = await getBusinessActivities();
+                const selectedActivity = activities?.find(
+                    (a: { id: number; business_activity: string; sector: string }) =>
+                        a.business_activity === formData.fbr_activity_name && a.sector === formData.fbr_sector
+                );
+
+                if (selectedActivity) {
+                    await upsertFbrProfile({
+                        user_id: user.id,
+                        cnic_ntn: formData.fbr_cnic_ntn,
+                        business_name: formData.fbr_business_name,
+                        province_code: Number(formData.fbr_province_code),
+                        address: formData.fbr_address,
+                        mobile_number: formData.fbr_mobile_number,
+                        business_activity_id: selectedActivity.id,
+                    });
+                }
+            }
+
             toast({
                 title: "Success",
                 description: "Company setup completed successfully!",
@@ -217,7 +271,16 @@ export default function Onboarding() {
                 );
             case 4:
                 return (
-                    <FbrProfile />
+                    <FbrProfile
+                        cnicNtn={formData.fbr_cnic_ntn}
+                        businessName={formData.fbr_business_name}
+                        provinceCode={formData.fbr_province_code}
+                        address={formData.fbr_address}
+                        mobileNumber={formData.fbr_mobile_number}
+                        activityName={formData.fbr_activity_name}
+                        sector={formData.fbr_sector}
+                        onFieldChange={handleFieldChange}
+                    />
                 );
             case 5:
                 return (
@@ -231,6 +294,13 @@ export default function Onboarding() {
                         taxIdNumber={formData.tax_id_number}
                         filingStatus={formData.filing_status}
                         taxYearEnd={formData.tax_year_end}
+                        fbrCnicNtn={formData.fbr_cnic_ntn}
+                        fbrBusinessName={formData.fbr_business_name}
+                        fbrProvinceCode={formData.fbr_province_code}
+                        fbrAddress={formData.fbr_address}
+                        fbrMobileNumber={formData.fbr_mobile_number}
+                        fbrActivityName={formData.fbr_activity_name}
+                        fbrSector={formData.fbr_sector}
                     />
                 );
             default:
@@ -280,7 +350,8 @@ export default function Onboarding() {
                         isLoading={isLoading}
                         canProceed={currentStep === 1 ? !!(formData.company_name && formData.company_type) :
                             currentStep === 2 ? validateOpeningBalance(formData.cash_balance, formData.balance_date, formData.skip_balance) :
-                                currentStep === 3 ? validateTaxInformation(formData.tax_id_number, formData.filing_status, formData.tax_year_end, formData.skip_tax_info) : true}
+                                currentStep === 3 ? validateTaxInformation(formData.tax_id_number, formData.filing_status, formData.tax_year_end, formData.skip_tax_info) :
+                                    currentStep === 4 ? validateFbrProfile(formData) : true}
                     />
                 </div>
             </div>
