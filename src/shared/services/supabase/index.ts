@@ -15,3 +15,4 @@ export * from './message';
 export * from './reports';
 export * from './activity';
 export * from './admin';
+export * from './fbr';

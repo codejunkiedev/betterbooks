@@ -18,6 +18,7 @@ import {
 import { useState } from "react";
 import { copyCOATemplateToCompany } from "@/shared/services/supabase/coa";
 import logo from "@/assets/logo.png";
+import FbrProfile from "./FbrProfile";
 
 interface CompanySetupData {
     company_name: string;
@@ -76,7 +77,7 @@ export default function Onboarding() {
     };
 
     const nextStep = () => {
-        if (currentStep < 4) {
+        if (currentStep < 5) {
             setCurrentStep(currentStep + 1);
         }
     };
@@ -216,6 +217,10 @@ export default function Onboarding() {
                 );
             case 4:
                 return (
+                    <FbrProfile />
+                );
+            case 5:
+                return (
                     <ReviewStep
                         companyName={formData.company_name}
                         companyType={formData.company_type}
@@ -260,7 +265,7 @@ export default function Onboarding() {
                         <p className="text-gray-600">Let's get your company set up in BetterBooks</p>
                     </div>
 
-                    <StepIndicator currentStep={currentStep} totalSteps={4} />
+                    <StepIndicator currentStep={currentStep} totalSteps={5} />
 
                     <div className="mt-8">
                         {renderCurrentStep()}
@@ -268,7 +273,7 @@ export default function Onboarding() {
 
                     <NavigationButtons
                         currentStep={currentStep}
-                        totalSteps={4}
+                        totalSteps={5}
                         onPrevious={prevStep}
                         onNext={nextStep}
                         onSubmit={handleSubmit}
