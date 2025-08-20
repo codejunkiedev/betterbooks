@@ -137,12 +137,17 @@ export const uploadDocumentsForCompany = async (
     }
 };
 
-export const getDocuments = async (filters?: DocumentFilters): Promise<DocumentListResponse> => {
+export const getDocuments = async (filters?: DocumentFilters, companyId?: string): Promise<DocumentListResponse> => {
     try {
         let query = supabase
             .from(DOCUMENTS_TABLE)
             .select('*')
             .order('uploaded_at', { ascending: false });
+
+        // Filter by company if provided
+        if (companyId) {
+            query = query.eq('company_id', companyId);
+        }
 
         if (filters?.type) {
             query = query.eq('type', filters.type);
@@ -171,13 +176,19 @@ export const getDocuments = async (filters?: DocumentFilters): Promise<DocumentL
 export const getPaginatedDocuments = async (
     page: number = 1,
     pageSize: number = 10,
-    filters?: DocumentFilters
+    filters?: DocumentFilters,
+    companyId?: string
 ): Promise<PaginatedDocumentResponse> => {
     try {
         // First, get the total count
         let countQuery = supabase
             .from(DOCUMENTS_TABLE)
             .select('*', { count: 'exact', head: true });
+
+        // Filter by company if provided
+        if (companyId) {
+            countQuery = countQuery.eq('company_id', companyId);
+        }
 
         if (filters?.type) {
             countQuery = countQuery.eq('type', filters.type);
@@ -203,6 +214,11 @@ export const getPaginatedDocuments = async (
             .select('*')
             .order('uploaded_at', { ascending: false })
             .range((page - 1) * pageSize, page * pageSize - 1);
+
+        // Filter by company if provided
+        if (companyId) {
+            query = query.eq('company_id', companyId);
+        }
 
         if (filters?.type) {
             query = query.eq('type', filters.type);
