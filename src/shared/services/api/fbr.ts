@@ -1,8 +1,10 @@
 
 import type { ApiResponse } from './types';
 import { HttpClientApi } from './http-client';
-import { updateFbrConnectionStatus, saveFbrCredentials } from '../supabase/fbr';
+import { updateFbrConnectionStatus, saveFbrCredentials, updateScenarioProgress, getFbrConfigStatus } from '../supabase/fbr';
+import { supabase } from '../supabase/client';
 import { FBR_API_STATUS } from '@/shared/constants/fbr';
+import type { FbrSandboxTestRequest, FbrSandboxTestResponse } from '@/shared/types/fbr';
 
 // FBR API endpoints for testing connections
 const ENV_TEST_ENDPOINTS = {
@@ -40,12 +42,12 @@ function getFbrErrorMessage(status: number): string {
 export interface TestConnectionRequest {
     apiKey: string;
     environment: 'sandbox' | 'production';
-    userId?: string | undefined;
+    userId?: string;
 }
 
 export interface SaveCredentialsRequest {
-    sandboxKey?: string | undefined;
-    productionKey?: string | undefined;
+    sandboxKey?: string;
+    productionKey?: string;
     userId: string;
 }
 
@@ -101,9 +103,24 @@ export async function testFbrConnection(params: TestConnectionRequest): Promise<
             }
         }
 
-        // Handle HTTP client errors
+        // Handle different types of errors
         if (error instanceof Error) {
-            const statusMatch = error.message.match(/HTTP (\d+):/);
+            const message = error.message;
+            
+            // Check if it's a CORS error
+            if (message.includes('CORS') || message.includes('cors')) {
+                return {
+                    success: false,
+                    message: 'CORS error - FBR API does not allow browser requests. Please contact support.',
+                    data: {
+                        status: 'failed',
+                        configStatus: updatedStatus
+                    }
+                };
+            }
+
+            // Check if it's an HTTP error
+            const statusMatch = message.match(/HTTP (\d+)/);
             if (statusMatch) {
                 const status = parseInt(statusMatch[1]);
                 const errorMessage = getFbrErrorMessage(status);
@@ -112,28 +129,26 @@ export async function testFbrConnection(params: TestConnectionRequest): Promise<
                     message: errorMessage,
                     data: {
                         status: 'failed',
-                        httpStatus: status,
                         configStatus: updatedStatus
                     }
                 };
             }
-        }
 
-        // Check if it's a CORS error
-        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
             return {
                 success: false,
-                message: 'CORS error - FBR API does not allow browser requests. Please contact support.',
-                data: { status: 'failed', error: 'cors' }
+                message: message || 'Connection failed',
+                data: {
+                    status: 'failed',
+                    configStatus: updatedStatus
+                }
             };
         }
 
         return {
             success: false,
-            message: 'Network error - please check your internet connection',
+            message: 'Connection failed',
             data: {
                 status: 'failed',
-                error: 'network',
                 configStatus: updatedStatus
             }
         };
@@ -149,15 +164,173 @@ export async function saveFbrApiCredentials(params: SaveCredentialsRequest): Pro
 
         return {
             success: true,
-            message: 'Credentials saved successfully',
-            data: { saved: true }
+            message: 'FBR credentials saved successfully',
+            data: null
         };
     } catch (error) {
         console.error('Error saving FBR credentials:', error);
         return {
             success: false,
-            message: error instanceof Error ? error.message : 'Failed to save credentials - please try again',
+            message: 'Failed to save FBR credentials',
             data: null
+        };
+    }
+}
+
+/**
+ * Get scenarios by business sector
+ */
+export async function getScenariosByBusinessSector(businessSectorId: number): Promise<ApiResponse<{ scenarios: string[] }>> {
+    try {
+        // Get scenarios for the business activity
+        const { data: scenarios, error } = await supabase
+            .from('business_activity_scenario')
+            .select(`
+                scenario_id,
+                scenario:scenario_id(code)
+            `)
+            .eq('business_activity_id', businessSectorId);
+
+        if (error) {
+            console.error('Failed to get scenarios for business activity:', error);
+            return {
+                success: false,
+                message: 'Failed to retrieve scenarios for business sector',
+                data: null
+            };
+        }
+
+        // Extract scenario codes from the response
+        const scenarioCodes = scenarios?.map((s: { scenario?: { code?: string }[] }) => {
+            if (s.scenario && Array.isArray(s.scenario) && s.scenario.length > 0) {
+                return s.scenario[0].code;
+            }
+            return null;
+        }).filter((code): code is string => Boolean(code)) || [];
+
+        return {
+            success: true,
+            message: 'Scenarios retrieved successfully',
+            data: { scenarios: scenarioCodes }
+        };
+    } catch (error) {
+        console.error('Error getting scenarios by business sector:', error);
+        return {
+            success: false,
+            message: 'Failed to retrieve scenarios',
+            data: null
+        };
+    }
+}
+
+/**
+ * Submit FBR sandbox test invoice
+ */
+export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): Promise<FbrSandboxTestResponse> {
+    try {
+        // Get user's sandbox API key
+        const configStatus = await getFbrConfigStatus(params.userId);
+        
+        if (!configStatus.sandbox_api_key) {
+            return {
+                success: false,
+                message: 'Sandbox API key not configured. Please configure your sandbox API key first.'
+            };
+        }
+
+        if (configStatus.sandbox_status !== FBR_API_STATUS.CONNECTED) {
+            return {
+                success: false,
+                message: 'Sandbox API connection not established. Please test your sandbox connection first.'
+            };
+        }
+
+        // Update scenario status to in_progress
+        await updateScenarioProgress(params.userId, params.scenarioId, 'in_progress');
+
+        // Prepare invoice data with scenario ID
+        const invoiceData = {
+            ...params.invoiceData,
+            scenarioId: params.scenarioId
+        };
+
+        // Submit to FBR sandbox
+        const response = await httpClient.request({
+            method: 'POST',
+            url: ENV_TEST_ENDPOINTS.sandbox,
+            headers: {
+                'Authorization': `Bearer ${configStatus.sandbox_api_key}`,
+                'Content-Type': 'application/json',
+            },
+            data: invoiceData
+        });
+
+        // Update scenario status to completed
+        const scenarioStatus = await updateScenarioProgress(
+            params.userId, 
+            params.scenarioId, 
+            'completed',
+            JSON.stringify(response.data)
+        );
+
+        return {
+            success: true,
+            message: 'Sandbox test invoice submitted successfully',
+            data: {
+                fbrResponse: response.data,
+                scenarioStatus
+            }
+        };
+    } catch (error) {
+        // Update scenario status to failed
+        let scenarioStatus;
+        try {
+            scenarioStatus = await updateScenarioProgress(
+                params.userId, 
+                params.scenarioId, 
+                'failed',
+                error instanceof Error ? error.message : 'Unknown error'
+            );
+        } catch (updateError) {
+            console.error('Failed to update scenario status:', updateError);
+        }
+
+        // Handle different types of errors
+        if (error instanceof Error) {
+            const message = error.message;
+            
+            // Check if it's an HTTP error
+            const statusMatch = message.match(/HTTP (\d+)/);
+            if (statusMatch) {
+                const status = parseInt(statusMatch[1]);
+                const errorMessage = getFbrErrorMessage(status);
+                return {
+                    success: false,
+                    message: `Sandbox test failed: ${errorMessage}`,
+                    data: {
+                        fbrResponse: null,
+                        scenarioStatus
+                    }
+                };
+            }
+
+            return {
+                success: false,
+                message: `Sandbox test failed: ${message}`,
+                data: {
+                    fbrResponse: null,
+                    scenarioStatus
+                }
+            };
+        }
+
+        return {
+            success: false,
+            message: 'Sandbox test failed: Unknown error',
+            data: {
+                fbrResponse: null,
+                scenarioStatus
+            }
         };
     }
 }

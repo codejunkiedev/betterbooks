@@ -1,20 +1,29 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Card } from "@/shared/components/Card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/Tabs";
 import { Receipt, Building2 } from "lucide-react";
 import { UploadBankStatements, UploadInvoicesExpenses } from "@/features/users/upload-document";
+import FbrScenarioInvoice from "@/features/users/upload-document/FbrScenarioInvoice";
 import { useModules } from "@/shared/hooks/useModules";
 
 const UploadDocuments = () => {
     const { accountingTier } = useModules();
     const hasAdvanced = accountingTier === 'Advanced';
     const [activeTab, setActiveTab] = useState(hasAdvanced ? "invoices-expenses" : "invoices-expenses");
+    const location = useLocation();
+
+    const isFbrScenario = location.state?.scenarioId && location.state?.scenarioData;
 
     useEffect(() => {
         if (!hasAdvanced && activeTab === 'bank-statements') {
             setActiveTab('invoices-expenses');
         }
     }, [hasAdvanced, activeTab]);
+
+    if (isFbrScenario) {
+        return <FbrScenarioInvoice />;
+    }
 
     return (
         <div className="container mx-auto px-4 py-8">

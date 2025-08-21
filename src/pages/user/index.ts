@@ -8,3 +8,8 @@ export { default as Messages } from "./Messages";
 export { default as Profile } from "./Profile";
 export { default as Onboarding } from "./Onboarding";
 export { default as Login } from "./Login";
+
+// FBR Integration
+export { default as FbrApiConfig } from "./FbrApiConfig";
+export { default as FbrProfile } from "./FbrProfile";
+export { default as FbrSandboxTesting } from "./FbrSandboxTesting";

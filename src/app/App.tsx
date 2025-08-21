@@ -29,6 +29,7 @@ import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
 import Blocked from "@/pages/user/Blocked";
 import FbrApiConfig from "@/pages/user/FbrApiConfig";
+import FbrSandboxTesting from "@/pages/user/FbrSandboxTesting";
 
 // Accountant Pages
 import AccountantDashboard from "@/pages/accountant/Dashboard";
@@ -93,7 +94,8 @@ export default function App() {
       children: [
         { path: "", element: <UserDashboard /> },
         {
-          path: "upload", element: (
+          path: "upload",
+          element: (
             <ModuleGuard module={MODULES.ACCOUNTING}>
               <UploadDocuments />
             </ModuleGuard>
@@ -127,6 +129,14 @@ export default function App() {
           element: (
             <ModuleGuard module={MODULES.TAX_FILING}>
               <FbrApiConfig />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "fbr/sandbox-testing",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <FbrSandboxTesting />
             </ModuleGuard>
           )
         },
