@@ -1,11 +1,11 @@
 import { encryptGcm, decryptGcm } from '@/shared/utils/encryption';
 import { supabase } from './client';
-import { FBR_API_STATUS } from '@/shared/constants/fbr';
-import type { FbrScenarioProgress } from '@/shared/types/fbr';
+import { FBR_API_STATUS, FbrApiStatus } from '@/shared/constants/fbr';
+import type { FbrScenarioProgress, FbrScenarioWithProgress } from '@/shared/types/fbr';
 
 export interface FbrConfigStatus {
-	sandbox_status: string;
-	production_status: string;
+	sandbox_status: FbrApiStatus;
+	production_status: FbrApiStatus;
 	last_sandbox_test?: string;
 	last_production_test?: string;
 	sandbox_api_key?: string | null;
@@ -106,16 +106,42 @@ export async function saveFbrCredentials(userId: string, sandboxKey?: string, pr
 		updatePayload.production_api_key = await encryptGcm(productionKey);
 	}
 
-	const { error } = await supabase
+	// First check if a record exists
+	const { data: existingRecord, error: checkError } = await supabase
 		.from('fbr_api_configs')
-		.upsert({
-			user_id: userId,
-			...updatePayload
-		}, { onConflict: 'user_id' });
+		.select('id')
+		.eq('user_id', userId)
+		.single();
 
-	if (error) {
-		console.error('Failed to save FBR credentials:', error);
-		throw new Error('Failed to save credentials');
+	if (checkError && checkError.code !== 'PGRST116') {
+		console.error('Failed to check existing record:', checkError);
+		throw new Error('Failed to check existing record');
+	}
+
+	if (existingRecord) {
+		// Update existing record
+		const { error } = await supabase
+			.from('fbr_api_configs')
+			.update(updatePayload)
+			.eq('user_id', userId);
+
+		if (error) {
+			console.error('Failed to update FBR credentials:', error);
+			throw new Error('Failed to update credentials');
+		}
+	} else {
+		// Insert new record
+		const { error } = await supabase
+			.from('fbr_api_configs')
+			.insert({
+				user_id: userId,
+				...updatePayload
+			});
+
+		if (error) {
+			console.error('Failed to insert FBR credentials:', error);
+			throw new Error('Failed to insert credentials');
+		}
 	}
 }
 
@@ -355,13 +381,49 @@ export async function updateScenarioProgress(
 		updatePayload.completion_timestamp = new Date().toISOString();
 	}
 
-	const { data, error } = await supabase
+	// First check if a record exists
+	const { data: existingRecord, error: checkError } = await supabase
 		.from('fbr_scenario_progress')
-		.update(updatePayload)
+		.select('id')
 		.eq('user_id', userId)
 		.eq('scenario_id', scenarioId)
-		.select()
 		.single();
+
+	if (checkError && checkError.code !== 'PGRST116') {
+		console.error('Failed to check existing scenario progress:', checkError);
+		throw new Error('Failed to check existing scenario progress');
+	}
+
+	let data;
+	let error;
+
+	if (existingRecord) {
+		// Update existing record
+		const result = await supabase
+			.from('fbr_scenario_progress')
+			.update(updatePayload)
+			.eq('user_id', userId)
+			.eq('scenario_id', scenarioId)
+			.select()
+			.single();
+
+		data = result.data;
+		error = result.error;
+	} else {
+		// Insert new record
+		const result = await supabase
+			.from('fbr_scenario_progress')
+			.insert({
+				user_id: userId,
+				scenario_id: scenarioId,
+				...updatePayload
+			})
+			.select()
+			.single();
+
+		data = result.data;
+		error = result.error;
+	}
 
 	if (error) {
 		console.error('Failed to update scenario progress:', error);
@@ -419,4 +481,161 @@ export async function getReadyScenarios(userId: string): Promise<string[]> {
 	return progress
 		.filter(p => p.status === 'not_started')
 		.map(p => p.scenario_id);
+}
+
+/**
+ * Get filtered mandatory scenarios for a business activity with backend filtering
+ */
+export async function getFilteredMandatoryScenarios(
+	businessActivityId: number,
+	filters: {
+		searchTerm?: string;
+		status?: string;
+		category?: string;
+		saleType?: string;
+		scenarioId?: string;
+	},
+	userId: string
+): Promise<Array<{
+	scenario_id: string;
+	scenario: {
+		code: string;
+		description: string;
+		sale_type: string;
+		category: string;
+	};
+	progress?: FbrScenarioProgress;
+}>> {
+	let query = supabase
+		.from('business_activity_scenario')
+		.select(`
+            scenario_id,
+            scenario!scenario_id (
+                code,
+                description,
+                sale_type,
+                category
+            )
+        `)
+		.eq('business_activity_id', businessActivityId);
+
+	// Apply filters
+	if (filters.category) {
+		query = query.eq('scenario.category', filters.category);
+	}
+
+	if (filters.saleType) {
+		query = query.eq('scenario.sale_type', filters.saleType);
+	}
+
+	if (filters.scenarioId) {
+		query = query.eq('scenario.code', filters.scenarioId);
+	}
+
+	const { data, error } = await query;
+
+	if (error) {
+		console.error('Failed to get filtered mandatory scenarios:', error);
+		throw error;
+	}
+
+	// Transform the data to fix the type issue
+	let scenarios = (data || []).map(item => ({
+		scenario_id: item.scenario_id,
+		scenario: Array.isArray(item.scenario) ? item.scenario[0] : item.scenario
+	}));
+
+	// Apply text search filter (client-side as Supabase doesn't support full-text search on joined tables easily)
+	if (filters.searchTerm) {
+		const searchTerm = filters.searchTerm.toLowerCase();
+		scenarios = scenarios.filter(item =>
+			item.scenario.description.toLowerCase().includes(searchTerm) ||
+			item.scenario.code.toLowerCase().includes(searchTerm) ||
+			item.scenario.category.toLowerCase().includes(searchTerm) ||
+			item.scenario.sale_type.toLowerCase().includes(searchTerm)
+		);
+	}
+
+	// Get user progress for the filtered scenarios
+	const scenarioIds = scenarios.map(s => s.scenario_id);
+	let progressQuery = supabase
+		.from('fbr_scenario_progress')
+		.select('*')
+		.eq('user_id', userId);
+
+	if (scenarioIds.length > 0) {
+		progressQuery = progressQuery.in('scenario_id', scenarioIds);
+	}
+
+	const { data: progressData, error: progressError } = await progressQuery;
+
+	if (progressError) {
+		console.error('Failed to get scenario progress:', progressError);
+		// Don't throw error, just continue without progress data
+	}
+
+	const progressMap = new Map(
+		(progressData || []).map(p => [p.scenario_id, p])
+	);
+
+	// Apply status filter
+	if (filters.status) {
+		scenarios = scenarios.filter(item => {
+			const progress = progressMap.get(item.scenario_id);
+			return progress?.status === filters.status;
+		});
+	}
+
+	// Add progress data to scenarios
+	const scenariosWithProgress = scenarios.map(item => ({
+		...item,
+		progress: progressMap.get(item.scenario_id)
+	}));
+
+	return scenariosWithProgress;
+}
+
+/**
+ * Get a single scenario by ID with user progress
+ */
+export async function getScenarioById(
+	scenarioId: string,
+	userId: string
+): Promise<FbrScenarioWithProgress | null> {
+	try {
+		// Get the scenario details
+		const { data: scenarioData, error: scenarioError } = await supabase
+			.from('scenario')
+			.select('*')
+			.eq('code', scenarioId)
+			.single();
+
+		if (scenarioError || !scenarioData) {
+			return null;
+		}
+
+		// Get user progress for this scenario
+		const { data: progressData, error: progressError } = await supabase
+			.from('fbr_scenario_progress')
+			.select('*')
+			.eq('user_id', userId)
+			.eq('scenario_id', scenarioId);
+
+		// Get the first (and should be only) progress record, or undefined if none exists
+		const progress = progressData && progressData.length > 0 ? progressData[0] : undefined;
+
+		// Create the scenario with progress
+		const scenario: FbrScenarioWithProgress = {
+			scenarioId: scenarioData.code,
+			description: scenarioData.description,
+			saleType: scenarioData.sale_type,
+			category: scenarioData.category,
+			progress: progressError ? undefined : progress
+		};
+
+		return scenario;
+	} catch (error) {
+		console.error('Error getting scenario by ID:', error);
+		return null;
+	}
 } 

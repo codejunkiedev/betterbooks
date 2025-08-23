@@ -30,15 +30,15 @@ export default function Messages() {
     try {
       const { data, error } = await getUserMessages();
       if (error) throw error;
-      
+
       // Filter for messages where current user is the recipient and has related document
       const { data: userData } = await supabase.auth.getUser();
       const currentUserId = userData.user?.id;
-      
+
       const accountantQuestions = (data || []).filter(
         message => message.recipient_id === currentUserId && message.related_document_id
       );
-      
+
       setMessages(accountantQuestions);
     } catch (error) {
       console.error("Error loading messages:", error);
@@ -59,14 +59,14 @@ export default function Messages() {
   const handleMessageClick = async (message: Message) => {
     setSelectedMessage(message);
     setIsDialogOpen(true);
-    
+
     // Mark message as read if it's unread
     if (!message.is_read) {
       try {
         await markMessageAsRead(message.id);
         // Update local state
-        setMessages(prev => 
-          prev.map(msg => 
+        setMessages(prev =>
+          prev.map(msg =>
             msg.id === message.id ? { ...msg, is_read: true } : msg
           )
         );
@@ -98,7 +98,7 @@ export default function Messages() {
       setReplyContent("");
       setIsDialogOpen(false);
       setSelectedMessage(null);
-      
+
       // Reload messages to show the new reply
       await loadMessages();
     } catch (error) {
@@ -170,11 +170,10 @@ export default function Messages() {
             {messages.map((message) => (
               <Card
                 key={message.id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  message.is_read 
-                    ? "border-gray-200" 
+                className={`cursor-pointer transition-all hover:shadow-md ${message.is_read
+                    ? "border-gray-200"
                     : "border-blue-200 bg-blue-50"
-                }`}
+                  }`}
                 onClick={() => handleMessageClick(message)}
               >
                 <div className="p-6">
@@ -211,11 +210,14 @@ export default function Messages() {
 
       {/* Message Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="message-dialog-description">
           <DialogHeader>
             <DialogTitle>Question from Your Accountant</DialogTitle>
+            <p id="message-dialog-description" className="text-sm text-gray-600">
+              View and reply to questions from your accountant about your documents.
+            </p>
           </DialogHeader>
-          
+
           {selectedMessage && (
             <div className="space-y-4">
               {/* Question Context */}

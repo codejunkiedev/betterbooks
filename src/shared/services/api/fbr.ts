@@ -105,7 +105,7 @@ export async function testFbrConnection(params: TestConnectionRequest): Promise<
         // Handle different types of errors
         if (error instanceof Error) {
             const errorMessage = error.message;
-            const status = (error as any).status || (error as any).response?.status;
+            const status = (error as { status?: number; response?: { status?: number } }).status || (error as { status?: number; response?: { status?: number } }).response?.status;
 
             if (status) {
                 const userFriendlyMessage = getFbrErrorMessage(status);
@@ -201,8 +201,8 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
         }
 
         // Calculate total amount from items
-        const calculatedTotal = params.invoiceData.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0);
-        
+        const calculatedTotal = params.invoiceData.items.reduce((sum: number, item: { quantity: number; rate: number; totalValues: number }) => sum + item.totalValues, 0);
+
         // Prepare invoice data with scenario ID and validated total
         const invoiceData = {
             ...params.invoiceData,
@@ -211,13 +211,6 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
             timestamp: new Date().toISOString(),
             environment: 'sandbox'
         };
-
-        console.log('Submitting sandbox test invoice:', {
-            scenarioId: params.scenarioId,
-            userId: params.userId,
-            endpoint: ENV_TEST_ENDPOINTS.sandbox,
-            totalAmount: calculatedTotal
-        });
 
         // Submit to FBR sandbox
         const response = await httpClient.request({
@@ -241,23 +234,25 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
                 timestamp: new Date().toISOString()
             }
         };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error submitting sandbox test invoice:', error);
 
         let errorMessage = 'Failed to submit test invoice to FBR sandbox';
-        
         // Handle specific error types
-        if (error.response) {
-            const status = error.response.status;
-            errorMessage = getFbrErrorMessage(status);
-            
-            // Add more specific error details if available
-            if (error.response.data && error.response.data.message) {
-                errorMessage += `: ${error.response.data.message}`;
+        if (error && typeof error === 'object' && 'response' in error) {
+            const response = (error as { response: { status?: number; data?: { message?: string } } }).response;
+            const status = response.status;
+            if (status) {
+                errorMessage = getFbrErrorMessage(status);
             }
-        } else if (error.request) {
+
+            // Add more specific error details if available
+            if (response.data && response.data.message) {
+                errorMessage += `: ${response.data.message}`;
+            }
+        } else if (error && typeof error === 'object' && 'request' in error) {
             errorMessage = 'No response received from FBR. Please check your internet connection and try again.';
-        } else if (error.message) {
+        } else if (error instanceof Error) {
             errorMessage = error.message;
         }
 
@@ -265,10 +260,10 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
             success: false,
             message: errorMessage,
             data: {
-                fbrResponse: error.response?.data || null,
+                fbrResponse: (error as { response?: { data?: unknown } }).response?.data || null,
                 scenarioId: params.scenarioId,
                 status: 'failed',
-                errorDetails: error.message
+                errorDetails: (error as { message?: string }).message || 'Unknown error'
             }
         };
     }
