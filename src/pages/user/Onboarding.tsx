@@ -17,7 +17,7 @@ import {
 } from "@/features/users/company";
 import { useState } from "react";
 import { copyCOATemplateToCompany } from "@/shared/services/supabase/coa";
-import { upsertFbrProfile, getBusinessActivities } from "@/shared/services/supabase/fbr";
+import { upsertFbrProfile, getBusinessActivities, getMandatoryScenarios, initializeScenarioProgress } from "@/shared/services/supabase/fbr";
 import logo from "@/assets/logo.png";
 import FbrProfile from "./FbrProfile";
 
@@ -209,6 +209,16 @@ export default function Onboarding() {
                         mobile_number: formData.fbr_mobile_number,
                         business_activity_id: selectedActivity.id,
                     });
+
+                    // Initialize scenario progress for the user's business activity
+                    try {
+                        const mandatoryScenarios = await getMandatoryScenarios(selectedActivity.id);
+                        const scenarioIds = mandatoryScenarios.map(s => s.scenario_id);
+                        await initializeScenarioProgress(user.id, scenarioIds);
+                    } catch (error) {
+                        console.error('Failed to initialize scenario progress during onboarding:', error);
+                        // Don't fail the entire onboarding process if scenario initialization fails
+                    }
                 }
             }
 

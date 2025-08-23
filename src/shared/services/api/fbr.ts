@@ -3,6 +3,7 @@ import type { ApiResponse } from './types';
 import { HttpClientApi } from './http-client';
 import { updateFbrConnectionStatus, saveFbrCredentials } from '../supabase/fbr';
 import { FBR_API_STATUS } from '@/shared/constants/fbr';
+import type { FbrSandboxTestRequest, FbrSandboxTestResponse } from '@/shared/types/fbr';
 
 // FBR API endpoints for testing connections
 const ENV_TEST_ENDPOINTS = {
@@ -101,39 +102,52 @@ export async function testFbrConnection(params: TestConnectionRequest): Promise<
             }
         }
 
-        // Handle HTTP client errors
+        // Handle different types of errors
         if (error instanceof Error) {
-            const statusMatch = error.message.match(/HTTP (\d+):/);
-            if (statusMatch) {
-                const status = parseInt(statusMatch[1]);
-                const errorMessage = getFbrErrorMessage(status);
+            const errorMessage = error.message;
+            const status = (error as any).status || (error as any).response?.status;
+
+            if (status) {
+                const userFriendlyMessage = getFbrErrorMessage(status);
                 return {
                     success: false,
-                    message: errorMessage,
+                    message: userFriendlyMessage,
                     data: {
                         status: 'failed',
-                        httpStatus: status,
-                        configStatus: updatedStatus
+                        configStatus: updatedStatus,
+                        originalError: errorMessage
                     }
                 };
             }
-        }
 
-        // Check if it's a CORS error
-        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+            // Handle CORS errors specifically
+            if (errorMessage.includes('CORS') || errorMessage.includes('cors')) {
+                return {
+                    success: false,
+                    message: 'CORS error - FBR API does not allow browser requests. Please contact support.',
+                    data: {
+                        status: 'failed',
+                        configStatus: updatedStatus,
+                        originalError: errorMessage
+                    }
+                };
+            }
+
             return {
                 success: false,
-                message: 'CORS error - FBR API does not allow browser requests. Please contact support.',
-                data: { status: 'failed', error: 'cors' }
+                message: errorMessage,
+                data: {
+                    status: 'failed',
+                    configStatus: updatedStatus
+                }
             };
         }
 
         return {
             success: false,
-            message: 'Network error - please check your internet connection',
+            message: 'Unknown error occurred',
             data: {
                 status: 'failed',
-                error: 'network',
                 configStatus: updatedStatus
             }
         };
@@ -149,15 +163,113 @@ export async function saveFbrApiCredentials(params: SaveCredentialsRequest): Pro
 
         return {
             success: true,
-            message: 'Credentials saved successfully',
-            data: { saved: true }
+            message: 'FBR API credentials saved successfully',
+            data: null
         };
     } catch (error) {
         console.error('Error saving FBR credentials:', error);
         return {
             success: false,
-            message: error instanceof Error ? error.message : 'Failed to save credentials - please try again',
+            message: 'Failed to save FBR API credentials',
             data: null
+        };
+    }
+}
+
+/**
+ * Submit test invoice to FBR sandbox
+ */
+export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): Promise<FbrSandboxTestResponse> {
+    try {
+        // Get user's sandbox API key
+        const { getFbrConfigStatus } = await import('../supabase/fbr');
+        const config = await getFbrConfigStatus(params.userId);
+
+        if (!config.sandbox_api_key) {
+            return {
+                success: false,
+                message: 'Sandbox API key not configured. Please configure your sandbox API key first.'
+            };
+        }
+
+        // Validate invoice data
+        if (!params.invoiceData.invoiceType || !params.invoiceData.buyerNTNCNIC || !params.invoiceData.items || params.invoiceData.items.length === 0) {
+            return {
+                success: false,
+                message: 'Invalid invoice data. Please ensure all required fields are filled.'
+            };
+        }
+
+        // Calculate total amount from items
+        const calculatedTotal = params.invoiceData.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0);
+        
+        // Prepare invoice data with scenario ID and validated total
+        const invoiceData = {
+            ...params.invoiceData,
+            scenarioId: params.scenarioId,
+            totalAmount: calculatedTotal,
+            timestamp: new Date().toISOString(),
+            environment: 'sandbox'
+        };
+
+        console.log('Submitting sandbox test invoice:', {
+            scenarioId: params.scenarioId,
+            userId: params.userId,
+            endpoint: ENV_TEST_ENDPOINTS.sandbox,
+            totalAmount: calculatedTotal
+        });
+
+        // Submit to FBR sandbox
+        const response = await httpClient.request({
+            method: 'POST',
+            url: ENV_TEST_ENDPOINTS.sandbox,
+            headers: {
+                'Authorization': `Bearer ${config.sandbox_api_key}`,
+                'Content-Type': 'application/json',
+            },
+            data: invoiceData
+        });
+
+        // If we reach here, the request was successful
+        return {
+            success: true,
+            message: 'Test invoice submitted successfully to FBR sandbox',
+            data: {
+                fbrResponse: response.data,
+                scenarioId: params.scenarioId,
+                status: 'completed',
+                timestamp: new Date().toISOString()
+            }
+        };
+    } catch (error: any) {
+        console.error('Error submitting sandbox test invoice:', error);
+
+        let errorMessage = 'Failed to submit test invoice to FBR sandbox';
+        
+        // Handle specific error types
+        if (error.response) {
+            const status = error.response.status;
+            errorMessage = getFbrErrorMessage(status);
+            
+            // Add more specific error details if available
+            if (error.response.data && error.response.data.message) {
+                errorMessage += `: ${error.response.data.message}`;
+            }
+        } else if (error.request) {
+            errorMessage = 'No response received from FBR. Please check your internet connection and try again.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
+        return {
+            success: false,
+            message: errorMessage,
+            data: {
+                fbrResponse: error.response?.data || null,
+                scenarioId: params.scenarioId,
+                status: 'failed',
+                errorDetails: error.message
+            }
         };
     }
 }
