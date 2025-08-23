@@ -8,7 +8,7 @@ import {
     JournalFilters,
     JournalHeader,
     JournalLoadingSkeleton
-} from "@/features/users/journal";
+} from "@/features/user/journal";
 
 interface JournalEntry {
     id: string;

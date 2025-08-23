@@ -9,7 +9,7 @@ import {
   TrialBalanceReport,
   ReportControls,
   ReportsLoadingSkeleton
-} from "@/features/users/reports";
+} from "@/features/user/reports";
 
 type ReportType = 'profit-loss' | 'balance-sheet' | 'trial-balance';
 

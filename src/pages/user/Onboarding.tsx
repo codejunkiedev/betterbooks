@@ -14,7 +14,7 @@ import {
     NavigationButtons,
     validateOpeningBalance,
     validateTaxInformation,
-} from "@/features/users/company";
+} from "@/features/user/company";
 import { useState } from "react";
 import { copyCOATemplateToCompany } from "@/shared/services/supabase/coa";
 import { upsertFbrProfile, getBusinessActivities, getMandatoryScenarios, initializeScenarioProgress } from "@/shared/services/supabase/fbr";
