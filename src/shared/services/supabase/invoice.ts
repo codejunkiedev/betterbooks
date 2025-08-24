@@ -4,7 +4,9 @@ import type {
     InvoiceItemCalculated,
     InvoiceRunningTotals,
     HSCode,
-    HSCodeSearchResult
+    HSCodeSearchResult,
+    UoMValidationCache,
+    UoMValidationResult
 } from '@/shared/types/invoice';
 
 /**
@@ -185,4 +187,63 @@ export async function getStaleHSCodes(): Promise<string[]> {
     }
 
     return data?.map(item => item.hs_code) || [];
+}
+
+/**
+ * Get cached UoM validation for HS code
+ */
+export async function getCachedUoMValidation(hsCode: string): Promise<UoMValidationCache | null> {
+    const { data, error } = await supabase
+        .from('uom_validations')
+        .select('*')
+        .eq('hs_code', hsCode)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return null; // Not found or expired
+        }
+        throw new Error(`Failed to fetch UoM validation: ${error.message}`);
+    }
+
+    return data;
+}
+
+/**
+ * Cache UoM validation result
+ */
+export async function cacheUoMValidation(
+    hsCode: string, 
+    validUoMs: string[], 
+    recommendedUoM: string
+): Promise<void> {
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours from now
+
+    const { error } = await supabase
+        .from('uom_validations')
+        .upsert([{
+            hs_code: hsCode,
+            valid_uoms: validUoMs,
+            recommended_uom: recommendedUoM,
+            expires_at: expiresAt
+        }], { onConflict: 'hs_code' });
+
+    if (error) {
+        throw new Error(`Failed to cache UoM validation: ${error.message}`);
+    }
+}
+
+/**
+ * Clean up expired UoM validations
+ */
+export async function cleanupExpiredUoMValidations(): Promise<void> {
+    const { error } = await supabase
+        .from('uom_validations')
+        .delete()
+        .lt('expires_at', new Date().toISOString());
+
+    if (error) {
+        throw new Error(`Failed to cleanup expired UoM validations: ${error.message}`);
+    }
 }

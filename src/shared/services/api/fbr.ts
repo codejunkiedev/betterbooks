@@ -3,6 +3,7 @@ import type { ApiResponse } from './types';
 import { HttpClientApi } from './http-client';
 import { updateFbrConnectionStatus, saveFbrCredentials } from '../supabase/fbr';
 import { FBR_API_STATUS } from '@/shared/constants/fbr';
+import { UoMValidationSeverity } from '@/shared/constants/uom';
 import type { FbrSandboxTestRequest, FbrSandboxTestResponse } from '@/shared/types/fbr';
 import type { HSCode, HSCodeSearchResult, UOMCode } from '@/shared/types/invoice';
 
@@ -478,6 +479,71 @@ export async function getHSCodeDetails(apiKey: string, hsCode: string): Promise<
             success: false,
             message: getFbrErrorMessage(fbrError.response?.status || 500),
             data: null
+        };
+    }
+}
+
+/**
+ * Validate UoM against HS code using FBR API
+ */
+export async function validateUoM(apiKey: string, hsCode: string, selectedUoM: string): Promise<ApiResponse<{
+    isValid: boolean;
+    recommendedUoM: string;
+    validUoMs: string[];
+    severity: 'warning' | 'error';
+    message?: string;
+    isCriticalMismatch?: boolean;
+}>> {
+    try {
+        const response = await httpClient.request({
+            method: 'GET',
+            url: FBR_DATA_ENDPOINTS.hscodeuom,
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            params: { hscode: hsCode }
+        });
+
+        const data = response.data as { validUOMs: string[]; recommendedUOM: string; criticalMismatch?: boolean };
+
+        const isValid = data.validUOMs.includes(selectedUoM);
+        const severity = data.criticalMismatch ? UoMValidationSeverity.ERROR : UoMValidationSeverity.WARNING;
+
+        let message: string | undefined;
+        if (!isValid) {
+            if (data.criticalMismatch) {
+                message = `Critical mismatch: ${selectedUoM} is not valid for HS Code ${hsCode}. FBR will reject this invoice.`;
+            } else {
+                message = `Recommended UoM for this HS Code: ${data.recommendedUOM}`;
+            }
+        }
+
+        return {
+            success: true,
+            message: 'UoM validation completed',
+            data: {
+                isValid,
+                recommendedUoM: data.recommendedUOM,
+                validUoMs: data.validUOMs,
+                severity,
+                ...(message && { message }),
+                ...(data.criticalMismatch && { isCriticalMismatch: data.criticalMismatch })
+            }
+        };
+    } catch (error: unknown) {
+        console.error('Failed to validate UoM:', error);
+        const fbrError = error as FbrApiError;
+        return {
+            success: false,
+            message: getFbrErrorMessage(fbrError.response?.status || 500),
+            data: {
+                isValid: true, // Default to valid if API fails
+                recommendedUoM: selectedUoM,
+                validUoMs: [selectedUoM],
+                severity: 'warning',
+                message: 'Unable to validate UoM - using selected value'
+            }
         };
     }
 }

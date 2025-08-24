@@ -2,4 +2,5 @@
 export * from './activity';
 export * from './buyer';
 export * from './company';
-export * from './documents'; 
+export * from './documents';
+export * from './uom'; 

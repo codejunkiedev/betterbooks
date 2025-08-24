@@ -139,4 +139,24 @@ export interface InvoiceRunningTotals {
 export interface InvoiceItemValidation {
     isValid: boolean;
     errors: Record<string, string>;
+}
+
+// UoM Validation Types
+import { UoMValidationSeverity } from '@/shared/constants/uom';
+
+export interface UoMValidationResult {
+    isValid: boolean;
+    recommendedUoM: string;
+    validUoMs: string[];
+    severity: UoMValidationSeverity;
+    message?: string;
+    isCriticalMismatch?: boolean;
+}
+
+export interface UoMValidationCache {
+    hs_code: string;
+    valid_uoms: string[];
+    recommended_uom: string;
+    last_updated: string;
+    expires_at: string;
 } 
