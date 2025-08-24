@@ -9,12 +9,11 @@ import {
     XCircle,
     AlertTriangle,
     Loader2,
-    ExternalLink,
     ChevronDown,
     ChevronUp,
     Info
 } from 'lucide-react';
-import type {
+import {
     InvoiceValidationResponse,
     ValidationResult,
     ValidationSeverity
@@ -26,7 +25,6 @@ interface InvoiceValidationModalProps {
     validationResult: InvoiceValidationResponse | null;
     isLoading: boolean;
     onValidate: () => void;
-    invoiceData?: any;
 }
 
 const getSeverityIcon = (severity: ValidationSeverity) => {
@@ -175,7 +173,6 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
     validationResult,
     isLoading,
     onValidate,
-    invoiceData
 }) => {
     const [activeTab, setActiveTab] = useState<'summary' | 'details'>('summary');
 
@@ -183,7 +180,6 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
 
     const hasErrors = validationResult?.summary.errors && validationResult.summary.errors > 0;
     const hasWarnings = validationResult?.summary.warnings && validationResult.summary.warnings > 0;
-    const canSubmit = validationResult?.canSubmit || false;
 
     const errorResults = validationResult?.results.filter(r => r.severity === ValidationSeverity.ERROR) || [];
     const warningResults = validationResult?.results.filter(r => r.severity === ValidationSeverity.WARNING) || [];
@@ -243,8 +239,8 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
                                 <button
                                     onClick={() => setActiveTab('summary')}
                                     className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'summary'
-                                            ? 'border-blue-500 text-blue-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
                                     Summary
@@ -252,8 +248,8 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
                                 <button
                                     onClick={() => setActiveTab('details')}
                                     className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'details'
-                                            ? 'border-blue-500 text-blue-600'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
                                     Details ({validationResult.results.length})

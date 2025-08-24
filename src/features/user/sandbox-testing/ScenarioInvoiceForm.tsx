@@ -409,29 +409,29 @@ export default function ScenarioInvoiceForm() {
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-6xl mx-auto space-y-8">
                 {/* Enhanced Header */}
-                <div className="bg-card rounded-xl p-6 border">
-                    <div className="flex items-start justify-between">
+                <div className="bg-card rounded-xl p-4 sm:p-6 border">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div className="flex-1">
                             <div className="flex items-center gap-3 mb-3">
-                                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                                    <Target className="h-5 w-5 text-primary" />
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                    <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold tracking-tight">
+                                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                                         Scenario {scenario.code}
                                     </h1>
-                                    <p className="text-muted-foreground font-medium">FBR Sandbox Testing</p>
+                                    <p className="text-muted-foreground font-medium text-sm sm:text-base">FBR Sandbox Testing</p>
                                 </div>
                             </div>
-                            <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl">
+                            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-3xl">
                                 {scenario.description}
                             </p>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
-                            <Badge variant="outline" className="capitalize px-4 py-2 text-sm font-medium">
+                        <div className="flex flex-row sm:flex-col items-start sm:items-end gap-2">
+                            <Badge variant="outline" className="capitalize px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium">
                                 {scenario.category}
                             </Badge>
-                            <Badge variant="secondary" className="capitalize px-4 py-2 text-sm font-medium">
+                            <Badge variant="secondary" className="capitalize px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-medium">
                                 {scenario.sale_type}
                             </Badge>
                         </div>
@@ -441,31 +441,33 @@ export default function ScenarioInvoiceForm() {
                 {/* Enhanced Invoice Form */}
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div>
-                                <CardTitle className="flex items-center gap-3 text-xl">
-                                    <FileText className="h-5 w-5 text-primary" />
+                                <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl">
+                                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                                     Create FBR Invoice
                                 </CardTitle>
                                 <p className="text-muted-foreground text-sm">Fill in the invoice details to complete this scenario</p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <Button
                                     type="button"
                                     variant="default"
                                     onClick={populateSampleData}
                                     disabled={loadingSampleData || clearingForm}
-                                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-green-600"
+                                    className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white border-green-600 px-3 sm:px-4 py-2"
                                 >
                                     {loadingSampleData ? (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            Loading...
+                                            <span className="hidden sm:inline">Loading...</span>
+                                            <span className="sm:hidden">Loading</span>
                                         </>
                                     ) : (
                                         <>
                                             <Database className="h-4 w-4" />
-                                            Load Sample Data
+                                            <span className="hidden sm:inline">Load Sample Data</span>
+                                            <span className="sm:hidden">Load Data</span>
                                         </>
                                     )}
                                 </Button>
@@ -474,34 +476,35 @@ export default function ScenarioInvoiceForm() {
                                     variant="destructive"
                                     onClick={clearFormData}
                                     disabled={loadingSampleData || clearingForm}
-                                    className="flex items-center gap-2"
+                                    className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2"
                                 >
                                     {clearingForm ? (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            Clearing...
+                                            <span className="hidden sm:inline">Clearing...</span>
+                                            <span className="sm:hidden">Clearing</span>
                                         </>
                                     ) : (
                                         <>
                                             <Trash2 className="h-4 w-4" />
-                                            Clear Form
+                                            <span className="hidden sm:inline">Clear Form</span>
+                                            <span className="sm:hidden">Clear</span>
                                         </>
                                     )}
                                 </Button>
-
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-8">
+                    <CardContent className="p-4 sm:p-6 space-y-6 sm:space-y-8">
                         {/* Basic Information */}
-                        <div className="bg-muted/30 rounded-lg p-6">
+                        <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
                             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                                 <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                                     <span className="text-primary-foreground text-xs font-bold">1</span>
                                 </div>
                                 Basic Invoice Information
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                 <div>
                                     <Label htmlFor="invoiceType" className="text-sm font-medium">Invoice Type</Label>
                                     <Select
@@ -533,14 +536,14 @@ export default function ScenarioInvoiceForm() {
                         </div>
 
                         {/* Seller Information */}
-                        <div className="bg-muted/30 rounded-lg p-6">
+                        <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
                             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                                 <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                                     <span className="text-primary-foreground text-xs font-bold">2</span>
                                 </div>
                                 Seller Information
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                 <div>
                                     <Label htmlFor="sellerNTNCNIC" className="text-sm font-medium">Seller NTN/CNIC</Label>
                                     <Input
@@ -596,7 +599,7 @@ export default function ScenarioInvoiceForm() {
                         </div>
 
                         {/* Buyer Information */}
-                        <div className="bg-muted/30 rounded-lg p-6">
+                        <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
                             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                                 <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                                     <span className="text-primary-foreground text-xs font-bold">3</span>
@@ -628,7 +631,7 @@ export default function ScenarioInvoiceForm() {
                         </div>
 
                         {/* Invoice Items Management */}
-                        <div className="bg-muted/30 rounded-lg p-6">
+                        <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
                             <div className="flex items-center mb-6">
                                 <h3 className="text-lg font-semibold flex items-center gap-2">
                                     <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
@@ -647,7 +650,7 @@ export default function ScenarioInvoiceForm() {
                         </div>
 
                         {/* Total Amount */}
-                        <div className="bg-muted/30 rounded-lg p-6 border">
+                        <div className="bg-muted/30 rounded-lg p-4 sm:p-6 border">
                             <div className="flex justify-between items-center">
                                 <div>
                                     <Label className="text-lg font-semibold">Total Amount</Label>
@@ -662,7 +665,7 @@ export default function ScenarioInvoiceForm() {
                         </div>
 
                         {/* Notes */}
-                        <div className="bg-muted/30 rounded-lg p-6 border">
+                        <div className="bg-muted/30 rounded-lg p-4 sm:p-6 border">
                             <Label htmlFor="notes" className="text-sm font-medium">Notes (Optional)</Label>
                             <Textarea
                                 id="notes"
@@ -675,60 +678,70 @@ export default function ScenarioInvoiceForm() {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="bg-muted/30 rounded-lg p-6 border">
-                            <div className="flex justify-between items-center">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => navigate('/fbr/sandbox-testing')}
-                                    disabled={submitting}
-                                    className="px-6 py-2"
-                                >
-                                    Cancel
-                                </Button>
-                                <div className="flex gap-2">
+                        <div className="bg-muted/30 rounded-lg p-4 sm:p-6 border">
+                            <div className="flex flex-col gap-4">
+                                {/* Main Action Buttons Row */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <Button
                                         variant="outline"
                                         onClick={handlePreview}
                                         disabled={!formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0)}
-                                        className="flex items-center gap-2 px-6 py-2"
+                                        className="flex items-center justify-center gap-2 px-4 py-2 h-10"
                                     >
                                         <Eye className="h-4 w-4" />
-                                        Preview Invoice
+                                        <span className="hidden sm:inline">Preview Invoice</span>
+                                        <span className="sm:hidden">Preview</span>
                                     </Button>
                                     <Button
                                         variant="outline"
                                         onClick={handleValidateInvoice}
                                         disabled={isValidating || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0)}
-                                        className="flex items-center gap-2 px-6 py-2"
+                                        className="flex items-center justify-center gap-2 px-4 py-2 h-10"
                                     >
                                         {isValidating ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                                Validating...
+                                                <span className="hidden sm:inline">Validating...</span>
+                                                <span className="sm:hidden">Validating</span>
                                             </>
                                         ) : (
                                             <>
                                                 <CheckCircle className="h-4 w-4" />
-                                                Validate Invoice
+                                                <span className="hidden sm:inline">Validate Invoice</span>
+                                                <span className="sm:hidden">Validate</span>
                                             </>
                                         )}
                                     </Button>
                                     <Button
                                         onClick={handleSubmit}
                                         disabled={submitting || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0) || !validationResult?.isValid}
-                                        className="flex items-center gap-2 px-8 py-2 font-semibold"
+                                        className="flex items-center justify-center gap-2 px-4 py-2 h-10 font-semibold"
                                     >
                                         {submitting ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                                Submitting...
+                                                <span className="hidden sm:inline">Submitting...</span>
+                                                <span className="sm:hidden">Submitting</span>
                                             </>
                                         ) : (
                                             <>
                                                 <Play className="h-4 w-4" />
-                                                Complete Scenario
+                                                <span className="hidden sm:inline">Complete Scenario</span>
+                                                <span className="sm:hidden">Complete</span>
                                             </>
                                         )}
+                                    </Button>
+                                </div>
+
+                                {/* Cancel Button Row */}
+                                <div className="flex justify-center sm:justify-start">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => navigate('/fbr/sandbox-testing')}
+                                        disabled={submitting}
+                                        className="px-6 py-2 h-10 w-full sm:w-auto"
+                                    >
+                                        Cancel
                                     </Button>
                                 </div>
                             </div>
@@ -753,7 +766,6 @@ export default function ScenarioInvoiceForm() {
                 validationResult={validationResult}
                 isLoading={isValidating}
                 onValidate={handleValidateInvoice}
-                invoiceData={formData}
             />
         </div>
     );
