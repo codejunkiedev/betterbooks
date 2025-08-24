@@ -1,7 +1,9 @@
 import { UploadedFile } from "./storage";
+import { INVOICE_STATUS, INVOICE_TYPE, BUYER_REGISTRATION_TYPE } from "@/shared/constants/invoice";
 
-export type InvoiceStatus = 'pending' | 'processing' | 'completed' | 'failed';
-export type InvoiceType = 'debit' | 'credit';
+export type InvoiceStatus = typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS];
+export type InvoiceType = typeof INVOICE_TYPE[keyof typeof INVOICE_TYPE];
+export type BuyerRegistrationType = typeof BUYER_REGISTRATION_TYPE[keyof typeof BUYER_REGISTRATION_TYPE];
 
 export interface InvoiceFile {
     path: string;

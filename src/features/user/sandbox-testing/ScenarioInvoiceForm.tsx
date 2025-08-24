@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/shared/components/Badge';
 import { Alert, AlertDescription } from '@/shared/components/Alert';
 import { InvoiceValidationModal } from '@/shared/components/InvoiceValidationModal';
+import { FBRSubmissionModal } from '@/shared/components/FBRSubmissionModal';
 import {
     Play,
     Target,
@@ -29,11 +30,9 @@ import {
     updateScenarioProgress,
     getProvinceCodes
 } from '@/shared/services/supabase/fbr';
-import { submitSandboxTestInvoice } from '@/shared/services/api/fbr';
 import { FbrScenario } from '@/shared/types/fbr';
 import { InvoiceItem, ScenarioInvoiceFormData, InvoiceItemCalculated, InvoiceRunningTotals } from '@/shared/types/invoice';
 import { generateRandomSampleData, generateScenarioSpecificSampleData } from '@/shared/data/fbrSampleData';
-import { saveInvoice } from '@/shared/services/supabase/invoice';
 
 import { BuyerManagement } from '@/features/user/buyer-management';
 import { InvoiceItemManagement } from './InvoiceItemManagement';
@@ -58,11 +57,11 @@ export default function ScenarioInvoiceForm() {
 
     const [scenario, setScenario] = useState<FbrScenario | null>(null);
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
     const [loadingSampleData, setLoadingSampleData] = useState(false);
     const [clearingForm, setClearingForm] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [showValidationModal, setShowValidationModal] = useState(false);
+    const [showSubmissionModal, setShowSubmissionModal] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [provinces, setProvinces] = useState<Array<{ state_province_code: number; state_province_desc: string }>>([]);
     const [formData, setFormData] = useState<ScenarioInvoiceFormData>({
@@ -263,101 +262,68 @@ export default function ScenarioInvoiceForm() {
         }
     };
 
-    const handleSubmit = async () => {
-        if (!scenario || !user?.id) return;
+    const handleSubmit = () => {
+        setShowSubmissionModal(true);
+    };
+
+    const handleSubmitToFBRWrapper = async () => {
+        if (!scenario || !user?.id) {
+            return {
+                success: false,
+                error: 'Missing scenario or user data'
+            };
+        }
 
         try {
-            setSubmitting(true);
+            // Get user's FBR API key
+            const { getFbrConfigStatus } = await import('@/shared/services/supabase/fbr');
+            const config = await getFbrConfigStatus(user.id);
 
+            if (!config.sandbox_api_key) {
+                return {
+                    success: false,
+                    error: 'FBR API Key Required - Please configure your FBR sandbox API key before submitting invoices.'
+                };
+            }
 
-            // Submit the invoice to FBR
-            const response = await submitSandboxTestInvoice({
-                scenarioId: scenario.code,
-                invoiceData: {
-                    invoiceType: formData.invoiceType,
-                    invoiceDate: formData.invoiceDate,
-                    sellerNTNCNIC: formData.sellerNTNCNIC,
-                    sellerBusinessName: formData.sellerBusinessName,
-                    sellerProvince: formData.sellerProvince,
-                    sellerAddress: formData.sellerAddress,
-                    buyerNTNCNIC: formData.buyerNTNCNIC,
-                    buyerBusinessName: formData.buyerBusinessName,
-                    buyerProvince: formData.buyerProvince,
-                    buyerAddress: formData.buyerAddress,
-                    buyerRegistrationType: formData.buyerRegistrationType,
-                    invoiceRefNo: formData.invoiceRefNo,
-                    items: formData.items.map(item => ({
-                        hsCode: item.hs_code,
-                        productDescription: item.item_name,
-                        rate: item.tax_rate, // Tax rate percentage
-                        uoM: item.uom_code,
-                        quantity: item.quantity,
-                        totalValues: item.total_amount,
-                        valueSalesExcludingST: item.value_sales_excluding_st,
-                        fixedNotifiedValueOrRetailPrice: item.fixed_notified_value || 0,
-                        salesTaxApplicable: item.sales_tax,
-                        salesTaxWithheldAtSource: 0,
-                        extraTax: 0,
-                        furtherTax: 0,
-                        sroScheduleNo: item.is_third_schedule ? '3' : '',
-                        fedPayable: item.sales_tax,
-                        discount: 0,
-                        saleType: 'Goods at standard rate (default)',
-                        sroItemSerialNo: ''
-                    })),
-                    totalAmount: formData.totalAmount,
-                    notes: formData.notes
-                },
-                userId: user.id
+            // Import the submission service
+            const { submitInvoiceToFBR } = await import('@/shared/services/api/fbrSubmission');
+
+            const response = await submitInvoiceToFBR({
+                userId: user.id,
+                invoiceData: formData,
+                environment: 'sandbox',
+                apiKey: config.sandbox_api_key,
+                maxRetries: 3,
+                timeout: 90000
             });
 
             if (response.success) {
-                // Save invoice to database
-                const saveResult = await saveInvoice(user.id, formData, response.data?.fbrResponse as Record<string, unknown>);
-
-                if (!saveResult.success) {
-                    console.error('Failed to save invoice:', saveResult.error);
-                    toast({
-                        title: "Warning",
-                        description: "Invoice submitted to FBR but failed to save locally. Please contact support.",
-                        variant: "destructive"
-                    });
-                }
-
-                // Mark scenario as completed using scenario code
-                const progressResult = await updateScenarioProgress(
+                // Mark scenario as completed
+                await updateScenarioProgress(
                     user.id,
                     scenario.id,
                     FBR_SCENARIO_STATUS.COMPLETED,
-                    JSON.stringify(response.data?.fbrResponse)
+                    JSON.stringify(response.data?.response)
                 );
-
-                toast({
-                    title: "Scenario Completed!",
-                    description: `You have successfully completed this FBR scenario on attempt ${progressResult.newAttempts}.`,
-                });
 
                 // Navigate back to sandbox testing with a flag to refresh
                 navigate('/fbr/sandbox-testing', { state: { refresh: true } });
             } else {
-                // Mark scenario as failed using scenario code
-                const progressResult = await updateScenarioProgress(
+                // Mark scenario as failed
+                await updateScenarioProgress(
                     user.id,
                     scenario.id,
                     FBR_SCENARIO_STATUS.FAILED,
-                    response.message
+                    response.error || 'Submission failed'
                 );
-
-                toast({
-                    title: "Scenario Failed",
-                    description: `${response.message} (Attempt ${progressResult.newAttempts})`,
-                    variant: "destructive"
-                });
             }
-        } catch (error) {
-            console.error('Error submitting scenario:', error);
 
-            // Mark scenario as failed on error using scenario code
+            return response;
+        } catch (error) {
+            console.error('Error submitting to FBR:', error);
+
+            // Mark scenario as failed on error
             if (scenario && user?.id) {
                 await updateScenarioProgress(
                     user.id,
@@ -367,13 +333,10 @@ export default function ScenarioInvoiceForm() {
                 );
             }
 
-            toast({
-                title: "Error",
-                description: "Failed to submit scenario. Please try again.",
-                variant: "destructive"
-            });
-        } finally {
-            setSubmitting(false);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Unknown error occurred'
+            };
         }
     };
 
@@ -714,22 +677,12 @@ export default function ScenarioInvoiceForm() {
                                     </Button>
                                     <Button
                                         onClick={handleSubmit}
-                                        disabled={submitting || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0) || !validationResult?.isValid}
+                                        disabled={!formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0) || !validationResult?.isValid}
                                         className="flex items-center justify-center gap-2 px-4 py-2 h-10 font-semibold"
                                     >
-                                        {submitting ? (
-                                            <>
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                                <span className="hidden sm:inline">Submitting...</span>
-                                                <span className="sm:hidden">Submitting</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Play className="h-4 w-4" />
-                                                <span className="hidden sm:inline">Complete Scenario</span>
-                                                <span className="sm:hidden">Complete</span>
-                                            </>
-                                        )}
+                                        <Play className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Complete Scenario</span>
+                                        <span className="sm:hidden">Complete</span>
                                     </Button>
                                 </div>
 
@@ -738,7 +691,6 @@ export default function ScenarioInvoiceForm() {
                                     <Button
                                         variant="outline"
                                         onClick={() => navigate('/fbr/sandbox-testing')}
-                                        disabled={submitting}
                                         className="px-6 py-2 h-10 w-full sm:w-auto"
                                     >
                                         Cancel
@@ -766,6 +718,16 @@ export default function ScenarioInvoiceForm() {
                 validationResult={validationResult}
                 isLoading={isValidating}
                 onValidate={handleValidateInvoice}
+            />
+
+            {/* FBR Submission Modal */}
+            <FBRSubmissionModal
+                isOpen={showSubmissionModal}
+                onClose={() => setShowSubmissionModal(false)}
+                invoiceData={formData}
+                environment="sandbox"
+                onSubmit={handleSubmitToFBRWrapper}
+                maxRetries={3}
             />
         </div>
     );

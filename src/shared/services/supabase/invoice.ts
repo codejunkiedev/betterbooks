@@ -1,5 +1,6 @@
 import { supabase } from './client';
-import { ScenarioInvoiceFormData, HSCode, HSCodeSearchResult, UoMValidationCache } from '@/shared/types/invoice';
+import { ScenarioInvoiceFormData, HSCode, HSCodeSearchResult, UoMValidationCache, InvoiceStatus } from '@/shared/types/invoice';
+import { INVOICE_STATUS } from '@/shared/constants/invoice';
 
 export interface InvoiceSequence {
     user_id: string;
@@ -67,7 +68,7 @@ export async function saveInvoice(
                 total_amount: invoiceData.totalAmount,
                 notes: invoiceData.notes,
                 fbr_response: fbrResponse ? JSON.stringify(fbrResponse) : null,
-                status: fbrResponse ? 'submitted' : 'draft'
+                status: fbrResponse ? INVOICE_STATUS.SUBMITTED : INVOICE_STATUS.DRAFT
             })
             .select('id')
             .single();
@@ -298,5 +299,43 @@ export async function cleanupExpiredUoMValidations(): Promise<void> {
 
     if (error) {
         throw new Error(`Failed to cleanup expired UoM validations: ${error.message}`);
+    }
+}
+
+/**
+ * Update invoice status
+ */
+export async function updateInvoiceStatus(
+    invoiceId: string,
+    status: InvoiceStatus,
+    metadata?: Record<string, unknown>
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const updateData: Record<string, unknown> = {
+            status,
+            updated_at: new Date().toISOString()
+        };
+
+        if (metadata) {
+            updateData.fbr_response = JSON.stringify(metadata);
+        }
+
+        const { error } = await supabase
+            .from('invoices')
+            .update(updateData)
+            .eq('id', invoiceId);
+
+        if (error) {
+            console.error('Error updating invoice status:', error);
+            throw error;
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to update invoice status:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
     }
 }
