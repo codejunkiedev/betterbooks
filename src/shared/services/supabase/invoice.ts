@@ -1,108 +1,161 @@
-import { supabase } from './index';
-import type {
-    InvoiceItemForm,
-    InvoiceItemCalculated,
-    InvoiceRunningTotals,
-    HSCode,
-    HSCodeSearchResult,
-    UoMValidationCache,
-    UoMValidationResult
-} from '@/shared/types/invoice';
+import { supabase } from './client';
+import { ScenarioInvoiceFormData, HSCode, HSCodeSearchResult, UoMValidationCache } from '@/shared/types/invoice';
 
-/**
- * Get invoice items by invoice ID
- */
-export async function getInvoiceItems(invoiceId: number): Promise<InvoiceItemCalculated[]> {
-    const { data, error } = await supabase
-        .from('invoice_items')
-        .select('*')
-        .eq('invoice_id', invoiceId)
-        .order('created_at', { ascending: true });
-
-    if (error) {
-        throw new Error(`Failed to fetch invoice items: ${error.message}`);
-    }
-
-    return data || [];
+export interface InvoiceSequence {
+    user_id: string;
+    year: number;
+    last_number: number;
+    created_at: string;
+    updated_at: string;
 }
 
 /**
- * Create a new invoice item
+ * Generate next invoice number for a user in a specific year
  */
-export async function createInvoiceItem(item: Omit<InvoiceItemForm, 'id'> & { invoice_id: number }): Promise<InvoiceItemCalculated> {
-    const { data, error } = await supabase
-        .from('invoice_items')
-        .insert([item])
-        .select()
-        .single();
+export async function generateInvoiceNumber(userId: string, year: number): Promise<string> {
+    try {
+        const { data, error } = await supabase.rpc('get_next_invoice_number', {
+            user_uuid: userId,
+            invoice_year: year
+        });
 
-    if (error) {
-        throw new Error(`Failed to create invoice item: ${error.message}`);
-    }
+        if (error) {
+            console.error('Error generating invoice number:', error);
+            throw error;
+        }
 
-    return data;
-}
-
-/**
- * Update an existing invoice item
- */
-export async function updateInvoiceItem(id: string, updates: Partial<InvoiceItemForm>): Promise<InvoiceItemCalculated> {
-    const { data, error } = await supabase
-        .from('invoice_items')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-    if (error) {
-        throw new Error(`Failed to update invoice item: ${error.message}`);
-    }
-
-    return data;
-}
-
-/**
- * Delete an invoice item
- */
-export async function deleteInvoiceItem(id: string): Promise<void> {
-    const { error } = await supabase
-        .from('invoice_items')
-        .delete()
-        .eq('id', id);
-
-    if (error) {
-        throw new Error(`Failed to delete invoice item: ${error.message}`);
+        return data;
+    } catch (error) {
+        console.error('Failed to generate invoice number:', error);
+        throw new Error('Failed to generate invoice number');
     }
 }
 
 /**
- * Get running totals for an invoice
+ * Save invoice to database
  */
-export async function getInvoiceRunningTotals(invoiceId: number): Promise<InvoiceRunningTotals> {
-    const { data, error } = await supabase
-        .from('invoice_items')
-        .select('quantity, value_sales_excluding_st, sales_tax, total_amount')
-        .eq('invoice_id', invoiceId);
+export async function saveInvoice(
+    userId: string,
+    invoiceData: ScenarioInvoiceFormData,
+    fbrResponse?: Record<string, unknown>
+): Promise<{ success: boolean; invoiceId?: string; error?: string }> {
+    try {
+        // Generate invoice number if not provided
+        if (!invoiceData.invoiceRefNo) {
+            const year = new Date(invoiceData.invoiceDate).getFullYear();
+            invoiceData.invoiceRefNo = await generateInvoiceNumber(userId, year);
+        }
 
-    if (error) {
-        throw new Error(`Failed to fetch running totals: ${error.message}`);
+        // Save invoice data to database
+        const { data, error } = await supabase
+            .from('invoices')
+            .insert({
+                user_id: userId,
+                invoice_ref_no: invoiceData.invoiceRefNo,
+                invoice_type: invoiceData.invoiceType,
+                invoice_date: invoiceData.invoiceDate,
+                seller_ntn_cnic: invoiceData.sellerNTNCNIC,
+                seller_business_name: invoiceData.sellerBusinessName,
+                seller_province: invoiceData.sellerProvince,
+                seller_address: invoiceData.sellerAddress,
+                buyer_ntn_cnic: invoiceData.buyerNTNCNIC,
+                buyer_business_name: invoiceData.buyerBusinessName,
+                buyer_province: invoiceData.buyerProvince,
+                buyer_address: invoiceData.buyerAddress,
+                buyer_registration_type: invoiceData.buyerRegistrationType,
+                scenario_id: invoiceData.scenarioId,
+                total_amount: invoiceData.totalAmount,
+                notes: invoiceData.notes,
+                fbr_response: fbrResponse ? JSON.stringify(fbrResponse) : null,
+                status: fbrResponse ? 'submitted' : 'draft'
+            })
+            .select('id')
+            .single();
+
+        if (error) {
+            console.error('Error saving invoice:', error);
+            throw error;
+        }
+
+        // Save invoice items
+        if (invoiceData.items.length > 0) {
+            const itemsToInsert = invoiceData.items.map(item => ({
+                invoice_id: data.id,
+                hs_code: item.hs_code,
+                item_name: item.item_name,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                total_amount: item.total_amount,
+                sales_tax: item.sales_tax || 0,
+                uom_code: item.uom_code,
+                tax_rate: item.tax_rate,
+                value_sales_excluding_st: item.value_sales_excluding_st,
+                fixed_notified_value: item.fixed_notified_value,
+                retail_price: item.retail_price,
+                invoice_note: item.invoice_note,
+                is_third_schedule: item.is_third_schedule
+            }));
+
+            const { error: itemsError } = await supabase
+                .from('invoice_items')
+                .insert(itemsToInsert);
+
+            if (itemsError) {
+                console.error('Error saving invoice items:', itemsError);
+                throw itemsError;
+            }
+        }
+
+        return { success: true, invoiceId: data.id };
+    } catch (error) {
+        console.error('Failed to save invoice:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
     }
+}
 
-    const totals = data?.reduce((acc, item) => ({
-        total_quantity: acc.total_quantity + (item.quantity || 0),
-        total_value_excluding_tax: acc.total_value_excluding_tax + (item.value_sales_excluding_st || 0),
-        total_sales_tax: acc.total_sales_tax + (item.sales_tax || 0),
-        total_amount: acc.total_amount + (item.total_amount || 0),
-        total_items: acc.total_items + 1
-    }), {
-        total_quantity: 0,
-        total_value_excluding_tax: 0,
-        total_sales_tax: 0,
-        total_amount: 0,
-        total_items: 0
-    });
+/**
+ * Get invoice by ID
+ */
+export async function getInvoiceById(invoiceId: string): Promise<{ data: Record<string, unknown> | null; error: unknown }> {
+    try {
+        const { data, error } = await supabase
+            .from('invoices')
+            .select(`
+                *,
+                invoice_items (*)
+            `)
+            .eq('id', invoiceId)
+            .single();
 
-    return totals;
+        return { data, error };
+    } catch (error) {
+        console.error('Failed to get invoice:', error);
+        return { data: null, error };
+    }
+}
+
+/**
+ * Get user's invoices
+ */
+export async function getUserInvoices(userId: string): Promise<{ data: Record<string, unknown>[]; error: unknown }> {
+    try {
+        const { data, error } = await supabase
+            .from('invoices')
+            .select(`
+                *,
+                invoice_items (*)
+            `)
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        return { data: data || [], error };
+    } catch (error) {
+        console.error('Failed to get user invoices:', error);
+        return { data: [], error };
+    }
 }
 
 /**
@@ -214,8 +267,8 @@ export async function getCachedUoMValidation(hsCode: string): Promise<UoMValidat
  * Cache UoM validation result
  */
 export async function cacheUoMValidation(
-    hsCode: string, 
-    validUoMs: string[], 
+    hsCode: string,
+    validUoMs: string[],
     recommendedUoM: string
 ): Promise<void> {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours from now

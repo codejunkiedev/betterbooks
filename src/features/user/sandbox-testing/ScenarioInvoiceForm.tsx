@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/shared/services/store';
 import { useToast } from '@/shared/hooks/useToast';
+import { useInvoiceValidation } from '@/shared/hooks/useInvoiceValidation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
@@ -11,13 +12,16 @@ import { Textarea } from '@/shared/components/Textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/Select';
 import { Badge } from '@/shared/components/Badge';
 import { Alert, AlertDescription } from '@/shared/components/Alert';
+import { InvoiceValidationModal } from '@/shared/components/InvoiceValidationModal';
 import {
     Play,
     Target,
     FileText,
     AlertCircle,
     Trash2,
-    Database
+    Database,
+    Eye,
+    CheckCircle
 } from 'lucide-react';
 import { FBR_SCENARIO_STATUS } from '@/shared/constants/fbr';
 import {
@@ -29,9 +33,12 @@ import { submitSandboxTestInvoice } from '@/shared/services/api/fbr';
 import { FbrScenario } from '@/shared/types/fbr';
 import { InvoiceItem, ScenarioInvoiceFormData, InvoiceItemCalculated, InvoiceRunningTotals } from '@/shared/types/invoice';
 import { generateRandomSampleData, generateScenarioSpecificSampleData } from '@/shared/data/fbrSampleData';
+import { saveInvoice } from '@/shared/services/supabase/invoice';
 
 import { BuyerManagement } from '@/features/user/buyer-management';
 import { InvoiceItemManagement } from './InvoiceItemManagement';
+import { InvoicePreview } from './InvoicePreview';
+import { InvoicePDFGenerator } from './invoicePDF';
 
 export default function ScenarioInvoiceForm() {
     const { scenarioId } = useParams<{ scenarioId: string }>();
@@ -39,11 +46,24 @@ export default function ScenarioInvoiceForm() {
     const { toast } = useToast();
     const navigate = useNavigate();
 
+    // Invoice validation hook
+    const {
+        validationResult,
+        isValidating,
+        validateInvoice: validateInvoiceData
+    } = useInvoiceValidation({
+        includeFBRValidation: true,
+        environment: 'sandbox'
+    });
+
     const [scenario, setScenario] = useState<FbrScenario | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [loadingSampleData, setLoadingSampleData] = useState(false);
     const [clearingForm, setClearingForm] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
+    const [showValidationModal, setShowValidationModal] = useState(false);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
     const [provinces, setProvinces] = useState<Array<{ state_province_code: number; state_province_desc: string }>>([]);
     const [formData, setFormData] = useState<ScenarioInvoiceFormData>({
         invoiceType: '',
@@ -208,6 +228,41 @@ export default function ScenarioInvoiceForm() {
         }
     };
 
+    const handlePreview = () => {
+        setShowPreview(true);
+    };
+
+
+
+    const handleDownloadPDF = async () => {
+        try {
+            setIsGeneratingPDF(true);
+            await InvoicePDFGenerator.downloadPDF(formData);
+            toast({
+                title: "PDF Downloaded",
+                description: "Invoice PDF has been downloaded successfully.",
+            });
+        } catch (error) {
+            console.error('Error downloading PDF:', error);
+            toast({
+                title: "Download Failed",
+                description: "Failed to download PDF. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsGeneratingPDF(false);
+        }
+    };
+
+    const handleValidateInvoice = async () => {
+        try {
+            await validateInvoiceData(formData);
+            setShowValidationModal(true);
+        } catch (error) {
+            console.error('Validation error:', error);
+        }
+    };
+
     const handleSubmit = async () => {
         if (!scenario || !user?.id) return;
 
@@ -257,6 +312,18 @@ export default function ScenarioInvoiceForm() {
             });
 
             if (response.success) {
+                // Save invoice to database
+                const saveResult = await saveInvoice(user.id, formData, response.data?.fbrResponse as Record<string, unknown>);
+
+                if (!saveResult.success) {
+                    console.error('Failed to save invoice:', saveResult.error);
+                    toast({
+                        title: "Warning",
+                        description: "Invoice submitted to FBR but failed to save locally. Please contact support.",
+                        variant: "destructive"
+                    });
+                }
+
                 // Mark scenario as completed using scenario code
                 const progressResult = await updateScenarioProgress(
                     user.id,
@@ -607,7 +674,7 @@ export default function ScenarioInvoiceForm() {
                             />
                         </div>
 
-                        {/* Submit Button */}
+                        {/* Action Buttons */}
                         <div className="bg-muted/30 rounded-lg p-6 border">
                             <div className="flex justify-between items-center">
                                 <Button
@@ -618,28 +685,76 @@ export default function ScenarioInvoiceForm() {
                                 >
                                     Cancel
                                 </Button>
-                                <Button
-                                    onClick={handleSubmit}
-                                    disabled={submitting || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0)}
-                                    className="flex items-center gap-2 px-8 py-2 font-semibold"
-                                >
-                                    {submitting ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            Submitting...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Play className="h-4 w-4" />
-                                            Complete Scenario
-                                        </>
-                                    )}
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={handlePreview}
+                                        disabled={!formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0)}
+                                        className="flex items-center gap-2 px-6 py-2"
+                                    >
+                                        <Eye className="h-4 w-4" />
+                                        Preview Invoice
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleValidateInvoice}
+                                        disabled={isValidating || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0)}
+                                        className="flex items-center gap-2 px-6 py-2"
+                                    >
+                                        {isValidating ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                Validating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="h-4 w-4" />
+                                                Validate Invoice
+                                            </>
+                                        )}
+                                    </Button>
+                                    <Button
+                                        onClick={handleSubmit}
+                                        disabled={submitting || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0) || !validationResult?.isValid}
+                                        className="flex items-center gap-2 px-8 py-2 font-semibold"
+                                    >
+                                        {submitting ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                Submitting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Play className="h-4 w-4" />
+                                                Complete Scenario
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Invoice Preview Modal */}
+            <InvoicePreview
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
+                invoiceData={formData}
+                onDownloadPDF={handleDownloadPDF}
+                isGeneratingPDF={isGeneratingPDF}
+            />
+
+            {/* Invoice Validation Modal */}
+            <InvoiceValidationModal
+                isOpen={showValidationModal}
+                onClose={() => setShowValidationModal(false)}
+                validationResult={validationResult}
+                isLoading={isValidating}
+                onValidate={handleValidateInvoice}
+                invoiceData={formData}
+            />
         </div>
     );
 }
