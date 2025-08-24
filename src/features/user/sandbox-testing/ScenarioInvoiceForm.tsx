@@ -30,6 +30,7 @@ import { submitSandboxTestInvoice } from '@/shared/services/api/fbr';
 import { FbrScenario } from '@/shared/types/fbr';
 import { InvoiceItem, ScenarioInvoiceFormData } from '@/shared/types/invoice';
 import { generateRandomSampleData } from '@/shared/data/fbrSampleData';
+import { BuyerManagement } from '@/features/user/buyer-management';
 
 export default function ScenarioInvoiceForm() {
     const { scenarioId } = useParams<{ scenarioId: string }>();
@@ -128,6 +129,23 @@ export default function ScenarioInvoiceForm() {
 
     const updateFormData = (field: keyof ScenarioInvoiceFormData, value: string | number | InvoiceItem[] | number) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleBuyerSelect = (buyerData: {
+        buyerNTNCNIC: string;
+        buyerBusinessName: string;
+        buyerProvince: string;
+        buyerAddress: string;
+        buyerRegistrationType: string;
+    }) => {
+        setFormData(prev => ({
+            ...prev,
+            buyerNTNCNIC: buyerData.buyerNTNCNIC,
+            buyerBusinessName: buyerData.buyerBusinessName,
+            buyerProvince: buyerData.buyerProvince,
+            buyerAddress: buyerData.buyerAddress,
+            buyerRegistrationType: buyerData.buyerRegistrationType
+        }));
     };
 
     const addItem = () => {
@@ -523,82 +541,27 @@ export default function ScenarioInvoiceForm() {
                                 </div>
                                 Buyer Information
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <Label htmlFor="buyerNTNCNIC" className="text-sm font-medium">Buyer NTN/CNIC</Label>
-                                    <Input
-                                        id="buyerNTNCNIC"
-                                        value={formData.buyerNTNCNIC}
-                                        onChange={(e) => updateFormData('buyerNTNCNIC', e.target.value)}
-                                        placeholder="Enter NTN or CNIC"
-                                        className="mt-1"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="buyerBusinessName" className="text-sm font-medium">Buyer Business Name</Label>
-                                    <Input
-                                        id="buyerBusinessName"
-                                        value={formData.buyerBusinessName}
-                                        onChange={(e) => updateFormData('buyerBusinessName', e.target.value)}
-                                        placeholder="Enter buyer business name"
-                                        className="mt-1"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="buyerProvince" className="text-sm font-medium">Buyer Province</Label>
-                                    <Select
-                                        value={formData.buyerProvince}
-                                        onValueChange={(value) => updateFormData('buyerProvince', value)}
-                                    >
-                                        <SelectTrigger className="mt-1">
-                                            <SelectValue placeholder="Select buyer province" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {provinces.map((province) => (
-                                                <SelectItem key={province.state_province_code} value={province.state_province_desc}>
-                                                    {province.state_province_desc}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label htmlFor="buyerAddress" className="text-sm font-medium">Buyer Address</Label>
-                                    <Input
-                                        id="buyerAddress"
-                                        value={formData.buyerAddress}
-                                        onChange={(e) => updateFormData('buyerAddress', e.target.value)}
-                                        placeholder="Enter buyer address"
-                                        className="mt-1"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="buyerRegistrationType" className="text-sm font-medium">Buyer Registration Type</Label>
-                                    <Select
-                                        value={formData.buyerRegistrationType}
-                                        onValueChange={(value) => updateFormData('buyerRegistrationType', value)}
-                                    >
-                                        <SelectTrigger className="mt-1">
-                                            <SelectValue placeholder="Select registration type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="NTN">NTN</SelectItem>
-                                            <SelectItem value="CNIC">CNIC</SelectItem>
-                                            <SelectItem value="Passport">Passport</SelectItem>
-                                            <SelectItem value="Other">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label htmlFor="invoiceRefNo" className="text-sm font-medium">Invoice Reference No.</Label>
-                                    <Input
-                                        id="invoiceRefNo"
-                                        value={formData.invoiceRefNo}
-                                        onChange={(e) => updateFormData('invoiceRefNo', e.target.value)}
-                                        placeholder="Enter invoice reference number"
-                                        className="mt-1"
-                                    />
-                                </div>
+
+                            <BuyerManagement
+                                onBuyerSelect={handleBuyerSelect}
+                                currentBuyerData={{
+                                    buyerNTNCNIC: formData.buyerNTNCNIC,
+                                    buyerBusinessName: formData.buyerBusinessName,
+                                    buyerProvince: formData.buyerProvince,
+                                    buyerAddress: formData.buyerAddress,
+                                    buyerRegistrationType: formData.buyerRegistrationType
+                                }}
+                            />
+
+                            <div className="mt-6">
+                                <Label htmlFor="invoiceRefNo" className="text-sm font-medium">Invoice Reference No.</Label>
+                                <Input
+                                    id="invoiceRefNo"
+                                    value={formData.invoiceRefNo}
+                                    onChange={(e) => updateFormData('invoiceRefNo', e.target.value)}
+                                    placeholder="Enter invoice reference number"
+                                    className="mt-1"
+                                />
                             </div>
                         </div>
 

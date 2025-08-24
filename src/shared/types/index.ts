@@ -3,6 +3,7 @@ export * from './errors';
 export * from './accounting';
 export * from './api';
 export * from './auth';
+export * from './buyer';
 export * from './coa';
 export * from './document';
 export * from './invoice';

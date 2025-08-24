@@ -2,6 +2,7 @@
 export * from './client';
 export * from './auth';
 export * from './accounting';
+export * from './buyer';
 export * from './coa';
 export * from './company';
 export * from './document';
