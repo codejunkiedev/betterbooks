@@ -1,228 +1,188 @@
-import { supabase } from './client';
-import { ApiResponse } from '@/shared/types/api';
-import {
-    InvoiceData,
-    CreateInvoiceData,
-    UpdateInvoiceData
+import { supabase } from './index';
+import type {
+    InvoiceItemForm,
+    InvoiceItemCalculated,
+    InvoiceRunningTotals,
+    HSCode,
+    HSCodeSearchResult
 } from '@/shared/types/invoice';
-import { getCurrentUser } from './auth';
-import { PaginatedResponse } from '@/shared/types/suggestion';
-import { PostgrestError } from '@supabase/supabase-js';
 
-// Helper function to get current user
+/**
+ * Get invoice items by invoice ID
+ */
+export async function getInvoiceItems(invoiceId: number): Promise<InvoiceItemCalculated[]> {
+    const { data, error } = await supabase
+        .from('invoice_items')
+        .select('*')
+        .eq('invoice_id', invoiceId)
+        .order('created_at', { ascending: true });
 
-export const uploadInvoice = async (
-    data: CreateInvoiceData
-): Promise<ApiResponse<InvoiceData[]>> => {
-    try {
-        const { user, error: userError } = await getCurrentUser();
-
-        if (userError || !user) {
-            throw new Error('User not authenticated');
-        }
-
-        // Create invoice records for each file
-        const invoicePromises = data?.files?.map(file =>
-            supabase
-                .from('invoices')
-                .insert({
-                    user_id: user.id,
-                    file: file,
-                    data: {},
-                    ocr_response: {},
-                    deepseek_response: {},
-                    status: 'pending',
-                    type: data.type,
-                    opening_balance: 0,
-                    closing_balance: 0
-                })
-                .select()
-                .single()
-        );
-        // Wait for all insertions to complete
-        const results = await Promise.all(invoicePromises || []);
-
-        // Check for any errors
-        const errors = results.filter((result) => result.error);
-        if (errors.length > 0) {
-            throw new Error('Some invoices failed to upload: ' + errors.map(e => e.error?.message).join(', '));
-        }
-
-        // Extract successful results
-        const invoices = results.map(result => result.data);
-
-        return {
-            data: invoices,
-            error: null
-        };
-    } catch (error) {
-        console.error('Error uploading invoices:', error);
-        return {
-            data: null,
-            error: error as Error
-        };
+    if (error) {
+        throw new Error(`Failed to fetch invoice items: ${error.message}`);
     }
-};
 
-// Helper function to get all invoices for the current user
-export const getInvoices = async (): Promise<ApiResponse<InvoiceData[]>> => {
-    try {
-        const { user, error: userError } = await getCurrentUser();
+    return data || [];
+}
 
-        if (userError || !user) {
-            throw new Error('User not authenticated');
+/**
+ * Create a new invoice item
+ */
+export async function createInvoiceItem(item: Omit<InvoiceItemForm, 'id'> & { invoice_id: number }): Promise<InvoiceItemCalculated> {
+    const { data, error } = await supabase
+        .from('invoice_items')
+        .insert([item])
+        .select()
+        .single();
+
+    if (error) {
+        throw new Error(`Failed to create invoice item: ${error.message}`);
+    }
+
+    return data;
+}
+
+/**
+ * Update an existing invoice item
+ */
+export async function updateInvoiceItem(id: string, updates: Partial<InvoiceItemForm>): Promise<InvoiceItemCalculated> {
+    const { data, error } = await supabase
+        .from('invoice_items')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        throw new Error(`Failed to update invoice item: ${error.message}`);
+    }
+
+    return data;
+}
+
+/**
+ * Delete an invoice item
+ */
+export async function deleteInvoiceItem(id: string): Promise<void> {
+    const { error } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        throw new Error(`Failed to delete invoice item: ${error.message}`);
+    }
+}
+
+/**
+ * Get running totals for an invoice
+ */
+export async function getInvoiceRunningTotals(invoiceId: number): Promise<InvoiceRunningTotals> {
+    const { data, error } = await supabase
+        .from('invoice_items')
+        .select('quantity, value_sales_excluding_st, sales_tax, total_amount')
+        .eq('invoice_id', invoiceId);
+
+    if (error) {
+        throw new Error(`Failed to fetch running totals: ${error.message}`);
+    }
+
+    const totals = data?.reduce((acc, item) => ({
+        total_quantity: acc.total_quantity + (item.quantity || 0),
+        total_value_excluding_tax: acc.total_value_excluding_tax + (item.value_sales_excluding_st || 0),
+        total_sales_tax: acc.total_sales_tax + (item.sales_tax || 0),
+        total_amount: acc.total_amount + (item.total_amount || 0),
+        total_items: acc.total_items + 1
+    }), {
+        total_quantity: 0,
+        total_value_excluding_tax: 0,
+        total_sales_tax: 0,
+        total_amount: 0,
+        total_items: 0
+    });
+
+    return totals;
+}
+
+/**
+ * Search HS codes from cache
+ */
+export async function searchHSCodes(searchTerm: string): Promise<HSCodeSearchResult[]> {
+    const { data, error } = await supabase
+        .from('hs_codes_cache')
+        .select('hs_code, description')
+        .or(`hs_code.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
+        .limit(50)
+        .order('hs_code');
+
+    if (error) {
+        throw new Error(`Failed to search HS codes: ${error.message}`);
+    }
+
+    return data || [];
+}
+
+/**
+ * Get HS code details from cache
+ */
+export async function getHSCodeDetails(hsCode: string): Promise<HSCode | null> {
+    const { data, error } = await supabase
+        .from('hs_codes_cache')
+        .select('*')
+        .eq('hs_code', hsCode)
+        .single();
+
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return null; // Not found
         }
-
-        const { data: invoices, error } = await supabase
-            .from('invoices')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        return {
-            data: invoices,
-            error: null
-        };
-    } catch (error) {
-        console.error('Error fetching invoices:', error);
-        return {
-            data: null,
-            error: error as Error
-        };
+        throw new Error(`Failed to fetch HS code details: ${error.message}`);
     }
-};
 
-// Helper function to get a single invoice by ID
-export const getInvoice = async (id: string): Promise<ApiResponse<InvoiceData>> => {
-    try {
-        const { user, error: userError } = await getCurrentUser();
+    return data;
+}
 
-        if (userError || !user) {
-            throw new Error('User not authenticated');
-        }
+/**
+ * Cache HS code data
+ */
+export async function cacheHSCode(hsCode: HSCode): Promise<void> {
+    const { error } = await supabase
+        .from('hs_codes_cache')
+        .upsert([hsCode], { onConflict: 'hs_code' });
 
-        const { data: invoice, error } = await supabase
-            .from('invoices')
-            .select('*')
-            .eq('id', id)
-            .eq('user_id', user.id)
-            .single();
-
-        if (error) throw error;
-
-        return {
-            data: invoice,
-            error: null
-        };
-    } catch (error) {
-        console.error('Error fetching invoice:', error);
-        return {
-            data: null,
-            error: error as Error
-        };
+    if (error) {
+        throw new Error(`Failed to cache HS code: ${error.message}`);
     }
-};
+}
 
-// Helper function to update an invoice
-export const updateInvoice = async (
-    id: string,
-    updates: UpdateInvoiceData
-): Promise<ApiResponse<InvoiceData>> => {
-    try {
-        const { user, error: userError } = await getCurrentUser();
+/**
+ * Bulk cache HS codes
+ */
+export async function bulkCacheHSCodes(hsCodes: HSCode[]): Promise<void> {
+    if (hsCodes.length === 0) return;
 
-        if (userError || !user) {
-            throw new Error('User not authenticated');
-        }
+    const { error } = await supabase
+        .from('hs_codes_cache')
+        .upsert(hsCodes, { onConflict: 'hs_code' });
 
-        const { data: invoice, error } = await supabase
-            .from('invoices')
-            .update(updates)
-            .eq('id', id)
-            .eq('user_id', user.id)
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        return {
-            data: invoice,
-            error: null
-        };
-    } catch (error) {
-        console.error('Error updating invoice:', error);
-        return {
-            data: null,
-            error: error as Error
-        };
+    if (error) {
+        throw new Error(`Failed to bulk cache HS codes: ${error.message}`);
     }
-};
+}
 
-// Helper function to delete an invoice
-export const deleteInvoice = async (id: string): Promise<ApiResponse<void>> => {
-    try {
-        const { user, error: userError } = await getCurrentUser();
+/**
+ * Get cached HS codes that need updating (older than 24 hours)
+ */
+export async function getStaleHSCodes(): Promise<string[]> {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-        if (userError || !user) {
-            throw new Error('User not authenticated');
-        }
+    const { data, error } = await supabase
+        .from('hs_codes_cache')
+        .select('hs_code')
+        .lt('last_updated', twentyFourHoursAgo);
 
-        const { error } = await supabase
-            .from('invoices')
-            .delete()
-            .eq('id', id)
-            .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        return {
-            data: undefined,
-            error: null
-        };
-    } catch (error) {
-        console.error('Error deleting invoice:', error);
-        return {
-            data: null,
-            error: error as Error
-        };
+    if (error) {
+        throw new Error(`Failed to fetch stale HS codes: ${error.message}`);
     }
-};
 
-export const fetchInvoices = async (page: number = 1, pageSize: number = 10): Promise<{ data: PaginatedResponse | null; error: PostgrestError | null }> => {
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-
-        // First, get the total count
-        const { count, error: countError } = await supabase
-            .from("invoices")
-            .select("*", { count: "exact", head: true })
-            .eq("status", "approved")
-            .eq("user_id", user?.id);
-
-        if (countError) throw countError;
-
-        // Then, get the paginated data
-        const { data, error } = await supabase
-            .from("invoices")
-            .select("*")
-            .eq("status", "approved")
-            .eq("user_id", user?.id)
-            .order("created_at", { ascending: false })
-            .range((page - 1) * pageSize, page * pageSize - 1);
-
-        if (error) throw error;
-
-        return {
-            data: {
-                items: data || [],
-                total: count || 0
-            },
-            error: null
-        };
-    } catch (error) {
-        console.error("Error fetching invoice suggestions:", error);
-        return { data: null, error: error as PostgrestError };
-    }
-};
+    return data?.map(item => item.hs_code) || [];
+}

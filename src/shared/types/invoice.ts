@@ -69,8 +69,74 @@ export interface ScenarioInvoiceFormData {
     buyerRegistrationType: string;
     invoiceRefNo: string;
     scenarioId: string;
-    items: InvoiceItem[];
+    items: InvoiceItemCalculated[];
     totalAmount: number;
     notes: string;
     [key: string]: unknown;
+}
+
+// New types for Invoice Item Management
+export interface HSCode {
+    hs_code: string;
+    description: string;
+    default_uom?: string;
+    default_tax_rate?: number;
+    is_third_schedule?: boolean;
+    last_updated?: string;
+}
+
+export interface HSCodeSearchResult {
+    hs_code: string;
+    description: string;
+    hierarchy?: string;
+}
+
+export interface UOMCode {
+    uom_code: string;
+    description: string;
+}
+
+export interface InvoiceItemForm {
+    id?: string;
+    hs_code: string;
+    item_name: string;
+    quantity: number;
+    unit_price: number;
+    uom_code: string;
+    tax_rate: number;
+    mrp_including_tax?: number;
+    mrp_excluding_tax?: number;
+    invoice_note?: string;
+    is_third_schedule: boolean;
+}
+
+export interface InvoiceItemCalculated {
+    id?: string | undefined;
+    hs_code: string;
+    item_name: string;
+    quantity: number;
+    unit_price: number;
+    uom_code: string;
+    tax_rate: number;
+    value_sales_excluding_st: number;
+    sales_tax: number;
+    total_amount: number;
+    unit_price_excluding_tax: number;
+    fixed_notified_value?: number | undefined;
+    retail_price?: number | undefined;
+    invoice_note?: string | undefined;
+    is_third_schedule: boolean;
+}
+
+export interface InvoiceRunningTotals {
+    total_quantity: number;
+    total_value_excluding_tax: number;
+    total_sales_tax: number;
+    total_amount: number;
+    total_items: number;
+}
+
+export interface InvoiceItemValidation {
+    isValid: boolean;
+    errors: Record<string, string>;
 } 

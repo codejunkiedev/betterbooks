@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/shared/services/store';
@@ -16,7 +16,6 @@ import {
     Target,
     FileText,
     AlertCircle,
-    Plus,
     Trash2,
     Database
 } from 'lucide-react';
@@ -28,9 +27,10 @@ import {
 } from '@/shared/services/supabase/fbr';
 import { submitSandboxTestInvoice } from '@/shared/services/api/fbr';
 import { FbrScenario } from '@/shared/types/fbr';
-import { InvoiceItem, ScenarioInvoiceFormData } from '@/shared/types/invoice';
-import { generateRandomSampleData } from '@/shared/data/fbrSampleData';
+import { InvoiceItem, ScenarioInvoiceFormData, InvoiceItemCalculated, InvoiceRunningTotals } from '@/shared/types/invoice';
+
 import { BuyerManagement } from '@/features/user/buyer-management';
+import { InvoiceItemManagement } from './InvoiceItemManagement';
 
 export default function ScenarioInvoiceForm() {
     const { scenarioId } = useParams<{ scenarioId: string }>();
@@ -41,6 +41,8 @@ export default function ScenarioInvoiceForm() {
     const [scenario, setScenario] = useState<FbrScenario | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [loadingSampleData, setLoadingSampleData] = useState(false);
+    const [clearingForm, setClearingForm] = useState(false);
     const [provinces, setProvinces] = useState<Array<{ state_province_code: number; state_province_desc: string }>>([]);
     const [formData, setFormData] = useState<ScenarioInvoiceFormData>({
         invoiceType: '',
@@ -56,25 +58,7 @@ export default function ScenarioInvoiceForm() {
         buyerRegistrationType: '',
         invoiceRefNo: '',
         scenarioId: '',
-        items: [{
-            hsCode: '',
-            productDescription: '',
-            rate: 0,
-            uoM: '',
-            quantity: 0,
-            totalValues: 0,
-            valueSalesExcludingST: 0,
-            fixedNotifiedValueOrRetailPrice: 0,
-            salesTaxApplicable: 0,
-            salesTaxWithheldAtSource: 0,
-            extraTax: 0,
-            furtherTax: 0,
-            sroScheduleNo: '',
-            fedPayable: 0,
-            discount: 0,
-            saleType: '',
-            sroItemSerialNo: ''
-        }],
+        items: [],
         totalAmount: 0,
         notes: ''
     });
@@ -148,94 +132,92 @@ export default function ScenarioInvoiceForm() {
         }));
     };
 
-    const addItem = () => {
+    const handleItemsChange = useCallback((newItems: InvoiceItemCalculated[]) => {
         setFormData(prev => ({
             ...prev,
-            items: [...prev.items, {
-                hsCode: '',
-                productDescription: '',
-                rate: 0,
-                uoM: '',
-                quantity: 0,
-                totalValues: 0,
-                valueSalesExcludingST: 0,
-                fixedNotifiedValueOrRetailPrice: 0,
-                salesTaxApplicable: 0,
-                salesTaxWithheldAtSource: 0,
-                extraTax: 0,
-                furtherTax: 0,
-                sroScheduleNo: '',
-                fedPayable: 0,
-                discount: 0,
-                saleType: '',
-                sroItemSerialNo: ''
-            }]
+            items: newItems
         }));
-    };
+    }, []);
 
-    const removeItem = (index: number) => {
-        if (formData.items.length > 1) {
-            setFormData(prev => {
-                const newItems = prev.items.filter((_, i) => i !== index);
-                const totalAmount = newItems.reduce((sum, item) => sum + (item.totalValues || 0), 0);
+    const handleRunningTotalsChange = useCallback((runningTotals: InvoiceRunningTotals) => {
+        setFormData(prev => ({
+            ...prev,
+            totalAmount: runningTotals.total_amount
+        }));
+    }, []);
 
-                return {
-                    ...prev,
-                    items: newItems,
-                    totalAmount
-                };
+    const populateSampleData = async () => {
+        setLoadingSampleData(true);
+        try {
+            // Simulate some loading time for better UX
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // For now, we'll create a simple sample with our new structure
+            const sampleItems: InvoiceItemCalculated[] = [
+                {
+                    hs_code: '84713000',
+                    item_name: 'Portable automatic data processing machines',
+                    quantity: 2,
+                    unit_price: 50000,
+                    uom_code: 'PCS',
+                    tax_rate: 16,
+                    value_sales_excluding_st: 84000,
+                    sales_tax: 16000,
+                    total_amount: 100000,
+                    unit_price_excluding_tax: 42000,
+                    fixed_notified_value: 100000,
+                    retail_price: 84000,
+                    invoice_note: 'Sample laptop computers',
+                    is_third_schedule: true
+                }
+            ];
+
+            setFormData(prev => ({
+                ...prev,
+                items: sampleItems,
+                totalAmount: 100000
+            }));
+
+            toast({
+                title: "Sample Data Loaded",
+                description: `Invoice populated with sample data. Total amount: Rs. 100,000`,
             });
+        } catch (error) {
+            console.error('Error loading sample data:', error);
+            toast({
+                title: "Error",
+                description: "Failed to load sample data. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoadingSampleData(false);
         }
     };
 
-    const updateItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
-        setFormData(prev => {
-            const newItems = [...prev.items];
-            const item = { ...newItems[index], [field]: value };
+    const clearFormData = async () => {
+        setClearingForm(true);
+        try {
+            // Simulate some loading time for better UX
+            await new Promise(resolve => setTimeout(resolve, 300));
 
-            // Recalculate totals for quantity/rate changes
-            if (field === 'quantity' || field === 'rate') {
-                const quantity = field === 'quantity' ? Number(value) || 0 : item.quantity;
-                const rate = field === 'rate' ? Number(value) || 0 : item.rate;
-                const total = quantity * rate;
-                item.totalValues = total;
-                item.valueSalesExcludingST = total;
-                item.fixedNotifiedValueOrRetailPrice = total;
-            }
+            setFormData({
+                invoiceType: '', invoiceDate: '', sellerNTNCNIC: '', sellerBusinessName: '',
+                sellerProvince: '', sellerAddress: '', buyerNTNCNIC: '', buyerBusinessName: '',
+                buyerProvince: '', buyerAddress: '', buyerRegistrationType: '', invoiceRefNo: '',
+                scenarioId: scenarioId || '', items: [], totalAmount: 0, notes: ''
+            });
 
-            newItems[index] = item;
-            const totalAmount = newItems.reduce((sum, item) => sum + (item.totalValues || 0), 0);
-
-            return { ...prev, items: newItems, totalAmount };
-        });
-    };
-
-    const populateSampleData = () => {
-        const sampleData = generateRandomSampleData(scenarioId);
-        setFormData(sampleData);
-
-        toast({
-            title: "Sample Data Loaded",
-            description: `Invoice populated with sample data. Total amount: Rs. ${sampleData.totalAmount.toLocaleString()}`,
-        });
-    };
-
-    const clearFormData = () => {
-        const emptyItem = {
-            hsCode: '', productDescription: '', rate: 0, uoM: '', quantity: 0,
-            totalValues: 0, valueSalesExcludingST: 0, fixedNotifiedValueOrRetailPrice: 0,
-            salesTaxApplicable: 0, salesTaxWithheldAtSource: 0, extraTax: 0, furtherTax: 0,
-            sroScheduleNo: '', fedPayable: 0, discount: 0, saleType: '', sroItemSerialNo: ''
-        };
-
-        setFormData({
-            invoiceType: '', invoiceDate: '', sellerNTNCNIC: '', sellerBusinessName: '',
-            sellerProvince: '', sellerAddress: '', buyerNTNCNIC: '', buyerBusinessName: '',
-            buyerProvince: '', buyerAddress: '', buyerRegistrationType: '', invoiceRefNo: '',
-            scenarioId: scenarioId || '', items: [emptyItem], totalAmount: 0, notes: ''
-        });
-
-        toast({ title: "Form Cleared", description: "All form data has been cleared." });
+            toast({ title: "Form Cleared", description: "All form data has been cleared." });
+        } catch (error) {
+            console.error('Error clearing form:', error);
+            toast({
+                title: "Error",
+                description: "Failed to clear form. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setClearingForm(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -262,18 +244,23 @@ export default function ScenarioInvoiceForm() {
                     buyerRegistrationType: formData.buyerRegistrationType,
                     invoiceRefNo: formData.invoiceRefNo,
                     items: formData.items.map(item => ({
-                        ...item,
-                        quantity: Number(item.quantity) || 0,
-                        rate: Number(item.rate) || 0,
-                        totalValues: Number(item.totalValues) || 0,
-                        valueSalesExcludingST: Number(item.valueSalesExcludingST) || 0,
-                        fixedNotifiedValueOrRetailPrice: Number(item.fixedNotifiedValueOrRetailPrice) || 0,
-                        salesTaxApplicable: Number(item.salesTaxApplicable) || 0,
-                        salesTaxWithheldAtSource: Number(item.salesTaxWithheldAtSource) || 0,
-                        extraTax: Number(item.extraTax) || 0,
-                        furtherTax: Number(item.furtherTax) || 0,
-                        fedPayable: Number(item.fedPayable) || 0,
-                        discount: Number(item.discount) || 0,
+                        hsCode: item.hs_code,
+                        productDescription: item.item_name,
+                        rate: item.unit_price,
+                        uoM: item.uom_code,
+                        quantity: item.quantity,
+                        totalValues: item.total_amount,
+                        valueSalesExcludingST: item.value_sales_excluding_st,
+                        fixedNotifiedValueOrRetailPrice: item.fixed_notified_value || 0,
+                        salesTaxApplicable: item.sales_tax,
+                        salesTaxWithheldAtSource: 0,
+                        extraTax: 0,
+                        furtherTax: 0,
+                        sroScheduleNo: item.is_third_schedule ? '3' : '',
+                        fedPayable: item.sales_tax,
+                        discount: 0,
+                        saleType: '',
+                        sroItemSerialNo: ''
                     })),
                     totalAmount: formData.totalAmount,
                     notes: formData.notes
@@ -412,19 +399,39 @@ export default function ScenarioInvoiceForm() {
                                     type="button"
                                     variant="default"
                                     onClick={populateSampleData}
+                                    disabled={loadingSampleData || clearingForm}
                                     className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-green-600"
                                 >
-                                    <Database className="h-4 w-4" />
-                                    Load Sample Data
+                                    {loadingSampleData ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            Loading...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Database className="h-4 w-4" />
+                                            Load Sample Data
+                                        </>
+                                    )}
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="destructive"
                                     onClick={clearFormData}
+                                    disabled={loadingSampleData || clearingForm}
                                     className="flex items-center gap-2"
                                 >
-                                    <Trash2 className="h-4 w-4" />
-                                    Clear Form
+                                    {clearingForm ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            Clearing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 className="h-4 w-4" />
+                                            Clear Form
+                                        </>
+                                    )}
                                 </Button>
 
                             </div>
@@ -565,223 +572,23 @@ export default function ScenarioInvoiceForm() {
                             </div>
                         </div>
 
-                        {/* Items */}
+                        {/* Invoice Items Management */}
                         <div className="bg-muted/30 rounded-lg p-6">
-                            <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center mb-6">
                                 <h3 className="text-lg font-semibold flex items-center gap-2">
                                     <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                                         <span className="text-primary-foreground text-xs font-bold">4</span>
                                     </div>
                                     Invoice Items
                                 </h3>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={addItem}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Add Item
-                                </Button>
                             </div>
 
-                            <div className="space-y-4">
-                                {formData.items.map((item, index) => (
-                                    <div key={index} className="bg-card rounded-lg border p-6 shadow-sm">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h4 className="font-semibold">Item #{index + 1}</h4>
-                                            {formData.items.length > 1 && (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => removeItem(index)}
-                                                    className="flex items-center gap-2 text-destructive hover:text-destructive"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                    Remove
-                                                </Button>
-                                            )}
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            <div>
-                                                <Label htmlFor={`hsCode-${index}`} className="text-sm font-medium">HS Code</Label>
-                                                <Input
-                                                    id={`hsCode-${index}`}
-                                                    value={item.hsCode}
-                                                    onChange={(e) => updateItem(index, 'hsCode', e.target.value)}
-                                                    placeholder="Enter HS Code"
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <Label htmlFor={`productDescription-${index}`} className="text-sm font-medium">Product Description</Label>
-                                                <Input
-                                                    id={`productDescription-${index}`}
-                                                    value={item.productDescription}
-                                                    onChange={(e) => updateItem(index, 'productDescription', e.target.value)}
-                                                    placeholder="Enter product description"
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`rate-${index}`} className="text-sm font-medium">Rate</Label>
-                                                <Input
-                                                    id={`rate-${index}`}
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={item.rate}
-                                                    onChange={(e) => updateItem(index, 'rate', e.target.value)}
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`uoM-${index}`} className="text-sm font-medium">UOM</Label>
-                                                <Input
-                                                    id={`uoM-${index}`}
-                                                    value={item.uoM}
-                                                    onChange={(e) => updateItem(index, 'uoM', e.target.value)}
-                                                    placeholder="Enter UOM"
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`quantity-${index}`} className="text-sm font-medium">Quantity</Label>
-                                                <Input
-                                                    id={`quantity-${index}`}
-                                                    type="number"
-                                                    min="1"
-                                                    value={item.quantity}
-                                                    onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`totalValues-${index}`} className="text-sm font-medium">Total Values</Label>
-                                                <Input
-                                                    id={`totalValues-${index}`}
-                                                    type="number"
-                                                    value={item.totalValues}
-                                                    readOnly
-                                                    className="mt-1 bg-muted"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`valueSalesExcludingST-${index}`} className="text-sm font-medium">Value Sales Excluding ST</Label>
-                                                <Input
-                                                    id={`valueSalesExcludingST-${index}`}
-                                                    type="number"
-                                                    value={item.valueSalesExcludingST}
-                                                    readOnly
-                                                    className="mt-1 bg-muted"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`fixedNotifiedValueOrRetailPrice-${index}`} className="text-sm font-medium">Fixed Notified Value or Retail Price</Label>
-                                                <Input
-                                                    id={`fixedNotifiedValueOrRetailPrice-${index}`}
-                                                    type="number"
-                                                    value={item.fixedNotifiedValueOrRetailPrice}
-                                                    readOnly
-                                                    className="mt-1 bg-muted"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`salesTaxApplicable-${index}`} className="text-sm font-medium">Sales Tax Applicable</Label>
-                                                <Input
-                                                    id={`salesTaxApplicable-${index}`}
-                                                    type="number"
-                                                    value={item.salesTaxApplicable}
-                                                    readOnly
-                                                    className="mt-1 bg-muted"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`salesTaxWithheldAtSource-${index}`} className="text-sm font-medium">Sales Tax Withheld At Source</Label>
-                                                <Input
-                                                    id={`salesTaxWithheldAtSource-${index}`}
-                                                    type="number"
-                                                    value={item.salesTaxWithheldAtSource}
-                                                    readOnly
-                                                    className="mt-1 bg-muted"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`extraTax-${index}`} className="text-sm font-medium">Extra Tax</Label>
-                                                <Input
-                                                    id={`extraTax-${index}`}
-                                                    type="number"
-                                                    value={item.extraTax}
-                                                    readOnly
-                                                    className="mt-1 bg-muted"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`furtherTax-${index}`} className="text-sm font-medium">Further Tax</Label>
-                                                <Input
-                                                    id={`furtherTax-${index}`}
-                                                    type="number"
-                                                    value={item.furtherTax}
-                                                    readOnly
-                                                    className="mt-1 bg-muted"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`sroScheduleNo-${index}`} className="text-sm font-medium">SRO Schedule No.</Label>
-                                                <Input
-                                                    id={`sroScheduleNo-${index}`}
-                                                    value={item.sroScheduleNo}
-                                                    onChange={(e) => updateItem(index, 'sroScheduleNo', e.target.value)}
-                                                    placeholder="Enter SRO Schedule No."
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`fedPayable-${index}`} className="text-sm font-medium">Fed Payable</Label>
-                                                <Input
-                                                    id={`fedPayable-${index}`}
-                                                    type="number"
-                                                    value={item.fedPayable}
-                                                    readOnly
-                                                    className="mt-1 bg-muted"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`discount-${index}`} className="text-sm font-medium">Discount</Label>
-                                                <Input
-                                                    id={`discount-${index}`}
-                                                    type="number"
-                                                    value={item.discount}
-                                                    readOnly
-                                                    className="mt-1 bg-muted"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`saleType-${index}`} className="text-sm font-medium">Sale Type</Label>
-                                                <Input
-                                                    id={`saleType-${index}`}
-                                                    value={item.saleType}
-                                                    onChange={(e) => updateItem(index, 'saleType', e.target.value)}
-                                                    placeholder="Enter sale type"
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`sroItemSerialNo-${index}`} className="text-sm font-medium">SRO Item Serial No.</Label>
-                                                <Input
-                                                    id={`sroItemSerialNo-${index}`}
-                                                    value={item.sroItemSerialNo}
-                                                    onChange={(e) => updateItem(index, 'sroItemSerialNo', e.target.value)}
-                                                    placeholder="Enter SRO Item Serial No."
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            <InvoiceItemManagement
+                                invoiceId={1} // This will be the actual invoice ID when integrated
+                                items={formData.items}
+                                onItemsChange={handleItemsChange}
+                                onRunningTotalsChange={handleRunningTotalsChange}
+                            />
                         </div>
 
                         {/* Total Amount */}
@@ -825,7 +632,7 @@ export default function ScenarioInvoiceForm() {
                                 </Button>
                                 <Button
                                     onClick={handleSubmit}
-                                    disabled={submitting || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.rate === 0)}
+                                    disabled={submitting || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0)}
                                     className="flex items-center gap-2 px-8 py-2 font-semibold"
                                 >
                                     {submitting ? (

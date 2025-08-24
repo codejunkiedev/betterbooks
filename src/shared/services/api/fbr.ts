@@ -4,11 +4,28 @@ import { HttpClientApi } from './http-client';
 import { updateFbrConnectionStatus, saveFbrCredentials } from '../supabase/fbr';
 import { FBR_API_STATUS } from '@/shared/constants/fbr';
 import type { FbrSandboxTestRequest, FbrSandboxTestResponse } from '@/shared/types/fbr';
+import type { HSCode, HSCodeSearchResult, UOMCode } from '@/shared/types/invoice';
+
+// Error type for FBR API responses
+interface FbrApiError {
+    response?: {
+        status?: number;
+        data?: { message?: string };
+    };
+    message?: string;
+}
 
 // FBR API endpoints for testing connections
 const ENV_TEST_ENDPOINTS = {
     sandbox: 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb',
     production: 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata'
+} as const;
+
+// FBR API endpoints for data retrieval
+const FBR_DATA_ENDPOINTS = {
+    itemcode: 'https://gw.fbr.gov.pk/di_data/v1/di/itemcode',
+    uom: 'https://gw.fbr.gov.pk/di_data/v1/di/uom',
+    hscodeuom: 'https://gw.fbr.gov.pk/di_data/v1/di/hscodeuom'
 } as const;
 
 // HTTP client instance
@@ -343,4 +360,126 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
     }
 }
 
+/**
+ * Get HS codes from FBR API
+ */
+export async function getHSCodes(apiKey: string, searchTerm?: string): Promise<ApiResponse<HSCodeSearchResult[]>> {
+    try {
+        const params = searchTerm ? { search: searchTerm } : {};
 
+        const response = await httpClient.request({
+            method: 'GET',
+            url: FBR_DATA_ENDPOINTS.itemcode,
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            params
+        });
+
+        return {
+            success: true,
+            message: 'HS codes retrieved successfully',
+            data: (response.data as HSCodeSearchResult[]) || []
+        };
+    } catch (error: unknown) {
+        console.error('Failed to fetch HS codes:', error);
+        const fbrError = error as FbrApiError;
+        return {
+            success: false,
+            message: getFbrErrorMessage(fbrError.response?.status || 500),
+            data: []
+        };
+    }
+}
+
+/**
+ * Get UOM codes from FBR API
+ */
+export async function getUOMCodes(apiKey: string): Promise<ApiResponse<UOMCode[]>> {
+    try {
+        const response = await httpClient.request({
+            method: 'GET',
+            url: FBR_DATA_ENDPOINTS.uom,
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            }
+        });
+
+        return {
+            success: true,
+            message: 'UOM codes retrieved successfully',
+            data: (response.data as UOMCode[]) || []
+        };
+    } catch (error: unknown) {
+        console.error('Failed to fetch UOM codes:', error);
+        const fbrError = error as FbrApiError;
+        return {
+            success: false,
+            message: getFbrErrorMessage(fbrError.response?.status || 500),
+            data: []
+        };
+    }
+}
+
+/**
+ * Get HS code UOM mapping from FBR API
+ */
+export async function getHSCodeUOMMapping(apiKey: string, hsCode: string): Promise<ApiResponse<UOMCode[]>> {
+    try {
+        const response = await httpClient.request({
+            method: 'GET',
+            url: FBR_DATA_ENDPOINTS.hscodeuom,
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            params: { hs_code: hsCode }
+        });
+
+        return {
+            success: true,
+            message: 'HS code UOM mapping retrieved successfully',
+            data: (response.data as UOMCode[]) || []
+        };
+    } catch (error: unknown) {
+        console.error('Failed to fetch HS code UOM mapping:', error);
+        const fbrError = error as FbrApiError;
+        return {
+            success: false,
+            message: getFbrErrorMessage(fbrError.response?.status || 500),
+            data: []
+        };
+    }
+}
+
+/**
+ * Get specific HS code details
+ */
+export async function getHSCodeDetails(apiKey: string, hsCode: string): Promise<ApiResponse<HSCode | null>> {
+    try {
+        const response = await httpClient.request({
+            method: 'GET',
+            url: `${FBR_DATA_ENDPOINTS.itemcode}/${hsCode}`,
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            }
+        });
+
+        return {
+            success: true,
+            message: 'HS code details retrieved successfully',
+            data: response.data as HSCode
+        };
+    } catch (error: unknown) {
+        console.error('Failed to fetch HS code details:', error);
+        const fbrError = error as FbrApiError;
+        return {
+            success: false,
+            message: getFbrErrorMessage(fbrError.response?.status || 500),
+            data: null
+        };
+    }
+}
