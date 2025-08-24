@@ -1,23 +1,11 @@
 import { FbrScenarioStatus } from "../constants/fbr";
 
 export interface FbrScenario {
-    scenarioId: string;
+    id: string;
+    code: string;
     description: string;
-    saleType: string;
+    sale_type: string;
     category: string;
-    mandatoryFields?: readonly string[];
-    sampleData?: {
-        invoiceType: string;
-        items: ReadonlyArray<{
-            itemName: string;
-            quantity: number;
-            unitPrice: number;
-            totalAmount: number;
-        }>;
-        [key: string]: unknown;
-    };
-    requirements?: readonly string[];
-    expectedOutcomes?: readonly string[];
 }
 
 export interface FbrScenarioProgress {
@@ -33,9 +21,26 @@ export interface FbrScenarioProgress {
     updated_at: string;
 }
 
-export interface FbrScenarioWithProgress extends FbrScenario {
-    progress?: FbrScenarioProgress;
+export interface FbrConfigStatus {
+    sandbox_status: string;
+    production_status: string;
+    last_sandbox_test?: string;
+    last_production_test?: string;
+    sandbox_api_key?: string | null;
+    production_api_key?: string | null;
 }
+
+export type FbrProfilePayload = {
+    user_id: string;
+    cnic_ntn: string;
+    business_name: string;
+    province_code: number;
+    address: string;
+    mobile_number: string;
+    business_activity_id: number;
+    ntn_number?: string;
+    strn_number?: string;
+};
 
 export interface FbrSandboxTestRequest {
     scenarioId: string;

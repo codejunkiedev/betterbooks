@@ -5,12 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/shared/components/Dialog';
 import { Badge } from '@/shared/components/Badge';
 import { Filter, Search } from 'lucide-react';
-import { FBR_SCENARIO_STATUS } from '@/shared/constants/fbr';
-import type { FbrScenarioWithProgress } from '@/shared/types/fbr';
+import { FbrScenario } from '@/shared/types/fbr';
 
 export interface SandboxSearchFilters {
     searchTerm: string;
-    status: string;
     category: string;
     saleType: string;
     scenarioId: string;
@@ -19,7 +17,7 @@ export interface SandboxSearchFilters {
 interface FiltersModalProps {
     filters: SandboxSearchFilters;
     setFilters: (filters: SandboxSearchFilters) => void;
-    scenarios: FbrScenarioWithProgress[];
+    scenarios: FbrScenario[];
     onSearch: () => void;
     onClearFilters: () => void;
 }
@@ -35,14 +33,13 @@ export const SearchModal = ({
 
     // Get unique categories and sale types from scenarios
     const categories = Array.from(new Set(scenarios.map(s => s.category))).sort();
-    const saleTypes = Array.from(new Set(scenarios.map(s => s.saleType))).sort();
-    const scenarioIds = Array.from(new Set(scenarios.map(s => s.scenarioId))).sort();
+    const saleTypes = Array.from(new Set(scenarios.map(s => s.sale_type))).sort();
+    const scenarioIds = Array.from(new Set(scenarios.map(s => s.id))).sort();
 
     // Count active filters
     const getActiveFiltersCount = () => {
         let count = 0;
         if (filters.searchTerm) count++;
-        if (filters.status && filters.status !== 'all') count++;
         if (filters.category && filters.category !== 'all') count++;
         if (filters.saleType && filters.saleType !== 'all') count++;
         if (filters.scenarioId && filters.scenarioId !== 'all') count++;
@@ -110,28 +107,6 @@ export const SearchModal = ({
 
                     {/* Filters Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Status Filter */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Status
-                            </label>
-                            <Select
-                                value={filters.status || 'all'}
-                                onValueChange={(value) => handleFilterChange('status', value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Statuses" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Statuses</SelectItem>
-                                    <SelectItem value={FBR_SCENARIO_STATUS.NOT_STARTED}>Not Started</SelectItem>
-                                    <SelectItem value={FBR_SCENARIO_STATUS.IN_PROGRESS}>In Progress</SelectItem>
-                                    <SelectItem value={FBR_SCENARIO_STATUS.COMPLETED}>Completed</SelectItem>
-                                    <SelectItem value={FBR_SCENARIO_STATUS.FAILED}>Failed</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
                         {/* Category Filter */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -201,8 +176,6 @@ export const SearchModal = ({
                             </Select>
                         </div>
                     </div>
-
-
 
                     {/* Action Buttons */}
                     <div className="flex justify-end gap-3 pt-4 border-t">

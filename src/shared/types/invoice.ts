@@ -33,4 +33,44 @@ export interface CreateInvoiceData {
 
 export interface UpdateInvoiceData extends Partial<CreateInvoiceData> {
     status?: InvoiceStatus;
+}
+
+export interface InvoiceItem {
+    hsCode: string;
+    productDescription: string;
+    rate: number;
+    uoM: string;
+    quantity: number;
+    totalValues: number;
+    valueSalesExcludingST: number;
+    fixedNotifiedValueOrRetailPrice: number;
+    salesTaxApplicable: number;
+    salesTaxWithheldAtSource: number;
+    extraTax: number;
+    furtherTax: number;
+    sroScheduleNo: string;
+    fedPayable: number;
+    discount: number;
+    saleType: string;
+    sroItemSerialNo: string;
+}
+
+export interface ScenarioInvoiceFormData {
+    invoiceType: string;
+    invoiceDate: string;
+    sellerNTNCNIC: string;
+    sellerBusinessName: string;
+    sellerProvince: string;
+    sellerAddress: string;
+    buyerNTNCNIC: string;
+    buyerBusinessName: string;
+    buyerProvince: string;
+    buyerAddress: string;
+    buyerRegistrationType: string;
+    invoiceRefNo: string;
+    scenarioId: string;
+    items: InvoiceItem[];
+    totalAmount: number;
+    notes: string;
+    [key: string]: unknown;
 } 

@@ -19,7 +19,6 @@ import {
     Plus,
     Trash2
 } from 'lucide-react';
-import type { FbrScenarioWithProgress } from '@/shared/types/fbr';
 import { FBR_SCENARIO_STATUS } from '@/shared/constants/fbr';
 import {
     getScenarioById,
@@ -27,46 +26,8 @@ import {
     getProvinceCodes
 } from '@/shared/services/supabase/fbr';
 import { submitSandboxTestInvoice } from '@/shared/services/api/fbr';
-
-interface InvoiceItem {
-    hsCode: string;
-    productDescription: string;
-    rate: number;
-    uoM: string;
-    quantity: number;
-    totalValues: number;
-    valueSalesExcludingST: number;
-    fixedNotifiedValueOrRetailPrice: number;
-    salesTaxApplicable: number;
-    salesTaxWithheldAtSource: number;
-    extraTax: number;
-    furtherTax: number;
-    sroScheduleNo: string;
-    fedPayable: number;
-    discount: number;
-    saleType: string;
-    sroItemSerialNo: string;
-}
-
-interface ScenarioInvoiceFormData {
-    invoiceType: string;
-    invoiceDate: string;
-    sellerNTNCNIC: string;
-    sellerBusinessName: string;
-    sellerProvince: string;
-    sellerAddress: string;
-    buyerNTNCNIC: string;
-    buyerBusinessName: string;
-    buyerProvince: string;
-    buyerAddress: string;
-    buyerRegistrationType: string;
-    invoiceRefNo: string;
-    scenarioId: string;
-    items: InvoiceItem[];
-    totalAmount: number;
-    notes: string;
-    [key: string]: unknown;
-}
+import { FbrScenario } from '@/shared/types/fbr';
+import { InvoiceItem, ScenarioInvoiceFormData } from '@/shared/types/invoice';
 
 export default function ScenarioInvoiceForm() {
     const { scenarioId } = useParams<{ scenarioId: string }>();
@@ -74,7 +35,7 @@ export default function ScenarioInvoiceForm() {
     const { toast } = useToast();
     const navigate = useNavigate();
 
-    const [scenario, setScenario] = useState<FbrScenarioWithProgress | null>(null);
+    const [scenario, setScenario] = useState<FbrScenario | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [provinces, setProvinces] = useState<Array<{ state_province_code: number; state_province_desc: string }>>([]);
@@ -138,33 +99,10 @@ export default function ScenarioInvoiceForm() {
 
         try {
             setLoading(true);
-            const scenarioData = await getScenarioById(scenarioId, user.id);
+            const scenarioData = await getScenarioById(scenarioId);
 
             if (scenarioData) {
                 setScenario(scenarioData);
-
-                // Pre-populate form with scenario data
-                if (scenarioData.sampleData) {
-                    setFormData(prev => ({
-                        ...prev,
-                        invoiceType: (scenarioData.sampleData?.invoiceType as string) || (prev.invoiceType as string),
-                        invoiceDate: (scenarioData.sampleData?.invoiceDate as string) || (prev.invoiceDate as string),
-                        sellerNTNCNIC: (scenarioData.sampleData?.sellerNTNCNIC as string) || (prev.sellerNTNCNIC as string),
-                        sellerBusinessName: (scenarioData.sampleData?.sellerBusinessName as string) || (prev.sellerBusinessName as string),
-                        sellerProvince: (scenarioData.sampleData?.sellerProvince as string) || (prev.sellerProvince as string),
-                        sellerAddress: (scenarioData.sampleData?.sellerAddress as string) || (prev.sellerAddress as string),
-                        buyerNTNCNIC: (scenarioData.sampleData?.buyerNTNCNIC as string) || (prev.buyerNTNCNIC as string),
-                        buyerBusinessName: (scenarioData.sampleData?.buyerBusinessName as string) || (prev.buyerBusinessName as string),
-                        buyerProvince: (scenarioData.sampleData?.buyerProvince as string) || (prev.buyerProvince as string),
-                        buyerAddress: (scenarioData.sampleData?.buyerAddress as string) || (prev.buyerAddress as string),
-                        buyerRegistrationType: (scenarioData.sampleData?.buyerRegistrationType as string) || (prev.buyerRegistrationType as string),
-                        invoiceRefNo: (scenarioData.sampleData?.invoiceRefNo as string) || (prev.invoiceRefNo as string),
-                        scenarioId: scenarioData.scenarioId,
-                        items: prev.items, // Keep default items for now
-                        totalAmount: (scenarioData.sampleData?.totalAmount as number) || 0,
-                        notes: (scenarioData.sampleData?.notes as string) || ''
-                    }));
-                }
             } else {
                 toast({
                     title: "Scenario Not Found",
@@ -263,14 +201,10 @@ export default function ScenarioInvoiceForm() {
         try {
             setSubmitting(true);
 
-            // Update scenario status to in progress if not already
-            if (scenario.progress?.status !== FBR_SCENARIO_STATUS.IN_PROGRESS) {
-                await updateScenarioProgress(user.id, scenario.scenarioId, FBR_SCENARIO_STATUS.IN_PROGRESS);
-            }
 
             // Submit the invoice to FBR
             const response = await submitSandboxTestInvoice({
-                scenarioId: scenario.scenarioId,
+                scenarioId: scenario.code,
                 invoiceData: {
                     invoiceType: formData.invoiceType,
                     invoiceDate: formData.invoiceDate,
@@ -305,10 +239,10 @@ export default function ScenarioInvoiceForm() {
             });
 
             if (response.success) {
-                // Mark scenario as completed
+                // Mark scenario as completed using scenario code
                 await updateScenarioProgress(
                     user.id,
-                    scenario.scenarioId,
+                    scenario.id,
                     FBR_SCENARIO_STATUS.COMPLETED,
                     JSON.stringify(response.data?.fbrResponse)
                 );
@@ -318,13 +252,13 @@ export default function ScenarioInvoiceForm() {
                     description: "You have successfully completed this FBR scenario.",
                 });
 
-                // Navigate back to sandbox testing
-                navigate('/fbr/sandbox-testing');
+                // Navigate back to sandbox testing with a flag to refresh
+                navigate('/fbr/sandbox-testing', { state: { refresh: true } });
             } else {
-                // Mark scenario as failed
+                // Mark scenario as failed using scenario code
                 await updateScenarioProgress(
                     user.id,
-                    scenario.scenarioId,
+                    scenario.id,
                     FBR_SCENARIO_STATUS.FAILED,
                     response.message
                 );
@@ -337,6 +271,17 @@ export default function ScenarioInvoiceForm() {
             }
         } catch (error) {
             console.error('Error submitting scenario:', error);
+
+            // Mark scenario as failed on error using scenario code
+            if (scenario && user?.id) {
+                await updateScenarioProgress(
+                    user.id,
+                    scenario.id,
+                    FBR_SCENARIO_STATUS.FAILED,
+                    error instanceof Error ? error.message : 'Unknown error occurred'
+                );
+            }
+
             toast({
                 title: "Error",
                 description: "Failed to submit scenario. Please try again.",
@@ -388,7 +333,7 @@ export default function ScenarioInvoiceForm() {
                                 </div>
                                 <div>
                                     <h1 className="text-3xl font-bold tracking-tight">
-                                        Scenario {scenario.scenarioId}
+                                        Scenario {scenario.code}
                                     </h1>
                                     <p className="text-muted-foreground font-medium">FBR Sandbox Testing</p>
                                 </div>
@@ -402,7 +347,7 @@ export default function ScenarioInvoiceForm() {
                                 {scenario.category}
                             </Badge>
                             <Badge variant="secondary" className="capitalize px-4 py-2 text-sm font-medium">
-                                {scenario.saleType}
+                                {scenario.sale_type}
                             </Badge>
                         </div>
                     </div>
