@@ -74,12 +74,6 @@ export async function testFbrConnection(params: TestConnectionRequest): Promise<
     try {
         const endpoint = ENV_TEST_ENDPOINTS[params.environment];
 
-        console.log('testFbrConnection', {
-            endpoint,
-            apiKey: params.apiKey,
-            environment: params.environment,
-            userId: params.userId
-        });
         // Test connection using HTTP client
         await httpClient.request({
             method: 'GET',
@@ -238,13 +232,19 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
             };
         }
 
-        // Format invoice data according to FBR API requirements (camelCase format)
+        // Format invoice data according to FBR API requirements
         const cleanNTNCNIC = (value: string) => value.replace(/\D/g, '');
 
         // Ensure all numeric values are properly formatted
         const formatNumber = (value: number | string): number => {
             const num = typeof value === 'string' ? parseFloat(value) || 0 : value;
             return Math.round(num * 100) / 100; // Round to 2 decimal places
+        };
+
+        // Format rate as percentage string (e.g., "16%")
+        const formatRate = (rate: number | string): string => {
+            const num = typeof rate === 'string' ? parseFloat(rate) || 0 : rate;
+            return `${num}%`;
         };
 
         const invoiceData = {
@@ -264,7 +264,7 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
             items: params.invoiceData.items.map(({ hsCode, productDescription, rate, uoM, quantity, totalValues, valueSalesExcludingST, fixedNotifiedValueOrRetailPrice, salesTaxApplicable, salesTaxWithheldAtSource, extraTax, furtherTax, sroScheduleNo, fedPayable, discount, saleType, sroItemSerialNo }) => ({
                 hsCode: hsCode || "",
                 productDescription: productDescription || "",
-                rate: formatNumber(rate),
+                rate: formatRate(rate),
                 uoM: uoM || "PCS",
                 quantity: formatNumber(quantity),
                 totalValues: formatNumber(totalValues),
@@ -277,15 +277,13 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
                 sroScheduleNo: sroScheduleNo || "",
                 fedPayable: formatNumber(fedPayable),
                 discount: formatNumber(discount),
-                saleType: saleType || "Local",
+                saleType: saleType || "Goods at standard rate (default)",
                 sroItemSerialNo: sroItemSerialNo || ""
             }))
         };
 
         // Log the exact JSON being sent for debugging
         console.log('FBR API Request Data:', JSON.stringify(invoiceData, null, 2));
-
-
 
         // Submit to FBR sandbox
         const response = await httpClient.request({

@@ -504,32 +504,32 @@ export function InvoiceItemManagement({
             {/* Running Totals */}
             {items.length > 0 && (
                 <Card>
-                    <div className="p-6">
+                    <div className="p-4 sm:p-6">
                         <h3 className="text-lg font-semibold mb-4">Running Totals</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                            <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <div className="text-xl sm:text-2xl font-bold text-blue-600">
                                     {runningTotals.total_items}
                                 </div>
-                                <div className="text-sm text-gray-600">Total Items</div>
+                                <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Items</div>
                             </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-green-600">
+                            <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                                <div className="text-xl sm:text-2xl font-bold text-green-600">
                                     {formatCurrency(runningTotals.total_value_excluding_tax)}
                                 </div>
-                                <div className="text-sm text-gray-600">Value Excluding Tax</div>
+                                <div className="text-xs sm:text-sm text-gray-600 font-medium">Value Excluding Tax</div>
                             </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-orange-600">
+                            <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                <div className="text-xl sm:text-2xl font-bold text-orange-600">
                                     {formatCurrency(runningTotals.total_sales_tax)}
                                 </div>
-                                <div className="text-sm text-gray-600">Sales Tax</div>
+                                <div className="text-xs sm:text-sm text-gray-600 font-medium">Sales Tax</div>
                             </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-600">
+                            <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                <div className="text-xl sm:text-2xl font-bold text-purple-600">
                                     {formatCurrency(runningTotals.total_amount)}
                                 </div>
-                                <div className="text-sm text-gray-600">Total Amount</div>
+                                <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Amount</div>
                             </div>
                         </div>
                     </div>

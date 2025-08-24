@@ -13,11 +13,11 @@ export function calculateInvoiceItem(item: InvoiceItemForm): InvoiceItemCalculat
     const unitPrice = Number(item.unit_price) || 0;
     const taxRate = Number(item.tax_rate) || 0;
 
-    // Calculate basic totals
-    const totalAmount = quantity * unitPrice;
-    const salesTax = (totalAmount * taxRate) / 100;
-    const valueSalesExcludingST = totalAmount - salesTax;
-    const unitPriceExcludingTax = unitPrice - ((unitPrice * taxRate) / 100);
+    // Calculate basic totals - unit_price is the price excluding tax
+    const valueSalesExcludingST = quantity * unitPrice;
+    const salesTax = (valueSalesExcludingST * taxRate) / 100;
+    const totalAmount = valueSalesExcludingST + salesTax;
+    const unitPriceExcludingTax = unitPrice; // Already excluding tax
 
     // Handle 3rd schedule items (MRP fields)
     let fixedNotifiedValue = undefined;

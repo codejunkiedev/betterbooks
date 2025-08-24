@@ -28,6 +28,7 @@ import {
 import { submitSandboxTestInvoice } from '@/shared/services/api/fbr';
 import { FbrScenario } from '@/shared/types/fbr';
 import { InvoiceItem, ScenarioInvoiceFormData, InvoiceItemCalculated, InvoiceRunningTotals } from '@/shared/types/invoice';
+import { generateRandomSampleData, generateScenarioSpecificSampleData } from '@/shared/data/fbrSampleData';
 
 import { BuyerManagement } from '@/features/user/buyer-management';
 import { InvoiceItemManagement } from './InvoiceItemManagement';
@@ -46,7 +47,7 @@ export default function ScenarioInvoiceForm() {
     const [provinces, setProvinces] = useState<Array<{ state_province_code: number; state_province_desc: string }>>([]);
     const [formData, setFormData] = useState<ScenarioInvoiceFormData>({
         invoiceType: '',
-        invoiceDate: '',
+        invoiceDate: new Date().toISOString().split('T')[0],
         sellerNTNCNIC: '',
         sellerBusinessName: '',
         sellerProvince: '',
@@ -152,35 +153,20 @@ export default function ScenarioInvoiceForm() {
             // Simulate some loading time for better UX
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // For now, we'll create a simple sample with our new structure
-            const sampleItems: InvoiceItemCalculated[] = [
-                {
-                    hs_code: '84713000',
-                    item_name: 'Portable automatic data processing machines',
-                    quantity: 2,
-                    unit_price: 50000,
-                    uom_code: 'PCS',
-                    tax_rate: 16,
-                    value_sales_excluding_st: 84000,
-                    sales_tax: 16000,
-                    total_amount: 100000,
-                    unit_price_excluding_tax: 42000,
-                    fixed_notified_value: 100000,
-                    retail_price: 84000,
-                    invoice_note: 'Sample laptop computers',
-                    is_third_schedule: true
-                }
-            ];
+            let sampleData: ScenarioInvoiceFormData;
 
-            setFormData(prev => ({
-                ...prev,
-                items: sampleItems,
-                totalAmount: 100000
-            }));
+            // Use scenario-specific data if scenario is loaded, otherwise use random data
+            if (scenario?.code) {
+                sampleData = generateScenarioSpecificSampleData(scenario.code, scenarioId || '');
+            } else {
+                sampleData = generateRandomSampleData(scenarioId || '');
+            }
+
+            setFormData(sampleData);
 
             toast({
                 title: "Sample Data Loaded",
-                description: `Invoice populated with sample data. Total amount: Rs. 100,000`,
+                description: `Invoice populated with ${scenario?.code ? 'scenario-specific' : 'random'} sample data. Total amount: Rs. ${sampleData.totalAmount.toLocaleString()}`,
             });
         } catch (error) {
             console.error('Error loading sample data:', error);
@@ -194,6 +180,8 @@ export default function ScenarioInvoiceForm() {
         }
     };
 
+
+
     const clearFormData = async () => {
         setClearingForm(true);
         try {
@@ -201,7 +189,7 @@ export default function ScenarioInvoiceForm() {
             await new Promise(resolve => setTimeout(resolve, 300));
 
             setFormData({
-                invoiceType: '', invoiceDate: '', sellerNTNCNIC: '', sellerBusinessName: '',
+                invoiceType: '', invoiceDate: new Date().toISOString().split('T')[0], sellerNTNCNIC: '', sellerBusinessName: '',
                 sellerProvince: '', sellerAddress: '', buyerNTNCNIC: '', buyerBusinessName: '',
                 buyerProvince: '', buyerAddress: '', buyerRegistrationType: '', invoiceRefNo: '',
                 scenarioId: scenarioId || '', items: [], totalAmount: 0, notes: ''
@@ -246,7 +234,7 @@ export default function ScenarioInvoiceForm() {
                     items: formData.items.map(item => ({
                         hsCode: item.hs_code,
                         productDescription: item.item_name,
-                        rate: item.unit_price,
+                        rate: item.tax_rate, // Tax rate percentage
                         uoM: item.uom_code,
                         quantity: item.quantity,
                         totalValues: item.total_amount,
@@ -259,7 +247,7 @@ export default function ScenarioInvoiceForm() {
                         sroScheduleNo: item.is_third_schedule ? '3' : '',
                         fedPayable: item.sales_tax,
                         discount: 0,
-                        saleType: '',
+                        saleType: 'Goods at standard rate (default)',
                         sroItemSerialNo: ''
                     })),
                     totalAmount: formData.totalAmount,
