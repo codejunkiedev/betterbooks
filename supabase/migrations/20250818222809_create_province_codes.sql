@@ -12,13 +12,13 @@ COMMENT ON TABLE public.province_codes IS 'Stores Pakistani provinces and territ
 
 -- Insert the provided province data
 INSERT INTO public.province_codes (state_province_code, state_province_desc) VALUES
-    (2, 'BALOCHISTAN'),
-    (4, 'AZAD JAMMU AND KASHMIR'),
-    (5, 'CAPITAL TERRITORY'),
-    (6, 'KHYBER PAKHTUNKHWA'),
-    (7, 'PUNJAB'),
-    (8, 'SINDH'),
-    (9, 'GILGIT BALTISTAN')
+    (2, 'Balochistan'),
+    (4, 'Azad Jammu And Kashmir'),
+    (5, 'Capital Territory'),
+    (6, 'Khyber Pakhtunkhwa'),
+    (7, 'Punjab'),
+    (8, 'Sindh'),
+    (9, 'Gilgit Baltistan')
 ON CONFLICT (state_province_code) DO NOTHING;
 
 -- Enable Row Level Security

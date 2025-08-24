@@ -10,7 +10,9 @@ import { SearchModal, SandboxSearchFilters } from "./SearchModal";
 import { ScenarioCard } from "./ScenarioCard";
 import {
     AlertCircle,
-    FileText
+    FileText,
+    Award,
+    ExternalLink
 } from "lucide-react";
 import type { FbrScenario } from "@/shared/types/fbr";
 import {
@@ -37,6 +39,7 @@ export default function SandboxTesting() {
     });
 
     const [hasValidSandboxKey, setHasValidSandboxKey] = useState(false);
+    const [isAllCompleted, setIsAllCompleted] = useState(false);
 
     useEffect(() => {
         loadScenarios();
@@ -69,10 +72,9 @@ export default function SandboxTesting() {
 
             const filteredScenariosData = await getFilteredMandatoryScenarios(
                 businessActivityId,
+                user.id,
                 filters || {}
             );
-
-            console.log('filteredScenariosData', filteredScenariosData);
 
             if (!filteredScenariosData || filteredScenariosData.length === 0) {
                 setFilteredScenarios([]);
@@ -84,22 +86,19 @@ export default function SandboxTesting() {
             }
 
             const scenariosWithProgress = filteredScenariosData
-                .filter(scenarioData => scenarioData && scenarioData.code)
-                .map((scenarioData) => {
-                    return {
-                        id: scenarioData.id,
-                        code: scenarioData.code,
-                        description: scenarioData.description,
-                        sale_type: scenarioData.sale_type,
-                        category: scenarioData.category
-                    } as FbrScenario;
-                });
+                .filter(scenario => scenario?.code)
+                .map(scenario => scenario as FbrScenario);
 
             setFilteredScenarios(scenariosWithProgress);
 
             if (!filters) {
                 setScenarios(scenariosWithProgress);
             }
+
+            // Check if all scenarios are completed
+            const allCompleted = scenariosWithProgress.length > 0 &&
+                scenariosWithProgress.every(scenario => scenario.status === FBR_SCENARIO_STATUS.COMPLETED);
+            setIsAllCompleted(allCompleted);
 
             const { getFbrConfigStatus } = await import("@/shared/services/supabase/fbr");
             const config = await getFbrConfigStatus(user.id);
@@ -289,6 +288,121 @@ export default function SandboxTesting() {
                         onClearFilters={handleClearSearchFilters}
                     />
                 </div>
+
+                {/* Progress Indicator */}
+                {scenarios.length > 0 && (
+                    <Card className="p-6">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-medium">Overall Progress</h3>
+                                <span className="text-2xl font-bold text-green-600">
+                                    {Math.round((scenarios.filter(s => s.status === FBR_SCENARIO_STATUS.COMPLETED).length / scenarios.length) * 100)}%
+                                </span>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div
+                                    className="bg-green-600 h-3 rounded-full transition-all duration-300"
+                                    style={{
+                                        width: `${(scenarios.filter(s => s.status === FBR_SCENARIO_STATUS.COMPLETED).length / scenarios.length) * 100}%`
+                                    }}
+                                ></div>
+                            </div>
+
+                            {/* Status Breakdown */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                    <div className="text-2xl font-bold text-gray-600">
+                                        {scenarios.filter(s => s.status === FBR_SCENARIO_STATUS.NOT_STARTED).length}
+                                    </div>
+                                    <div className="text-sm text-gray-500">Not Started</div>
+                                </div>
+                                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                    <div className="text-2xl font-bold text-blue-600">
+                                        {scenarios.filter(s => s.status === FBR_SCENARIO_STATUS.IN_PROGRESS).length}
+                                    </div>
+                                    <div className="text-sm text-blue-500">In Progress</div>
+                                </div>
+                                <div className="text-center p-3 bg-green-50 rounded-lg">
+                                    <div className="text-2xl font-bold text-green-600">
+                                        {scenarios.filter(s => s.status === FBR_SCENARIO_STATUS.COMPLETED).length}
+                                    </div>
+                                    <div className="text-sm text-green-500">Completed</div>
+                                </div>
+                                <div className="text-center p-3 bg-red-50 rounded-lg">
+                                    <div className="text-2xl font-bold text-red-600">
+                                        {scenarios.filter(s => s.status === FBR_SCENARIO_STATUS.FAILED).length}
+                                    </div>
+                                    <div className="text-sm text-red-500">Failed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                )}
+
+                {/* Sandbox Testing Complete State */}
+                {isAllCompleted && (
+                    <Card className="p-6 border-green-200 bg-green-50">
+                        <div className="text-center space-y-4">
+                            <div className="flex justify-center">
+                                <div className="p-3 bg-green-100 rounded-full">
+                                    <Award className="h-8 w-8 text-green-600" />
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-green-800 mb-2">
+                                    Sandbox Testing Complete! 🎉
+                                </h3>
+                                <p className="text-green-700 mb-4">
+                                    Congratulations! You have successfully completed all mandatory FBR sandbox scenarios.
+                                    You are now ready to configure your production API key and start using FBR in production.
+                                </p>
+                            </div>
+
+                            {/* Certification Summary */}
+                            <div className="bg-white rounded-lg p-4 border border-green-200">
+                                <h4 className="font-semibold text-green-800 mb-3">Certification Summary</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                    <div className="text-center">
+                                        <div className="text-2xl font-bold text-green-600">{scenarios.length}</div>
+                                        <div className="text-green-700">Scenarios Completed</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-2xl font-bold text-green-600">100%</div>
+                                        <div className="text-green-700">Success Rate</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-2xl font-bold text-green-600">
+                                            {new Date().toLocaleDateString()}
+                                        </div>
+                                        <div className="text-green-700">Certification Date</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                <Button
+                                    onClick={() => navigate("/fbr/api-config")}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                    Configure Production API Key
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => window.print()}
+                                    className="border-green-300 text-green-700 hover:bg-green-50"
+                                >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Print Certificate
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                )}
+
                 {(searchFilters.searchTerm || getActiveFiltersCount() > 0) && (
                     <div className="flex items-center justify-between">
                         <p className="text-sm text-gray-600">

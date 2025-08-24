@@ -3,9 +3,12 @@ import { supabase } from './client';
 import { FBR_API_STATUS, FBR_SCENARIO_STATUS, FbrScenarioStatus } from '@/shared/constants/fbr';
 import type {
 	FbrScenarioProgress,
+	FbrScenarioProgressResult,
 	FbrScenario,
 	FbrConfigStatus,
-	FbrProfilePayload
+	FbrProfilePayload,
+	ScenarioFilters,
+	ScenarioWithProgress
 } from '@/shared/types/fbr';
 
 /**
@@ -270,6 +273,27 @@ export async function getScenarioDetails(scenarioId: string) {
 }
 
 /**
+ * Get scenario progress for a specific user and scenario
+ */
+export async function getScenarioProgress(userId: string, scenarioId: string): Promise<FbrScenarioProgress | null> {
+	const { data, error } = await supabase
+		.from('fbr_scenario_progress')
+		.select('*')
+		.eq('user_id', userId)
+		.eq('scenario_id', scenarioId)
+		.single();
+
+	if (error) {
+		if (error.code === 'PGRST116') {
+			return null; // No record found
+		}
+		throw error;
+	}
+
+	return data;
+}
+
+/**
  * Update scenario progress
  */
 export async function updateScenarioProgress(
@@ -277,9 +301,21 @@ export async function updateScenarioProgress(
 	scenarioId: string,
 	status: FbrScenarioStatus,
 	fbrResponse?: string
-): Promise<FbrScenarioProgress> {
+): Promise<FbrScenarioProgressResult> {
+	// First check if a record exists to get current attempts
+	const { data: existingRecord, error: checkError } = await supabase
+		.from('fbr_scenario_progress')
+		.select('id, attempts')
+		.eq('user_id', userId)
+		.eq('scenario_id', scenarioId)
+		.single();
+
+	const currentAttempts = existingRecord?.attempts || 0;
+	const newAttempts = currentAttempts + 1;
+
 	const updatePayload: Partial<FbrScenarioProgress> = {
 		status,
+		attempts: newAttempts,
 		last_attempt: new Date().toISOString(),
 		updated_at: new Date().toISOString()
 	};
@@ -291,14 +327,6 @@ export async function updateScenarioProgress(
 	if (status === FBR_SCENARIO_STATUS.COMPLETED) {
 		updatePayload.completion_timestamp = new Date().toISOString();
 	}
-
-	// First check if a record exists
-	const { data: existingRecord, error: checkError } = await supabase
-		.from('fbr_scenario_progress')
-		.select('id')
-		.eq('user_id', userId)
-		.eq('scenario_id', scenarioId)
-		.single();
 
 	if (checkError && checkError.code !== 'PGRST116') {
 		throw new Error('Failed to check existing scenario progress');
@@ -339,7 +367,73 @@ export async function updateScenarioProgress(
 		throw error;
 	}
 
-	return data;
+	return { ...data, newAttempts };
+}
+
+/**
+ * Initialize scenario progress for a user based on their business activity
+ * This should be called during onboarding when user selects their business activity
+ */
+export async function initializeScenarioProgress(userId: string, businessActivityId: number): Promise<void> {
+	try {
+		// Get all mandatory scenarios for this business activity
+		const scenarios = await getMandatoryScenarios(businessActivityId);
+
+		if (scenarios.length === 0) {
+			console.log('No scenarios found for business activity:', businessActivityId);
+			return;
+		}
+
+		// Create progress entries for each scenario
+		const progressEntries = scenarios.map(scenario => ({
+			user_id: userId,
+			scenario_id: scenario.scenario_id,
+			status: FBR_SCENARIO_STATUS.NOT_STARTED,
+			attempts: 0,
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString()
+		}));
+
+		// Insert all progress entries in a single batch
+		const { error } = await supabase
+			.from('fbr_scenario_progress')
+			.insert(progressEntries);
+
+		if (error) {
+			console.error('Error initializing scenario progress:', error);
+			throw new Error('Failed to initialize scenario progress');
+		}
+
+	} catch (error) {
+		console.error('Error in initializeScenarioProgress:', error);
+		throw error;
+	}
+}
+
+/**
+ * Update scenario progress when user changes their business activity
+ * This will remove old progress entries and create new ones for the new business activity
+ */
+export async function updateScenarioProgressForNewBusinessActivity(userId: string, newBusinessActivityId: number): Promise<void> {
+	try {
+		// First, delete all existing progress entries for this user
+		const { error: deleteError } = await supabase
+			.from('fbr_scenario_progress')
+			.delete()
+			.eq('user_id', userId);
+
+		if (deleteError) {
+			console.error('Error deleting existing scenario progress:', deleteError);
+			throw new Error('Failed to delete existing scenario progress');
+		}
+
+		// Then initialize new progress entries for the new business activity
+		await initializeScenarioProgress(userId, newBusinessActivityId);
+
+	} catch (error) {
+		console.error('Error in updateScenarioProgressForNewBusinessActivity:', error);
+		throw error;
+	}
 }
 
 
@@ -349,51 +443,50 @@ export async function updateScenarioProgress(
  */
 export async function getFilteredMandatoryScenarios(
 	businessActivityId: number,
-	filters: {
-		searchTerm?: string;
-		category?: string;
-		saleType?: string;
-		scenarioId?: string;
-	}
-): Promise<Array<{
-	id: string;
-	code: string;
-	category: string;
-	sale_type: string;
-	description: string;
-}>> {
-	// Build base query with all filters on backend
+	userId: string,
+	filters: ScenarioFilters = {}
+): Promise<ScenarioWithProgress[]> {
 	let query = supabase
 		.from('business_activity_scenario')
-		.select(`
-			scenario_id,
-			scenario!scenario_id (
-				code,
-				description,
-				sale_type,
-				category
-			)
-		`)
+		.select('scenario_id, scenario!scenario_id (code, description, sale_type, category)')
 		.eq('business_activity_id', businessActivityId);
 
-	// Apply all filters on backend
 	if (filters.category) query = query.eq('scenario.category', filters.category);
 	if (filters.saleType) query = query.eq('scenario.sale_type', filters.saleType);
 	if (filters.scenarioId) query = query.eq('scenario.code', filters.scenarioId);
-	if (filters.searchTerm) query = query.or(`scenario.description.ilike.%${filters.searchTerm}%,scenario.code.ilike.%${filters.searchTerm}%,scenario.category.ilike.%${filters.searchTerm}%,scenario.sale_type.ilike.%${filters.searchTerm}%`);
+	if (filters.searchTerm) {
+		query = query.or(`scenario.description.ilike.%${filters.searchTerm}%,scenario.code.ilike.%${filters.searchTerm}%`);
+	}
 
-	const { data, error } = await query;
+	const { data: scenarios, error } = await query;
 	if (error) throw error;
 
-	// Simple transformation - return flat objects
-	return (data || []).map(item => {
+	const progressMap = new Map<string, Pick<FbrScenarioProgress, 'scenario_id' | 'status' | 'attempts' | 'last_attempt' | 'completion_timestamp'>>();
+
+	if (userId && scenarios?.length) {
+		const { data: progress } = await supabase
+			.from('fbr_scenario_progress')
+			.select('scenario_id, status, attempts, last_attempt, completion_timestamp')
+			.eq('user_id', userId)
+			.in('scenario_id', scenarios.map(s => s.scenario_id));
+
+		progress?.forEach(p => progressMap.set(String(p.scenario_id), p));
+	}
+
+	return (scenarios || []).map(item => {
+		const progress = progressMap.get(String(item.scenario_id));
 		const scenario = Array.isArray(item.scenario) ? item.scenario[0] : item.scenario;
+
 		return {
 			id: item.scenario_id,
-			code: scenario.code,
-			category: scenario.category,
-			sale_type: scenario.sale_type,
-			description: scenario.description
+			code: scenario?.code || '',
+			category: scenario?.category || '',
+			sale_type: scenario?.sale_type || '',
+			description: scenario?.description || '',
+			status: progress?.status || FBR_SCENARIO_STATUS.NOT_STARTED,
+			attempts: progress?.attempts || 0,
+			last_attempt: progress?.last_attempt || null,
+			completion_timestamp: progress?.completion_timestamp || null
 		};
 	});
 }
@@ -416,13 +509,17 @@ export async function getScenarioById(
 			return null;
 		}
 
-		// Create the scenario object
+		// Create the scenario object with default progress values
 		const scenario: FbrScenario = {
 			id: scenarioData.id,
 			code: scenarioData.code,
 			description: scenarioData.description,
 			sale_type: scenarioData.sale_type,
-			category: scenarioData.category
+			category: scenarioData.category,
+			status: FBR_SCENARIO_STATUS.NOT_STARTED,
+			attempts: 0,
+			last_attempt: null,
+			completion_timestamp: null
 		};
 
 		return scenario;

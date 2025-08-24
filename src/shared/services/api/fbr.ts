@@ -200,17 +200,75 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
             };
         }
 
-        // Calculate total amount from items
-        const calculatedTotal = params.invoiceData.items.reduce((sum: number, item: { quantity: number; rate: number; totalValues: number }) => sum + item.totalValues, 0);
-
-        // Prepare invoice data with scenario ID and validated total
-        const invoiceData = {
-            ...params.invoiceData,
-            scenarioId: params.scenarioId,
-            totalAmount: calculatedTotal,
-            timestamp: new Date().toISOString(),
-            environment: 'sandbox'
+        // Validate NTN/CNIC formats
+        const validateNTNCNIC = (ntnCnic: string): boolean => {
+            const clean = ntnCnic.replace(/\D/g, '');
+            return clean.length === 7 || clean.length === 13;
         };
+
+        const validationErrors = [];
+        if (!validateNTNCNIC(params.invoiceData.sellerNTNCNIC)) {
+            validationErrors.push('seller NTN/CNIC');
+        }
+        if (!validateNTNCNIC(params.invoiceData.buyerNTNCNIC)) {
+            validationErrors.push('buyer NTN/CNIC');
+        }
+
+        if (validationErrors.length > 0) {
+            return {
+                success: false,
+                message: `Invalid ${validationErrors.join(' and ')} format. Must be 7 digits (NTN) or 13 digits (CNIC).`
+            };
+        }
+
+        // Format invoice data according to FBR API requirements (camelCase format)
+        const cleanNTNCNIC = (value: string) => value.replace(/\D/g, '');
+
+        // Ensure all numeric values are properly formatted
+        const formatNumber = (value: number | string): number => {
+            const num = typeof value === 'string' ? parseFloat(value) || 0 : value;
+            return Math.round(num * 100) / 100; // Round to 2 decimal places
+        };
+
+        const invoiceData = {
+            invoiceType: params.invoiceData.invoiceType || "Sale Invoice",
+            invoiceDate: params.invoiceData.invoiceDate,
+            sellerNTNCNIC: cleanNTNCNIC(params.invoiceData.sellerNTNCNIC),
+            sellerBusinessName: params.invoiceData.sellerBusinessName,
+            sellerProvince: params.invoiceData.sellerProvince,
+            sellerAddress: params.invoiceData.sellerAddress,
+            buyerNTNCNIC: cleanNTNCNIC(params.invoiceData.buyerNTNCNIC),
+            buyerBusinessName: params.invoiceData.buyerBusinessName,
+            buyerProvince: params.invoiceData.buyerProvince,
+            buyerAddress: params.invoiceData.buyerAddress,
+            buyerRegistrationType: params.invoiceData.buyerRegistrationType || "Registered",
+            invoiceRefNo: params.invoiceData.invoiceRefNo || "",
+            scenarioId: params.scenarioId,
+            items: params.invoiceData.items.map(({ hsCode, productDescription, rate, uoM, quantity, totalValues, valueSalesExcludingST, fixedNotifiedValueOrRetailPrice, salesTaxApplicable, salesTaxWithheldAtSource, extraTax, furtherTax, sroScheduleNo, fedPayable, discount, saleType, sroItemSerialNo }) => ({
+                hsCode: hsCode || "",
+                productDescription: productDescription || "",
+                rate: formatNumber(rate),
+                uoM: uoM || "PCS",
+                quantity: formatNumber(quantity),
+                totalValues: formatNumber(totalValues),
+                valueSalesExcludingST: formatNumber(valueSalesExcludingST),
+                fixedNotifiedValueOrRetailPrice: formatNumber(fixedNotifiedValueOrRetailPrice),
+                salesTaxApplicable: formatNumber(salesTaxApplicable),
+                salesTaxWithheldAtSource: formatNumber(salesTaxWithheldAtSource),
+                extraTax: formatNumber(extraTax),
+                furtherTax: formatNumber(furtherTax),
+                sroScheduleNo: sroScheduleNo || "",
+                fedPayable: formatNumber(fedPayable),
+                discount: formatNumber(discount),
+                saleType: saleType || "Local",
+                sroItemSerialNo: sroItemSerialNo || ""
+            }))
+        };
+
+        // Log the exact JSON being sent for debugging
+        console.log('FBR API Request Data:', JSON.stringify(invoiceData, null, 2));
+
+
 
         // Submit to FBR sandbox
         const response = await httpClient.request({
@@ -222,6 +280,22 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
             },
             data: invoiceData
         });
+
+        // Check if FBR returned an error response
+        if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+            const errorMessage = typeof response.data.error === 'string' ? response.data.error : 'Unknown FBR error';
+            return {
+                success: false,
+                message: `FBR API Error: ${errorMessage}`,
+                data: {
+                    fbrResponse: response.data,
+                    scenarioId: params.scenarioId,
+                    status: 'failed',
+                    timestamp: new Date().toISOString(),
+                    errorDetails: errorMessage
+                }
+            };
+        }
 
         // If we reach here, the request was successful
         return {

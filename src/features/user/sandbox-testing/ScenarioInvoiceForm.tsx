@@ -17,7 +17,8 @@ import {
     FileText,
     AlertCircle,
     Plus,
-    Trash2
+    Trash2,
+    Database
 } from 'lucide-react';
 import { FBR_SCENARIO_STATUS } from '@/shared/constants/fbr';
 import {
@@ -28,6 +29,7 @@ import {
 import { submitSandboxTestInvoice } from '@/shared/services/api/fbr';
 import { FbrScenario } from '@/shared/types/fbr';
 import { InvoiceItem, ScenarioInvoiceFormData } from '@/shared/types/invoice';
+import { generateRandomSampleData } from '@/shared/data/fbrSampleData';
 
 export default function ScenarioInvoiceForm() {
     const { scenarioId } = useParams<{ scenarioId: string }>();
@@ -171,28 +173,51 @@ export default function ScenarioInvoiceForm() {
     const updateItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
         setFormData(prev => {
             const newItems = [...prev.items];
-            newItems[index] = { ...newItems[index], [field]: value };
+            const item = { ...newItems[index], [field]: value };
 
-            // Recalculate total amount for this item
+            // Recalculate totals for quantity/rate changes
             if (field === 'quantity' || field === 'rate') {
-                const quantity = field === 'quantity' ? (typeof value === 'string' ? (value === '' ? 0 : Number(value) || 0) : value) : newItems[index].quantity;
-                const rate = field === 'rate' ? (typeof value === 'string' ? (value === '' ? 0 : Number(value) || 0) : value) : newItems[index].rate;
-                newItems[index].totalValues = quantity * rate;
-                newItems[index].valueSalesExcludingST = quantity * rate;
-                newItems[index].fixedNotifiedValueOrRetailPrice = quantity * rate;
+                const quantity = field === 'quantity' ? Number(value) || 0 : item.quantity;
+                const rate = field === 'rate' ? Number(value) || 0 : item.rate;
+                const total = quantity * rate;
+                item.totalValues = total;
+                item.valueSalesExcludingST = total;
+                item.fixedNotifiedValueOrRetailPrice = total;
             }
 
-            // Recalculate total amount
-            const totalAmount = newItems.reduce((sum, item) => {
-                return sum + (item.totalValues || 0);
-            }, 0);
+            newItems[index] = item;
+            const totalAmount = newItems.reduce((sum, item) => sum + (item.totalValues || 0), 0);
 
-            return {
-                ...prev,
-                items: newItems,
-                totalAmount
-            };
+            return { ...prev, items: newItems, totalAmount };
         });
+    };
+
+    const populateSampleData = () => {
+        const sampleData = generateRandomSampleData(scenarioId);
+        setFormData(sampleData);
+
+        toast({
+            title: "Sample Data Loaded",
+            description: `Invoice populated with sample data. Total amount: Rs. ${sampleData.totalAmount.toLocaleString()}`,
+        });
+    };
+
+    const clearFormData = () => {
+        const emptyItem = {
+            hsCode: '', productDescription: '', rate: 0, uoM: '', quantity: 0,
+            totalValues: 0, valueSalesExcludingST: 0, fixedNotifiedValueOrRetailPrice: 0,
+            salesTaxApplicable: 0, salesTaxWithheldAtSource: 0, extraTax: 0, furtherTax: 0,
+            sroScheduleNo: '', fedPayable: 0, discount: 0, saleType: '', sroItemSerialNo: ''
+        };
+
+        setFormData({
+            invoiceType: '', invoiceDate: '', sellerNTNCNIC: '', sellerBusinessName: '',
+            sellerProvince: '', sellerAddress: '', buyerNTNCNIC: '', buyerBusinessName: '',
+            buyerProvince: '', buyerAddress: '', buyerRegistrationType: '', invoiceRefNo: '',
+            scenarioId: scenarioId || '', items: [emptyItem], totalAmount: 0, notes: ''
+        });
+
+        toast({ title: "Form Cleared", description: "All form data has been cleared." });
     };
 
     const handleSubmit = async () => {
@@ -240,7 +265,7 @@ export default function ScenarioInvoiceForm() {
 
             if (response.success) {
                 // Mark scenario as completed using scenario code
-                await updateScenarioProgress(
+                const progressResult = await updateScenarioProgress(
                     user.id,
                     scenario.id,
                     FBR_SCENARIO_STATUS.COMPLETED,
@@ -249,14 +274,14 @@ export default function ScenarioInvoiceForm() {
 
                 toast({
                     title: "Scenario Completed!",
-                    description: "You have successfully completed this FBR scenario.",
+                    description: `You have successfully completed this FBR scenario on attempt ${progressResult.newAttempts}.`,
                 });
 
                 // Navigate back to sandbox testing with a flag to refresh
                 navigate('/fbr/sandbox-testing', { state: { refresh: true } });
             } else {
                 // Mark scenario as failed using scenario code
-                await updateScenarioProgress(
+                const progressResult = await updateScenarioProgress(
                     user.id,
                     scenario.id,
                     FBR_SCENARIO_STATUS.FAILED,
@@ -265,7 +290,7 @@ export default function ScenarioInvoiceForm() {
 
                 toast({
                     title: "Scenario Failed",
-                    description: response.message,
+                    description: `${response.message} (Attempt ${progressResult.newAttempts})`,
                     variant: "destructive"
                 });
             }
@@ -356,11 +381,36 @@ export default function ScenarioInvoiceForm() {
                 {/* Enhanced Invoice Form */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-3 text-xl">
-                            <FileText className="h-5 w-5 text-primary" />
-                            Create FBR Invoice
-                        </CardTitle>
-                        <p className="text-muted-foreground text-sm">Fill in the invoice details to complete this scenario</p>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-3 text-xl">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                    Create FBR Invoice
+                                </CardTitle>
+                                <p className="text-muted-foreground text-sm">Fill in the invoice details to complete this scenario</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant="default"
+                                    onClick={populateSampleData}
+                                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-green-600"
+                                >
+                                    <Database className="h-4 w-4" />
+                                    Load Sample Data
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    onClick={clearFormData}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    Clear Form
+                                </Button>
+
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent className="p-6 space-y-8">
                         {/* Basic Information */}
@@ -417,9 +467,12 @@ export default function ScenarioInvoiceForm() {
                                         id="sellerNTNCNIC"
                                         value={formData.sellerNTNCNIC}
                                         onChange={(e) => updateFormData('sellerNTNCNIC', e.target.value)}
-                                        placeholder="Enter NTN or CNIC"
+                                        placeholder="Enter NTN (7 digits) or CNIC (13 digits)"
                                         className="mt-1"
                                     />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Must be 7 digits for NTN or 13 digits for CNIC
+                                    </p>
                                 </div>
                                 <div>
                                     <Label htmlFor="sellerBusinessName" className="text-sm font-medium">Seller Business Name</Label>

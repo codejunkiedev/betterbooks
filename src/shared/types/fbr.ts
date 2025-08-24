@@ -6,6 +6,29 @@ export interface FbrScenario {
     description: string;
     sale_type: string;
     category: string;
+    status: FbrScenarioStatus;
+    attempts: number;
+    last_attempt: string | null;
+    completion_timestamp: string | null;
+}
+
+export interface ScenarioFilters {
+    searchTerm?: string;
+    category?: string;
+    saleType?: string;
+    scenarioId?: string;
+}
+
+export interface ScenarioWithProgress {
+    id: string;
+    code: string;
+    category: string;
+    sale_type: string;
+    description: string;
+    status: FbrScenarioStatus;
+    attempts: number;
+    last_attempt: string | null;
+    completion_timestamp: string | null;
 }
 
 export interface FbrScenarioProgress {
@@ -19,6 +42,10 @@ export interface FbrScenarioProgress {
     completion_timestamp: string | null;
     created_at: string;
     updated_at: string;
+}
+
+export interface FbrScenarioProgressResult extends FbrScenarioProgress {
+    newAttempts: number;
 }
 
 export interface FbrConfigStatus {

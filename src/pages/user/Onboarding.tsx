@@ -17,7 +17,7 @@ import {
 } from "@/features/user/company";
 import { useState } from "react";
 import { copyCOATemplateToCompany } from "@/shared/services/supabase/coa";
-import { upsertFbrProfile, getBusinessActivities } from "@/shared/services/supabase/fbr";
+import { upsertFbrProfile, getBusinessActivities, initializeScenarioProgress } from "@/shared/services/supabase/fbr";
 import logo from "@/assets/logo.png";
 import FbrProfile from "./FbrProfile";
 
@@ -209,6 +209,9 @@ export default function Onboarding() {
                         mobile_number: formData.fbr_mobile_number,
                         business_activity_id: selectedActivity.id,
                     });
+
+                    // Initialize scenario progress for all mandatory scenarios
+                    await initializeScenarioProgress(user.id, selectedActivity.id);
                 }
             }
 
