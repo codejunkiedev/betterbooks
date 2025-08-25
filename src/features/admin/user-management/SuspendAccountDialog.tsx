@@ -76,9 +76,12 @@ export function SuspendAccountDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent aria-describedby="suspend-account-description">
                 <DialogHeader>
                     <DialogTitle>{isSuspending ? 'Suspend Account' : 'Reactivate Account'}</DialogTitle>
+                    <p id="suspend-account-description" className="text-sm text-gray-600">
+                        {isSuspending ? 'Suspend or reactivate this user account.' : 'Reactivate this user account.'}
+                    </p>
                 </DialogHeader>
 
                 {isSuspending ? (

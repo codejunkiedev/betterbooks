@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+
 import { RootState } from "@/shared/services/store";
 import { useToast } from "@/shared/hooks/useToast";
 import { FBR_API_STATUS, type FbrApiStatus } from "@/shared/constants/fbr";
@@ -10,6 +11,7 @@ import { AlertCircle, CheckCircle, Info, Loader2, ExternalLink } from "lucide-re
 export default function FbrApiConfig() {
 	const { user } = useSelector((s: RootState) => s.user);
 	const { toast } = useToast();
+
 
 	const [sandboxKey, setSandboxKey] = useState("");
 	const [productionKey, setProductionKey] = useState("");
@@ -222,10 +224,77 @@ export default function FbrApiConfig() {
 
 	if (loading) {
 		return (
-			<div className="max-w-2xl p-6 space-y-6">
-				<div className="flex items-center justify-center py-12">
-					<Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-					<span className="ml-2 text-gray-600">Loading FBR configuration...</span>
+			<div className="max-w-4xl p-6 space-y-6">
+				{/* Header Skeleton */}
+				<div className="space-y-2">
+					<div className="h-8 bg-gray-200 rounded-md w-64 animate-pulse"></div>
+					<div className="h-4 bg-gray-200 rounded-md w-96 animate-pulse"></div>
+				</div>
+
+				{/* Instructions Card Skeleton */}
+				<div className="rounded-lg border border-gray-200 p-4">
+					<div className="flex items-start space-x-3">
+						<div className="h-5 w-5 bg-gray-200 rounded-full animate-pulse"></div>
+						<div className="space-y-2 flex-1">
+							<div className="h-5 bg-gray-200 rounded-md w-48 animate-pulse"></div>
+							<div className="space-y-2">
+								<div className="h-4 bg-gray-200 rounded-md w-full animate-pulse"></div>
+								<div className="h-4 bg-gray-200 rounded-md w-3/4 animate-pulse"></div>
+								<div className="h-4 bg-gray-200 rounded-md w-5/6 animate-pulse"></div>
+								<div className="h-4 bg-gray-200 rounded-md w-2/3 animate-pulse"></div>
+								<div className="h-4 bg-gray-200 rounded-md w-4/5 animate-pulse"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className="grid gap-6">
+					{/* Sandbox Configuration Skeleton */}
+					<div className="rounded-lg border border-gray-200 p-6 space-y-4">
+						<div className="flex items-center justify-between">
+							<div className="space-y-2">
+								<div className="h-6 bg-gray-200 rounded-md w-40 animate-pulse"></div>
+								<div className="h-4 bg-gray-200 rounded-md w-48 animate-pulse"></div>
+							</div>
+							<div className="h-8 bg-gray-200 rounded-full w-24 animate-pulse"></div>
+						</div>
+
+						<div className="space-y-2">
+							<div className="h-4 bg-gray-200 rounded-md w-32 animate-pulse"></div>
+							<div className="h-10 bg-gray-200 rounded-md w-full animate-pulse"></div>
+							<div className="h-3 bg-gray-200 rounded-md w-64 animate-pulse"></div>
+						</div>
+
+						<div className="flex justify-end">
+							<div className="h-10 bg-gray-200 rounded-md w-40 animate-pulse"></div>
+						</div>
+					</div>
+
+					{/* Production Configuration Skeleton */}
+					<div className="rounded-lg border border-gray-200 p-6 space-y-4">
+						<div className="flex items-center justify-between">
+							<div className="space-y-2">
+								<div className="h-6 bg-gray-200 rounded-md w-44 animate-pulse"></div>
+								<div className="h-4 bg-gray-200 rounded-md w-56 animate-pulse"></div>
+							</div>
+							<div className="h-8 bg-gray-200 rounded-full w-24 animate-pulse"></div>
+						</div>
+
+						<div className="space-y-2">
+							<div className="h-4 bg-gray-200 rounded-md w-36 animate-pulse"></div>
+							<div className="h-10 bg-gray-200 rounded-md w-full animate-pulse"></div>
+							<div className="h-3 bg-gray-200 rounded-md w-64 animate-pulse"></div>
+						</div>
+
+						<div className="flex justify-end">
+							<div className="h-10 bg-gray-200 rounded-md w-44 animate-pulse"></div>
+						</div>
+					</div>
+				</div>
+
+				{/* Save Button Skeleton */}
+				<div className="flex justify-end pt-4 border-t border-gray-200">
+					<div className="h-12 bg-gray-200 rounded-md w-32 animate-pulse"></div>
 				</div>
 			</div>
 		);

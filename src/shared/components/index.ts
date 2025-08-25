@@ -37,4 +37,7 @@ export * from './AskUserModal';
 
 // Auth and Role components
 export { default as RoleGuard } from './RoleGuard';
-export { default as Unauthorized } from './Unauthorized'; 
+export { default as Unauthorized } from './Unauthorized';
+
+// Invoice Validation components
+export * from './InvoiceValidationModal';

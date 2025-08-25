@@ -70,9 +70,12 @@ export const SearchModal = ({
                     )}
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl" aria-describedby="search-users-description">
                 <DialogHeader>
                     <DialogTitle>Search & Filter Users</DialogTitle>
+                    <p id="search-users-description" className="text-sm text-gray-600">
+                        Search and filter users by various criteria including status, role, and registration date.
+                    </p>
                 </DialogHeader>
 
                 <div className="space-y-6">

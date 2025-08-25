@@ -1,6 +1,6 @@
-import { FinancialSummary } from "@/features/users/dashboard/FinancialSummary";
-import { AccountingSummary } from "@/features/users/dashboard/AccountingSummary";
-import { AccountantQuestions } from "@/features/users/dashboard/AccountantQuestions";
+import { FinancialSummary } from "@/features/user/dashboard/FinancialSummary";
+import { AccountingSummary } from "@/features/user/dashboard/AccountingSummary";
+import { AccountantQuestions } from "@/features/user/dashboard/AccountantQuestions";
 import { useModules } from "@/shared/hooks/useModules";
 
 const Dashboard = () => {

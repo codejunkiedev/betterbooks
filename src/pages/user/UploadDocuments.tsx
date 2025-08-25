@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/shared/components/Card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/Tabs";
 import { Receipt, Building2 } from "lucide-react";
-import { UploadBankStatements, UploadInvoicesExpenses } from "@/features/users/upload-document";
+import { UploadBankStatements, UploadInvoicesExpenses } from "@/features/user/upload-document";
 import { useModules } from "@/shared/hooks/useModules";
 
 const UploadDocuments = () => {

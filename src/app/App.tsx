@@ -24,6 +24,8 @@ import DocumentsList from "@/pages/user/Documents";
 import Journal from "@/pages/user/Journal";
 import Reports from "@/pages/user/Reports";
 import Messages from "@/pages/user/Messages";
+import SandboxTesting from "@/pages/user/SandboxTesting";
+import ScenarioInvoiceForm from "@/features/user/sandbox-testing/ScenarioInvoiceForm";
 
 import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
@@ -130,6 +132,24 @@ export default function App() {
             </ModuleGuard>
           )
         },
+        {
+          path: "fbr/sandbox-testing",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <SandboxTesting />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "fbr/sandbox-testing/scenario/:scenarioId",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <ScenarioInvoiceForm />
+            </ModuleGuard>
+          )
+        },
+
+
       ],
     },
 
