@@ -17,6 +17,17 @@ import {
 import { RegistrationType, REGISTRATION_TYPE_OPTIONS } from '@/shared/constants/buyer';
 import { Search, Plus, User } from 'lucide-react';
 
+// Province codes mapping
+const PROVINCE_OPTIONS = [
+    { code: '7', name: 'Punjab' },
+    { code: '8', name: 'Sindh' },
+    { code: '6', name: 'Khyber Pakhtunkhwa' },
+    { code: '2', name: 'Balochistan' },
+    { code: '5', name: 'Capital Territory' },
+    { code: '9', name: 'Gilgit Baltistan' },
+    { code: '4', name: 'Azad Jammu And Kashmir' }
+];
+
 interface BuyerManagementProps {
     onBuyerSelect: (buyerData: {
         buyerNTNCNIC: string;
@@ -45,7 +56,6 @@ export default function BuyerManagement({
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showSearchModal, setShowSearchModal] = useState(false);
 
-
     // Create buyer form state
     const [createFormData, setCreateFormData] = useState<CreateBuyerData>({
         ntn_cnic: '',
@@ -54,6 +64,12 @@ export default function BuyerManagement({
         address: '',
         registration_type: 'Registered'
     });
+
+    // Helper function to get province name from code
+    const getProvinceName = (code: string): string => {
+        const province = PROVINCE_OPTIONS.find(p => p.code === code);
+        return province ? province.name : code;
+    };
 
     // Search buyers with debouncing
     const searchBuyersDebounced = useCallback(
@@ -101,7 +117,7 @@ export default function BuyerManagement({
         const buyerData = {
             buyerNTNCNIC: walkInData.ntn_cnic,
             buyerBusinessName: walkInData.business_name,
-            buyerProvince: walkInData.province_code,
+            buyerProvince: getProvinceName(walkInData.province_code),
             buyerAddress: walkInData.address,
             buyerRegistrationType: walkInData.registration_type
         };
@@ -117,7 +133,7 @@ export default function BuyerManagement({
         const buyerData = {
             buyerNTNCNIC: buyer.ntn_cnic,
             buyerBusinessName: buyer.business_name,
-            buyerProvince: buyer.province_code,
+            buyerProvince: getProvinceName(buyer.province_code),
             buyerAddress: buyer.address,
             buyerRegistrationType: buyer.registration_type
         };
@@ -148,7 +164,7 @@ export default function BuyerManagement({
                 const buyerData = {
                     buyerNTNCNIC: response.data.ntn_cnic,
                     buyerBusinessName: response.data.business_name,
-                    buyerProvince: response.data.province_code,
+                    buyerProvince: getProvinceName(response.data.province_code),
                     buyerAddress: response.data.address,
                     buyerRegistrationType: response.data.registration_type
                 };
@@ -245,6 +261,9 @@ export default function BuyerManagement({
                                                     NTN/CNIC: {buyer.ntn_cnic}
                                                 </div>
                                                 <div className="text-sm text-muted-foreground">
+                                                    {getProvinceName(buyer.province_code)}
+                                                </div>
+                                                <div className="text-sm text-muted-foreground">
                                                     {buyer.address}
                                                 </div>
                                             </div>
@@ -319,13 +338,11 @@ export default function BuyerManagement({
                                         <SelectValue placeholder="Select province" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Punjab">Punjab</SelectItem>
-                                        <SelectItem value="Sindh">Sindh</SelectItem>
-                                        <SelectItem value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</SelectItem>
-                                        <SelectItem value="Balochistan">Balochistan</SelectItem>
-                                        <SelectItem value="Islamabad Capital Territory">Islamabad Capital Territory</SelectItem>
-                                        <SelectItem value="Gilgit-Baltistan">Gilgit-Baltistan</SelectItem>
-                                        <SelectItem value="Azad Jammu and Kashmir">Azad Jammu and Kashmir</SelectItem>
+                                        {PROVINCE_OPTIONS.map(province => (
+                                            <SelectItem key={province.code} value={province.code}>
+                                                {province.name}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
