@@ -192,8 +192,8 @@ export default function FbrApiConfig() {
 		setSaving(true);
 		try {
 			const response = await saveFbrApiCredentials({
-				sandboxKey: sandboxKey || undefined,
-				productionKey: productionKey || undefined,
+				...(sandboxKey ? { sandboxKey } : {}),
+				...(productionKey ? { productionKey } : {}),
 				userId
 			});
 

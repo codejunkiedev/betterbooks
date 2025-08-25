@@ -50,7 +50,7 @@ const createFallbackStatus = (environment: string, status: string) => ({
 export interface TestConnectionRequest {
     apiKey: string;
     environment: 'sandbox' | 'production';
-    userId?: string;
+    userId?: string | undefined;
 }
 
 export interface SaveCredentialsRequest {
