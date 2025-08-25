@@ -43,34 +43,81 @@ export async function upsertFbrProfile(payload: FbrProfilePayload) {
  * Update FBR connection status in database
  */
 export async function updateFbrConnectionStatus(userId: string, environment: 'sandbox' | 'production', status: 'connected' | 'failed'): Promise<FbrConfigStatus> {
-	const now = new Date().toISOString();
-	const updatePayload: { updated_at: string; sandbox_status?: string; production_status?: string; last_sandbox_test?: string; last_production_test?: string } = { updated_at: now };
+	try {
+		const now = new Date().toISOString();
+		const updatePayload: { updated_at: string; sandbox_status?: string; production_status?: string; last_sandbox_test?: string; last_production_test?: string } = { updated_at: now };
 
-	if (environment === 'sandbox') {
-		updatePayload.sandbox_status = status;
-		updatePayload.last_sandbox_test = now;
-	} else {
-		updatePayload.production_status = status;
-		updatePayload.last_production_test = now;
-	}
+		if (environment === 'sandbox') {
+			updatePayload.sandbox_status = status;
+			updatePayload.last_sandbox_test = now;
+		} else {
+			updatePayload.production_status = status;
+			updatePayload.last_production_test = now;
+		}
 
-	const { data, error } = await supabase
-		.from('fbr_api_configs')
-		.update(updatePayload)
-		.eq('user_id', userId)
-		.select('sandbox_status, production_status, last_sandbox_test, last_production_test')
-		.single();
+		// First check if a record exists
+		const { data: existingRecord, error: checkError } = await supabase
+			.from('fbr_api_configs')
+			.select('id')
+			.eq('user_id', userId)
+			.single();
 
-	if (error) {
+		if (checkError && checkError.code !== 'PGRST116') {
+			console.error('Error checking existing record:', checkError);
+			throw new Error(`Failed to check existing record: ${checkError.message}`);
+		}
+
+		if (existingRecord) {
+			// Update existing record
+			const { data, error } = await supabase
+				.from('fbr_api_configs')
+				.update(updatePayload)
+				.eq('user_id', userId)
+				.select('sandbox_status, production_status, last_sandbox_test, last_production_test')
+				.single();
+
+			if (error) {
+				throw error;
+			}
+
+			return {
+				sandbox_status: data.sandbox_status || FBR_API_STATUS.NOT_CONFIGURED,
+				production_status: data.production_status || FBR_API_STATUS.NOT_CONFIGURED,
+				last_sandbox_test: data.last_sandbox_test,
+				last_production_test: data.last_production_test
+			};
+		} else {
+			// Insert new record with default values
+			const insertPayload = {
+				user_id: userId,
+				sandbox_status: environment === 'sandbox' ? status : FBR_API_STATUS.NOT_CONFIGURED,
+				production_status: environment === 'production' ? status : FBR_API_STATUS.NOT_CONFIGURED,
+				last_sandbox_test: environment === 'sandbox' ? now : null,
+				last_production_test: environment === 'production' ? now : null,
+				...updatePayload
+			};
+
+			const { data, error } = await supabase
+				.from('fbr_api_configs')
+				.insert(insertPayload)
+				.select('sandbox_status, production_status, last_sandbox_test, last_production_test')
+				.single();
+
+			if (error) {
+				throw new Error('Failed to insert FBR config record');
+			}
+
+			return {
+				sandbox_status: data.sandbox_status || FBR_API_STATUS.NOT_CONFIGURED,
+				production_status: data.production_status || FBR_API_STATUS.NOT_CONFIGURED,
+				last_sandbox_test: data.last_sandbox_test,
+				last_production_test: data.last_production_test
+			};
+		}
+	} catch (error) {
+		console.error('Error in updateFbrConnectionStatus:', error);
 		throw error;
 	}
-
-	return {
-		sandbox_status: data.sandbox_status || FBR_API_STATUS.NOT_CONFIGURED,
-		production_status: data.production_status || FBR_API_STATUS.NOT_CONFIGURED,
-		last_sandbox_test: data.last_sandbox_test,
-		last_production_test: data.last_production_test
-	};
 }
 
 /**
