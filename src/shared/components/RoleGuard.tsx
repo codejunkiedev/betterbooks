@@ -5,9 +5,7 @@ import { UserRole } from '@/shared/types/auth';
 import { LoadingSpinner } from '@/shared/components/Loading';
 import { useAppSelector, useAppDispatch } from '@/shared/hooks/useRedux';
 import { getUserRoleFromDB } from '@/shared/services/supabase/auth';
-import { getCompanyByUserId } from '@/shared/services/supabase/company';
-import { getFbrProfileByUser } from '@/shared/services/supabase/fbr';
-import { setCurrentCompany } from '@/shared/services/store/companySlice';
+import { checkOnboardingStatus } from '@/shared/services/store/companySlice';
 
 interface RoleGuardProps {
     children: React.ReactNode;
@@ -73,11 +71,9 @@ export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
 export function UserGuard({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const { user, isAuthenticated, loading } = useAppSelector(state => state.user);
-    const { currentCompany } = useAppSelector(state => state.company);
+    const { currentCompany, onboardingStatus, isLoading: companyLoading } = useAppSelector(state => state.company);
     const dispatch = useAppDispatch();
     const [userRole, setUserRole] = useState<UserRole | null>(null);
-    const [hasCompany, setHasCompany] = useState<boolean | null>(null);
-    const [hasFbrProfile, setHasFbrProfile] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -91,27 +87,13 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
                 const role = await getUserRoleFromDB(user);
                 setUserRole(role);
 
-                // If user is USER role, check if they have both company and FBR profile
-                if (role === 'USER') {
-                    const [company, fbrProfile] = await Promise.all([
-                        getCompanyByUserId(user.id),
-                        getFbrProfileByUser(user.id).catch(() => null) // Handle case where FBR profile doesn't exist
-                    ]);
-
-                    if (company) {
-                        dispatch(setCurrentCompany(company));
-                        setHasCompany(true);
-                    } else {
-                        setHasCompany(false);
-                    }
-
-                    setHasFbrProfile(!!fbrProfile);
+                // If user is USER role and no onboarding status, check it
+                if (role === 'USER' && !onboardingStatus) {
+                    dispatch(checkOnboardingStatus(user.id));
                 }
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 setUserRole('USER');
-                setHasCompany(false);
-                setHasFbrProfile(false);
             } finally {
                 setIsLoading(false);
             }
@@ -122,9 +104,9 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
         } else {
             setIsLoading(false);
         }
-    }, [isAuthenticated, user, dispatch]);
+    }, [isAuthenticated, user, onboardingStatus, dispatch]);
 
-    if (loading || isLoading) {
+    if (loading || isLoading || companyLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <LoadingSpinner />
@@ -145,7 +127,6 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
     // Handle USER role company and FBR profile checks
     if (userRole === 'USER') {
         const isOnboarding = location.pathname === '/onboarding';
-        const isHome = location.pathname === '/';
         const isBlocked = location.pathname === '/blocked';
 
         // Check if user's company is deactivated
@@ -154,7 +135,7 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
         }
 
         // Check if user has completed onboarding (both company and FBR profile)
-        const hasCompletedOnboarding = hasCompany === true && hasFbrProfile === true;
+        const hasCompletedOnboarding = onboardingStatus?.isCompleted === true;
 
         // If user has completed onboarding and is on onboarding page, redirect to home
         if (hasCompletedOnboarding && isOnboarding) {
@@ -162,12 +143,7 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
         }
 
         // If user hasn't completed onboarding and is not on onboarding, redirect to onboarding
-        if (!hasCompletedOnboarding && !isOnboarding) {
-            return <Navigate to="/onboarding" replace />;
-        }
-
-        // If user hasn't completed onboarding and is on home page, redirect to onboarding
-        if (!hasCompletedOnboarding && isHome) {
+        if (!hasCompletedOnboarding && !isOnboarding && !isBlocked) {
             return <Navigate to="/onboarding" replace />;
         }
     }

@@ -3,7 +3,7 @@ import { useToast } from "@/shared/hooks/useToast";
 import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
 import { createCompany } from "@/shared/services/supabase/company";
 import { CompanyType } from "@/shared/constants/company";
-import { setCurrentCompany } from "@/shared/services/store/companySlice";
+import { setCurrentCompany, checkOnboardingStatus } from "@/shared/services/store/companySlice";
 import { createOpeningBalanceJournalEntry } from "@/shared/services/supabase/journal";
 import {
     StepIndicator,
@@ -214,6 +214,9 @@ export default function Onboarding() {
                     await initializeScenarioProgress(user.id, selectedActivity.id);
                 }
             }
+
+            // Refresh onboarding status in Redux
+            dispatch(checkOnboardingStatus(user.id));
 
             toast({
                 title: "Success",
