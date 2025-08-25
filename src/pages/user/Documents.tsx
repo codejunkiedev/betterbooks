@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useAppSelector } from "@/shared/hooks/useRedux";
 import { Button } from "@/shared/components/Button";
 import { useToast } from "@/shared/hooks/useToast";
 import { Card } from "@/shared/components/Card";
@@ -27,6 +28,7 @@ type FilterState = {
 };
 
 const DocumentsList = () => {
+    const { currentCompany } = useAppSelector(state => state.company);
     const [documents, setDocuments] = useState<Document[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filters, setFilters] = useState<FilterState>({});
@@ -44,6 +46,14 @@ const DocumentsList = () => {
     const loadDocuments = useCallback(async () => {
         try {
             setIsLoading(true);
+            
+            // Don't load documents if no company is available
+            if (!currentCompany?.id) {
+                setDocuments([]);
+                setTotalItems(0);
+                return;
+            }
+
             // Convert FilterState to DocumentFilters by filtering out undefined values
             const documentFilters: DocumentFilters = {};
             if (filters.type !== undefined) documentFilters.type = filters.type;
@@ -51,7 +61,7 @@ const DocumentsList = () => {
             if (filters.date_from !== undefined) documentFilters.date_from = filters.date_from;
             if (filters.date_to !== undefined) documentFilters.date_to = filters.date_to;
 
-            const { data, error } = await getPaginatedDocuments(currentPage, ITEMS_PER_PAGE, documentFilters);
+            const { data, error } = await getPaginatedDocuments(currentPage, ITEMS_PER_PAGE, documentFilters, currentCompany.id);
             if (error) {
                 throw error;
             }
@@ -67,7 +77,7 @@ const DocumentsList = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [filters, currentPage, toast]);
+    }, [filters, currentPage, toast, currentCompany?.id]);
 
     useEffect(() => {
         loadDocuments();

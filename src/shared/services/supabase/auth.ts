@@ -69,15 +69,33 @@ export const signIn = async (payload: SignInPayload): Promise<AuthResponse> => {
         password: payload.password,
     });
 
-    // Log successful login activity
     if (data.user && !error) {
+        // Check if user's company is suspended and block login
+        try {
+            const company = await getCompanyByUserId(data.user.id);
+            if (company && company.is_active === false) {
+                await supabase.auth.signOut();
+                const suspendedError = {
+                    name: 'AuthError',
+                    message: 'Your account is suspended. Please contact support.',
+                    status: 400,
+                } as unknown as import('@supabase/supabase-js').AuthError;
+                return {
+                    user: null,
+                    error: suspendedError,
+                };
+            }
+        } catch (companyError) {
+            // Ignore errors fetching company for login flow
+            console.warn('Company fetch failed during login check:', companyError);
+        }
+
         try {
             let companyId = null;
             try {
                 const company = await getCompanyByUserId(data.user.id);
                 companyId = company?.id || null;
             } catch (companyError) {
-                // User might not have a company yet, which is fine
                 console.log('User has no company or company fetch failed:', companyError);
             }
 
@@ -89,7 +107,6 @@ export const signIn = async (payload: SignInPayload): Promise<AuthResponse> => {
                 'email_password'
             );
         } catch (activityError) {
-            // Don't fail the login if activity logging fails
             console.error('Failed to log login activity:', activityError);
         }
     }

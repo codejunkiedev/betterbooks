@@ -24,10 +24,13 @@ import DocumentsList from "@/pages/user/Documents";
 import Journal from "@/pages/user/Journal";
 import Reports from "@/pages/user/Reports";
 import Messages from "@/pages/user/Messages";
+import SandboxTesting from "@/pages/user/SandboxTesting";
+import ScenarioInvoiceForm from "@/features/user/sandbox-testing/ScenarioInvoiceForm";
 
 import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
 import Blocked from "@/pages/user/Blocked";
+import FbrApiConfig from "@/pages/user/FbrApiConfig";
 
 // Accountant Pages
 import AccountantDashboard from "@/pages/accountant/Dashboard";
@@ -35,17 +38,22 @@ import AccountantClients from "@/pages/accountant/Clients";
 import AccountantBankStatements from "@/pages/accountant/BankStatements";
 import AccountantTaxDocuments from "@/pages/accountant/TaxDocuments";
 import AccountantActivityLogs from "@/pages/accountant/ActivityLogs";
+import AccountantInvoicesDocuments from "@/pages/accountant/InvoicesDocuments";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminUserManagement from "@/pages/admin/UserManagement";
+import UserDetail from "@/pages/admin/UserDetail";
 import RoleManagement from "@/pages/admin/RoleManagement";
+import AccountantsManagement from "@/pages/admin/Accountants";
+import AccountantDetail from "@/pages/admin/AccountantDetail";
 
 // Role Guards
 import { UserGuard, AccountantGuard, AdminGuard } from "@/shared/components/RoleGuard";
 
 import AuthGuard from "@/shared/components/AuthGuard";
-
+import ModuleGuard from "@/shared/components/ModuleGuard";
+import { MODULES } from "@/shared/constants/modules";
 
 
 export default function App() {
@@ -86,12 +94,62 @@ export default function App() {
       ),
       children: [
         { path: "", element: <UserDashboard /> },
-        { path: "upload", element: <UploadDocuments /> },
-        { path: "documents", element: <DocumentsList /> },
-        { path: "journal", element: <Journal /> },
-        { path: "reports", element: <Reports /> },
+        {
+          path: "upload", element: (
+            <ModuleGuard module={MODULES.ACCOUNTING}>
+              <UploadDocuments />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "documents", element: (
+            <ModuleGuard module={MODULES.ACCOUNTING}>
+              <DocumentsList />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "journal", element: (
+            <ModuleGuard module={MODULES.ACCOUNTING} requiredTier="Basic">
+              <Journal />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "reports", element: (
+            <ModuleGuard module={MODULES.ACCOUNTING} requiredTier="Advanced">
+              <Reports />
+            </ModuleGuard>
+          )
+        },
         { path: "messages", element: <Messages /> },
         { path: "profile", element: <Profile /> },
+        {
+          path: "fbr/api-config",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <FbrApiConfig />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "fbr/sandbox-testing",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <SandboxTesting />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "fbr/sandbox-testing/scenario/:scenarioId",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <ScenarioInvoiceForm />
+            </ModuleGuard>
+          )
+        },
+
+
       ],
     },
 
@@ -127,6 +185,7 @@ export default function App() {
         { path: "", element: <AccountantDashboard /> },
         { path: "clients", element: <AccountantClients /> },
         { path: "bank-statements", element: <AccountantBankStatements /> },
+        { path: "invoices-documents", element: <AccountantInvoicesDocuments /> },
         { path: "tax-documents", element: <AccountantTaxDocuments /> },
         { path: "activity-logs", element: <AccountantActivityLogs /> },
       ],
@@ -143,7 +202,10 @@ export default function App() {
       children: [
         { path: "", element: <AdminDashboard /> },
         { path: "users", element: <AdminUserManagement /> },
+        { path: "users/:userId", element: <UserDetail /> },
         { path: "roles", element: <RoleManagement /> },
+        { path: "accountants", element: <AccountantsManagement /> },
+        { path: "accountants/:accountantId", element: <AccountantDetail /> },
       ],
     },
 

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/shared/hooks/useToast";
 import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
 import { createCompany } from "@/shared/services/supabase/company";
+import { CompanyType } from "@/shared/constants/company";
 import { setCurrentCompany } from "@/shared/services/store/companySlice";
 import { createOpeningBalanceJournalEntry } from "@/shared/services/supabase/journal";
 import {
@@ -13,10 +14,12 @@ import {
     NavigationButtons,
     validateOpeningBalance,
     validateTaxInformation,
-} from "@/features/users/company";
+} from "@/features/user/company";
 import { useState } from "react";
 import { copyCOATemplateToCompany } from "@/shared/services/supabase/coa";
+import { upsertFbrProfile, getBusinessActivities, initializeScenarioProgress } from "@/shared/services/supabase/fbr";
 import logo from "@/assets/logo.png";
+import FbrProfile from "./FbrProfile";
 
 interface CompanySetupData {
     company_name: string;
@@ -28,6 +31,13 @@ interface CompanySetupData {
     filing_status: string;
     tax_year_end: string;
     skip_tax_info: boolean;
+    fbr_cnic_ntn: string;
+    fbr_business_name: string;
+    fbr_province_code: string;
+    fbr_address: string;
+    fbr_mobile_number: string;
+    fbr_activity_name: string;
+    fbr_sector: string;
 }
 
 export default function Onboarding() {
@@ -47,6 +57,14 @@ export default function Onboarding() {
         filing_status: "",
         tax_year_end: "",
         skip_tax_info: false,
+        // FBR Profile data
+        fbr_cnic_ntn: "",
+        fbr_business_name: "",
+        fbr_province_code: "",
+        fbr_address: "",
+        fbr_mobile_number: "",
+        fbr_activity_name: "",
+        fbr_sector: "",
     });
     const [isLoading, setIsLoading] = useState(false);
 
@@ -74,8 +92,24 @@ export default function Onboarding() {
         setFormData(prev => ({ ...prev, skip_tax_info: false }));
     };
 
+    const validateFbrProfile = (data: CompanySetupData) => {
+        return !!(
+            data.fbr_cnic_ntn &&
+            data.fbr_cnic_ntn.match(/^\d{7}$|^\d{13}$/) &&
+            data.fbr_business_name &&
+            data.fbr_business_name.length <= 100 &&
+            data.fbr_province_code &&
+            data.fbr_address &&
+            data.fbr_address.length <= 250 &&
+            data.fbr_mobile_number &&
+            data.fbr_mobile_number.match(/^\+92\d{10}$/) &&
+            data.fbr_activity_name &&
+            data.fbr_sector
+        );
+    };
+
     const nextStep = () => {
-        if (currentStep < 4) {
+        if (currentStep < 5) {
             setCurrentStep(currentStep + 1);
         }
     };
@@ -119,7 +153,7 @@ export default function Onboarding() {
             const companyData: {
                 user_id: string;
                 name: string;
-                type: string;
+                type: CompanyType;
                 tax_id_number?: string;
                 filing_status?: string;
                 tax_year_end?: string;
@@ -127,7 +161,7 @@ export default function Onboarding() {
             } = {
                 user_id: user.id,
                 name: formData.company_name,
-                type: formData.company_type,
+                type: formData.company_type as CompanyType,
                 assigned_accountant_id: '',
             };
 
@@ -156,13 +190,36 @@ export default function Onboarding() {
                 );
             }
 
+            // Save FBR profile
+            if (formData.fbr_cnic_ntn && formData.fbr_business_name) {
+                // Get business activity ID from the activity name and sector
+                const { data: activities } = await getBusinessActivities();
+                const selectedActivity = activities?.find(
+                    (a: { id: number; business_activity: string; sector: string }) =>
+                        a.business_activity === formData.fbr_activity_name && a.sector === formData.fbr_sector
+                );
+
+                if (selectedActivity) {
+                    await upsertFbrProfile({
+                        user_id: user.id,
+                        cnic_ntn: formData.fbr_cnic_ntn,
+                        business_name: formData.fbr_business_name,
+                        province_code: Number(formData.fbr_province_code),
+                        address: formData.fbr_address,
+                        mobile_number: formData.fbr_mobile_number,
+                        business_activity_id: selectedActivity.id,
+                    });
+
+                    // Initialize scenario progress for all mandatory scenarios
+                    await initializeScenarioProgress(user.id, selectedActivity.id);
+                }
+            }
+
             toast({
                 title: "Success",
                 description: "Company setup completed successfully!",
                 variant: "default",
             });
-
-
 
             navigate("/");
         } catch (error) {
@@ -215,6 +272,19 @@ export default function Onboarding() {
                 );
             case 4:
                 return (
+                    <FbrProfile
+                        cnicNtn={formData.fbr_cnic_ntn}
+                        businessName={formData.fbr_business_name}
+                        provinceCode={formData.fbr_province_code}
+                        address={formData.fbr_address}
+                        mobileNumber={formData.fbr_mobile_number}
+                        activityName={formData.fbr_activity_name}
+                        sector={formData.fbr_sector}
+                        onFieldChange={handleFieldChange}
+                    />
+                );
+            case 5:
+                return (
                     <ReviewStep
                         companyName={formData.company_name}
                         companyType={formData.company_type}
@@ -225,6 +295,13 @@ export default function Onboarding() {
                         taxIdNumber={formData.tax_id_number}
                         filingStatus={formData.filing_status}
                         taxYearEnd={formData.tax_year_end}
+                        fbrCnicNtn={formData.fbr_cnic_ntn}
+                        fbrBusinessName={formData.fbr_business_name}
+                        fbrProvinceCode={formData.fbr_province_code}
+                        fbrAddress={formData.fbr_address}
+                        fbrMobileNumber={formData.fbr_mobile_number}
+                        fbrActivityName={formData.fbr_activity_name}
+                        fbrSector={formData.fbr_sector}
                     />
                 );
             default:
@@ -259,7 +336,7 @@ export default function Onboarding() {
                         <p className="text-gray-600">Let's get your company set up in BetterBooks</p>
                     </div>
 
-                    <StepIndicator currentStep={currentStep} totalSteps={4} />
+                    <StepIndicator currentStep={currentStep} totalSteps={5} />
 
                     <div className="mt-8">
                         {renderCurrentStep()}
@@ -267,14 +344,15 @@ export default function Onboarding() {
 
                     <NavigationButtons
                         currentStep={currentStep}
-                        totalSteps={4}
+                        totalSteps={5}
                         onPrevious={prevStep}
                         onNext={nextStep}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}
                         canProceed={currentStep === 1 ? !!(formData.company_name && formData.company_type) :
                             currentStep === 2 ? validateOpeningBalance(formData.cash_balance, formData.balance_date, formData.skip_balance) :
-                                currentStep === 3 ? validateTaxInformation(formData.tax_id_number, formData.filing_status, formData.tax_year_end, formData.skip_tax_info) : true}
+                                currentStep === 3 ? validateTaxInformation(formData.tax_id_number, formData.filing_status, formData.tax_year_end, formData.skip_tax_info) :
+                                    currentStep === 4 ? validateFbrProfile(formData) : true}
                     />
                 </div>
             </div>

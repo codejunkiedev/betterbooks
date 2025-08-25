@@ -2,11 +2,13 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "dev": true, 
-      "staging": true
+      "staging": true,
+      "dev": true
     }
   },
   "buildCommand": "npm run build",
+  "outputDirectory": "dist", 
+  "framework": "vite",
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ]

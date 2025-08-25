@@ -1,6 +1,7 @@
 import { supabase } from '@/shared/services/supabase/client';
 import { ActivityType } from '@/shared/types/activity';
 import { logActivity } from '@/shared/utils/activity';
+import { CompanyType } from '@/shared/constants/company';
 
 export async function getCompanyByUserId(userId: string) {
   const { data, error } = await supabase
@@ -26,11 +27,13 @@ export async function createCompany({
 }: {
   user_id: string;
   name: string;
-  type: string;
+  type: CompanyType;
   tax_id_number?: string;
   filing_status?: string;
   tax_year_end?: string;
 }) {
+  console.log("createCompany called with:", { user_id, name, type, tax_id_number, filing_status, tax_year_end });
+  
   const { data, error } = await supabase
     .from("companies")
     .insert({
@@ -46,8 +49,16 @@ export async function createCompany({
 
   if (error) {
     console.error("Error creating company:", error);
+    console.error("Error details:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
     throw error;
   }
+  
+  console.log("Company created successfully:", data);
   return data;
 }
 
@@ -55,7 +66,7 @@ export async function updateCompany(
   companyId: string,
   updates: Partial<{
     name: string;
-    type: string;
+    type: CompanyType;
     tax_id_number: string;
     filing_status: string;
     tax_year_end: string;
