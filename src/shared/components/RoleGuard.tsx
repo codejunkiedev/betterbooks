@@ -6,6 +6,7 @@ import { LoadingSpinner } from '@/shared/components/Loading';
 import { useAppSelector, useAppDispatch } from '@/shared/hooks/useRedux';
 import { getUserRoleFromDB } from '@/shared/services/supabase/auth';
 import { getCompanyByUserId } from '@/shared/services/supabase/company';
+import { getFbrProfileByUser } from '@/shared/services/supabase/fbr';
 import { setCurrentCompany } from '@/shared/services/store/companySlice';
 
 interface RoleGuardProps {
@@ -75,6 +76,8 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
     const { currentCompany } = useAppSelector(state => state.company);
     const dispatch = useAppDispatch();
     const [userRole, setUserRole] = useState<UserRole | null>(null);
+    const [hasCompany, setHasCompany] = useState<boolean | null>(null);
+    const [hasFbrProfile, setHasFbrProfile] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -88,16 +91,27 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
                 const role = await getUserRoleFromDB(user);
                 setUserRole(role);
 
-                // If user is USER role and no company in Redux store, fetch it
-                if (role === 'USER' && !currentCompany) {
-                    const company = await getCompanyByUserId(user.id);
+                // If user is USER role, check if they have both company and FBR profile
+                if (role === 'USER') {
+                    const [company, fbrProfile] = await Promise.all([
+                        getCompanyByUserId(user.id),
+                        getFbrProfileByUser(user.id).catch(() => null) // Handle case where FBR profile doesn't exist
+                    ]);
+
                     if (company) {
                         dispatch(setCurrentCompany(company));
+                        setHasCompany(true);
+                    } else {
+                        setHasCompany(false);
                     }
+
+                    setHasFbrProfile(!!fbrProfile);
                 }
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 setUserRole('USER');
+                setHasCompany(false);
+                setHasFbrProfile(false);
             } finally {
                 setIsLoading(false);
             }
@@ -108,7 +122,7 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
         } else {
             setIsLoading(false);
         }
-    }, [isAuthenticated, user, currentCompany, dispatch]);
+    }, [isAuthenticated, user, dispatch]);
 
     if (loading || isLoading) {
         return (
@@ -128,7 +142,7 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
         return <Navigate to={redirectPath} replace />;
     }
 
-    // Handle USER role company checks
+    // Handle USER role company and FBR profile checks
     if (userRole === 'USER') {
         const isOnboarding = location.pathname === '/onboarding';
         const isHome = location.pathname === '/';
@@ -139,18 +153,21 @@ export function UserGuard({ children }: { children: React.ReactNode }) {
             return <Navigate to="/blocked" replace />;
         }
 
-        // If user is on onboarding page but has a company, redirect to home
-        if (currentCompany && isOnboarding) {
+        // Check if user has completed onboarding (both company and FBR profile)
+        const hasCompletedOnboarding = hasCompany === true && hasFbrProfile === true;
+
+        // If user has completed onboarding and is on onboarding page, redirect to home
+        if (hasCompletedOnboarding && isOnboarding) {
             return <Navigate to="/" replace />;
         }
 
-        // If user is on home page but doesn't have a company, redirect to onboarding
-        if (!currentCompany && isHome) {
+        // If user hasn't completed onboarding and is not on onboarding, redirect to onboarding
+        if (!hasCompletedOnboarding && !isOnboarding) {
             return <Navigate to="/onboarding" replace />;
         }
 
-        // If user doesn't have a company and is not on onboarding, redirect to onboarding
-        if (!currentCompany && !isOnboarding) {
+        // If user hasn't completed onboarding and is on home page, redirect to onboarding
+        if (!hasCompletedOnboarding && isHome) {
             return <Navigate to="/onboarding" replace />;
         }
     }

@@ -29,6 +29,23 @@ export async function getFbrProfileByUser(userId: string) {
  * Upsert FBR profile
  */
 export async function upsertFbrProfile(payload: FbrProfilePayload) {
+	// First check if the CNIC/NTN already exists for a different user
+	const { data: existingCnicNtn, error: checkError } = await supabase
+		.from("fbr_profiles")
+		.select("user_id")
+		.eq("cnic_ntn", payload.cnic_ntn)
+		.neq("user_id", payload.user_id)
+		.single();
+
+	if (checkError && checkError.code !== 'PGRST116') {
+		throw new Error(`Error checking existing CNIC/NTN: ${checkError.message}`);
+	}
+
+	if (existingCnicNtn) {
+		throw new Error(`CNIC/NTN ${payload.cnic_ntn} is already registered by another user. Please use a different CNIC/NTN or contact support if this is an error.`);
+	}
+
+	// Now proceed with upsert
 	const { data, error } = await supabase
 		.from("fbr_profiles")
 		.upsert(payload, { onConflict: "user_id" })
