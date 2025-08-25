@@ -1,9 +1,6 @@
 import { HttpClientApi } from './http-client';
-import type { ApiResponse } from './types';
-import type { 
-    ScenarioInvoiceFormData, 
-    InvoiceItemCalculated,
-    UoMValidationResult 
+import type {
+    ScenarioInvoiceFormData
 } from '@/shared/types/invoice';
 import { validateUoM } from './fbr';
 import { getFbrConfigStatus } from '../supabase/fbr';
@@ -47,8 +44,8 @@ export interface InvoiceValidationResponse {
     fbrValidation?: {
         success: boolean;
         message: string;
-        data?: any;
-    };
+        data?: Record<string, unknown>;
+    } | undefined;
 }
 
 // FBR Error code mapping
@@ -74,7 +71,7 @@ const FBR_ERROR_MESSAGES: Record<string, { message: string; severity: Validation
  */
 const validateRequiredFields = (invoiceData: ScenarioInvoiceFormData): ValidationResult[] => {
     const results: ValidationResult[] = [];
-    
+
     // Required field checks
     if (!invoiceData.invoiceType?.trim()) {
         results.push({
@@ -84,7 +81,7 @@ const validateRequiredFields = (invoiceData: ScenarioInvoiceFormData): Validatio
             code: 'REQUIRED_FIELD'
         });
     }
-    
+
     if (!invoiceData.invoiceDate?.trim()) {
         results.push({
             field: 'invoiceDate',
@@ -93,7 +90,7 @@ const validateRequiredFields = (invoiceData: ScenarioInvoiceFormData): Validatio
             code: 'REQUIRED_FIELD'
         });
     }
-    
+
     if (!invoiceData.sellerNTNCNIC?.trim()) {
         results.push({
             field: 'sellerNTNCNIC',
@@ -102,7 +99,7 @@ const validateRequiredFields = (invoiceData: ScenarioInvoiceFormData): Validatio
             code: 'REQUIRED_FIELD'
         });
     }
-    
+
     if (!invoiceData.sellerBusinessName?.trim()) {
         results.push({
             field: 'sellerBusinessName',
@@ -111,7 +108,7 @@ const validateRequiredFields = (invoiceData: ScenarioInvoiceFormData): Validatio
             code: 'REQUIRED_FIELD'
         });
     }
-    
+
     if (!invoiceData.buyerNTNCNIC?.trim()) {
         results.push({
             field: 'buyerNTNCNIC',
@@ -120,7 +117,7 @@ const validateRequiredFields = (invoiceData: ScenarioInvoiceFormData): Validatio
             code: 'REQUIRED_FIELD'
         });
     }
-    
+
     if (!invoiceData.buyerBusinessName?.trim()) {
         results.push({
             field: 'buyerBusinessName',
@@ -129,7 +126,7 @@ const validateRequiredFields = (invoiceData: ScenarioInvoiceFormData): Validatio
             code: 'REQUIRED_FIELD'
         });
     }
-    
+
     return results;
 };
 
@@ -140,7 +137,7 @@ const validateNTNCNICFormat = (ntnCnic: string): boolean => {
 
 const validateDataFormats = (invoiceData: ScenarioInvoiceFormData): ValidationResult[] => {
     const results: ValidationResult[] = [];
-    
+
     // NTN/CNIC format validation
     if (invoiceData.sellerNTNCNIC && !validateNTNCNICFormat(invoiceData.sellerNTNCNIC)) {
         results.push({
@@ -151,7 +148,7 @@ const validateDataFormats = (invoiceData: ScenarioInvoiceFormData): ValidationRe
             suggestion: 'Remove any non-numeric characters and ensure correct length'
         });
     }
-    
+
     if (invoiceData.buyerNTNCNIC && !validateNTNCNICFormat(invoiceData.buyerNTNCNIC)) {
         results.push({
             field: 'buyerNTNCNIC',
@@ -161,7 +158,7 @@ const validateDataFormats = (invoiceData: ScenarioInvoiceFormData): ValidationRe
             suggestion: 'Remove any non-numeric characters and ensure correct length'
         });
     }
-    
+
     // Date format validation
     if (invoiceData.invoiceDate) {
         const date = new Date(invoiceData.invoiceDate);
@@ -183,13 +180,13 @@ const validateDataFormats = (invoiceData: ScenarioInvoiceFormData): ValidationRe
             });
         }
     }
-    
+
     return results;
 };
 
 const validateBusinessRules = (invoiceData: ScenarioInvoiceFormData): ValidationResult[] => {
     const results: ValidationResult[] = [];
-    
+
     // Items validation
     if (!invoiceData.items || invoiceData.items.length === 0) {
         results.push({
@@ -199,7 +196,7 @@ const validateBusinessRules = (invoiceData: ScenarioInvoiceFormData): Validation
             code: 'NO_ITEMS'
         });
     }
-    
+
     // Total amount validation
     if (invoiceData.totalAmount <= 0) {
         results.push({
@@ -209,7 +206,7 @@ const validateBusinessRules = (invoiceData: ScenarioInvoiceFormData): Validation
             code: 'INVALID_AMOUNT'
         });
     }
-    
+
     // Business name length validation
     if (invoiceData.sellerBusinessName && invoiceData.sellerBusinessName.length > 100) {
         results.push({
@@ -220,7 +217,7 @@ const validateBusinessRules = (invoiceData: ScenarioInvoiceFormData): Validation
             suggestion: 'Consider using a shorter business name'
         });
     }
-    
+
     if (invoiceData.buyerBusinessName && invoiceData.buyerBusinessName.length > 100) {
         results.push({
             field: 'buyerBusinessName',
@@ -230,20 +227,20 @@ const validateBusinessRules = (invoiceData: ScenarioInvoiceFormData): Validation
             suggestion: 'Consider using a shorter business name'
         });
     }
-    
+
     return results;
 };
 
 const validateTaxCalculations = (invoiceData: ScenarioInvoiceFormData): ValidationResult[] => {
     const results: ValidationResult[] = [];
-    
+
     if (!invoiceData.items) return results;
-    
+
     invoiceData.items.forEach((item, index) => {
         // Calculate expected tax
         const expectedTax = (item.unit_price * item.quantity * item.tax_rate) / 100;
         const taxDifference = Math.abs(item.sales_tax - expectedTax);
-        
+
         if (taxDifference > 0.01) {
             results.push({
                 field: `items[${index}].sales_tax`,
@@ -253,7 +250,7 @@ const validateTaxCalculations = (invoiceData: ScenarioInvoiceFormData): Validati
                 suggestion: 'Recalculate tax based on unit price, quantity, and tax rate'
             });
         }
-        
+
         // Validate tax rate
         if (item.tax_rate < 0 || item.tax_rate > 100) {
             results.push({
@@ -263,7 +260,7 @@ const validateTaxCalculations = (invoiceData: ScenarioInvoiceFormData): Validati
                 code: 'INVALID_TAX_RATE'
             });
         }
-        
+
         // Validate quantities and prices
         if (item.quantity <= 0) {
             results.push({
@@ -273,7 +270,7 @@ const validateTaxCalculations = (invoiceData: ScenarioInvoiceFormData): Validati
                 code: 'INVALID_QUANTITY'
             });
         }
-        
+
         if (item.unit_price < 0) {
             results.push({
                 field: `items[${index}].unit_price`,
@@ -283,15 +280,15 @@ const validateTaxCalculations = (invoiceData: ScenarioInvoiceFormData): Validati
             });
         }
     });
-    
+
     return results;
 };
 
 const validateHSCodes = (invoiceData: ScenarioInvoiceFormData): ValidationResult[] => {
     const results: ValidationResult[] = [];
-    
+
     if (!invoiceData.items) return results;
-    
+
     invoiceData.items.forEach((item, index) => {
         if (!item.hs_code?.trim()) {
             results.push({
@@ -309,7 +306,7 @@ const validateHSCodes = (invoiceData: ScenarioInvoiceFormData): ValidationResult
             });
         }
     });
-    
+
     return results;
 };
 
@@ -318,16 +315,16 @@ const validateHSCodes = (invoiceData: ScenarioInvoiceFormData): ValidationResult
  */
 const validateUoMs = async (invoiceData: ScenarioInvoiceFormData, userId: string): Promise<ValidationResult[]> => {
     const results: ValidationResult[] = [];
-    
+
     if (!invoiceData.items) return results;
-    
+
     try {
         const fbrConfig = await getFbrConfigStatus(userId);
         const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
-        
+
         if (!apiKey) {
             // Add warning if no API key available
-            invoiceData.items.forEach((item, index) => {
+            invoiceData.items.forEach((_, index) => {
                 results.push({
                     field: `items[${index}].uom_code`,
                     severity: ValidationSeverity.WARNING,
@@ -337,17 +334,17 @@ const validateUoMs = async (invoiceData: ScenarioInvoiceFormData, userId: string
             });
             return results;
         }
-        
+
         // Validate each item's UoM
         for (let i = 0; i < invoiceData.items.length; i++) {
             const item = invoiceData.items[i];
             if (item.hs_code && item.uom_code) {
                 try {
                     const validationResult = await validateUoM(apiKey, item.hs_code, item.uom_code);
-                    
+
                     if (validationResult.success && validationResult.data) {
-                        const { isValid, severity, message, isCriticalMismatch } = validationResult.data;
-                        
+                        const { isValid, message, isCriticalMismatch } = validationResult.data;
+
                         if (!isValid) {
                             results.push({
                                 field: `items[${i}].uom_code`,
@@ -358,7 +355,7 @@ const validateUoMs = async (invoiceData: ScenarioInvoiceFormData, userId: string
                             });
                         }
                     }
-                } catch (error) {
+                } catch {
                     results.push({
                         field: `items[${i}].uom_code`,
                         severity: ValidationSeverity.WARNING,
@@ -371,7 +368,7 @@ const validateUoMs = async (invoiceData: ScenarioInvoiceFormData, userId: string
     } catch (error) {
         console.error('Error validating UoMs:', error);
     }
-    
+
     return results;
 };
 
@@ -379,21 +376,21 @@ const validateUoMs = async (invoiceData: ScenarioInvoiceFormData, userId: string
  * Call FBR validation API
  */
 const validateWithFBR = async (
-    invoiceData: ScenarioInvoiceFormData, 
+    invoiceData: ScenarioInvoiceFormData,
     userId: string,
     environment: 'sandbox' | 'production' = 'sandbox'
-): Promise<{ success: boolean; message: string; data?: any }> => {
+): Promise<{ success: boolean; message: string; data?: Record<string, unknown> }> => {
     try {
         const fbrConfig = await getFbrConfigStatus(userId);
         const apiKey = environment === 'sandbox' ? fbrConfig.sandbox_api_key : fbrConfig.production_api_key;
-        
+
         if (!apiKey) {
             return {
                 success: false,
                 message: `${environment === 'sandbox' ? 'Sandbox' : 'Production'} API key not configured`
             };
         }
-        
+
         // Format data for FBR API
         const cleanNTNCNIC = (value: string) => value.replace(/\D/g, '');
         const formatNumber = (value: number | string) => {
@@ -404,7 +401,7 @@ const validateWithFBR = async (
             const num = typeof value === 'string' ? parseFloat(value) : value;
             return isNaN(num) ? '0%' : `${num}%`;
         };
-        
+
         const fbrRequestData = {
             invoiceType: invoiceData.invoiceType,
             invoiceDate: invoiceData.invoiceDate,
@@ -433,7 +430,7 @@ const validateWithFBR = async (
                 sroItemSerialNo: ""
             })) || []
         };
-        
+
         const response = await httpClient.request({
             method: 'POST',
             url: FBR_VALIDATION_ENDPOINTS[environment],
@@ -444,19 +441,21 @@ const validateWithFBR = async (
             data: fbrRequestData,
             timeout: 60000 // 60 seconds timeout
         });
-        
+
         return {
             success: true,
             message: 'FBR validation completed successfully',
-            data: response.data
+            data: response.data as Record<string, unknown>
         };
-        
-    } catch (error: any) {
+
+    } catch (error: unknown) {
         console.error('FBR validation error:', error);
-        
+
         let errorMessage = 'FBR validation failed';
-        if (error.response?.status) {
-            const status = error.response.status;
+        const errorObj = error as { response?: { status?: number; data?: unknown }; code?: string };
+
+        if (errorObj.response?.status) {
+            const status = errorObj.response.status;
             switch (status) {
                 case 401:
                     errorMessage = 'Invalid API key - Please check your credentials';
@@ -476,14 +475,14 @@ const validateWithFBR = async (
                 default:
                     errorMessage = `FBR validation failed (${status})`;
             }
-        } else if (error.code === 'ECONNABORTED') {
+        } else if (errorObj.code === 'ECONNABORTED') {
             errorMessage = 'FBR validation timed out - Please try again';
         }
-        
+
         return {
             success: false,
             message: errorMessage,
-            data: error.response?.data
+            data: errorObj.response?.data as Record<string, unknown>
         };
     }
 };
@@ -500,25 +499,25 @@ export async function validateInvoice(
     } = {}
 ): Promise<InvoiceValidationResponse> {
     const { includeFBRValidation = true, environment = 'sandbox' } = options;
-    
+
     const results: ValidationResult[] = [];
-    
+
     // Run local validations
     results.push(...validateRequiredFields(invoiceData));
     results.push(...validateDataFormats(invoiceData));
     results.push(...validateBusinessRules(invoiceData));
     results.push(...validateTaxCalculations(invoiceData));
     results.push(...validateHSCodes(invoiceData));
-    
+
     // Run UoM validations
     const uomResults = await validateUoMs(invoiceData, userId);
     results.push(...uomResults);
-    
+
     // Run FBR validation if requested
     let fbrValidation;
     if (includeFBRValidation) {
         fbrValidation = await validateWithFBR(invoiceData, userId, environment);
-        
+
         // Process FBR validation results
         if (!fbrValidation.success) {
             results.push({
@@ -529,23 +528,25 @@ export async function validateInvoice(
             });
         } else if (fbrValidation.data?.errors) {
             // Process FBR error codes
-            fbrValidation.data.errors.forEach((error: any) => {
-                const errorInfo = FBR_ERROR_MESSAGES[error.code] || {
-                    message: error.message || 'Unknown FBR error',
+            const errors = fbrValidation.data.errors as Array<Record<string, unknown>>;
+            errors.forEach((error: Record<string, unknown>) => {
+                const errorCode = error.code as string;
+                const errorInfo = FBR_ERROR_MESSAGES[errorCode] || {
+                    message: (error.message as string) || 'Unknown FBR error',
                     severity: ValidationSeverity.ERROR
                 };
-                
+
                 results.push({
-                    field: error.field || 'general',
+                    field: (error.field as string) || 'general',
                     severity: errorInfo.severity,
                     message: errorInfo.message,
-                    code: error.code,
-                    suggestion: error.suggestion
+                    code: errorCode,
+                    suggestion: error.suggestion as string
                 });
             });
         }
     }
-    
+
     // Calculate summary
     const summary = {
         total: results.length,
@@ -553,17 +554,17 @@ export async function validateInvoice(
         warnings: results.filter(r => r.severity === ValidationSeverity.WARNING).length,
         successes: results.filter(r => r.severity === ValidationSeverity.SUCCESS).length
     };
-    
+
     // Determine if invoice is valid and can be submitted
     const hasErrors = summary.errors > 0;
     const isValid = !hasErrors;
     const canSubmit = isValid || summary.warnings > 0; // Can submit with warnings
-    
+
     return {
         isValid,
         canSubmit,
         results,
         summary,
-        fbrValidation
+        fbrValidation: fbrValidation || undefined
     };
 }

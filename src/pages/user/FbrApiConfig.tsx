@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 
 import { RootState } from "@/shared/services/store";
@@ -26,12 +26,7 @@ export default function FbrApiConfig() {
 	const [lastSandboxTest, setLastSandboxTest] = useState<string | undefined>();
 	const [lastProductionTest, setLastProductionTest] = useState<string | undefined>();
 
-	// Load existing configuration on component mount
-	useEffect(() => {
-		loadConfigStatus();
-	}, []);
-
-	const loadConfigStatus = async () => {
+	const loadConfigStatus = useCallback(async () => {
 		if (!user?.id) {
 			setLoading(false);
 			return;
@@ -58,7 +53,12 @@ export default function FbrApiConfig() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [user?.id]);
+
+	// Load existing configuration on component mount
+	useEffect(() => {
+		loadConfigStatus();
+	}, [loadConfigStatus]);
 
 	const getStatusDisplay = (status: FbrApiStatus) => {
 		switch (status) {

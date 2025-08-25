@@ -26,21 +26,21 @@ export class InvoicePDFGenerator {
         const opts = { ...this.DEFAULT_OPTIONS, ...options };
         let lastError: Error | null = null;
 
-        for (let attempt = 1; attempt <= opts.retryAttempts; attempt++) {
+        for (let attempt = 1; attempt <= (opts.retryAttempts || 3); attempt++) {
             try {
                 return await this.generatePDFAttempt(invoiceData, opts);
             } catch (error) {
                 lastError = error as Error;
                 console.warn(`PDF generation attempt ${attempt} failed:`, error);
 
-                if (attempt < opts.retryAttempts) {
+                if (attempt < (opts.retryAttempts || 3)) {
                     // Wait before retry
                     await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
                 }
             }
         }
 
-        throw new Error(`PDF generation failed after ${opts.retryAttempts} attempts: ${lastError?.message}`);
+        throw new Error(`PDF generation failed after ${opts.retryAttempts || 3} attempts: ${lastError?.message}`);
     }
 
     /**
@@ -70,7 +70,7 @@ export class InvoicePDFGenerator {
 
             // Convert to canvas
             const canvas = await html2canvas(container, {
-                scale: options.scale,
+                scale: options.scale || 2,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#ffffff',
@@ -232,7 +232,7 @@ export class InvoicePDFGenerator {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${invoiceData.items.map((item, index) => `
+                                ${invoiceData.items.map((item) => `
                                     <tr style="border-bottom: 1px solid #eee;">
                                         <td style="padding: 12px;">
                                             <div>

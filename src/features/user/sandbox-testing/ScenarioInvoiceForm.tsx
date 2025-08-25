@@ -83,14 +83,7 @@ export default function ScenarioInvoiceForm() {
         notes: ''
     });
 
-    useEffect(() => {
-        if (scenarioId && user?.id) {
-            loadScenario();
-        }
-        loadProvinces();
-    }, [scenarioId, user?.id]);
-
-    const loadProvinces = async () => {
+    const loadProvinces = useCallback(async () => {
         try {
             const { data, error } = await getProvinceCodes();
             if (data && !error) {
@@ -99,9 +92,9 @@ export default function ScenarioInvoiceForm() {
         } catch (error) {
             console.error('Error loading provinces:', error);
         }
-    };
+    }, []);
 
-    const loadScenario = async () => {
+    const loadScenario = useCallback(async () => {
         if (!scenarioId || !user?.id) return;
 
         try {
@@ -129,7 +122,15 @@ export default function ScenarioInvoiceForm() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [scenarioId, user?.id, toast, navigate]);
+
+    // Load scenario and provinces on component mount
+    useEffect(() => {
+        if (scenarioId && user?.id) {
+            loadScenario();
+        }
+        loadProvinces();
+    }, [scenarioId, user?.id, loadScenario, loadProvinces]);
 
     const updateFormData = (field: keyof ScenarioInvoiceFormData, value: string | number | InvoiceItem[] | number) => {
         setFormData(prev => ({ ...prev, [field]: value }));

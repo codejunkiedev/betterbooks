@@ -303,6 +303,145 @@ export async function cleanupExpiredUoMValidations(): Promise<void> {
 }
 
 /**
+ * Fetch invoices with pagination
+ */
+export async function fetchInvoices(
+    page: number = 1,
+    pageSize: number = 10
+): Promise<{ data: { items: Record<string, unknown>[]; total: number } | null; error: unknown }> {
+    try {
+        const offset = (page - 1) * pageSize;
+
+        // Get total count
+        const { count, error: countError } = await supabase
+            .from('invoices')
+            .select('*', { count: 'exact', head: true });
+
+        if (countError) {
+            throw countError;
+        }
+
+        // Get paginated data
+        const { data, error } = await supabase
+            .from('invoices')
+            .select(`
+                *,
+                invoice_items (*)
+            `)
+            .range(offset, offset + pageSize - 1)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            throw error;
+        }
+
+        return {
+            data: {
+                items: data || [],
+                total: count || 0
+            },
+            error: null
+        };
+    } catch (error) {
+        console.error('Error fetching invoices:', error);
+        return { data: null, error };
+    }
+}
+
+/**
+ * Get invoice items for an invoice
+ */
+export async function getInvoiceItems(invoiceId: string): Promise<{ data: Record<string, unknown>[] | null; error: unknown }> {
+    try {
+        const { data, error } = await supabase
+            .from('invoice_items')
+            .select('*')
+            .eq('invoice_id', invoiceId);
+
+        if (error) {
+            throw error;
+        }
+
+        return { data, error: null };
+    } catch (error) {
+        console.error('Error fetching invoice items:', error);
+        return { data: null, error };
+    }
+}
+
+/**
+ * Create invoice item
+ */
+export async function createInvoiceItem(itemData: Record<string, unknown>): Promise<{ data: Record<string, unknown> | null; error: unknown }> {
+    try {
+        const { data, error } = await supabase
+            .from('invoice_items')
+            .insert(itemData)
+            .select()
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return { data, error: null };
+    } catch (error) {
+        console.error('Error creating invoice item:', error);
+        return { data: null, error };
+    }
+}
+
+/**
+ * Update invoice item
+ */
+export async function updateInvoiceItem(
+    itemId: string,
+    updateData: Record<string, unknown>
+): Promise<{ data: Record<string, unknown> | null; error: unknown }> {
+    try {
+        const { data, error } = await supabase
+            .from('invoice_items')
+            .update(updateData)
+            .eq('id', itemId)
+            .select()
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return { data, error: null };
+    } catch (error) {
+        console.error('Error updating invoice item:', error);
+        return { data: null, error };
+    }
+}
+
+/**
+ * Delete invoice item
+ */
+export async function deleteInvoiceItem(itemId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const { error } = await supabase
+            .from('invoice_items')
+            .delete()
+            .eq('id', itemId);
+
+        if (error) {
+            throw error;
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting invoice item:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
+    }
+}
+
+/**
  * Update invoice status
  */
 export async function updateInvoiceStatus(

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RootState } from "@/shared/services/store";
@@ -41,18 +41,7 @@ export default function SandboxTesting() {
     const [hasValidSandboxKey, setHasValidSandboxKey] = useState(false);
     const [isAllCompleted, setIsAllCompleted] = useState(false);
 
-    useEffect(() => {
-        loadScenarios();
-    }, []);
-
-    useEffect(() => {
-        if (location.state?.refresh) {
-            loadScenarios();
-            navigate(location.pathname, { replace: true, state: {} });
-        }
-    }, [location.state]);
-
-    const loadScenarios = async (filters?: SandboxSearchFilters) => {
+    const loadScenarios = useCallback(async (filters?: SandboxSearchFilters) => {
         if (!user?.id) return;
 
         try {
@@ -114,7 +103,19 @@ export default function SandboxTesting() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.id, toast]);
+
+    // Load scenarios on component mount
+    useEffect(() => {
+        loadScenarios();
+    }, [loadScenarios]);
+
+    useEffect(() => {
+        if (location.state?.refresh) {
+            loadScenarios();
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, loadScenarios, location.pathname, navigate]);
 
     const handleStartScenario = async (scenario: FbrScenario) => {
         if (!user?.id) return;

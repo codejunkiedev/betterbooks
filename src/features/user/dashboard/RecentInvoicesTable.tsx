@@ -26,7 +26,7 @@ const RecentInvoicesTable = () => {
     try {
       const { data, error } = await fetchInvoices(currentPage, ITEMS_PER_PAGE);
       if (error) throw error;
-      setSuggestions(data?.items || []);
+      setSuggestions((data?.items as unknown as InvoiceSuggestionType[]) || []);
       setTotalItems(data?.total || 0);
     } catch (error) {
       console.error("Error loading suggestions:", error);

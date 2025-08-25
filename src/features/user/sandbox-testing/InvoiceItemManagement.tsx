@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/shared/services/store';
 import { Button } from '@/shared/components/Button';
@@ -79,12 +79,7 @@ export function InvoiceItemManagement({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [items]); // Only depend on items, not the callback
 
-    // Load FBR API key and UOM options on component mount
-    useEffect(() => {
-        loadFbrApiKeyAndUOMOptions();
-    }, [user?.id]);
-
-    const loadFbrApiKeyAndUOMOptions = async () => {
+    const loadFbrApiKeyAndUOMOptions = useCallback(async () => {
         if (!user?.id) return;
 
         try {
@@ -120,9 +115,14 @@ export function InvoiceItemManagement({
                 variant: 'destructive'
             });
         }
-    };
+    }, [user?.id, toast]);
 
-    const searchHSCodesFromFBR = async (searchTerm: string) => {
+    // Load FBR API key and UOM options on component mount
+    useEffect(() => {
+        loadFbrApiKeyAndUOMOptions();
+    }, [loadFbrApiKeyAndUOMOptions]);
+
+    const searchHSCodesFromFBR = useCallback(async (searchTerm: string) => {
         if (!searchTerm.trim()) {
             setHsCodeResults([]);
             return;
@@ -180,14 +180,13 @@ export function InvoiceItemManagement({
         } finally {
             setIsSearchingHSCodes(false);
         }
-    };
+    }, [fbrApiKey, toast]);
 
-    const handleHSCodeSearch = useCallback(
-        debounce((searchTerm: unknown) => {
-            searchHSCodesFromFBR(searchTerm as string);
-        }, 300),
-        []
-    );
+    const handleHSCodeSearch = useCallback((searchTerm: unknown) => {
+        debounce((term: unknown) => {
+            searchHSCodesFromFBR(term as string);
+        }, 300)(searchTerm);
+    }, [searchHSCodesFromFBR]);
 
     const handleHSCodeSelect = async (hsCode: string) => {
         try {

@@ -54,19 +54,6 @@ export function useInvoiceItems({ invoiceId }: UseInvoiceItemsProps): UseInvoice
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Load items on mount
-    useEffect(() => {
-        if (invoiceId) {
-            refreshItems();
-        }
-    }, [invoiceId]);
-
-    // Calculate running totals whenever items change
-    useEffect(() => {
-        const totals = calculateRunningTotals(items);
-        setRunningTotals(totals);
-    }, [items]);
-
     const refreshItems = useCallback(async () => {
         if (!invoiceId) return;
 
@@ -74,8 +61,9 @@ export function useInvoiceItems({ invoiceId }: UseInvoiceItemsProps): UseInvoice
         setError(null);
 
         try {
-            const fetchedItems = await getInvoiceItems(invoiceId);
-            setItems(fetchedItems);
+            const { data, error } = await getInvoiceItems(invoiceId.toString());
+            if (error) throw error;
+            setItems((data as unknown as InvoiceItemCalculated[]) || []);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to load invoice items';
             setError(errorMessage);
@@ -96,7 +84,7 @@ export function useInvoiceItems({ invoiceId }: UseInvoiceItemsProps): UseInvoice
         setError(null);
 
         try {
-            const newItem = await createInvoiceItem({
+            const { data: newItem, error } = await createInvoiceItem({
                 invoice_id: invoiceId,
                 hs_code: item.hs_code,
                 item_name: item.item_name,
@@ -108,7 +96,10 @@ export function useInvoiceItems({ invoiceId }: UseInvoiceItemsProps): UseInvoice
                 is_third_schedule: item.is_third_schedule
             });
 
-            setItems(prev => [...prev, newItem]);
+            if (error) throw error;
+            if (newItem) {
+                setItems(prev => [...prev, newItem as unknown as InvoiceItemCalculated]);
+            }
             toast({
                 title: 'Success',
                 description: 'Item added successfully'
@@ -125,6 +116,19 @@ export function useInvoiceItems({ invoiceId }: UseInvoiceItemsProps): UseInvoice
             setIsSaving(false);
         }
     }, [invoiceId, toast]);
+
+    // Load items on mount
+    useEffect(() => {
+        if (invoiceId) {
+            refreshItems();
+        }
+    }, [invoiceId, refreshItems]);
+
+    // Calculate running totals whenever items change
+    useEffect(() => {
+        const totals = calculateRunningTotals(items);
+        setRunningTotals(totals);
+    }, [items]);
 
     const updateItem = useCallback(async (id: string, updates: Partial<InvoiceItemCalculated>) => {
         setIsSaving(true);
@@ -143,8 +147,11 @@ export function useInvoiceItems({ invoiceId }: UseInvoiceItemsProps): UseInvoice
             if (updates.invoice_note !== undefined) formUpdates.invoice_note = updates.invoice_note;
             if (updates.is_third_schedule !== undefined) formUpdates.is_third_schedule = updates.is_third_schedule;
 
-            const updatedItem = await updateInvoiceItem(id, formUpdates);
-            setItems(prev => prev.map(item => item.id === id ? updatedItem : item));
+            const { data: updatedItem, error } = await updateInvoiceItem(id, formUpdates);
+            if (error) throw error;
+            if (updatedItem) {
+                setItems(prev => prev.map(item => item.id === id ? (updatedItem as unknown as InvoiceItemCalculated) : item));
+            }
             toast({
                 title: 'Success',
                 description: 'Item updated successfully'
@@ -270,7 +277,7 @@ export function useInvoiceItems({ invoiceId }: UseInvoiceItemsProps): UseInvoice
                 message: errorMessage
             };
         }
-    }, []);
+    }, [user?.id]);
 
     return {
         items,

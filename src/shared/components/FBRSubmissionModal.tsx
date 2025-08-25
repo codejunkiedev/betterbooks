@@ -40,10 +40,10 @@ export interface SubmissionStatus {
     stage: 'confirming' | 'submitting' | 'success' | 'error' | 'timeout';
     message: string;
     progress: number;
-    attempt?: number;
-    fbrReference?: string;
-    error?: string;
-    canRetry?: boolean;
+    attempt?: number | undefined;
+    fbrReference?: string | undefined;
+    error?: string | undefined;
+    canRetry?: boolean | undefined;
 }
 
 export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
@@ -88,7 +88,7 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
                     stage: 'success',
                     message: 'Invoice submitted successfully to FBR',
                     progress: 100,
-                    fbrReference: result.data?.fbrReference || result.data?.transactionId
+                    fbrReference: result.data?.fbrReference || result.data?.transactionId || undefined
                 });
             } else {
                 const isTimeout = result.error?.includes('timeout') || result.error?.includes('Timeout');
@@ -98,8 +98,8 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
                     stage: isTimeout ? 'timeout' : 'error',
                     message: result.error || 'Submission failed',
                     progress: 0,
-                    attempt: result.attempt,
-                    error: result.error,
+                    attempt: result.attempt || undefined,
+                    error: result.error || undefined,
                     canRetry
                 });
             }
