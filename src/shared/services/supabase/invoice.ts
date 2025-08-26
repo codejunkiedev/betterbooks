@@ -348,6 +348,111 @@ export async function fetchInvoices(
     }
 }
 
+export type InvoiceSortField =
+    | 'invoice_ref_no'
+    | 'invoice_date'
+    | 'buyer_business_name'
+    | 'total_amount'
+    | 'status'
+    | 'created_at';
+
+export interface InvoiceFilters {
+    status?: 'all' | 'draft' | 'submitted' | 'failed' | 'cancelled' | undefined;
+    date_from?: string | undefined;
+    date_to?: string | undefined;
+    buyer?: string | undefined; // exact id or name substring
+    amount_min?: number | undefined;
+    amount_max?: number | undefined;
+    search?: string | undefined; // invoice number or buyer name
+    sort_by?: InvoiceSortField | undefined;
+    sort_dir?: 'asc' | 'desc' | undefined;
+}
+
+/**
+ * Fetch invoices for the current user with filtering, sorting, and pagination
+ * Defaults to 25 items per page and created_at desc
+ */
+export async function getPaginatedInvoices(
+    page: number = 1,
+    pageSize: number = 25,
+    filters: InvoiceFilters = {}
+): Promise<{ data: { items: Record<string, unknown>[]; total: number } | null; error: Error | null }> {
+    try {
+        const { data: userData, error: userErr } = await supabase.auth.getUser();
+        if (userErr || !userData?.user?.id) {
+            throw new Error('User not authenticated');
+        }
+
+        const userId = userData.user.id;
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+
+        let query = supabase
+            .from('invoices')
+            .select(
+                `id, invoice_ref_no, invoice_date, buyer_business_name, total_amount, status, fbr_reference, created_at`,
+                { count: 'exact' }
+            )
+            .eq('user_id', userId);
+
+        // Status filter
+        if (filters.status && filters.status !== 'all') {
+            query = query.eq('status', filters.status);
+        }
+
+        // Date range
+        if (filters.date_from) {
+            query = query.gte('invoice_date', filters.date_from);
+        }
+        if (filters.date_to) {
+            query = query.lte('invoice_date', filters.date_to);
+        }
+
+        // Buyer filter (substring match on name)
+        if (filters.buyer && filters.buyer.trim().length > 0) {
+            query = query.ilike('buyer_business_name', `%${filters.buyer.trim()}%`);
+        }
+
+        // Amount range
+        if (typeof filters.amount_min === 'number') {
+            query = query.gte('total_amount', filters.amount_min);
+        }
+        if (typeof filters.amount_max === 'number') {
+            query = query.lte('total_amount', filters.amount_max);
+        }
+
+        // Search across invoice_ref_no and buyer_business_name
+        if (filters.search && filters.search.trim().length > 0) {
+            const term = filters.search.trim();
+            query = query.or(
+                `invoice_ref_no.ilike.%${term}%,buyer_business_name.ilike.%${term}%`
+            );
+        }
+
+        // Sorting
+        const sortBy: InvoiceSortField = filters.sort_by || 'created_at';
+        const sortDir: 'asc' | 'desc' = filters.sort_dir || 'desc';
+        query = query.order(sortBy, { ascending: sortDir === 'asc' });
+
+        // Pagination
+        query = query.range(from, to);
+
+        const { data, count, error } = await query;
+        if (error) throw error;
+
+        return {
+            data: {
+                items: data || [],
+                total: count || 0,
+            },
+            error: null,
+        };
+    } catch (err) {
+        console.error('Error in getPaginatedInvoices:', err);
+        return { data: null, error: err as Error };
+    }
+}
+
 /**
  * Get invoice items for an invoice
  */

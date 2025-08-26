@@ -26,6 +26,7 @@ import Reports from "@/pages/user/Reports";
 import Messages from "@/pages/user/Messages";
 import SandboxTesting from "@/pages/user/SandboxTesting";
 import ScenarioInvoiceForm from "@/features/user/sandbox-testing/ScenarioInvoiceForm";
+import Invoices from "@/pages/user/Invoices";
 
 import Profile from "@/pages/user/Profile";
 import Onboarding from "@/pages/user/Onboarding";
@@ -119,6 +120,14 @@ export default function App() {
           path: "reports", element: (
             <ModuleGuard module={MODULES.ACCOUNTING} requiredTier="Advanced">
               <Reports />
+            </ModuleGuard>
+          )
+        },
+        {
+          path: "invoices",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <Invoices />
             </ModuleGuard>
           )
         },
