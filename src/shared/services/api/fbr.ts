@@ -1,8 +1,7 @@
 
 import type { ApiResponse } from './types';
 import { HttpClientApi } from './http-client';
-import { updateFbrConnectionStatus, saveFbrCredentials } from '../supabase/fbr';
-import { FBR_API_STATUS } from '@/shared/constants/fbr';
+import { saveFbrCredentials } from '../supabase/fbr';
 import { UoMValidationSeverity } from '@/shared/constants/uom';
 import type { FbrSandboxTestRequest, FbrSandboxTestResponse } from '@/shared/types/fbr';
 import type { HSCode, HSCodeSearchResult, UOMCode } from '@/shared/types/invoice';
@@ -13,14 +12,14 @@ interface FbrApiError {
 }
 
 const ENV_TEST_ENDPOINTS = {
-    sandbox: 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb',
-    production: 'https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata'
+    sandbox: 'https://gw.fbr.gov.pk/pdi/v1/itemdesccode',
+    production: 'https://gw.fbr.gov.pk/pdi/v1/itemdesccode'
 } as const;
 
 const FBR_DATA_ENDPOINTS = {
-    itemcode: 'https://gw.fbr.gov.pk/di_data/v1/di/itemcode',
-    uom: 'https://gw.fbr.gov.pk/di_data/v1/di/uom',
-    hscodeuom: 'https://gw.fbr.gov.pk/di_data/v1/di/hscodeuom'
+    itemcode: 'https://gw.fbr.gov.pk/pdi/v1/itemdesccode',
+    uom: 'https://gw.fbr.gov.pk/pdi/v1/uom',
+    hscodeuom: 'https://gw.fbr.gov.pk/pdi/v1/hscodeuom'
 } as const;
 
 const httpClient = new HttpClientApi();
@@ -40,12 +39,7 @@ const getFbrErrorMessage = (status: number): string => {
     return messages[status as keyof typeof messages] || `Unexpected error (${status})`;
 };
 
-const createFallbackStatus = (environment: string, status: string) => ({
-    sandbox_status: environment === 'sandbox' ? status : FBR_API_STATUS.NOT_CONFIGURED,
-    production_status: environment === 'production' ? status : FBR_API_STATUS.NOT_CONFIGURED,
-    last_sandbox_test: environment === 'sandbox' ? new Date().toISOString() : null,
-    last_production_test: environment === 'production' ? new Date().toISOString() : null
-});
+
 
 export interface TestConnectionRequest {
     apiKey: string;
@@ -61,58 +55,90 @@ export interface SaveCredentialsRequest {
 
 export async function testFbrConnection(params: TestConnectionRequest): Promise<ApiResponse<unknown>> {
     try {
-        await httpClient.request({
-            method: 'GET',
-            url: ENV_TEST_ENDPOINTS[params.environment],
-            headers: {
-                'Authorization': `Bearer ${params.apiKey}`,
-                'Content-Type': 'application/json',
-            }
-        });
-
-        let updatedStatus = null;
-        if (params.userId) {
-            try {
-                updatedStatus = await updateFbrConnectionStatus(params.userId, params.environment, FBR_API_STATUS.CONNECTED);
-            } catch (err) {
-                console.error('Failed to update connection status:', err);
-                updatedStatus = createFallbackStatus(params.environment, FBR_API_STATUS.CONNECTED);
-            }
-        }
-
-        return {
-            success: true,
-            message: 'Connection Successful - FBR API is accessible',
-            data: { status: 'connected', configStatus: updatedStatus }
-        };
-    } catch (error) {
-        let updatedStatus = null;
-        if (params.userId) {
-            try {
-                updatedStatus = await updateFbrConnectionStatus(params.userId, params.environment, FBR_API_STATUS.FAILED);
-            } catch (err) {
-                console.error('Failed to update connection status:', err);
-                updatedStatus = createFallbackStatus(params.environment, FBR_API_STATUS.FAILED);
-            }
-        }
-
-        if (error instanceof Error) {
-            const status = (error as { status?: number; response?: { status?: number } }).status || (error as { status?: number; response?: { status?: number } }).response?.status;
-            const message = status ? getFbrErrorMessage(status) :
-                error.message.includes('CORS') ? 'CORS error - FBR API does not allow browser requests' :
-                    error.message;
-
+        if (!params.userId) {
             return {
                 success: false,
-                message,
-                data: { status: 'failed', configStatus: updatedStatus, originalError: error.message }
+                message: 'User ID is required for testing connection',
+                data: { status: 'failed' }
             };
         }
 
+        console.log('FBR connection test request:', params);
+
+        // First, save the API key being tested
+        try {
+            const savePayload = {
+                userId: params.userId,
+                ...(params.environment === 'sandbox' ? { sandboxKey: params.apiKey } : {}),
+                ...(params.environment === 'production' ? { productionKey: params.apiKey } : {})
+            };
+            await saveFbrApiCredentials(savePayload);
+        } catch (saveError) {
+            console.warn('Failed to save API key before testing:', saveError);
+            // Continue with the test even if saving fails
+        }
+
+        // Test the FBR API connection directly
+        const testEndpoint = 'https://gw.fbr.gov.pk/pdi/v1/itemdesccode';
+
+        try {
+            const response = await httpClient.request({
+                method: 'GET',
+                url: testEndpoint,
+                headers: {
+                    'Authorization': `Bearer ${params.apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const isSuccess = response.success;
+            const status = isSuccess ? 'connected' : 'failed';
+
+            // Update the connection status in the database
+            const { updateFbrConnectionStatus } = await import('../supabase/fbr');
+            const configStatus = await updateFbrConnectionStatus(params.userId, params.environment, status);
+
+            if (isSuccess) {
+                return {
+                    success: true,
+                    message: `FBR ${params.environment} connection successful`,
+                    data: {
+                        status: 'connected',
+                        configStatus
+                    }
+                };
+            } else {
+                return {
+                    success: false,
+                    message: `FBR ${params.environment} connection failed`,
+                    data: {
+                        status: 'failed',
+                        configStatus
+                    }
+                };
+            }
+        } catch (error) {
+            console.error('Error testing FBR connection:', error);
+
+            // Update status to failed
+            const { updateFbrConnectionStatus } = await import('../supabase/fbr');
+            const configStatus = await updateFbrConnectionStatus(params.userId, params.environment, 'failed');
+
+            return {
+                success: false,
+                message: `FBR ${params.environment} connection failed: Network error`,
+                data: {
+                    status: 'failed',
+                    configStatus
+                }
+            };
+        }
+    } catch (error) {
+        console.error('Error in testFbrConnection:', error);
         return {
             success: false,
-            message: 'Unknown error occurred',
-            data: { status: 'failed', configStatus: updatedStatus }
+            message: error instanceof Error ? error.message : 'Network error while testing connection',
+            data: { status: 'failed' }
         };
     }
 }
