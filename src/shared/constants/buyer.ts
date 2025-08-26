@@ -13,7 +13,7 @@ export const REGISTRATION_TYPE_OPTIONS = [
 export const WALK_IN_CUSTOMER_DATA = {
     NTN_CNIC: '0000000000000',
     BUSINESS_NAME: 'Walk-in Customer',
-    PROVINCE: 'N/A',
+    PROVINCE: '5', // Capital Territory code
     ADDRESS: 'N/A',
     REGISTRATION_TYPE: REGISTRATION_TYPES.UNREGISTERED
 } as const;
