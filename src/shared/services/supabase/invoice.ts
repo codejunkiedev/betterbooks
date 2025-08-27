@@ -390,7 +390,7 @@ export async function getPaginatedInvoices(
         let query = supabase
             .from('invoices')
             .select(
-                `id, invoice_ref_no, invoice_date, buyer_business_name, total_amount, status, fbr_reference, created_at`,
+                `id, invoice_ref_no, invoice_date, buyer_business_name, total_amount, status, created_at`,
                 { count: 'exact' }
             )
             .eq('user_id', userId);

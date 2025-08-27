@@ -31,7 +31,7 @@ interface InvoiceRow {
     buyer_business_name: string;
     total_amount: number;
     status: "draft" | "submitted" | "failed" | "cancelled";
-    fbr_reference: string | null;
+    // fbr_reference omitted (not in schema)
     created_at: string;
 }
 
@@ -332,7 +332,7 @@ export default function Invoices() {
                                 <Card className="p-3"><div className="text-xs text-gray-500">Buyer</div><div>{activeInvoice.buyer_business_name}</div></Card>
                                 <Card className="p-3"><div className="text-xs text-gray-500">Amount</div><div>{activeInvoice.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div></Card>
                                 <Card className="p-3"><div className="text-xs text-gray-500">Status</div><div>{activeInvoice.status}</div></Card>
-                                <Card className="p-3"><div className="text-xs text-gray-500">FBR Ref</div><div>{activeInvoice.fbr_reference || '-'}</div></Card>
+                                <Card className="p-3"><div className="text-xs text-gray-500">Created</div><div>{new Date(activeInvoice.created_at).toLocaleString()}</div></Card>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Button onClick={() => toast({ title: 'PDF opened' })}><Download className="w-4 h-4 mr-2" />View PDF</Button>
