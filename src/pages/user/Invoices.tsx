@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/shared/components/Button";
-import { Input } from "@/shared/components/Input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/Select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/Table";
-import { Card } from "@/shared/components/Card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/Dialog";
-import { Checkbox } from "@/shared/components/Checkbox";
+
 import { useToast } from "@/shared/hooks/useToast";
-// local debounce implemented below
 import { supabase } from "@/shared/services/supabase/client";
 import { getPaginatedInvoices, InvoiceFilters, InvoiceSortField } from "@/shared/services/supabase/invoice";
-import { Loader2, Download, RefreshCw, Trash2, Copy, FileSpreadsheet, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+
 import JSZip from "jszip";
 
+// Components
+import { InvoiceStats } from "@/features/invoices/components/InvoiceStats";
+import { InvoiceActions } from "@/features/invoices/components/InvoiceActions";
+import { InvoiceTable } from "@/features/invoices/components/InvoiceTable";
+import { InvoicePagination } from "@/features/invoices/components/InvoicePagination";
+import { InvoiceSearchModal } from "@/features/invoices/components/InvoiceSearchModal";
+import { InvoiceDetailsModal } from "@/features/invoices/components/InvoiceDetailsModal";
+
+// Utils
 function useLocalDebounce<T>(value: T, delayMs: number): T {
     const [debounced, setDebounced] = useState(value);
     useEffect(() => {
@@ -26,54 +28,77 @@ const PAGE_SIZE = 25;
 
 interface InvoiceRow {
     id: string;
-    invoice_ref_no: string;
-    invoice_date: string;
-    buyer_business_name: string;
-    total_amount: number;
-    status: "draft" | "submitted" | "failed" | "cancelled";
-    // fbr_reference omitted (not in schema)
+    invoice_ref_no: string | null;
+    invoice_date: string | null;
+    buyer_business_name: string | null;
+    total_amount: number | null;
+    status: string;
     created_at: string;
+}
+
+interface LocalInvoiceFilters {
+    search: string;
+    status: string;
+    dateFrom?: string;
+    dateTo?: string;
+    buyer: string;
+    amountMin: string;
+    amountMax: string;
 }
 
 export default function Invoices() {
     const { toast } = useToast();
 
+    // Data state
     const [items, setItems] = useState<InvoiceRow[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
-    const [filters, setFilters] = useState<InvoiceFilters>({ status: 'all', sort_by: 'created_at', sort_dir: 'desc' });
-    const [search, setSearch] = useState("");
-    const debouncedSearch = useLocalDebounce(search, 300);
+    // Filter state
+    const [apiFilters, setApiFilters] = useState<InvoiceFilters>({
+        status: 'all',
+        sort_by: 'created_at',
+        sort_dir: 'desc'
+    });
 
-    const [dateFrom, setDateFrom] = useState<string | undefined>(undefined);
-    const [dateTo, setDateTo] = useState<string | undefined>(undefined);
-    const [buyer, setBuyer] = useState("");
-    const [amountMin, setAmountMin] = useState<string>("");
-    const [amountMax, setAmountMax] = useState<string>("");
+    const [localFilters, setLocalFilters] = useState<LocalInvoiceFilters>({
+        search: "",
+        status: "all",
+        buyer: "",
+        amountMin: "",
+        amountMax: ""
+    });
 
+    const debouncedSearch = useLocalDebounce(localFilters.search, 300);
+
+    // Selection state
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-    const [detailsOpen, setDetailsOpen] = useState(false);
+    // Modal state
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [activeInvoice, setActiveInvoice] = useState<InvoiceRow | null>(null);
 
-    const pages = useMemo(() => Math.max(1, Math.ceil(total / PAGE_SIZE)), [total]);
+    const totalPages = useMemo(() => Math.max(1, Math.ceil(total / PAGE_SIZE)), [total]);
 
+    // Load invoices
     const loadInvoices = useCallback(async () => {
         setIsLoading(true);
         try {
             const composedFilters: InvoiceFilters = {
-                ...filters,
+                ...apiFilters,
                 search: debouncedSearch || undefined,
-                date_from: dateFrom || undefined,
-                date_to: dateTo || undefined,
-                buyer: buyer || undefined,
-                amount_min: amountMin ? Number(amountMin) : undefined,
-                amount_max: amountMax ? Number(amountMax) : undefined,
+                date_from: localFilters.dateFrom || undefined,
+                date_to: localFilters.dateTo || undefined,
+                buyer: localFilters.buyer || undefined,
+                amount_min: localFilters.amountMin ? Number(localFilters.amountMin) : undefined,
+                amount_max: localFilters.amountMax ? Number(localFilters.amountMax) : undefined,
             };
+
             const { data, error } = await getPaginatedInvoices(page, PAGE_SIZE, composedFilters);
             if (error) throw error;
+
             setItems(((data?.items || []) as unknown) as InvoiceRow[]);
             setTotal(data?.total || 0);
         } catch (err) {
@@ -82,13 +107,13 @@ export default function Invoices() {
         } finally {
             setIsLoading(false);
         }
-    }, [filters, debouncedSearch, dateFrom, dateTo, buyer, amountMin, amountMax, page, toast]);
+    }, [page, apiFilters, debouncedSearch, localFilters, toast]);
 
     useEffect(() => {
         loadInvoices();
     }, [loadInvoices]);
 
-    // Realtime status updates via Supabase
+    // Realtime updates
     useEffect(() => {
         const channel = supabase
             .channel('invoices-status')
@@ -98,74 +123,80 @@ export default function Invoices() {
                 setItems(prev => prev.map(row => row.id === updated.id ? { ...row, ...updated } as InvoiceRow : row));
             })
             .subscribe();
+
         return () => {
             supabase.removeChannel(channel);
         };
     }, []);
 
-    // Summary cards
+    // Summary stats
     const summary = useMemo(() => {
-        const totalInvoices = total;
-        const counts = items.reduce(
-            (acc, it) => {
-                acc[it.status] = (acc[it.status] || 0) + 1;
-                return acc;
-            },
-            { draft: 0, submitted: 0, failed: 0, cancelled: 0 } as Record<InvoiceRow['status'], number>
-        );
-        return { total: totalInvoices, draft: counts.draft, submitted: counts.submitted, failed: counts.failed };
+        const statusCounts = items.reduce((acc, item) => {
+            acc[item.status] = (acc[item.status] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        return {
+            total: total,
+            submitted: statusCounts.submitted || 0,
+            failed: statusCounts.failed || 0,
+            draft: statusCounts.draft || 0,
+        };
     }, [items, total]);
 
-    // Selection helpers
+    // Selection handlers
     const toggleSelect = (id: string) => {
         setSelectedIds(prev => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id); else next.add(id);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
             return next;
         });
     };
+
     const toggleSelectAll = (checked: boolean) => {
         setSelectedIds(checked ? new Set(items.map(i => i.id)) : new Set());
     };
 
     // Sorting
-    const onSort = (field: InvoiceSortField) => {
-        setFilters(prev => ({ ...prev, sort_by: field, sort_dir: prev.sort_by === field && prev.sort_dir === 'desc' ? 'asc' : 'desc' }));
+    const onSort = (field: string) => {
+        setApiFilters(prev => ({
+            ...prev,
+            sort_by: field as InvoiceSortField,
+            sort_dir: prev.sort_by === field && prev.sort_dir === 'desc' ? 'asc' : 'desc'
+        }));
     };
 
-    // Filter actions
-    const applyFilters = () => {
-        setFilters(prev => ({
+    // Filter handlers
+    const handleApplyFilters = () => {
+        setApiFilters(prev => ({
             ...prev,
-            date_from: dateFrom || undefined,
-            date_to: dateTo || undefined,
-            buyer: buyer || undefined,
-            amount_min: amountMin ? Number(amountMin) : undefined,
-            amount_max: amountMax ? Number(amountMax) : undefined,
+            status: localFilters.status as 'all' | 'draft' | 'submitted' | 'failed' | 'cancelled'
         }));
         setPage(1);
     };
-    const clearFilters = () => {
-        setDateFrom(undefined);
-        setDateTo(undefined);
-        setBuyer("");
-        setAmountMin("");
-        setAmountMax("");
-        setFilters({ status: 'all', sort_by: 'created_at', sort_dir: 'desc' });
-        setSearch("");
+
+    const handleClearFilters = () => {
+        setLocalFilters({
+            search: "",
+            status: "all",
+            buyer: "",
+            amountMin: "",
+            amountMax: ""
+        });
+        setApiFilters({ status: 'all', sort_by: 'created_at', sort_dir: 'desc' });
         setPage(1);
     };
 
-    // Bulk actions
-    const anySelected = selectedIds.size > 0;
-
+    // Action handlers
     const downloadSelectedZip = async () => {
-        if (!anySelected) return;
+        if (selectedIds.size === 0) return;
+
         const zip = new JSZip();
-        // Placeholder: In a real app, fetch invoice PDFs/JSON and add to zip
         Array.from(selectedIds).forEach((id) => {
-            zip.file(`invoice-${id}.txt`, `Selected invoice ${id}`);
+            zip.file(`invoice-${id}.txt`, `Invoice data for ${id}`);
         });
+
         const blob = await zip.generateAsync({ type: 'blob' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -173,21 +204,35 @@ export default function Invoices() {
         a.download = 'invoices.zip';
         a.click();
         URL.revokeObjectURL(url);
+
+        toast({ title: `Downloaded ${selectedIds.size} invoices` });
     };
 
     const retryFailed = async () => {
-        // Placeholder: invoke edge function or API to retry by ids
-        toast({ title: `Retrying ${selectedIds.size} failed invoice(s)` });
+        const failedIds = items.filter(i => selectedIds.has(i.id) && i.status === 'failed').map(i => i.id);
+        if (failedIds.length === 0) {
+            toast({ title: 'No failed invoices selected', variant: 'destructive' });
+            return;
+        }
+
+        toast({ title: `Retrying ${failedIds.length} failed invoices...` });
+        // Implementation would go here
     };
 
     const exportCSV = () => {
-        const headers = ['Invoice #', 'Date', 'Buyer', 'Amount', 'Status'];
-        const rows = items
-            .filter(i => selectedIds.size === 0 || selectedIds.has(i.id))
-            .map(i => [i.invoice_ref_no, i.invoice_date, i.buyer_business_name, i.total_amount, i.status]);
-        const csv = [headers, ...rows]
-            .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
-            .join('\n');
+        const headers = ['Invoice #', 'Date', 'Buyer', 'Amount', 'Status', 'Created'];
+        const csv = [
+            headers.join(','),
+            ...items.map(item => [
+                item.invoice_ref_no || `INV-${item.id.slice(0, 8)}`,
+                item.invoice_date || '',
+                item.buyer_business_name || '',
+                item.total_amount || 0,
+                item.status,
+                item.created_at
+            ].join(','))
+        ].join('\n');
+
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -195,6 +240,8 @@ export default function Invoices() {
         a.download = 'invoices.csv';
         a.click();
         URL.revokeObjectURL(url);
+
+        toast({ title: 'CSV exported successfully' });
     };
 
     const deleteDrafts = async () => {
@@ -203,11 +250,14 @@ export default function Invoices() {
             toast({ title: 'No drafts selected', variant: 'destructive' });
             return;
         }
+
         const confirmed = window.confirm(`Delete ${ids.length} draft(s)?`);
         if (!confirmed) return;
+
         try {
             const { error } = await supabase.from('invoices').delete().in('id', ids);
             if (error) throw error;
+
             toast({ title: 'Drafts deleted' });
             setSelectedIds(new Set());
             loadInvoices();
@@ -217,146 +267,87 @@ export default function Invoices() {
         }
     };
 
-    const openDetails = (row: InvoiceRow) => {
-        setActiveInvoice(row);
-        setDetailsOpen(true);
+    const openDetails = (invoice: InvoiceRow) => {
+        setActiveInvoice(invoice);
+        setIsDetailsModalOpen(true);
     };
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-4 gap-4">
-                <Card className="p-4"><div className="text-sm text-gray-500">Total Invoices</div><div className="text-2xl font-semibold">{summary.total}</div></Card>
-                <Card className="p-4"><div className="text-sm text-gray-500">Successful</div><div className="text-2xl font-semibold text-green-600">{summary.submitted}</div></Card>
-                <Card className="p-4"><div className="text-sm text-gray-500">Failed</div><div className="text-2xl font-semibold text-red-600">{summary.failed}</div></Card>
-                <Card className="p-4"><div className="text-sm text-gray-500">Draft</div><div className="text-2xl font-semibold">{summary.draft}</div></Card>
-            </div>
-
-            <Card className="p-4 space-y-3">
-                <div className="flex flex-wrap items-center gap-3">
-                    <Input placeholder="Search invoice # or buyer" value={search} onChange={e => setSearch(e.target.value)} className="w-60" />
-                    <Select value={filters.status || 'all'} onValueChange={(v) => setFilters(prev => ({ ...prev, status: v as any }))}>
-                        <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="submitted">Submitted</SelectItem>
-                            <SelectItem value="failed">Failed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Input type="date" value={dateFrom || ''} onChange={e => setDateFrom(e.target.value || undefined)} />
-                    <Input type="date" value={dateTo || ''} onChange={e => setDateTo(e.target.value || undefined)} />
-                    <Input placeholder="Buyer" value={buyer} onChange={e => setBuyer(e.target.value)} className="w-48" />
-                    <Input placeholder="Min Amount" type="number" value={amountMin} onChange={e => setAmountMin(e.target.value)} className="w-36" />
-                    <Input placeholder="Max Amount" type="number" value={amountMax} onChange={e => setAmountMax(e.target.value)} className="w-36" />
-                    <Button onClick={applyFilters} variant="default">Apply</Button>
-                    <Button onClick={clearFilters} variant="secondary">Clear</Button>
-                    <div className="ml-auto text-sm text-gray-500">{total} result(s)</div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <Button disabled={!anySelected} onClick={downloadSelectedZip}><Download className="w-4 h-4 mr-2" />Download ZIP</Button>
-                    <Button disabled={!anySelected} onClick={retryFailed} variant="outline"><RefreshCw className="w-4 h-4 mr-2" />Retry Failed</Button>
-                    <Button onClick={exportCSV} variant="outline"><FileSpreadsheet className="w-4 h-4 mr-2" />Export CSV</Button>
-                    <Button disabled={!anySelected} onClick={deleteDrafts} variant="destructive"><Trash2 className="w-4 h-4 mr-2" />Delete Drafts</Button>
-                </div>
-            </Card>
-
-            <Card className="p-0 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-10">
-                                    <Checkbox checked={selectedIds.size === items.length && items.length > 0} onCheckedChange={v => toggleSelectAll(Boolean(v))} />
-                                </TableHead>
-                                <TableHead onClick={() => onSort('invoice_ref_no')} className="cursor-pointer">Invoice #</TableHead>
-                                <TableHead onClick={() => onSort('invoice_date')} className="cursor-pointer">Date</TableHead>
-                                <TableHead onClick={() => onSort('buyer_business_name')} className="cursor-pointer">Buyer</TableHead>
-                                <TableHead onClick={() => onSort('total_amount')} className="cursor-pointer">Amount</TableHead>
-                                <TableHead onClick={() => onSort('status')} className="cursor-pointer">Status</TableHead>
-                                <TableHead>Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-10 text-gray-500">
-                                        <Loader2 className="w-5 h-5 animate-spin inline-block mr-2" /> Loading...
-                                    </TableCell>
-                                </TableRow>
-                            ) : items.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-10 text-gray-500">No invoices found</TableCell>
-                                </TableRow>
-                            ) : (
-                                items.map((row) => (
-                                    <TableRow key={row.id} className="hover:bg-gray-50">
-                                        <TableCell>
-                                            <Checkbox checked={selectedIds.has(row.id)} onCheckedChange={() => toggleSelect(row.id)} />
-                                        </TableCell>
-                                        <TableCell className="font-medium cursor-pointer" onClick={() => openDetails(row)}>{row.invoice_ref_no}</TableCell>
-                                        <TableCell>{new Date(row.invoice_date).toLocaleDateString()}</TableCell>
-                                        <TableCell>{row.buyer_business_name}</TableCell>
-                                        <TableCell>{row.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                                        <TableCell className={row.status === 'failed' ? 'text-red-600' : row.status === 'submitted' ? 'text-green-600' : ''}>{row.status}</TableCell>
-                                        <TableCell>
-                                            <Button size="sm" variant="ghost" onClick={() => openDetails(row)}><Eye className="w-4 h-4 mr-1" />View</Button>
-                                            <Button size="sm" variant="ghost" onClick={() => toast({ title: 'Duplicated' })}><Copy className="w-4 h-4 mr-1" />Duplicate</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-                <div className="flex items-center justify-between p-3 border-t bg-gray-50">
-                    <div className="text-sm text-gray-500">Page {page} of {pages}</div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}><ChevronLeft className="w-4 h-4" /></Button>
-                        <Button variant="outline" disabled={page >= pages} onClick={() => setPage(p => Math.min(pages, p + 1))}><ChevronRight className="w-4 h-4" /></Button>
+        <div className="container mx-auto px-4 py-8">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Page Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
+                        <p className="text-sm text-gray-500 mt-1">Manage and track your invoice submissions</p>
                     </div>
                 </div>
-            </Card>
 
-            <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Invoice Details</DialogTitle>
-                    </DialogHeader>
-                    {activeInvoice && (
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                                <Card className="p-3"><div className="text-xs text-gray-500">Invoice #</div><div>{activeInvoice.invoice_ref_no}</div></Card>
-                                <Card className="p-3"><div className="text-xs text-gray-500">Date</div><div>{new Date(activeInvoice.invoice_date).toLocaleString()}</div></Card>
-                                <Card className="p-3"><div className="text-xs text-gray-500">Buyer</div><div>{activeInvoice.buyer_business_name}</div></Card>
-                                <Card className="p-3"><div className="text-xs text-gray-500">Amount</div><div>{activeInvoice.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div></Card>
-                                <Card className="p-3"><div className="text-xs text-gray-500">Status</div><div>{activeInvoice.status}</div></Card>
-                                <Card className="p-3"><div className="text-xs text-gray-500">Created</div><div>{new Date(activeInvoice.created_at).toLocaleString()}</div></Card>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button onClick={() => toast({ title: 'PDF opened' })}><Download className="w-4 h-4 mr-2" />View PDF</Button>
-                                {activeInvoice.status === 'failed' && (
-                                    <Button variant="outline" onClick={() => toast({ title: 'Retry triggered' })}><RefreshCw className="w-4 h-4 mr-2" />Retry</Button>
-                                )}
-                                <Button variant="outline" onClick={() => toast({ title: 'Duplicated' })}><Copy className="w-4 h-4 mr-2" />Duplicate</Button>
-                            </div>
-                            <Card className="p-3">
-                                <div className="text-sm font-medium mb-2">Submission History</div>
-                                <div className="text-sm text-gray-500">Coming soon</div>
-                            </Card>
-                            <Card className="p-3">
-                                <div className="text-sm font-medium mb-2">Errors</div>
-                                {activeInvoice.status === 'failed' ? (
-                                    <div className="text-sm text-red-600">Submission failed. Please retry.</div>
-                                ) : (
-                                    <div className="text-sm text-gray-500">No errors</div>
-                                )}
-                            </Card>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+                {/* Stats Cards */}
+                <InvoiceStats summary={summary} isLoading={isLoading} />
+
+                {/* Actions Bar */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <InvoiceActions
+                        selectedCount={selectedIds.size}
+                        totalCount={total}
+                        filters={localFilters}
+                        onDownloadZip={downloadSelectedZip}
+                        onRetryFailed={retryFailed}
+                        onExportCSV={exportCSV}
+                        onDeleteDrafts={deleteDrafts}
+                        onOpenSearch={() => setIsSearchModalOpen(true)}
+                        isLoading={isLoading}
+                    />
+                </div>
+
+                {/* Invoices Table */}
+                <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-gray-200">
+                        <h2 className="text-lg font-semibold text-gray-900">Invoice List</h2>
+                    </div>
+                    <div className="p-0">
+                        <InvoiceTable
+                            items={items}
+                            isLoading={isLoading}
+                            selectedIds={selectedIds}
+                            onToggleSelect={toggleSelect}
+                            onToggleSelectAll={toggleSelectAll}
+                            onSort={onSort}
+                            onViewDetails={openDetails}
+                        />
+                    </div>
+
+                    {/* Pagination */}
+                    <div className="p-6 border-t border-gray-200">
+                        <InvoicePagination
+                            currentPage={page}
+                            totalPages={totalPages}
+                            totalCount={total}
+                            pageSize={PAGE_SIZE}
+                            onPageChange={setPage}
+                            isLoading={isLoading}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Modals */}
+            <InvoiceSearchModal
+                isOpen={isSearchModalOpen}
+                onClose={() => setIsSearchModalOpen(false)}
+                filters={localFilters}
+                onFiltersChange={setLocalFilters}
+                onApplyFilters={handleApplyFilters}
+                onClearFilters={handleClearFilters}
+            />
+
+            <InvoiceDetailsModal
+                isOpen={isDetailsModalOpen}
+                onClose={() => setIsDetailsModalOpen(false)}
+                invoice={activeInvoice}
+                isLoading={isLoading}
+            />
         </div>
     );
-} 
+}

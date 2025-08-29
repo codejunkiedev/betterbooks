@@ -330,11 +330,18 @@ export async function validateUoM(apiKey: string, hsCode: string, selectedUoM: s
     isCriticalMismatch?: boolean;
 }>> {
     try {
+        // Debug logging
+        console.log('FBR UoM Validation Request:', {
+            url: FBR_DATA_ENDPOINTS.hs_uom,
+            params: { hs_code: hsCode },
+            selectedUoM
+        });
+
         const response = await httpClient.request({
             method: 'GET',
             url: FBR_DATA_ENDPOINTS.hs_uom,
             headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-            params: { hscode: hsCode }
+            params: { hs_code: hsCode }
         });
 
         const data = response.data as { validUOMs: string[]; recommendedUOM: string; criticalMismatch?: boolean };
@@ -362,6 +369,14 @@ export async function validateUoM(apiKey: string, hsCode: string, selectedUoM: s
         };
     } catch (error) {
         const fbrError = error as FbrApiError;
+
+        // Log detailed error information
+        console.error('FBR UoM Validation Error:', {
+            status: fbrError.response?.status,
+            data: fbrError.response?.data,
+            message: fbrError.message
+        });
+
         return {
             success: false,
             message: getFbrErrorMessage(fbrError.response?.status || 500),

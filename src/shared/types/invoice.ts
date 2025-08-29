@@ -2,6 +2,7 @@ import { UploadedFile } from "./storage";
 import { INVOICE_STATUS, INVOICE_TYPE, BUYER_REGISTRATION_TYPE } from "@/shared/constants/invoice";
 
 export type InvoiceStatus = typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS];
+
 export type InvoiceType = typeof INVOICE_TYPE[keyof typeof INVOICE_TYPE];
 export type BuyerRegistrationType = typeof BUYER_REGISTRATION_TYPE[keyof typeof BUYER_REGISTRATION_TYPE];
 
