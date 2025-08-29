@@ -705,7 +705,7 @@ export function InvoiceItemManagement({
                                                 </SelectItem>
                                             ))
                                         ) : (
-                                            <SelectItem value="" disabled>
+                                            <SelectItem value="__loading__" disabled>
                                                 Loading UoM options...
                                             </SelectItem>
                                         )}

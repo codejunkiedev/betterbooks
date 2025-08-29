@@ -174,7 +174,11 @@ export async function searchHSCodes(searchTerm: string): Promise<HSCodeSearchRes
         throw new Error(`Failed to search HS codes: ${error.message}`);
     }
 
-    return data || [];
+    // Map to HSCodeSearchResult expected shape used by UI (hS_CODE capitalization)
+    return (data || []).map((row: { hs_code: string; description: string }) => ({
+        hS_CODE: row.hs_code,
+        description: row.description,
+    }));
 }
 
 /**

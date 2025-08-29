@@ -42,7 +42,7 @@ export default function SandboxTesting() {
     const [isAllCompleted, setIsAllCompleted] = useState(false);
 
     const loadScenarios = useCallback(async (filters?: SandboxSearchFilters) => {
-        if (!user?.id || loading) return; // Prevent concurrent calls
+        if (!user?.id) return;
 
         try {
             setLoading(true);
@@ -56,7 +56,7 @@ export default function SandboxTesting() {
                     variant: "destructive"
                 });
 
-                return;
+                return; // finally block will unset loading
             }
 
             const filteredScenariosData = await getFilteredMandatoryScenarios(
@@ -106,7 +106,7 @@ export default function SandboxTesting() {
         } finally {
             setLoading(false);
         }
-    }, [user?.id, toast, loading, hasValidSandboxKey]);
+    }, [user?.id, toast, hasValidSandboxKey]);
 
     // Load scenarios on component mount
     useEffect(() => {
@@ -444,7 +444,6 @@ export default function SandboxTesting() {
                         <ScenarioCard
                             key={scenario.id}
                             scenario={scenario}
-                            hasValidSandboxKey={hasValidSandboxKey}
                             onStartScenario={handleStartScenario}
                         />
                     ))

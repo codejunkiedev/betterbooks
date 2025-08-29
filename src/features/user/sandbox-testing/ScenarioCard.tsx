@@ -18,13 +18,11 @@ import { FBR_SCENARIO_STATUS } from "@/shared/constants/fbr";
 
 interface ScenarioCardProps {
     scenario: FbrScenario;
-    hasValidSandboxKey: boolean;
     onStartScenario: (scenario: FbrScenario) => void;
 }
 
 export function ScenarioCard({
     scenario,
-    hasValidSandboxKey,
     onStartScenario
 }: ScenarioCardProps) {
     const getStatusInfo = () => {
@@ -147,7 +145,7 @@ export function ScenarioCard({
                 <div className="pt-2 mt-auto">
                     <Button
                         onClick={() => onStartScenario(scenario)}
-                        disabled={!hasValidSandboxKey || scenario.status === FBR_SCENARIO_STATUS.COMPLETED}
+                        disabled={scenario.status === FBR_SCENARIO_STATUS.COMPLETED}
                         className="w-full"
                         size="lg"
                         variant={statusInfo.buttonVariant}
