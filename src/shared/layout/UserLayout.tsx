@@ -266,6 +266,17 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                         isDark={isDark}
                     />
                 )}
+                      {isModuleEnabled(MODULES.TAX_FILING) && (
+                    <SidebarLink
+                        to="/invoices"
+                        icon={<FileText className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                        label="Invoices"
+                        active={isActive("/invoices")}
+                        onNavigate={handleNavigation}
+                        isCollapsed={isCollapsed}
+                        isDark={isDark}
+                    />
+                )}
                 <SidebarLink
                     to="/messages"
                     icon={<MessageCircle className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
