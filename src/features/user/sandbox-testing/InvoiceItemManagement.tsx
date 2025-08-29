@@ -25,10 +25,9 @@ import {
     formatQuantity,
     formatPercentage,
     isThirdScheduleItem,
-    getDefaultTaxRate,
-    getDefaultUOM
+    getDefaultTaxRate
 } from '@/shared/utils/invoiceCalculations';
-import { SYSTEM_DEFAULTS, getBestAvailableUOM } from '@/shared/constants/invoiceDefaults';
+import { SYSTEM_DEFAULTS } from '@/shared/constants/invoiceDefaults';
 import {
     getHSCodeDetails as getCachedHSCodeDetails,
     cacheHSCode,
@@ -37,6 +36,7 @@ import {
 import { getFbrConfigStatus } from '@/shared/services/supabase/fbr';
 import { Plus, Trash2, Edit, MoveUp, MoveDown } from 'lucide-react';
 import { getAllHSCodes } from '@/shared/services/api/fbr';
+import { getUOMCodes } from '@/shared/services/api/fbr';
 interface InvoiceItemManagementProps {
     invoiceId: number;
     items: InvoiceItemCalculated[];
@@ -74,6 +74,12 @@ export function InvoiceItemManagement({
     const [isCaching, setIsCaching] = useState(false);
     const [hasLoadedData, setHasLoadedData] = useState(false);
 
+    // Helper function to get UOM description by ID
+    const getUomDescription = (uomId: string | number): string => {
+        const uom = uomOptions.find(option => option.uoM_ID.toString() === uomId.toString());
+        return uom ? uom.description : uomId.toString();
+    };
+
     // Calculate running totals only when items change
     useEffect(() => {
         const totals = calculateRunningTotals(items);
@@ -109,9 +115,8 @@ export function InvoiceItemManagement({
                 return;
             }
 
-            // Check if we already have data in memory to avoid unnecessary API calls
-            if (allHSCodes.length > 0 && uomOptions.length > 0) {
-                console.log('FBR data already loaded, skipping API calls');
+            // Check if we already have HS codes loaded
+            if (allHSCodes.length > 0) {
                 setHasLoadedData(true);
                 return;
             }
@@ -129,11 +134,10 @@ export function InvoiceItemManagement({
                         const cacheStatus = await checkCacheStatus();
 
                         if (!cacheStatus.hasData) {
-                            console.log('Populating HS code cache...');
                             const hsCodeCache = hsCodeResponse.data.map(item => ({
                                 hs_code: item.hS_CODE,
                                 description: item.description,
-                                default_uom: getDefaultUOM(item.hS_CODE, undefined, uomOptions.map(u => u.uom_code)),
+                                default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50',
                                 default_tax_rate: getDefaultTaxRate(item.hS_CODE),
                                 is_third_schedule: isThirdScheduleItem(item.hS_CODE)
                             }));
@@ -144,13 +148,8 @@ export function InvoiceItemManagement({
                                 const batch = hsCodeCache.slice(i, i + batchSize);
                                 await bulkCacheHSCodes(batch);
                             }
-
-                            console.log(`Successfully cached ${hsCodeCache.length} HS codes`);
-                        } else {
-                            console.log(`HS code cache already populated with ${cacheStatus.count} items, skipping...`);
                         }
-                    } catch (cacheError) {
-                        console.warn('Failed to populate HS code cache:', cacheError);
+                    } catch {
                         // Don't throw error as this is optional
                     }
                 } else {
@@ -158,41 +157,35 @@ export function InvoiceItemManagement({
                 }
             }
 
-            // Load UOM codes from FBR API only if not already loaded
-            if (uomOptions.length === 0) {
-                const { getUOMCodes } = await import('@/shared/services/api/fbr');
-                const uomResponse = await getUOMCodes(apiKey);
+            // Load UOM codes from FBR API
+            const uomResponse = await getUOMCodes(apiKey);
+            console.log(uomResponse);
 
-                if (uomResponse.success) {
-                    // Filter out duplicates to ensure unique keys
-                    const uniqueUomOptions = uomResponse.data.filter((uom, index, self) =>
-                        index === self.findIndex(u => u.uom_code === uom.uom_code)
-                    );
-                    console.log('Loaded UOM options:', uniqueUomOptions.length, uniqueUomOptions.slice(0, 5));
-                    setUomOptions(uniqueUomOptions);
-                } else {
-                    throw new Error(uomResponse.message);
-                }
+            if (uomResponse.success && uomResponse.data && uomResponse.data.length > 0) {
+                // Filter out duplicates to ensure unique keys
+                const uniqueUomOptions = uomResponse.data.filter((uom, index, self) =>
+                    index === self.findIndex(u => u.uoM_ID === uom.uoM_ID)
+                );
+                setUomOptions(uniqueUomOptions);
             }
-        } catch (error) {
-            console.error('Failed to load FBR data:', error);
+        } catch {
             toast({
                 title: 'Error',
-                description: 'Failed to load data from FBR API',
+                description: 'Failed to load data from FBR API. Please check your API configuration and try again.',
                 variant: 'destructive'
             });
         } finally {
             setIsCaching(false);
             setHasLoadedData(true);
         }
-    }, [user?.id, toast]); // Dependencies for memoization - removed length dependencies to prevent re-creation
+    }, [user?.id, toast]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Load FBR API key and all data on component mount (only once)
     useEffect(() => {
-        if (!hasLoadedData) {
+        if (!hasLoadedData && user?.id) {
             loadFbrApiKeyAndAllData();
         }
-    }, [loadFbrApiKeyAndAllData, hasLoadedData]);
+    }, [loadFbrApiKeyAndAllData, hasLoadedData, user?.id]);
 
     const searchHSCodesFromFrontend = useCallback((searchTerm: string) => {
         if (!searchTerm.trim()) {
@@ -253,17 +246,14 @@ export function InvoiceItemManagement({
             let hsCodeDetails = await getCachedHSCodeDetails(hsCode);
 
             if (!hsCodeDetails) {
-                // Use dynamic values based on the selected HS code and available options
-                const availableUOMs = uomOptions.map(u => u.uom_code);
                 hsCodeDetails = {
                     hs_code: hsCode,
                     description: selectedHSCode.description,
-                    default_uom: getDefaultUOM(hsCode, undefined, availableUOMs),
+                    default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50',
                     default_tax_rate: getDefaultTaxRate(hsCode),
                     is_third_schedule: isThirdScheduleItem(hsCode)
                 };
 
-                // Cache the HS code for future use
                 try {
                     await cacheHSCode(hsCodeDetails);
                 } catch (error) {
@@ -271,12 +261,10 @@ export function InvoiceItemManagement({
                 }
             }
 
-            // Update form with HS code details using dynamic defaults
-            const availableUOMs = uomOptions.map(u => u.uom_code);
-            const bestUom = hsCodeDetails.default_uom || getBestAvailableUOM(availableUOMs);
+            const bestUom = hsCodeDetails.default_uom || (uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50');
             const bestTaxRate = hsCodeDetails.default_tax_rate !== undefined ? hsCodeDetails.default_tax_rate : SYSTEM_DEFAULTS.DEFAULT_TAX_RATE;
 
-            console.log('Setting HS code details:', { hsCode, bestUom, bestTaxRate, description: hsCodeDetails.description });
+
 
             setFormData(prev => ({
                 ...prev,
@@ -300,7 +288,7 @@ export function InvoiceItemManagement({
     };
 
     const handleFormChange = (field: keyof InvoiceItemForm, value: string | number | boolean) => {
-        console.log('Form change:', field, value);
+
 
         setFormData(prev => {
             const updated = { ...prev, [field]: value };
@@ -316,15 +304,7 @@ export function InvoiceItemManagement({
                 };
             }
 
-            // Validate UoM code exists in options
-            if (field === 'uom_code' && typeof value === 'string') {
-                const validUom = uomOptions.find(uom => uom.uom_code === value);
-                if (!validUom && value) {
-                    console.warn('Selected UoM code not found in options:', value);
-                } else if (validUom) {
-                    console.log('Valid UoM selected:', validUom);
-                }
-            }
+
 
             return updated;
         });
@@ -478,7 +458,10 @@ export function InvoiceItemManagement({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="max-w-xs">
-                                                <div className="truncate" title={item.item_name}>
+                                                <div
+                                                    className="truncate cursor-help"
+                                                    title={`Full Description: ${item.item_name}`}
+                                                >
                                                     {item.item_name}
                                                 </div>
                                             </TableCell>
@@ -488,7 +471,7 @@ export function InvoiceItemManagement({
                                             <TableCell className="text-right font-mono">
                                                 {formatCurrency(item.unit_price)}
                                             </TableCell>
-                                            <TableCell className="font-mono">{item.uom_code}</TableCell>
+                                            <TableCell className="font-mono">{getUomDescription(item.uom_code)}</TableCell>
                                             <TableCell className="text-right">
                                                 {formatPercentage(item.tax_rate)}
                                             </TableCell>
@@ -700,13 +683,13 @@ export function InvoiceItemManagement({
                                     <SelectContent>
                                         {uomOptions.length > 0 ? (
                                             uomOptions.map((uom, index) => (
-                                                <SelectItem key={`${uom.uom_code}-${index}`} value={uom.uom_code}>
-                                                    {uom.uom_code} - {uom.description}
+                                                <SelectItem key={`${uom.uoM_ID}-${index}`} value={uom.uoM_ID.toString()}>
+                                                    {uom.description}
                                                 </SelectItem>
                                             ))
                                         ) : (
-                                            <SelectItem value="__loading__" disabled>
-                                                Loading UoM options...
+                                            <SelectItem value="__no_data__" disabled>
+                                                No UoM options available. Check API configuration.
                                             </SelectItem>
                                         )}
                                     </SelectContent>
@@ -714,6 +697,7 @@ export function InvoiceItemManagement({
                                 {validationErrors.uom_code && (
                                     <p className="text-sm text-red-500">{validationErrors.uom_code}</p>
                                 )}
+
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="tax-rate">Tax Rate (%) *</Label>

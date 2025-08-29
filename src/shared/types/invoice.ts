@@ -94,7 +94,7 @@ export interface HSCodeSearchResult {
 }
 
 export interface UOMCode {
-    uom_code: string;
+    uoM_ID: number;
     description: string;
 }
 
