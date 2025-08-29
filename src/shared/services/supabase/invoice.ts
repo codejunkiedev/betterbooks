@@ -226,6 +226,22 @@ export async function bulkCacheHSCodes(hsCodes: HSCode[]): Promise<void> {
 }
 
 /**
+ * Check if HS code cache has data to prevent infinite cache population
+ */
+export async function checkCacheStatus(): Promise<{ hasData: boolean; count: number }> {
+    const { count, error } = await supabase
+        .from('hs_codes_cache')
+        .select('*', { count: 'exact', head: true });
+
+    if (error) {
+        console.warn('Failed to check cache status:', error);
+        return { hasData: false, count: 0 };
+    }
+
+    return { hasData: (count || 0) > 0, count: count || 0 };
+}
+
+/**
  * Get cached HS codes that need updating (older than 24 hours)
  */
 export async function getStaleHSCodes(): Promise<string[]> {

@@ -19,7 +19,7 @@ const ENV_TEST_ENDPOINTS = {
 const FBR_DATA_ENDPOINTS = {
     itemcode: 'https://gw.fbr.gov.pk/pdi/v1/itemdesccode',
     uom: 'https://gw.fbr.gov.pk/pdi/v1/uom',
-    hscodeuom: 'https://gw.fbr.gov.pk/pdi/v1/hscodeuom'
+    hs_uom: 'https://gw.fbr.gov.pk/pdi/v2/HS_UOM'
 } as const;
 
 const httpClient = new HttpClientApi();
@@ -264,6 +264,20 @@ export async function getHSCodes(apiKey: string, searchTerm?: string): Promise<A
     }
 }
 
+export async function getAllHSCodes(apiKey: string): Promise<ApiResponse<HSCodeSearchResult[]>> {
+    try {
+        const response = await httpClient.request({
+            method: 'GET',
+            url: FBR_DATA_ENDPOINTS.itemcode,
+            headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+        });
+        return { success: true, message: 'All HS codes retrieved successfully', data: (response.data as HSCodeSearchResult[]) || [] };
+    } catch (error) {
+        const fbrError = error as FbrApiError;
+        return { success: false, message: getFbrErrorMessage(fbrError.response?.status || 500), data: [] };
+    }
+}
+
 export async function getUOMCodes(apiKey: string): Promise<ApiResponse<UOMCode[]>> {
     try {
         const response = await httpClient.request({
@@ -282,7 +296,7 @@ export async function getHSCodeUOMMapping(apiKey: string, hsCode: string): Promi
     try {
         const response = await httpClient.request({
             method: 'GET',
-            url: FBR_DATA_ENDPOINTS.hscodeuom,
+            url: FBR_DATA_ENDPOINTS.hs_uom,
             headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
             params: { hs_code: hsCode }
         });
@@ -318,7 +332,7 @@ export async function validateUoM(apiKey: string, hsCode: string, selectedUoM: s
     try {
         const response = await httpClient.request({
             method: 'GET',
-            url: FBR_DATA_ENDPOINTS.hscodeuom,
+            url: FBR_DATA_ENDPOINTS.hs_uom,
             headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
             params: { hscode: hsCode }
         });

@@ -88,7 +88,7 @@ export interface HSCode {
 }
 
 export interface HSCodeSearchResult {
-    hs_code: string;
+    hS_CODE: string;
     description: string;
     hierarchy?: string;
 }
