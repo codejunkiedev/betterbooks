@@ -2,6 +2,7 @@ import { UploadedFile } from "./storage";
 import { INVOICE_STATUS, INVOICE_TYPE, BUYER_REGISTRATION_TYPE } from "@/shared/constants/invoice";
 
 export type InvoiceStatus = typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS];
+
 export type InvoiceType = typeof INVOICE_TYPE[keyof typeof INVOICE_TYPE];
 export type BuyerRegistrationType = typeof BUYER_REGISTRATION_TYPE[keyof typeof BUYER_REGISTRATION_TYPE];
 
@@ -88,13 +89,13 @@ export interface HSCode {
 }
 
 export interface HSCodeSearchResult {
-    hs_code: string;
+    hS_CODE: string;
     description: string;
     hierarchy?: string;
 }
 
 export interface UOMCode {
-    uom_code: string;
+    uoM_ID: number;
     description: string;
 }
 

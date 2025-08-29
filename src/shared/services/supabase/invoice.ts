@@ -174,7 +174,11 @@ export async function searchHSCodes(searchTerm: string): Promise<HSCodeSearchRes
         throw new Error(`Failed to search HS codes: ${error.message}`);
     }
 
-    return data || [];
+    // Map to HSCodeSearchResult expected shape used by UI (hS_CODE capitalization)
+    return (data || []).map((row: { hs_code: string; description: string }) => ({
+        hS_CODE: row.hs_code,
+        description: row.description,
+    }));
 }
 
 /**
@@ -223,6 +227,22 @@ export async function bulkCacheHSCodes(hsCodes: HSCode[]): Promise<void> {
     if (error) {
         throw new Error(`Failed to bulk cache HS codes: ${error.message}`);
     }
+}
+
+/**
+ * Check if HS code cache has data to prevent infinite cache population
+ */
+export async function checkCacheStatus(): Promise<{ hasData: boolean; count: number }> {
+    const { count, error } = await supabase
+        .from('hs_codes_cache')
+        .select('*', { count: 'exact', head: true });
+
+    if (error) {
+        console.warn('Failed to check cache status:', error);
+        return { hasData: false, count: 0 };
+    }
+
+    return { hasData: (count || 0) > 0, count: count || 0 };
 }
 
 /**

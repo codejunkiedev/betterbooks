@@ -7,8 +7,8 @@ import { getFbrConfigStatus } from '../supabase/fbr';
 
 // FBR Validation API endpoints
 const FBR_VALIDATION_ENDPOINTS = {
-    sandbox: 'https://gw.fbr.gov.pk/di_data/v1/di/validateinvoice_sb',
-    production: 'https://gw.fbr.gov.pk/di_data/v1/di/validateinvoice'
+    sandbox: 'https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata_sb',
+    production: 'https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata'
 } as const;
 
 // HTTP client instance
@@ -392,7 +392,14 @@ const validateWithFBR = async (
         }
 
         // Format data for FBR API
-        const cleanNTNCNIC = (value: string) => value.replace(/\D/g, '');
+        const cleanNTNCNIC = (value: string) => {
+            const cleaned = value.replace(/\D/g, '');
+            // Validate NTN/CNIC format
+            if (cleaned.length !== 7 && cleaned.length !== 13) {
+                throw new Error(`Invalid NTN/CNIC format. Must be 7 digits (NTN) or 13 digits (CNIC). Current length: ${cleaned.length}`);
+            }
+            return cleaned;
+        };
         const formatNumber = (value: number | string) => {
             const num = typeof value === 'string' ? parseFloat(value) : value;
             return isNaN(num) ? '0' : num.toString();
@@ -401,6 +408,16 @@ const validateWithFBR = async (
             const num = typeof value === 'string' ? parseFloat(value) : value;
             return isNaN(num) ? '0%' : `${num}%`;
         };
+
+        // Validate required fields before sending to FBR
+        if (!invoiceData.invoiceType || !invoiceData.invoiceDate || !invoiceData.sellerNTNCNIC ||
+            !invoiceData.sellerBusinessName || !invoiceData.buyerNTNCNIC || !invoiceData.buyerBusinessName ||
+            !invoiceData.scenarioId || !invoiceData.items || invoiceData.items.length === 0) {
+            return {
+                success: false,
+                message: 'Missing required fields for FBR validation'
+            };
+        }
 
         const fbrRequestData = {
             invoiceType: invoiceData.invoiceType,
@@ -431,6 +448,29 @@ const validateWithFBR = async (
             })) || []
         };
 
+        // Debug logging
+        console.log('FBR Validation Request:', {
+            url: FBR_VALIDATION_ENDPOINTS[environment],
+            sellerNTNCNIC: fbrRequestData.sellerNTNCNIC,
+            buyerNTNCNIC: fbrRequestData.buyerNTNCNIC,
+            data: fbrRequestData
+        });
+
+        // Additional validation for NTN/CNIC format
+        if (fbrRequestData.sellerNTNCNIC.length !== 7 && fbrRequestData.sellerNTNCNIC.length !== 13) {
+            return {
+                success: false,
+                message: `Invalid seller NTN/CNIC format. Must be 7 digits (NTN) or 13 digits (CNIC). Current: ${fbrRequestData.sellerNTNCNIC} (${fbrRequestData.sellerNTNCNIC.length} digits)`
+            };
+        }
+
+        if (fbrRequestData.buyerNTNCNIC.length !== 7 && fbrRequestData.buyerNTNCNIC.length !== 13) {
+            return {
+                success: false,
+                message: `Invalid buyer NTN/CNIC format. Must be 7 digits (NTN) or 13 digits (CNIC). Current: ${fbrRequestData.buyerNTNCNIC} (${fbrRequestData.buyerNTNCNIC.length} digits)`
+            };
+        }
+
         const response = await httpClient.request({
             method: 'POST',
             url: FBR_VALIDATION_ENDPOINTS[environment],
@@ -454,6 +494,12 @@ const validateWithFBR = async (
         let errorMessage = 'FBR validation failed';
         const errorObj = error as { response?: { status?: number; data?: unknown }; code?: string };
 
+        // Log detailed error information
+        if (errorObj.response) {
+            console.error('FBR Response Status:', errorObj.response.status);
+            console.error('FBR Response Data:', errorObj.response.data);
+        }
+
         if (errorObj.response?.status) {
             const status = errorObj.response.status;
             switch (status) {
@@ -464,7 +510,7 @@ const validateWithFBR = async (
                     errorMessage = 'API key not authorized - Contact FBR for access';
                     break;
                 case 404:
-                    errorMessage = 'FBR validation endpoint not found';
+                    errorMessage = 'FBR validation endpoint not found - Please check the API endpoint';
                     break;
                 case 429:
                     errorMessage = 'Rate limit exceeded - Please try again later';

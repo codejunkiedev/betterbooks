@@ -56,7 +56,7 @@ export default function SandboxTesting() {
                     variant: "destructive"
                 });
 
-                return;
+                return; // finally block will unset loading
             }
 
             const filteredScenariosData = await getFilteredMandatoryScenarios(
@@ -89,10 +89,13 @@ export default function SandboxTesting() {
                 scenariosWithProgress.every(scenario => scenario.status === FBR_SCENARIO_STATUS.COMPLETED);
             setIsAllCompleted(allCompleted);
 
-            const { getFbrConfigStatus } = await import("@/shared/services/supabase/fbr");
-            const config = await getFbrConfigStatus(user.id);
-            const hasValidKey = config.sandbox_status === FBR_API_STATUS.CONNECTED && !!config.sandbox_api_key;
-            setHasValidSandboxKey(hasValidKey);
+            // Only check FBR config if we don't already have the status
+            if (hasValidSandboxKey === false) {
+                const { getFbrConfigStatus } = await import("@/shared/services/supabase/fbr");
+                const config = await getFbrConfigStatus(user.id);
+                const hasValidKey = config.sandbox_status === FBR_API_STATUS.CONNECTED && !!config.sandbox_api_key;
+                setHasValidSandboxKey(hasValidKey);
+            }
 
         } catch {
             toast({
@@ -103,7 +106,7 @@ export default function SandboxTesting() {
         } finally {
             setLoading(false);
         }
-    }, [user?.id, toast]);
+    }, [user?.id, toast, hasValidSandboxKey]);
 
     // Load scenarios on component mount
     useEffect(() => {
@@ -441,7 +444,6 @@ export default function SandboxTesting() {
                         <ScenarioCard
                             key={scenario.id}
                             scenario={scenario}
-                            hasValidSandboxKey={hasValidSandboxKey}
                             onStartScenario={handleStartScenario}
                         />
                     ))

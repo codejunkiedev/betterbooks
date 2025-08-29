@@ -4,6 +4,7 @@ import type {
     InvoiceItemValidation,
     InvoiceRunningTotals
 } from '@/shared/types/invoice';
+import { SYSTEM_DEFAULTS, COMMON_UOM_PRIORITIES } from '@/shared/constants/invoiceDefaults';
 
 /**
  * Calculate tax and totals for an invoice item
@@ -79,26 +80,26 @@ export function validateInvoiceItem(item: InvoiceItemForm): InvoiceItemValidatio
 
     if (!item.item_name?.trim()) {
         errors.item_name = 'Product description is required';
-    } else if (item.item_name.length > 200) {
-        errors.item_name = 'Product description must be 200 characters or less';
+    } else if (item.item_name.length > SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH) {
+        errors.item_name = `Product description must be ${SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH} characters or less`;
     }
 
     if (!item.quantity || item.quantity <= 0) {
         errors.quantity = 'Quantity must be greater than 0';
-    } else if (item.quantity < 0.01) {
-        errors.quantity = 'Quantity must be at least 0.01';
+    } else if (item.quantity < SYSTEM_DEFAULTS.MIN_QUANTITY) {
+        errors.quantity = `Quantity must be at least ${SYSTEM_DEFAULTS.MIN_QUANTITY}`;
     }
 
-    if (!item.unit_price || item.unit_price < 0) {
-        errors.unit_price = 'Unit price must be 0 or greater';
+    if (item.unit_price === undefined || item.unit_price === null || item.unit_price < SYSTEM_DEFAULTS.MIN_UNIT_PRICE) {
+        errors.unit_price = `Unit price must be ${SYSTEM_DEFAULTS.MIN_UNIT_PRICE} or greater`;
     }
 
     if (!item.uom_code?.trim()) {
         errors.uom_code = 'Unit of measure is required';
     }
 
-    if (item.tax_rate < 0 || item.tax_rate > 100) {
-        errors.tax_rate = 'Tax rate must be between 0 and 100';
+    if (item.tax_rate < SYSTEM_DEFAULTS.MIN_TAX_RATE || item.tax_rate > SYSTEM_DEFAULTS.MAX_TAX_RATE) {
+        errors.tax_rate = `Tax rate must be between ${SYSTEM_DEFAULTS.MIN_TAX_RATE} and ${SYSTEM_DEFAULTS.MAX_TAX_RATE}`;
     }
 
     // 3rd schedule validation
@@ -276,58 +277,88 @@ export function isThirdScheduleItem(hsCode: string): boolean {
 }
 
 /**
- * Get default tax rate for HS code
+ * Get dynamic tax rate for HS code from cached data or FBR API
+ * Falls back to system defaults only when no data is available
  */
-export function getDefaultTaxRate(hsCode: string): number {
-    // This is a simplified implementation - in practice, this would come from FBR API
-    if (isThirdScheduleItem(hsCode)) {
-        return 16; // Standard rate for 3rd schedule items
+export function getDefaultTaxRate(hsCode: string, cachedHSCodeData?: { default_tax_rate?: number }): number {
+    // First priority: Use cached data if available
+    if (cachedHSCodeData?.default_tax_rate !== undefined) {
+        return cachedHSCodeData.default_tax_rate;
     }
 
-    // Default tax rates based on HS code categories
+    // Second priority: Dynamic lookup based on HS code patterns
+    // This should ideally come from FBR API or database
+
+    // For 3rd schedule items, use system default
+    if (isThirdScheduleItem(hsCode)) {
+        return SYSTEM_DEFAULTS.DEFAULT_TAX_RATE;
+    }
+
+    // TODO: Replace with actual FBR API call or database lookup
+    // This is a simplified fallback implementation
     const code = hsCode.substring(0, 4);
 
-    // Zero-rated items
+    // Zero-rated items (should come from FBR data)
     const zeroRatedCodes = ['0101', '0102', '0103', '0104', '0105', '0106', '0201', '0202', '0203', '0204', '0205', '0206', '0207', '0208', '0209', '0210'];
     if (zeroRatedCodes.includes(code)) {
         return 0;
     }
 
-    // Reduced rate items (5%)
+    // Reduced rate items (should come from FBR data)
     const reducedRateCodes = ['1001', '1002', '1003', '1004', '1005', '1006', '1007', '1008'];
     if (reducedRateCodes.includes(code)) {
         return 5;
     }
 
-    // Standard rate (16%)
-    return 16;
+    // Last resort: System default
+    return SYSTEM_DEFAULTS.DEFAULT_TAX_RATE;
 }
 
 /**
- * Get default UOM for HS code
+ * Get dynamic UOM for HS code from cached data or FBR API
+ * Falls back to system defaults only when no data is available
  */
-export function getDefaultUOM(hsCode: string): string {
-    // This is a simplified implementation - in practice, this would come from FBR API
+export function getDefaultUOM(hsCode: string, cachedHSCodeData?: { default_uom?: string }, availableUOMs?: string[]): string {
+    // First priority: Use cached data if available
+    if (cachedHSCodeData?.default_uom) {
+        return cachedHSCodeData.default_uom;
+    }
+
+    // Second priority: Use most common UOM from available options
+
+    if (availableUOMs && availableUOMs.length > 0) {
+        // Find the first priority UOM that's available
+        for (const priorityUOM of COMMON_UOM_PRIORITIES) {
+            if (availableUOMs.includes(priorityUOM)) {
+                return priorityUOM;
+            }
+        }
+        // If no priority UOM found, use the first available
+        return availableUOMs[0];
+    }
+
+    // Third priority: Dynamic lookup based on HS code patterns
+    // TODO: Replace with actual FBR API call or database lookup
     const code = hsCode.substring(0, 4);
 
-    // Weight-based items
+    // Weight-based items (should come from FBR data)
     const weightCodes = ['0101', '0102', '0103', '0104', '0105', '0106', '0201', '0202', '0203', '0204', '0205', '0206', '0207', '0208', '0209', '0210'];
     if (weightCodes.includes(code)) {
         return 'KG';
     }
 
-    // Volume-based items
+    // Volume-based items (should come from FBR data)
     const volumeCodes = ['2201', '2202', '2203', '2204', '2205', '2206', '2207', '2208', '2209'];
     if (volumeCodes.includes(code)) {
         return 'LTR';
     }
 
-    // Length-based items
+    // Length-based items (should come from FBR data)
     const lengthCodes = ['5201', '5202', '5203', '5204', '5205', '5206', '5207', '5208', '5209'];
     if (lengthCodes.includes(code)) {
         return 'MTR';
     }
 
-    // Default to pieces
-    return 'PCS';
+    // Last resort: System default
+    return SYSTEM_DEFAULTS.DEFAULT_UOM;
 }

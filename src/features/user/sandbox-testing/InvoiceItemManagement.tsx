@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/shared/services/store';
+import { useAppSelector } from '@/shared/hooks/useRedux';
 import { Button } from '@/shared/components/Button';
 import { Card } from '@/shared/components/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/Table';
@@ -9,7 +8,7 @@ import { Input } from '@/shared/components/Input';
 import { Label } from '@/shared/components/Label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/Select';
 import { Textarea } from '@/shared/components/Textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/components/Dialog';
 import { useToast } from '@/shared/hooks/useToast';
 import {
     InvoiceItemForm,
@@ -26,17 +25,18 @@ import {
     formatQuantity,
     formatPercentage,
     isThirdScheduleItem,
-    getDefaultTaxRate,
-    getDefaultUOM
+    getDefaultTaxRate
 } from '@/shared/utils/invoiceCalculations';
+import { SYSTEM_DEFAULTS } from '@/shared/constants/invoiceDefaults';
 import {
-    searchHSCodes,
     getHSCodeDetails as getCachedHSCodeDetails,
-    cacheHSCode
+    cacheHSCode,
+    bulkCacheHSCodes
 } from '@/shared/services/supabase/invoice';
 import { getFbrConfigStatus } from '@/shared/services/supabase/fbr';
 import { Plus, Trash2, Edit, MoveUp, MoveDown } from 'lucide-react';
-
+import { getAllHSCodes } from '@/shared/services/api/fbr';
+import { getUOMCodes } from '@/shared/services/api/fbr';
 interface InvoiceItemManagementProps {
     invoiceId: number;
     items: InvoiceItemCalculated[];
@@ -51,17 +51,17 @@ export function InvoiceItemManagement({
     onRunningTotalsChange,
     className = ''
 }: InvoiceItemManagementProps) {
-    const { user } = useSelector((state: RootState) => state.user);
+    const { user } = useAppSelector((state) => state.user);
     const { toast } = useToast();
     const [isAddItemOpen, setIsAddItemOpen] = useState(false);
     const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
     const [formData, setFormData] = useState<InvoiceItemForm>({
         hs_code: '',
         item_name: '',
-        quantity: 1,
-        unit_price: 0,
-        uom_code: 'PCS',
-        tax_rate: 16,
+        quantity: SYSTEM_DEFAULTS.DEFAULT_QUANTITY,
+        unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
+        uom_code: '',
+        tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
         invoice_note: '',
         is_third_schedule: false
     });
@@ -70,7 +70,15 @@ export function InvoiceItemManagement({
     const [hsCodeResults, setHsCodeResults] = useState<HSCodeSearchResult[]>([]);
     const [isSearchingHSCodes, setIsSearchingHSCodes] = useState(false);
     const [uomOptions, setUomOptions] = useState<UOMCode[]>([]);
-    const [fbrApiKey, setFbrApiKey] = useState<string | null>(null);
+    const [allHSCodes, setAllHSCodes] = useState<HSCodeSearchResult[]>([]);
+    const [isCaching, setIsCaching] = useState(false);
+    const [hasLoadedData, setHasLoadedData] = useState(false);
+
+    // Helper function to get UOM description by ID
+    const getUomDescription = (uomId: string | number): string => {
+        const uom = uomOptions.find(option => option.uoM_ID.toString() === uomId.toString());
+        return uom ? uom.description : uomId.toString();
+    };
 
     // Calculate running totals only when items change
     useEffect(() => {
@@ -79,10 +87,21 @@ export function InvoiceItemManagement({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [items]); // Only depend on items, not the callback
 
-    const loadFbrApiKeyAndUOMOptions = useCallback(async () => {
+    // OPTIMIZATION: Load FBR data with multiple safeguards to prevent excessive API calls:
+    // 1. Check if data already exists in memory before making API calls
+    // 2. Use isCaching flag to prevent concurrent calls
+    // 3. Use hasLoadedData flag to prevent repeated loads on re-renders
+    // 4. Removed isCaching from useCallback dependencies to prevent infinite loops
+
+    const loadFbrApiKeyAndAllData = useCallback(async () => {
         if (!user?.id) return;
 
+        // Prevent multiple simultaneous calls
+        if (isCaching) return;
+
         try {
+            setIsCaching(true);
+
             // Get FBR API configuration
             const fbrConfig = await getFbrConfigStatus(user.id);
             const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
@@ -96,166 +115,165 @@ export function InvoiceItemManagement({
                 return;
             }
 
-            setFbrApiKey(apiKey);
+            // Check if we already have HS codes loaded
+            if (allHSCodes.length > 0) {
+                setHasLoadedData(true);
+                return;
+            }
+
+            // Load all HS codes from FBR API only if not already loaded
+            if (allHSCodes.length === 0) {
+                const hsCodeResponse = await getAllHSCodes(apiKey);
+
+                if (hsCodeResponse.success) {
+                    setAllHSCodes(hsCodeResponse.data);
+
+                    // Check if cache is already populated
+                    try {
+                        const { checkCacheStatus } = await import('@/shared/services/supabase/invoice');
+                        const cacheStatus = await checkCacheStatus();
+
+                        if (!cacheStatus.hasData) {
+                            const hsCodeCache = hsCodeResponse.data.map(item => ({
+                                hs_code: item.hS_CODE,
+                                description: item.description,
+                                default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50',
+                                default_tax_rate: getDefaultTaxRate(item.hS_CODE),
+                                is_third_schedule: isThirdScheduleItem(item.hS_CODE)
+                            }));
+
+                            // Cache in batches to avoid overwhelming the database
+                            const batchSize = 50;
+                            for (let i = 0; i < hsCodeCache.length; i += batchSize) {
+                                const batch = hsCodeCache.slice(i, i + batchSize);
+                                await bulkCacheHSCodes(batch);
+                            }
+                        }
+                    } catch {
+                        // Don't throw error as this is optional
+                    }
+                } else {
+                    throw new Error(hsCodeResponse.message);
+                }
+            }
 
             // Load UOM codes from FBR API
-            const { getUOMCodes } = await import('@/shared/services/api/fbr');
             const uomResponse = await getUOMCodes(apiKey);
+            console.log(uomResponse);
 
-            if (uomResponse.success) {
-                setUomOptions(uomResponse.data);
-            } else {
-                throw new Error(uomResponse.message);
+            if (uomResponse.success && uomResponse.data && uomResponse.data.length > 0) {
+                // Filter out duplicates to ensure unique keys
+                const uniqueUomOptions = uomResponse.data.filter((uom, index, self) =>
+                    index === self.findIndex(u => u.uoM_ID === uom.uoM_ID)
+                );
+                setUomOptions(uniqueUomOptions);
             }
-        } catch (error) {
-            console.error('Failed to load UOM options:', error);
+        } catch {
             toast({
                 title: 'Error',
-                description: 'Failed to load unit of measure options from FBR',
+                description: 'Failed to load data from FBR API. Please check your API configuration and try again.',
                 variant: 'destructive'
             });
+        } finally {
+            setIsCaching(false);
+            setHasLoadedData(true);
         }
-    }, [user?.id, toast]);
+    }, [user?.id, toast]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Load FBR API key and UOM options on component mount
+    // Load FBR API key and all data on component mount (only once)
     useEffect(() => {
-        loadFbrApiKeyAndUOMOptions();
-    }, [loadFbrApiKeyAndUOMOptions]);
+        if (!hasLoadedData && user?.id) {
+            loadFbrApiKeyAndAllData();
+        }
+    }, [loadFbrApiKeyAndAllData, hasLoadedData, user?.id]);
 
-    const searchHSCodesFromFBR = useCallback(async (searchTerm: string) => {
+    const searchHSCodesFromFrontend = useCallback((searchTerm: string) => {
         if (!searchTerm.trim()) {
             setHsCodeResults([]);
             return;
         }
 
-        if (!fbrApiKey) {
+        if (!allHSCodes.length) {
             toast({
-                title: 'FBR API Not Available',
-                description: 'Please configure your FBR API credentials first',
-                variant: 'destructive'
+                title: 'No HS Codes Available',
+                description: 'Please wait for HS codes to load from FBR API',
+                variant: 'default'
             });
             return;
         }
 
         setIsSearchingHSCodes(true);
-        try {
-            // First try to get from cache
-            const cachedResults = await searchHSCodes(searchTerm);
-            if (cachedResults.length > 0) {
-                setHsCodeResults(cachedResults);
-                return;
-            }
 
-            // If not in cache, try FBR API
-            const { getHSCodes } = await import('@/shared/services/api/fbr');
-            const hsCodeResponse = await getHSCodes(fbrApiKey, searchTerm);
+        // Use setTimeout to make the search non-blocking
+        setTimeout(() => {
+            // Filter HS codes on frontend with null safety
+            const searchTermLower = searchTerm.toLowerCase();
+            const filteredResults = allHSCodes.filter(item => {
+                // Ensure both hs_code and description are strings before using toLowerCase
+                const hsCode = item.hS_CODE?.toString() || '';
+                const description = item.description?.toString() || '';
 
-            if (hsCodeResponse.success) {
-                const results = hsCodeResponse.data.map(item => ({
-                    hs_code: item.hs_code,
-                    description: item.description
-                }));
-                setHsCodeResults(results);
+                return hsCode.toLowerCase().includes(searchTermLower) ||
+                    description.toLowerCase().includes(searchTermLower);
+            }).slice(0, 50);
 
-                // Cache the results for future use
-                for (const result of results) {
-                    await cacheHSCode({
-                        hs_code: result.hs_code,
-                        description: result.description,
-                        default_uom: getDefaultUOM(result.hs_code),
-                        default_tax_rate: getDefaultTaxRate(result.hs_code),
-                        is_third_schedule: isThirdScheduleItem(result.hs_code)
-                    });
-                }
-            } else {
-                throw new Error(hsCodeResponse.message);
-            }
-        } catch (error) {
-            console.error('Failed to search HS codes:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to search HS codes from FBR',
-                variant: 'destructive'
-            });
-        } finally {
+            setHsCodeResults(filteredResults);
             setIsSearchingHSCodes(false);
-        }
-    }, [fbrApiKey, toast]);
+        }, 0);
+    }, [allHSCodes, toast]);
 
     const handleHSCodeSearch = useCallback((searchTerm: unknown) => {
         debounce((term: unknown) => {
-            searchHSCodesFromFBR(term as string);
-        }, 300)(searchTerm);
-    }, [searchHSCodesFromFBR]);
+            searchHSCodesFromFrontend(term as string);
+        }, 100)(searchTerm); // Further reduced debounce for better responsiveness
+    }, [searchHSCodesFromFrontend]);
 
     const handleHSCodeSelect = async (hsCode: string) => {
         try {
-            // Get HS code details from cache or FBR
+            // Find the selected HS code from the frontend data
+            const selectedHSCode = allHSCodes.find(item => item.hS_CODE === hsCode);
+
+            if (!selectedHSCode) {
+                toast({
+                    title: 'Error',
+                    description: 'Selected HS code not found',
+                    variant: 'destructive'
+                });
+                return;
+            }
+
+            // Get HS code details from cache or use defaults
             let hsCodeDetails = await getCachedHSCodeDetails(hsCode);
 
             if (!hsCodeDetails) {
-                // Try to get from FBR API and cache it
-                if (fbrApiKey) {
-                    const { getHSCodeDetails } = await import('@/shared/services/api/fbr');
+                hsCodeDetails = {
+                    hs_code: hsCode,
+                    description: selectedHSCode.description,
+                    default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50',
+                    default_tax_rate: getDefaultTaxRate(hsCode),
+                    is_third_schedule: isThirdScheduleItem(hsCode)
+                };
 
-                    // Get HS code details
-                    const hsCodeResponse = await getHSCodeDetails(fbrApiKey, hsCode);
-                    if (hsCodeResponse.success && hsCodeResponse.data) {
-                        const fbrHsCode = hsCodeResponse.data;
-                        hsCodeDetails = {
-                            hs_code: hsCode,
-                            description: fbrHsCode.description || hsCodeResults.find(r => r.hs_code === hsCode)?.description || '',
-                            default_uom: fbrHsCode.default_uom || getDefaultUOM(hsCode),
-                            default_tax_rate: fbrHsCode.default_tax_rate || getDefaultTaxRate(hsCode),
-                            is_third_schedule: fbrHsCode.is_third_schedule || isThirdScheduleItem(hsCode)
-                        };
-                    } else {
-                        // Fallback to default values
-                        hsCodeDetails = {
-                            hs_code: hsCode,
-                            description: hsCodeResults.find(r => r.hs_code === hsCode)?.description || '',
-                            default_uom: getDefaultUOM(hsCode),
-                            default_tax_rate: getDefaultTaxRate(hsCode),
-                            is_third_schedule: isThirdScheduleItem(hsCode)
-                        };
-                    }
-
-                    // Cache the HS code
+                try {
                     await cacheHSCode(hsCodeDetails);
-                } else {
-                    // Use default values if no API key
-                    hsCodeDetails = {
-                        hs_code: hsCode,
-                        description: hsCodeResults.find(r => r.hs_code === hsCode)?.description || '',
-                        default_uom: getDefaultUOM(hsCode),
-                        default_tax_rate: getDefaultTaxRate(hsCode),
-                        is_third_schedule: isThirdScheduleItem(hsCode)
-                    };
+                } catch (error) {
+                    console.warn('Failed to cache HS code:', error);
                 }
             }
 
-            // Update form with HS code details
+            const bestUom = hsCodeDetails.default_uom || (uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50');
+            const bestTaxRate = hsCodeDetails.default_tax_rate !== undefined ? hsCodeDetails.default_tax_rate : SYSTEM_DEFAULTS.DEFAULT_TAX_RATE;
+
+
+
             setFormData(prev => ({
                 ...prev,
                 hs_code: hsCode,
                 item_name: hsCodeDetails.description,
-                uom_code: hsCodeDetails.default_uom || 'PCS',
-                tax_rate: hsCodeDetails.default_tax_rate || 16,
+                uom_code: bestUom,
+                tax_rate: bestTaxRate,
                 is_third_schedule: hsCodeDetails.is_third_schedule || false
             }));
-
-            // Load specific UOM options for this HS code if API key is available
-            if (fbrApiKey) {
-                try {
-                    const { getHSCodeUOMMapping } = await import('@/shared/services/api/fbr');
-                    const uomResponse = await getHSCodeUOMMapping(fbrApiKey, hsCode);
-                    if (uomResponse.success && uomResponse.data.length > 0) {
-                        setUomOptions(uomResponse.data);
-                    }
-                } catch (error) {
-                    console.error('Failed to load HS code specific UOM options:', error);
-                }
-            }
 
             setHsCodeResults([]);
             setHsCodeSearchTerm(hsCode);
@@ -270,6 +288,8 @@ export function InvoiceItemManagement({
     };
 
     const handleFormChange = (field: keyof InvoiceItemForm, value: string | number | boolean) => {
+
+
         setFormData(prev => {
             const updated = { ...prev, [field]: value };
 
@@ -283,6 +303,8 @@ export function InvoiceItemManagement({
                     mrp_excluding_tax: calculated.retail_price || 0
                 };
             }
+
+
 
             return updated;
         });
@@ -326,14 +348,14 @@ export function InvoiceItemManagement({
             onItemsChange([...items, calculatedItem]);
         }
 
-        // Reset form
+        // Reset form with dynamic defaults
         setFormData({
             hs_code: '',
             item_name: '',
-            quantity: 1,
-            unit_price: 0,
-            uom_code: 'PCS',
-            tax_rate: 16,
+            quantity: SYSTEM_DEFAULTS.DEFAULT_QUANTITY,
+            unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
+            uom_code: '',
+            tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
             invoice_note: '',
             is_third_schedule: false
         });
@@ -436,7 +458,10 @@ export function InvoiceItemManagement({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="max-w-xs">
-                                                <div className="truncate" title={item.item_name}>
+                                                <div
+                                                    className="truncate cursor-help"
+                                                    title={`Full Description: ${item.item_name}`}
+                                                >
                                                     {item.item_name}
                                                 </div>
                                             </TableCell>
@@ -446,7 +471,7 @@ export function InvoiceItemManagement({
                                             <TableCell className="text-right font-mono">
                                                 {formatCurrency(item.unit_price)}
                                             </TableCell>
-                                            <TableCell className="font-mono">{item.uom_code}</TableCell>
+                                            <TableCell className="font-mono">{getUomDescription(item.uom_code)}</TableCell>
                                             <TableCell className="text-right">
                                                 {formatPercentage(item.tax_rate)}
                                             </TableCell>
@@ -542,6 +567,11 @@ export function InvoiceItemManagement({
                         <DialogTitle>
                             {editingItemIndex !== null ? 'Edit Item' : 'Add New Item'}
                         </DialogTitle>
+                        <DialogDescription>
+                            {editingItemIndex !== null
+                                ? 'Modify the details of this invoice item below.'
+                                : 'Enter the details for a new invoice item below.'}
+                        </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-6">
@@ -575,12 +605,12 @@ export function InvoiceItemManagement({
                                 <div className="border rounded-md max-h-48 overflow-y-auto">
                                     {hsCodeResults.map((result) => (
                                         <div
-                                            key={result.hs_code}
+                                            key={result.hS_CODE}
                                             className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                                            onClick={() => handleHSCodeSelect(result.hs_code)}
+                                            onClick={() => handleHSCodeSelect(result.hS_CODE)}
                                         >
                                             <div className="font-mono text-sm font-semibold">
-                                                {result.hs_code}
+                                                {result.hS_CODE}
                                             </div>
                                             <div className="text-sm text-gray-600">
                                                 {result.description}
@@ -612,7 +642,7 @@ export function InvoiceItemManagement({
                                 <Input
                                     id="quantity"
                                     type="number"
-                                    min="0.01"
+                                    min={SYSTEM_DEFAULTS.MIN_QUANTITY}
                                     step="0.001"
                                     value={formData.quantity}
                                     onChange={(e) => handleFormChange('quantity', parseFloat(e.target.value) || 0)}
@@ -627,7 +657,7 @@ export function InvoiceItemManagement({
                                 <Input
                                     id="unit-price"
                                     type="number"
-                                    min="0"
+                                    min={SYSTEM_DEFAULTS.MIN_UNIT_PRICE}
                                     step="0.01"
                                     value={formData.unit_price}
                                     onChange={(e) => handleFormChange('unit_price', parseFloat(e.target.value) || 0)}
@@ -644,31 +674,38 @@ export function InvoiceItemManagement({
                             <div className="space-y-2">
                                 <Label htmlFor="uom">Unit of Measure *</Label>
                                 <Select
-                                    value={formData.uom_code}
+                                    {...(formData.uom_code ? { value: formData.uom_code } : {})}
                                     onValueChange={(value) => handleFormChange('uom_code', value)}
                                 >
                                     <SelectTrigger className={validationErrors.uom_code ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Select UoM" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {uomOptions.map((uom) => (
-                                            <SelectItem key={uom.uom_code} value={uom.uom_code}>
-                                                {uom.uom_code} - {uom.description}
+                                        {uomOptions.length > 0 ? (
+                                            uomOptions.map((uom, index) => (
+                                                <SelectItem key={`${uom.uoM_ID}-${index}`} value={uom.uoM_ID.toString()}>
+                                                    {uom.description}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem value="__no_data__" disabled>
+                                                No UoM options available. Check API configuration.
                                             </SelectItem>
-                                        ))}
+                                        )}
                                     </SelectContent>
                                 </Select>
                                 {validationErrors.uom_code && (
                                     <p className="text-sm text-red-500">{validationErrors.uom_code}</p>
                                 )}
+
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="tax-rate">Tax Rate (%) *</Label>
                                 <Input
                                     id="tax-rate"
                                     type="number"
-                                    min="0"
-                                    max="100"
+                                    min={SYSTEM_DEFAULTS.MIN_TAX_RATE}
+                                    max={SYSTEM_DEFAULTS.MAX_TAX_RATE}
                                     step="0.01"
                                     value={formData.tax_rate}
                                     onChange={(e) => handleFormChange('tax_rate', parseFloat(e.target.value) || 0)}
@@ -725,12 +762,12 @@ export function InvoiceItemManagement({
                                 value={formData.invoice_note}
                                 onChange={(e) => handleFormChange('invoice_note', e.target.value)}
                                 placeholder="Additional notes for this item..."
-                                maxLength={200}
+                                maxLength={SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH}
                                 className={validationErrors.invoice_note ? 'border-red-500' : ''}
                             />
                             <div className="flex justify-between text-sm text-gray-500">
-                                <span>Max 200 characters</span>
-                                <span>{formData.invoice_note?.length || 0}/200</span>
+                                <span>Max {SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH} characters</span>
+                                <span>{formData.invoice_note?.length || 0}/{SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH}</span>
                             </div>
                             {validationErrors.invoice_note && (
                                 <p className="text-sm text-red-500">{validationErrors.invoice_note}</p>
@@ -747,10 +784,10 @@ export function InvoiceItemManagement({
                                     setFormData({
                                         hs_code: '',
                                         item_name: '',
-                                        quantity: 1,
-                                        unit_price: 0,
-                                        uom_code: 'PCS',
-                                        tax_rate: 16,
+                                        quantity: SYSTEM_DEFAULTS.DEFAULT_QUANTITY,
+                                        unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
+                                        uom_code: '',
+                                        tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
                                         invoice_note: '',
                                         is_third_schedule: false
                                     });
