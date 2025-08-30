@@ -14,7 +14,7 @@ AS $$
 DECLARE
     v_company_id UUID;
     v_company_name TEXT;
-    v_company_type TEXT;
+    v_company_type company_type;
     v_tax_id_number TEXT;
     v_filing_status TEXT;
     v_tax_year_end DATE;
@@ -59,9 +59,21 @@ DECLARE
     v_has_fbr_profile BOOLEAN := FALSE;
     
 BEGIN
-    -- Extract company data
+    -- Extract company data with proper validation
     v_company_name := p_company_data->>'name';
-    v_company_type := p_company_data->>'type';
+    
+    -- Validate and cast company type with better error handling
+    IF p_company_data->>'type' IS NULL OR p_company_data->>'type' = '' THEN
+        RAISE EXCEPTION 'Company type is required';
+    END IF;
+    
+    BEGIN
+        v_company_type := (p_company_data->>'type')::company_type;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE EXCEPTION 'Invalid company type: %. Valid types are: INDEPENDENT_WORKER, PROFESSIONAL_SERVICES, SMALL_BUSINESS', p_company_data->>'type';
+    END;
+    
     v_tax_id_number := p_company_data->>'tax_id_number';
     v_filing_status := p_company_data->>'filing_status';
     v_tax_year_end := CASE 
@@ -97,8 +109,12 @@ BEGIN
     END IF;
     
     -- Validate required fields
-    IF v_company_name IS NULL OR v_company_type IS NULL THEN
-        RAISE EXCEPTION 'Company name and type are required';
+    IF v_company_name IS NULL OR v_company_name = '' THEN
+        RAISE EXCEPTION 'Company name is required';
+    END IF;
+    
+    IF v_company_type IS NULL THEN
+        RAISE EXCEPTION 'Company type is required';
     END IF;
     
     IF v_cnic_ntn IS NULL OR v_business_name IS NULL OR v_business_activity_id IS NULL THEN

@@ -17,7 +17,7 @@ AS $$
 DECLARE
     v_company_id UUID;
     v_company_name TEXT;
-    v_company_type TEXT;
+    v_company_type company_type;
     v_tax_id_number TEXT;
     v_filing_status TEXT;
     v_tax_year_end DATE;
@@ -64,7 +64,7 @@ DECLARE
 BEGIN
     -- Extract company data
     v_company_name := p_company_data->>'name';
-    v_company_type := p_company_data->>'type';
+    v_company_type := (p_company_data->>'type')::company_type;
     v_tax_id_number := p_company_data->>'tax_id_number';
     v_filing_status := p_company_data->>'filing_status';
     v_tax_year_end := CASE 
