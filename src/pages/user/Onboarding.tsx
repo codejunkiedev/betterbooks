@@ -150,8 +150,8 @@ export default function Onboarding() {
 
             // Create company object for Redux
             const company = {
-                id: data.data.company_id,
-                name: data.data.company_name,
+                id: data.company_id,
+                name: formData.company_name,
                 type: formData.company_type,
                 user_id: user.id,
                 is_active: true,
