@@ -9,7 +9,8 @@ CREATE OR REPLACE FUNCTION complete_onboarding_transaction(
     p_user_id UUID,
     p_company_data JSONB,
     p_fbr_data JSONB,
-    p_opening_balance_data JSONB DEFAULT NULL,
+    p_opening_balance JSONB DEFAULT NULL,
+    p_skip_balance BOOLEAN DEFAULT FALSE,
     p_skip_tax_info BOOLEAN DEFAULT FALSE
 ) RETURNS JSONB AS $$
 DECLARE
@@ -73,10 +74,10 @@ BEGIN
     END IF;
     
     -- Extract opening balance data
-    v_has_opening_balance := p_opening_balance_data IS NOT NULL;
+    v_has_opening_balance := p_opening_balance IS NOT NULL;
     IF v_has_opening_balance THEN
-        v_opening_amount := (p_opening_balance_data->>'amount')::NUMERIC;
-        v_opening_date := (p_opening_balance_data->>'date')::DATE;
+        v_opening_amount := (p_opening_balance->>'amount')::NUMERIC;
+        v_opening_date := (p_opening_balance->>'date')::DATE;
         
         IF v_opening_amount IS NULL OR v_opening_amount <= 0 THEN
             RAISE EXCEPTION 'Opening balance amount must be greater than 0';
