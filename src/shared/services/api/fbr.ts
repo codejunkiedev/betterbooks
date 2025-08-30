@@ -298,7 +298,7 @@ export async function getHSCodeUOMMapping(apiKey: string, hsCode: string): Promi
             method: 'GET',
             url: FBR_DATA_ENDPOINTS.hs_uom,
             headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-            params: { hs_code: hsCode }
+            params: { hs_code: hsCode, annexure_id: 3 }
         });
         return { success: true, message: 'HS code UOM mapping retrieved successfully', data: (response.data as UOMCode[]) || [] };
     } catch (error) {

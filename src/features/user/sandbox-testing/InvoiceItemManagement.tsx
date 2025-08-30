@@ -35,8 +35,7 @@ import {
 } from '@/shared/services/supabase/invoice';
 import { getFbrConfigStatus } from '@/shared/services/supabase/fbr';
 import { Plus, Trash2, Edit, MoveUp, MoveDown } from 'lucide-react';
-import { getAllHSCodes } from '@/shared/services/api/fbr';
-import { getUOMCodes } from '@/shared/services/api/fbr';
+import { getAllHSCodes, getHSCodeUOMMapping } from '@/shared/services/api/fbr';
 interface InvoiceItemManagementProps {
     invoiceId: number;
     items: InvoiceItemCalculated[];
@@ -85,13 +84,8 @@ export function InvoiceItemManagement({
         const totals = calculateRunningTotals(items);
         onRunningTotalsChange(totals);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [items]); // Only depend on items, not the callback
+    }, [items]);
 
-    // OPTIMIZATION: Load FBR data with multiple safeguards to prevent excessive API calls:
-    // 1. Check if data already exists in memory before making API calls
-    // 2. Use isCaching flag to prevent concurrent calls
-    // 3. Use hasLoadedData flag to prevent repeated loads on re-renders
-    // 4. Removed isCaching from useCallback dependencies to prevent infinite loops
 
     const loadFbrApiKeyAndAllData = useCallback(async () => {
         if (!user?.id) return;
@@ -155,18 +149,6 @@ export function InvoiceItemManagement({
                 } else {
                     throw new Error(hsCodeResponse.message);
                 }
-            }
-
-            // Load UOM codes from FBR API
-            const uomResponse = await getUOMCodes(apiKey);
-            console.log(uomResponse);
-
-            if (uomResponse.success && uomResponse.data && uomResponse.data.length > 0) {
-                // Filter out duplicates to ensure unique keys
-                const uniqueUomOptions = uomResponse.data.filter((uom, index, self) =>
-                    index === self.findIndex(u => u.uoM_ID === uom.uoM_ID)
-                );
-                setUomOptions(uniqueUomOptions);
             }
         } catch {
             toast({
@@ -242,6 +224,33 @@ export function InvoiceItemManagement({
                 return;
             }
 
+            // Get FBR API configuration for UOM mapping
+            const fbrConfig = await getFbrConfigStatus(user?.id || '');
+            const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
+
+            if (!apiKey) {
+                toast({
+                    title: 'FBR API Not Configured',
+                    description: 'Please configure your FBR API credentials first',
+                    variant: 'destructive'
+                });
+                return;
+            }
+
+            // Get UOM codes specific to this HS code
+            const uomResponse = await getHSCodeUOMMapping(apiKey, hsCode);
+
+            let availableUomOptions: UOMCode[] = [];
+            if (uomResponse.success && uomResponse.data && uomResponse.data.length > 0) {
+                // Filter out duplicates to ensure unique keys
+                availableUomOptions = uomResponse.data.filter((uom, index, self) =>
+                    index === self.findIndex(u => u.uoM_ID === uom.uoM_ID)
+                );
+                setUomOptions(availableUomOptions);
+            } else {
+                setUomOptions([]);
+            }
+
             // Get HS code details from cache or use defaults
             let hsCodeDetails = await getCachedHSCodeDetails(hsCode);
 
@@ -249,7 +258,7 @@ export function InvoiceItemManagement({
                 hsCodeDetails = {
                     hs_code: hsCode,
                     description: selectedHSCode.description,
-                    default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50',
+                    default_uom: availableUomOptions.length > 0 ? availableUomOptions[0].uoM_ID.toString() : '50',
                     default_tax_rate: getDefaultTaxRate(hsCode),
                     is_third_schedule: isThirdScheduleItem(hsCode)
                 };
@@ -261,10 +270,8 @@ export function InvoiceItemManagement({
                 }
             }
 
-            const bestUom = hsCodeDetails.default_uom || (uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50');
+            const bestUom = hsCodeDetails.default_uom || (availableUomOptions.length > 0 ? availableUomOptions[0].uoM_ID.toString() : '50');
             const bestTaxRate = hsCodeDetails.default_tax_rate !== undefined ? hsCodeDetails.default_tax_rate : SYSTEM_DEFAULTS.DEFAULT_TAX_RATE;
-
-
 
             setFormData(prev => ({
                 ...prev,

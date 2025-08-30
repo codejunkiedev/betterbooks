@@ -11,13 +11,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/components/Tooltip";
+import { useAppSelector } from "@/shared/hooks/useRedux";
 
 export function AccountingSummary() {
   const [summary, setSummary] = useState<AccountingSummaryType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAppSelector(state => state.user);
 
   const loadSummary = useCallback(async () => {
+    // UserGuard ensures user is authenticated, so we can safely proceed
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await fetchAccountingSummary();
       if (error) throw error;
@@ -32,11 +40,16 @@ export function AccountingSummary() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, user]);
 
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  // UserGuard ensures user is authenticated, so we can safely proceed
+  if (!user) {
+    return null;
+  }
 
   const getPeriodLabel = () => {
     return format(new Date(), "MMMM yyyy");

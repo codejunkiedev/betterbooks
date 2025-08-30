@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import { UserRole } from '@/shared/types/auth';
+import { UserRole, UserRoleEnum } from '@/shared/types/auth';
 
 // Check user role from database tables
 export const getUserRoleFromDatabase = async (userId: string): Promise<UserRole> => {
@@ -13,7 +13,7 @@ export const getUserRoleFromDatabase = async (userId: string): Promise<UserRole>
             .maybeSingle();
 
         if (!adminError && adminData) {
-            return 'ADMIN';
+            return UserRoleEnum.ADMIN;
         }
 
         // Check if user is an accountant
@@ -25,14 +25,14 @@ export const getUserRoleFromDatabase = async (userId: string): Promise<UserRole>
             .maybeSingle();
 
         if (!accountantError && accountantData) {
-            return 'ACCOUNTANT';
+            return UserRoleEnum.ACCOUNTANT;
         }
 
         // Default to user role
-        return 'USER';
+        return UserRoleEnum.USER;
     } catch (error) {
         console.error('Error checking user role from database:', error);
-        return 'USER'; // Default to user role on error
+        return UserRoleEnum.USER; // Default to user role on error
     }
 };
 

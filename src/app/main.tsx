@@ -9,12 +9,10 @@ import { Provider } from 'react-redux'
 import { store } from '@/shared/services/store'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <App />
-        <Toaster />
-      </BrowserRouter>
-    </Provider>
-  </React.StrictMode>,
+  <Provider store={store}>
+    <BrowserRouter>
+      <App />
+      <Toaster />
+    </BrowserRouter>
+  </Provider>,
 )

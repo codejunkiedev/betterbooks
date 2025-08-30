@@ -11,6 +11,7 @@ import {
     TooltipTrigger,
 } from "@/shared/components/Tooltip";
 import { Button } from "@/shared/components/Button";
+import { useAppSelector } from "@/shared/hooks/useRedux";
 
 interface FinancialMetrics {
     totalRevenue: number;
@@ -28,8 +29,15 @@ export function FinancialSummary() {
     const [isLoading, setIsLoading] = useState(true);
     const [period, setPeriod] = useState<'month' | 'quarter'>('month');
     const { toast } = useToast();
+    const { user } = useAppSelector(state => state.user);
 
     const loadMetrics = useCallback(async () => {
+        // UserGuard ensures user is authenticated, so we can safely proceed
+        if (!user) {
+            setIsLoading(false);
+            return;
+        }
+
         try {
             setIsLoading(true);
             const { data, error } = await fetchFinancialMetrics(period);
@@ -45,11 +53,15 @@ export function FinancialSummary() {
         } finally {
             setIsLoading(false);
         }
-    }, [period, toast]);
+    }, [period, toast, user]);
 
     useEffect(() => {
         loadMetrics();
     }, [loadMetrics]);
+
+    if (!user) {
+        return null;
+    }
 
     const getPeriodLabel = () => {
         if (!metrics) return "";

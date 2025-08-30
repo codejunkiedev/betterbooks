@@ -5,10 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/shared/hooks/useToast";
 import { getCurrentUser } from "@/shared/services/supabase/auth";
 import { createAdminRecord, createAccountantRecord, getUserRoleFromDatabase } from "@/shared/services/supabase/roles";
-import { UserRole } from "@/shared/types/auth";
+import { UserRole, UserRoleEnum } from "@/shared/types/auth";
 
 export default function RoleManagement() {
-    const [selectedRole, setSelectedRole] = useState<UserRole>("USER");
+    const [selectedRole, setSelectedRole] = useState<UserRole>(UserRoleEnum.USER);
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
 
@@ -28,10 +28,10 @@ export default function RoleManagement() {
 
             let error = null;
 
-            if (selectedRole === 'ADMIN') {
+            if (selectedRole === UserRoleEnum.ADMIN) {
                 const result = await createAdminRecord(user.id);
                 error = result.error;
-            } else if (selectedRole === 'ACCOUNTANT') {
+            } else if (selectedRole === UserRoleEnum.ACCOUNTANT) {
                 const result = await createAccountantRecord(user.id);
                 error = result.error;
             }
@@ -84,9 +84,9 @@ export default function RoleManagement() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="USER">User</SelectItem>
-                                <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
-                                <SelectItem value="ADMIN">Admin</SelectItem>
+                                <SelectItem value={UserRoleEnum.USER}>User</SelectItem>
+                                <SelectItem value={UserRoleEnum.ACCOUNTANT}>Accountant</SelectItem>
+                                <SelectItem value={UserRoleEnum.ADMIN}>Admin</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
