@@ -44,16 +44,7 @@ export interface OnboardingPayload {
 
 export interface OnboardingResponse {
     success: boolean;
-    data: {
-        company_id: string;
-        company_name: string;
-        fbr_profile_id: string | null;
-        journal_entry_id: string | null;
-        activity_id: string | null;
-        has_opening_balance: boolean;
-        opening_balance_amount: number;
-        opening_balance_date: string | null;
-        has_fbr_profile: boolean;
-    };
+    company_id: string;
+    has_opening_balance: boolean;
     message: string;
 }
