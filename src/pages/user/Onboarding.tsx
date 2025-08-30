@@ -1,10 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/shared/hooks/useToast";
 import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
-import { createCompany } from "@/shared/services/supabase/company";
-import { CompanyType } from "@/shared/constants/company";
 import { setCurrentCompany, checkOnboardingStatus } from "@/shared/services/store/companySlice";
-import { createOpeningBalanceJournalEntry } from "@/shared/services/supabase/journal";
 import {
     StepIndicator,
     CompanyInfoStep,
@@ -16,29 +13,12 @@ import {
     validateTaxInformation,
 } from "@/features/user/company";
 import { useState } from "react";
-import { copyCOATemplateToCompany } from "@/shared/services/supabase/coa";
-import { upsertFbrProfile, getBusinessActivities, initializeScenarioProgress } from "@/shared/services/supabase/fbr";
+import { getBusinessActivities } from "@/shared/services/supabase/fbr";
+import { completeOnboarding } from "@/shared/services/supabase/onboarding";
+import { formatOnboardingError } from "@/shared/utils/onboarding";
 import logo from "@/assets/logo.png";
 import FbrProfile from "./FbrProfile";
-
-interface CompanySetupData {
-    company_name: string;
-    company_type: string;
-    cash_balance: string;
-    balance_date: string;
-    skip_balance: boolean;
-    tax_id_number: string;
-    filing_status: string;
-    tax_year_end: string;
-    skip_tax_info: boolean;
-    fbr_cnic_ntn: string;
-    fbr_business_name: string;
-    fbr_province_code: string;
-    fbr_address: string;
-    fbr_mobile_number: string;
-    fbr_activity_name: string;
-    fbr_sector: string;
-}
+import { CompanySetupData, OnboardingPayload } from "@/shared/types/onboarding";
 
 export default function Onboarding() {
     const navigate = useNavigate();
@@ -57,7 +37,6 @@ export default function Onboarding() {
         filing_status: "",
         tax_year_end: "",
         skip_tax_info: false,
-        // FBR Profile data
         fbr_cnic_ntn: "",
         fbr_business_name: "",
         fbr_province_code: "",
@@ -67,10 +46,6 @@ export default function Onboarding() {
         fbr_sector: "",
     });
     const [isLoading, setIsLoading] = useState(false);
-
-
-
-
 
     const handleFieldChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -131,92 +106,63 @@ export default function Onboarding() {
         }
 
         setIsLoading(true);
+
         try {
-            // Validate opening balance first (if provided)
-            if (!formData.skip_balance && formData.cash_balance && formData.balance_date) {
-                const amount = parseFloat(formData.cash_balance);
-                const balanceDate = new Date(formData.balance_date);
-                const today = new Date();
+            // Get business activity ID from the activity name and sector
+            const { data: activities } = await getBusinessActivities();
+            const selectedActivity = activities?.find(
+                (a: { id: number; business_activity: string; sector: string }) =>
+                    a.business_activity === formData.fbr_activity_name && a.sector === formData.fbr_sector
+            );
 
-                // Validate amount
-                if (amount <= 0) {
-                    throw new Error("Opening balance must be greater than 0");
-                }
-
-                // Validate date (should not be in the future)
-                if (balanceDate > today) {
-                    throw new Error("Opening balance date cannot be in the future");
-                }
+            if (!selectedActivity) {
+                throw new Error("Selected business activity not found");
             }
 
-            // Create company first
-            const companyData: {
-                user_id: string;
-                name: string;
-                type: CompanyType;
-                tax_id_number?: string;
-                filing_status?: string;
-                tax_year_end?: string;
-                assigned_accountant_id?: string;
-            } = {
+            // Prepare the payload for the database function
+            const payload: OnboardingPayload = {
                 user_id: user.id,
-                name: formData.company_name,
-                type: formData.company_type as CompanyType,
-                assigned_accountant_id: '',
+                company_data: {
+                    name: formData.company_name,
+                    type: formData.company_type,
+                    tax_id_number: formData.tax_id_number,
+                    filing_status: formData.filing_status,
+                    tax_year_end: formData.tax_year_end,
+                },
+                fbr_data: {
+                    cnic_ntn: formData.fbr_cnic_ntn,
+                    business_name: formData.fbr_business_name,
+                    province_code: parseInt(formData.fbr_province_code),
+                    address: formData.fbr_address,
+                    mobile_number: formData.fbr_mobile_number,
+                    business_activity_id: selectedActivity.id,
+                },
+                opening_balance: formData.skip_balance ? null : {
+                    amount: parseFloat(formData.cash_balance) || 0,
+                    date: formData.balance_date,
+                },
+                skip_balance: formData.skip_balance,
+                skip_tax_info: formData.skip_tax_info,
             };
 
-            if (!formData.skip_tax_info) {
-                if (formData.tax_id_number) companyData.tax_id_number = formData.tax_id_number;
-                if (formData.filing_status) companyData.filing_status = formData.filing_status;
-                if (formData.tax_year_end) companyData.tax_year_end = formData.tax_year_end;
-            }
+            // Call the onboarding service
+            const data = await completeOnboarding(payload);
 
-            const company = await createCompany(companyData);
+            // Create company object for Redux
+            const company = {
+                id: data.data.company_id,
+                name: data.data.company_name,
+                type: formData.company_type,
+                user_id: user.id,
+                is_active: true,
+                created_at: new Date().toISOString(),
+            };
 
             // Update Redux store with the new company
             dispatch(setCurrentCompany(company));
 
-            await copyCOATemplateToCompany(company.id);
-
-            // Handle opening balance after company is created
-            if (!formData.skip_balance && formData.cash_balance && formData.balance_date) {
-                const amount = parseFloat(formData.cash_balance);
-
-                await createOpeningBalanceJournalEntry(
-                    company.id,
-                    user.id,
-                    amount,
-                    formData.balance_date
-                );
-            }
-
-            // Save FBR profile
-            if (formData.fbr_cnic_ntn && formData.fbr_business_name) {
-                // Get business activity ID from the activity name and sector
-                const { data: activities } = await getBusinessActivities();
-                const selectedActivity = activities?.find(
-                    (a: { id: number; business_activity: string; sector: string }) =>
-                        a.business_activity === formData.fbr_activity_name && a.sector === formData.fbr_sector
-                );
-
-                if (selectedActivity) {
-                    await upsertFbrProfile({
-                        user_id: user.id,
-                        cnic_ntn: formData.fbr_cnic_ntn,
-                        business_name: formData.fbr_business_name,
-                        province_code: Number(formData.fbr_province_code),
-                        address: formData.fbr_address,
-                        mobile_number: formData.fbr_mobile_number,
-                        business_activity_id: selectedActivity.id,
-                    });
-
-                    // Initialize scenario progress for all mandatory scenarios
-                    await initializeScenarioProgress(user.id, selectedActivity.id);
-                }
-            }
-
             // Refresh onboarding status in Redux
-            dispatch(checkOnboardingStatus(user.id));
+            await dispatch(checkOnboardingStatus(user.id));
 
             toast({
                 title: "Success",
@@ -224,12 +170,24 @@ export default function Onboarding() {
                 variant: "default",
             });
 
-            navigate("/");
-        } catch (error) {
+            // Navigate to user dashboard after a brief delay to ensure state is updated
+            setTimeout(() => {
+                navigate("/", { replace: true });
+            }, 100);
+
+        } catch (error: unknown) {
             console.error("Error setting up company:", error);
+
+            const errorInfo = error instanceof Error
+                ? formatOnboardingError(error)
+                : {
+                    title: "Setup Failed",
+                    message: "We encountered an issue while setting up your company. Please try again or contact support if the problem persists."
+                };
+
             toast({
-                title: "Error",
-                description: "Failed to set up company. Please try again.",
+                title: errorInfo.title,
+                description: errorInfo.message,
                 variant: "destructive",
             });
         } finally {

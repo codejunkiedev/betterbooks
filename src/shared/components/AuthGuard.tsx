@@ -1,8 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useEffect } from "react";
-import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
-import { checkOnboardingStatus } from "@/shared/services/store/companySlice";
-import { LoadingSpinner } from "@/shared/components/Loading";
+import { useAppSelector } from "@/shared/hooks/useRedux";
 
 interface AuthGuardProps {
     children: React.ReactNode;
@@ -10,22 +7,7 @@ interface AuthGuardProps {
 
 export default function AuthGuard({ children }: AuthGuardProps) {
     const { user, isAuthenticated } = useAppSelector(state => state.user);
-    const { onboardingStatus, isLoading } = useAppSelector(state => state.company);
-    const dispatch = useAppDispatch();
-
-    useEffect(() => {
-        if (isAuthenticated && user && !onboardingStatus) {
-            dispatch(checkOnboardingStatus(user.id));
-        }
-    }, [isAuthenticated, user, onboardingStatus, dispatch]);
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <LoadingSpinner />
-            </div>
-        );
-    }
+    const { onboardingStatus } = useAppSelector(state => state.company);
 
     // If user is authenticated, redirect based on onboarding status
     if (isAuthenticated && user && onboardingStatus) {
