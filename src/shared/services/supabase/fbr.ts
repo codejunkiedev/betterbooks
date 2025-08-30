@@ -26,6 +26,48 @@ export async function getFbrProfileByUser(userId: string) {
 }
 
 /**
+ * Get FBR profile data formatted for seller information in invoices
+ */
+export async function getFbrProfileForSellerData(userId: string) {
+	try {
+		const { data, error } = await supabase
+			.from("fbr_profiles")
+			.select("cnic_ntn, business_name, address, province_code")
+			.eq("user_id", userId)
+			.single();
+
+		if (error) {
+			if (error.code === 'PGRST116') {
+				return null; // No profile found
+			}
+			throw error;
+		}
+
+		// Get province description
+		const { data: provinceData, error: provinceError } = await supabase
+			.from("province_codes")
+			.select("state_province_desc")
+			.eq("state_province_code", data.province_code)
+			.single();
+
+		if (provinceError) {
+			console.error('Error fetching province data:', provinceError);
+			throw provinceError;
+		}
+
+		return {
+			sellerNTNCNIC: data.cnic_ntn,
+			sellerBusinessName: data.business_name,
+			sellerProvince: provinceData?.state_province_desc || '',
+			sellerAddress: data.address
+		};
+	} catch (error) {
+		console.error('Error fetching FBR profile for seller data:', error);
+		throw error;
+	}
+}
+
+/**
  * Upsert FBR profile
  */
 export async function upsertFbrProfile(payload: FbrProfilePayload) {

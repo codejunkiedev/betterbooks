@@ -28,7 +28,8 @@ import { FBR_SCENARIO_STATUS } from '@/shared/constants/fbr';
 import {
     getScenarioById,
     updateScenarioProgress,
-    getProvinceCodes
+    getProvinceCodes,
+    getFbrProfileForSellerData
 } from '@/shared/services/supabase/fbr';
 import { FbrScenario } from '@/shared/types/fbr';
 import { InvoiceItem, ScenarioInvoiceFormData, InvoiceItemCalculated, InvoiceRunningTotals } from '@/shared/types/invoice';
@@ -58,6 +59,8 @@ export default function ScenarioInvoiceForm() {
     const [scenario, setScenario] = useState<FbrScenario | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadingSampleData, setLoadingSampleData] = useState(false);
+    const [loadingFbrData, setLoadingFbrData] = useState(false);
+    const [sellerDataFromFBR, setSellerDataFromFBR] = useState(false);
     const [clearingForm, setClearingForm] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [showValidationModal, setShowValidationModal] = useState(false);
@@ -132,6 +135,31 @@ export default function ScenarioInvoiceForm() {
         loadProvinces();
     }, [scenarioId, user?.id, loadScenario, loadProvinces]);
 
+    // Auto-populate seller data from FBR profile when form loads
+    useEffect(() => {
+        const autoPopulateSellerData = async () => {
+            if (user?.id && !formData.sellerNTNCNIC && !formData.sellerBusinessName) {
+                try {
+                    const sellerData = await getFbrProfileForSellerData(user.id);
+                    if (sellerData) {
+                        setFormData(prev => ({
+                            ...prev,
+                            sellerNTNCNIC: sellerData.sellerNTNCNIC,
+                            sellerBusinessName: sellerData.sellerBusinessName,
+                            sellerProvince: sellerData.sellerProvince,
+                            sellerAddress: sellerData.sellerAddress
+                        }));
+                        setSellerDataFromFBR(true);
+                    }
+                } catch (error) {
+                    console.error('Error auto-populating seller data:', error);
+                }
+            }
+        };
+
+        autoPopulateSellerData();
+    }, [user?.id, formData.sellerNTNCNIC, formData.sellerBusinessName]);
+
     const updateFormData = (field: keyof ScenarioInvoiceFormData, value: string | number | InvoiceItem[] | number) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -200,6 +228,55 @@ export default function ScenarioInvoiceForm() {
         }
     };
 
+    const populateSellerDataFromFBR = async () => {
+        if (!user?.id) {
+            toast({
+                title: "Error",
+                description: "User not found. Please log in again.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setLoadingFbrData(true);
+        try {
+            const sellerData = await getFbrProfileForSellerData(user.id);
+            
+            if (!sellerData) {
+                toast({
+                    title: "No FBR Profile Found",
+                    description: "Please complete your FBR profile setup first.",
+                    variant: "destructive"
+                });
+                return;
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                sellerNTNCNIC: sellerData.sellerNTNCNIC,
+                sellerBusinessName: sellerData.sellerBusinessName,
+                sellerProvince: sellerData.sellerProvince,
+                sellerAddress: sellerData.sellerAddress
+            }));
+
+            setSellerDataFromFBR(true);
+
+            toast({
+                title: "Seller Data Populated",
+                description: "Seller information has been populated from your FBR profile.",
+            });
+        } catch (error) {
+            console.error('Error loading FBR profile data:', error);
+            toast({
+                title: "Error",
+                description: "Failed to load FBR profile data. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoadingFbrData(false);
+        }
+    };
+
 
 
     const clearFormData = async () => {
@@ -214,6 +291,8 @@ export default function ScenarioInvoiceForm() {
                 buyerProvince: '', buyerAddress: '', buyerRegistrationType: '', invoiceRefNo: '',
                 scenarioId: scenarioId || '', items: [], totalAmount: 0, notes: ''
             });
+
+            setSellerDataFromFBR(false);
 
             toast({ title: "Form Cleared", description: "All form data has been cleared." });
         } catch (error) {
@@ -501,12 +580,42 @@ export default function ScenarioInvoiceForm() {
 
                         {/* Seller Information */}
                         <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
-                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                                    <span className="text-primary-foreground text-xs font-bold">2</span>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                        <span className="text-primary-foreground text-xs font-bold">2</span>
+                                    </div>
+                                    Seller Information
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    {sellerDataFromFBR && (
+                                        <Badge variant="secondary" className="text-xs">
+                                            <CheckCircle className="h-3 w-3 mr-1" />
+                                            From FBR Profile
+                                        </Badge>
+                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={populateSellerDataFromFBR}
+                                        disabled={loadingFbrData}
+                                        className="flex items-center gap-2"
+                                    >
+                                        {loadingFbrData ? (
+                                            <>
+                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                                <span>Loading...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Database className="h-4 w-4" />
+                                                <span>Use FBR Profile</span>
+                                            </>
+                                        )}
+                                    </Button>
                                 </div>
-                                Seller Information
-                            </h3>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                 <div>
                                     <Label htmlFor="sellerNTNCNIC" className="text-sm font-medium">Seller NTN/CNIC</Label>
