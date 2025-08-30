@@ -1,5 +1,5 @@
--- Fix onboarding function to remove is_active column from company_coa insert
--- This resolves the "column is_active does not exist" error
+-- Final fix for onboarding function to remove is_active column from company_coa insert
+-- This resolves the "column is_active does not exist" error by ensuring all function signatures are consistent
 
 -- Drop all possible function signatures to ensure clean replacement
 DROP FUNCTION IF EXISTS complete_onboarding_transaction(UUID, JSONB, JSONB, JSONB, BOOLEAN);
