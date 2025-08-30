@@ -17,7 +17,7 @@ AS $$
 DECLARE
     v_company_id UUID;
     v_company_name TEXT;
-    v_company_type TEXT;
+    v_company_type company_type;
     v_tax_id_number TEXT;
     v_filing_status TEXT;
     v_tax_year_end DATE;
@@ -36,8 +36,8 @@ DECLARE
     v_opening_date DATE;
     
     -- Account IDs for opening balance
-    v_cash_account_id UUID;
-    v_equity_account_id UUID;
+    v_cash_account_id BIGINT;
+    v_equity_account_id BIGINT;
     
     -- Journal entry variables
     v_journal_entry_id UUID;
@@ -47,14 +47,14 @@ DECLARE
     v_existing_profile_user_id UUID;
     
     -- Scenario progress variables
-    v_scenario_id INTEGER;
+    v_scenario_id VARCHAR(10);
     v_scenario_cursor CURSOR FOR
         SELECT id FROM fbr_scenarios 
         WHERE business_activity_id = v_business_activity_id 
         AND is_mandatory = true;
     
     -- Activity log variables
-    v_activity_id UUID;
+    v_activity_id BIGINT;
     
     -- Result variables
     v_result JSONB;
@@ -62,9 +62,21 @@ DECLARE
     v_has_fbr_profile BOOLEAN := FALSE;
     
 BEGIN
-    -- Extract company data
+    -- Extract company data with proper validation
     v_company_name := p_company_data->>'name';
-    v_company_type := p_company_data->>'type';
+    
+    -- Validate and cast company type with better error handling
+    IF p_company_data->>'type' IS NULL OR p_company_data->>'type' = '' THEN
+        RAISE EXCEPTION 'Company type is required';
+    END IF;
+    
+    BEGIN
+        v_company_type := (p_company_data->>'type')::company_type;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE EXCEPTION 'Invalid company type: %. Valid types are: INDEPENDENT_WORKER, PROFESSIONAL_SERVICES, SMALL_BUSINESS', p_company_data->>'type';
+    END;
+    
     v_tax_id_number := p_company_data->>'tax_id_number';
     v_filing_status := p_company_data->>'filing_status';
     v_tax_year_end := CASE 
@@ -100,8 +112,12 @@ BEGIN
     END IF;
     
     -- Validate required fields
-    IF v_company_name IS NULL OR v_company_type IS NULL THEN
-        RAISE EXCEPTION 'Company name and type are required';
+    IF v_company_name IS NULL OR v_company_name = '' THEN
+        RAISE EXCEPTION 'Company name is required';
+    END IF;
+    
+    IF v_company_type IS NULL THEN
+        RAISE EXCEPTION 'Company type is required';
     END IF;
     
     IF v_cnic_ntn IS NULL OR v_business_name IS NULL OR v_business_activity_id IS NULL THEN
@@ -145,46 +161,46 @@ BEGIN
             NOW()
         ) RETURNING id INTO v_company_id;
         
-        -- Step 2: Copy COA template to company
+        -- Step 2: Copy COA template to company (fixed table and column names)
         INSERT INTO company_coa (
             company_id,
-            account_code,
+            account_id,
             account_name,
             account_type,
-            parent_account_id,
+            parent_id,
             is_active,
             created_at,
             updated_at
         )
         SELECT 
             v_company_id,
-            account_code,
+            account_id,
             account_name,
             account_type,
-            parent_account_id,
-            is_active,
+            parent_id,
+            TRUE,
             NOW(),
             NOW()
-        FROM coa_templates 
-        WHERE is_active = TRUE;
+        FROM coa_template 
+        WHERE account_id IS NOT NULL;
         
         -- Step 3: Handle opening balance if provided
         IF v_has_opening_balance THEN
-            -- Find cash account (account_code = '1000')
+            -- Find cash account (account_id = '1000')
             SELECT id INTO v_cash_account_id
             FROM company_coa
             WHERE company_id = v_company_id 
-            AND account_code = '1000';
+            AND account_id = '1000';
             
             IF v_cash_account_id IS NULL THEN
                 RAISE EXCEPTION 'Cash account not found for opening balance';
             END IF;
             
-            -- Find equity account (account_code = '3000')
+            -- Find equity account (account_id = '3000')
             SELECT id INTO v_equity_account_id
             FROM company_coa
             WHERE company_id = v_company_id 
-            AND account_code = '3000';
+            AND account_id = '3000';
             
             IF v_equity_account_id IS NULL THEN
                 RAISE EXCEPTION 'Equity account not found for opening balance';
@@ -197,29 +213,25 @@ BEGIN
                 description,
                 is_adjusting_entry,
                 created_by,
-                created_at,
-                updated_at
+                created_at
             ) VALUES (
                 v_company_id,
                 v_opening_date,
                 'Opening Balance',
                 FALSE,
                 p_user_id,
-                NOW(),
                 NOW()
             ) RETURNING id INTO v_journal_entry_id;
             
-            -- Create journal entry lines
+            -- Create journal entry lines (fixed account_id type to bigint)
             INSERT INTO journal_entry_lines (
                 journal_entry_id,
                 account_id,
                 type,
-                amount,
-                created_at,
-                updated_at
+                amount
             ) VALUES 
-            (v_journal_entry_id, v_cash_account_id, 'DEBIT', v_opening_amount, NOW(), NOW()),
-            (v_journal_entry_id, v_equity_account_id, 'CREDIT', v_opening_amount, NOW(), NOW());
+            (v_journal_entry_id, v_cash_account_id, 'DEBIT', v_opening_amount),
+            (v_journal_entry_id, v_equity_account_id, 'CREDIT', v_opening_amount);
         END IF;
         
         -- Step 4: Create FBR profile
@@ -243,42 +255,38 @@ BEGIN
             v_business_activity_id,
             NOW(),
             NOW()
-        ) RETURNING id INTO v_fbr_profile_id;
+        ) RETURNING user_id INTO v_fbr_profile_id;
         
         v_has_fbr_profile := TRUE;
         
-        -- Step 5: Initialize scenario progress for mandatory scenarios
+        -- Step 5: Initialize scenario progress for mandatory scenarios (fixed structure)
         FOR v_scenario_id IN v_scenario_cursor LOOP
             INSERT INTO fbr_scenario_progress (
                 user_id,
-                business_activity_id,
                 scenario_id,
                 status,
                 created_at,
                 updated_at
             ) VALUES (
                 p_user_id,
-                v_business_activity_id,
                 v_scenario_id,
-                'PENDING',
+                'not_started',
                 NOW(),
                 NOW()
             );
         END LOOP;
         
-        -- Step 6: Log activity for company creation
+        -- Step 6: Log activity for company creation (fixed column names)
         INSERT INTO activity_logs (
             company_id,
-            user_id,
-            activity_type,
-            description,
-            metadata,
+            actor_id,
+            activity,
+            details,
             created_at
         ) VALUES (
             v_company_id,
             p_user_id,
             'COMPANY_CREATED',
-            'Company created during onboarding',
             jsonb_build_object(
                 'company_name', v_company_name,
                 'company_type', v_company_type,
