@@ -1,5 +1,6 @@
 import { supabase } from '@/shared/services/supabase/client';
 import { AdminUsersFilters, AdminUsersResponse, Status, DetailedUserResponse, DetailedUserInfo } from '@/shared/types/admin';
+import { UserRoleEnum } from '@/shared/types/auth';
 import { logActivity } from '@/shared/utils/activity';
 import { ActivityType } from '@/shared/types/activity';
 import { MODULES, ModuleName, isModuleName } from '@/shared/constants/modules';
@@ -196,7 +197,7 @@ export async function getAdminUsers(
                 phone: 'N/A',
                 created_at: company.created_at,
                 last_sign_in_at: authUser?.last_sign_in_at || 'N/A',
-                role: 'USER' as const,
+                role: UserRoleEnum.USER,
                 status,
                 company: {
                     id: company.id,
@@ -635,7 +636,7 @@ export async function getDetailedUserInfo(userId: string): Promise<DetailedUserR
             phone: profile?.phone_number || undefined,
             createdAt: (company as { created_at: string }).created_at,
             lastSignInAt: (authUserData as { last_sign_in_at?: string } | undefined)?.last_sign_in_at || '',
-            role: 'USER',
+            role: UserRoleEnum.USER,
             status,
             company: {
                 id: (company as { id: string }).id,

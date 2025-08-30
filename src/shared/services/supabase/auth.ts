@@ -1,10 +1,11 @@
 import { supabase } from './client';
-import { AuthResponse, SignInPayload, SignUpPayload, UserRole } from '@/shared/types/auth';
+import { AuthResponse, SignInPayload, SignUpPayload, UserRole, UserRoleEnum } from '@/shared/types/auth';
 import { User } from '@supabase/supabase-js';
 import { getUserRoleFromDatabase } from './roles';
 import { getCompanyByUserId } from './company';
 import { ActivityType } from '@/shared/types';
 import { logActivity } from '@/shared/utils/activity';
+import { config } from '@/shared/config/environment';
 
 // Test Supabase connection on first auth service import
 let connectionTested = false;
@@ -33,8 +34,9 @@ export const signUp = async (payload: SignUpPayload): Promise<AuthResponse> => {
         email: payload.email,
         password: payload.password,
         options: {
+            emailRedirectTo: `${config.VITE_APP_BASE_URL}/auth/callback`,
             data: {
-                role: 'USER' // Default role for new signups
+                role: UserRoleEnum.USER
             }
         }
     });
@@ -154,7 +156,7 @@ export const signOut = async () => {
 
 export const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${config.VITE_APP_BASE_URL}/reset-password`,
     });
     return { error };
 };
@@ -186,23 +188,23 @@ export const getCurrentSession = async () => {
 
 // Helper function to get user role (fallback to metadata)
 export const getUserRole = (user: User | null): UserRole => {
-    return user?.user_metadata?.role || 'USER';
+    return user?.user_metadata?.role || UserRoleEnum.USER;
 };
 
 // Helper function to get user role from database
 export const getUserRoleFromDB = async (user: User | null): Promise<UserRole> => {
-    if (!user?.id) return 'USER';
+    if (!user?.id) return UserRoleEnum.USER;
     return await getUserRoleFromDatabase(user.id);
 };
 
 // Helper function to get role-based redirect path
 export const getRoleBasedRedirectPath = (role: UserRole): string => {
     switch (role) {
-        case 'ADMIN':
+        case UserRoleEnum.ADMIN:
             return '/admin';
-        case 'ACCOUNTANT':
+        case UserRoleEnum.ACCOUNTANT:
             return '/accountant';
-        case 'USER':
+        case UserRoleEnum.USER:
         default:
             return '/';
     }
