@@ -6,6 +6,7 @@ import type {
 	FbrScenarioProgressResult,
 	FbrScenario,
 	FbrConfigStatus,
+	FbrProfile,
 	FbrProfilePayload,
 	ScenarioFilters,
 	ScenarioWithProgress
@@ -14,14 +15,19 @@ import type {
 /**
  * Get FBR profile by user ID
  */
-export async function getFbrProfileByUser(userId: string) {
+export async function getFbrProfileByUser(userId: string): Promise<FbrProfile | null> {
 	const { data, error } = await supabase
 		.from("fbr_profiles")
 		.select("*")
 		.eq("user_id", userId)
 		.single();
 
-	if (error) throw error;
+	if (error) {
+		if (error.code === 'PGRST116') {
+			return null; // No profile found
+		}
+		throw error;
+	}
 	return data;
 }
 
@@ -35,9 +41,9 @@ export async function upsertFbrProfile(payload: FbrProfilePayload) {
 		.select("user_id")
 		.eq("cnic_ntn", payload.cnic_ntn)
 		.neq("user_id", payload.user_id)
-		.single();
+		.maybeSingle();
 
-	if (checkError && checkError.code !== 'PGRST116') {
+	if (checkError) {
 		throw new Error(`Error checking existing CNIC/NTN: ${checkError.message}`);
 	}
 
