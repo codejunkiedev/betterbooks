@@ -14,7 +14,7 @@ CREATE OR REPLACE FUNCTION complete_onboarding_transaction(
     p_opening_balance JSONB DEFAULT NULL,
     p_skip_balance BOOLEAN DEFAULT FALSE,
     p_skip_tax_info BOOLEAN DEFAULT FALSE,
-    p_user_id UUID
+    p_user_id UUID DEFAULT NULL
 ) RETURNS JSONB AS $$
 DECLARE
     v_company_id UUID;
@@ -44,6 +44,11 @@ DECLARE
     
     v_result JSONB;
 BEGIN
+    -- Validate user_id is provided
+    IF p_user_id IS NULL THEN
+        RAISE EXCEPTION 'User ID is required';
+    END IF;
+    
     -- Extract company data
     v_company_name := p_company_data->>'name';
     v_company_type_text := p_company_data->>'type';
