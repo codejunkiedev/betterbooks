@@ -32,8 +32,7 @@ export async function createCompany({
   filing_status?: string;
   tax_year_end?: string;
 }) {
-  console.log("createCompany called with:", { user_id, name, type, tax_id_number, filing_status, tax_year_end });
-  
+
   const { data, error } = await supabase
     .from("companies")
     .insert({
@@ -57,7 +56,7 @@ export async function createCompany({
     });
     throw error;
   }
-  
+
   console.log("Company created successfully:", data);
   return data;
 }

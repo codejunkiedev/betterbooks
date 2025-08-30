@@ -57,6 +57,18 @@ export interface FbrConfigStatus {
     production_api_key?: string | null;
 }
 
+export interface FbrProfile {
+    user_id: string;
+    cnic_ntn: string;
+    business_name: string;
+    province_code: number;
+    address: string;
+    mobile_number: string;
+    business_activity_id: number;
+    created_at: string;
+    updated_at: string;
+}
+
 export type FbrProfilePayload = {
     user_id: string;
     cnic_ntn: string;

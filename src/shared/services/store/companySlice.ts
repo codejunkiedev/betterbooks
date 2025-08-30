@@ -83,6 +83,11 @@ const companySlice = createSlice({
         clearOnboardingStatus: (state) => {
             state.onboardingStatus = null;
         },
+        clearCompany: (state) => {
+            state.currentCompany = null;
+            state.onboardingStatus = null;
+            state.error = null;
+        },
         clearError: (state) => {
             state.error = null;
         },
@@ -129,6 +134,7 @@ export const {
     setCurrentCompany,
     setOnboardingStatus,
     clearOnboardingStatus,
+    clearCompany,
     clearError,
 } = companySlice.actions;
 

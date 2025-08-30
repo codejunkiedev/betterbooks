@@ -18,3 +18,4 @@ export * from './reports';
 export * from './activity';
 export * from './environment';
 export * from './admin';
+export * from './onboarding';
