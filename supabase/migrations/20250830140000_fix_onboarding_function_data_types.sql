@@ -1,4 +1,8 @@
--- Create a comprehensive onboarding transaction function
+-- Fix onboarding function data type issues
+-- Drop the function if it exists and recreate it
+DROP FUNCTION IF EXISTS complete_onboarding_transaction(UUID, JSONB, JSONB, JSONB, BOOLEAN, BOOLEAN);
+
+-- Create a comprehensive onboarding transaction function with all data type fixes
 CREATE OR REPLACE FUNCTION complete_onboarding_transaction(
     p_user_id UUID,
     p_company_data JSONB,
@@ -62,6 +66,19 @@ DECLARE
     v_company_type_text TEXT;
     
 BEGIN
+    -- Input validation
+    IF p_user_id IS NULL THEN
+        RAISE EXCEPTION 'User ID is required';
+    END IF;
+    
+    IF p_company_data IS NULL THEN
+        RAISE EXCEPTION 'Company data is required';
+    END IF;
+    
+    IF p_fbr_data IS NULL THEN
+        RAISE EXCEPTION 'FBR data is required';
+    END IF;
+    
     -- Extract company data with proper validation
     v_company_name := p_company_data->>'name';
     
@@ -83,25 +100,77 @@ BEGIN
     
     v_tax_id_number := p_company_data->>'tax_id_number';
     v_filing_status := p_company_data->>'filing_status';
-    v_tax_year_end := CASE 
-        WHEN p_company_data->>'tax_year_end' IS NOT NULL AND p_company_data->>'tax_year_end' != '' 
-        THEN (p_company_data->>'tax_year_end')::DATE 
-        ELSE NULL 
-    END;
+    
+    -- Validate and cast tax year end date
+    IF p_company_data->>'tax_year_end' IS NOT NULL AND p_company_data->>'tax_year_end' != '' THEN
+        BEGIN
+            v_tax_year_end := (p_company_data->>'tax_year_end')::DATE;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE EXCEPTION 'Invalid tax year end date format: %. Expected format: YYYY-MM-DD', p_company_data->>'tax_year_end';
+        END;
+    ELSE
+        v_tax_year_end := NULL;
+    END IF;
+    
     v_assigned_accountant_id := '';
     
-    -- Extract FBR data
+    -- Extract FBR data with validation
     v_cnic_ntn := p_fbr_data->>'cnic_ntn';
     v_business_name := p_fbr_data->>'business_name';
-    v_province_code := (p_fbr_data->>'province_code')::INTEGER;
+    
+    -- Validate province code
+    IF p_fbr_data->>'province_code' IS NULL OR p_fbr_data->>'province_code' = '' THEN
+        RAISE EXCEPTION 'Province code is required';
+    END IF;
+    
+    BEGIN
+        v_province_code := (p_fbr_data->>'province_code')::INTEGER;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE EXCEPTION 'Invalid province code: %. Must be a valid integer', p_fbr_data->>'province_code';
+    END;
+    
     v_address := p_fbr_data->>'address';
     v_mobile_number := p_fbr_data->>'mobile_number';
-    v_business_activity_id := (p_fbr_data->>'business_activity_id')::INTEGER;
     
-    -- Extract opening balance data
+    -- Validate business activity ID
+    IF p_fbr_data->>'business_activity_id' IS NULL OR p_fbr_data->>'business_activity_id' = '' THEN
+        RAISE EXCEPTION 'Business activity ID is required';
+    END IF;
+    
+    BEGIN
+        v_business_activity_id := (p_fbr_data->>'business_activity_id')::INTEGER;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE EXCEPTION 'Invalid business activity ID: %. Must be a valid integer', p_fbr_data->>'business_activity_id';
+    END;
+    
+    -- Extract opening balance data with validation
     IF NOT p_skip_balance AND p_opening_balance IS NOT NULL THEN
-        v_opening_amount := (p_opening_balance->>'amount')::DECIMAL;
-        v_opening_date := (p_opening_balance->>'date')::DATE;
+        -- Validate opening balance amount
+        IF p_opening_balance->>'amount' IS NULL OR p_opening_balance->>'amount' = '' THEN
+            RAISE EXCEPTION 'Opening balance amount is required when opening balance is provided';
+        END IF;
+        
+        BEGIN
+            v_opening_amount := (p_opening_balance->>'amount')::DECIMAL;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE EXCEPTION 'Invalid opening balance amount: %. Must be a valid decimal number', p_opening_balance->>'amount';
+        END;
+        
+        -- Validate opening balance date
+        IF p_opening_balance->>'date' IS NULL OR p_opening_balance->>'date' = '' THEN
+            RAISE EXCEPTION 'Opening balance date is required when opening balance is provided';
+        END IF;
+        
+        BEGIN
+            v_opening_date := (p_opening_balance->>'date')::DATE;
+        EXCEPTION
+            WHEN OTHERS THEN
+                RAISE EXCEPTION 'Invalid opening balance date format: %. Expected format: YYYY-MM-DD', p_opening_balance->>'date';
+        END;
         
         -- Validate opening balance
         IF v_opening_amount <= 0 THEN
@@ -124,8 +193,34 @@ BEGIN
         RAISE EXCEPTION 'Company type is required';
     END IF;
     
-    IF v_cnic_ntn IS NULL OR v_business_name IS NULL OR v_business_activity_id IS NULL THEN
-        RAISE EXCEPTION 'FBR profile data is required: CNIC/NTN, business name, and business activity';
+    IF v_cnic_ntn IS NULL OR v_cnic_ntn = '' THEN
+        RAISE EXCEPTION 'CNIC/NTN is required';
+    END IF;
+    
+    IF v_business_name IS NULL OR v_business_name = '' THEN
+        RAISE EXCEPTION 'Business name is required';
+    END IF;
+    
+    IF v_business_activity_id IS NULL THEN
+        RAISE EXCEPTION 'Business activity ID is required';
+    END IF;
+    
+    IF v_address IS NULL OR v_address = '' THEN
+        RAISE EXCEPTION 'Address is required';
+    END IF;
+    
+    IF v_mobile_number IS NULL OR v_mobile_number = '' THEN
+        RAISE EXCEPTION 'Mobile number is required';
+    END IF;
+    
+    -- Validate CNIC/NTN format (7 or 13 digits)
+    IF v_cnic_ntn !~ '^(\d{7}|\d{13})$' THEN
+        RAISE EXCEPTION 'Invalid CNIC/NTN format: %. Must be 7 or 13 digits', v_cnic_ntn;
+    END IF;
+    
+    -- Validate mobile number format (+92XXXXXXXXXX)
+    IF v_mobile_number !~ '^\+92\d{10}$' THEN
+        RAISE EXCEPTION 'Invalid mobile number format: %. Must be in format: +92XXXXXXXXXX', v_mobile_number;
     END IF;
     
     -- Check if CNIC/NTN already exists for different user

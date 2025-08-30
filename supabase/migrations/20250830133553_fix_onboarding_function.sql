@@ -61,21 +61,28 @@ DECLARE
     v_has_opening_balance BOOLEAN := FALSE;
     v_has_fbr_profile BOOLEAN := FALSE;
     
+    -- Debug variables
+    v_company_type_text TEXT;
+    
 BEGIN
     -- Extract company data with proper validation
     v_company_name := p_company_data->>'name';
     
-    -- Validate and cast company type with better error handling
-    IF p_company_data->>'type' IS NULL OR p_company_data->>'type' = '' THEN
+    -- Extract company type as text first for debugging
+    v_company_type_text := p_company_data->>'type';
+    
+    -- Validate company type is not null or empty
+    IF v_company_type_text IS NULL OR v_company_type_text = '' THEN
         RAISE EXCEPTION 'Company type is required';
     END IF;
     
-    BEGIN
-        v_company_type := (p_company_data->>'type')::company_type;
-    EXCEPTION
-        WHEN OTHERS THEN
-            RAISE EXCEPTION 'Invalid company type: %. Valid types are: INDEPENDENT_WORKER, PROFESSIONAL_SERVICES, SMALL_BUSINESS', p_company_data->>'type';
-    END;
+    -- Validate company type is one of the valid enum values
+    IF v_company_type_text NOT IN ('INDEPENDENT_WORKER', 'PROFESSIONAL_SERVICES', 'SMALL_BUSINESS') THEN
+        RAISE EXCEPTION 'Invalid company type: %. Valid types are: INDEPENDENT_WORKER, PROFESSIONAL_SERVICES, SMALL_BUSINESS', v_company_type_text;
+    END IF;
+    
+    -- Now safely cast to enum
+    v_company_type := v_company_type_text::company_type;
     
     v_tax_id_number := p_company_data->>'tax_id_number';
     v_filing_status := p_company_data->>'filing_status';
