@@ -66,11 +66,19 @@ export const loadUserData = createAsyncThunk(
   }
 );
 
+// Track if auth listener is already set up
+let authListenerSetup = false;
+
 // Async thunk for setting up auth state listener
 export const setupAuthListener = createAsyncThunk(
   'user/setupAuthListener',
   async (_, { dispatch, rejectWithValue }) => {
     try {
+      // Prevent multiple listeners from being set up
+      if (authListenerSetup) {
+        return { success: true, alreadySetup: true };
+      }
+
       const { supabase } = await import('@/shared/services/supabase/client');
 
       supabase.auth.onAuthStateChange(
@@ -91,6 +99,7 @@ export const setupAuthListener = createAsyncThunk(
         }
       );
 
+      authListenerSetup = true;
       return { success: true };
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to setup auth listener');
