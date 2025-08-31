@@ -14,6 +14,7 @@ import { Badge } from '@/shared/components/Badge';
 import { Alert, AlertDescription } from '@/shared/components/Alert';
 import { InvoiceValidationModal } from '@/shared/components/InvoiceValidationModal';
 import { FBRSubmissionModal } from '@/shared/components/FBRSubmissionModal';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/Tooltip';
 import {
     Play,
     Target,
@@ -38,6 +39,7 @@ import { BuyerManagement } from '@/features/user/buyer-management';
 import { InvoiceItemManagement } from './InvoiceItemManagement';
 import { InvoicePreview } from './InvoicePreview';
 import { InvoicePDFGenerator } from './invoicePDF';
+import { submitInvoiceToFBR } from '@/shared/services/api/fbrSubmission';
 
 export default function ScenarioInvoiceForm() {
     const { scenarioId } = useParams<{ scenarioId: string }>();
@@ -256,10 +258,39 @@ export default function ScenarioInvoiceForm() {
 
     const handleValidateInvoice = async () => {
         try {
+            // Basic validation before calling FBR
+            if (!formData.buyerNTNCNIC || formData.items.length === 0) {
+                toast({
+                    title: 'Validation Error',
+                    description: 'Please fill in buyer details and add at least one item before validating.',
+                    variant: 'destructive'
+                });
+                return;
+            }
+
+            // Check if items have required data
+            const invalidItems = formData.items.filter(item =>
+                !item.quantity || item.quantity <= 0 || !item.unit_price || item.unit_price <= 0
+            );
+
+            if (invalidItems.length > 0) {
+                toast({
+                    title: 'Validation Error',
+                    description: 'Please ensure all items have valid quantity and unit price.',
+                    variant: 'destructive'
+                });
+                return;
+            }
+
             await validateInvoiceData(formData);
             setShowValidationModal(true);
         } catch (error) {
             console.error('Validation error:', error);
+            toast({
+                title: 'Validation Error',
+                description: 'Failed to validate invoice. Please try again.',
+                variant: 'destructive'
+            });
         }
     };
 
@@ -286,9 +317,6 @@ export default function ScenarioInvoiceForm() {
                     error: 'FBR API Key Required - Please configure your FBR sandbox API key before submitting invoices.'
                 };
             }
-
-            // Import the submission service
-            const { submitInvoiceToFBR } = await import('@/shared/services/api/fbrSubmission');
 
             const response = await submitInvoiceToFBR({
                 userId: user.id,
@@ -673,18 +701,53 @@ export default function ScenarioInvoiceForm() {
                                                 <CheckCircle className="h-4 w-4" />
                                                 <span className="hidden sm:inline">Validate Invoice</span>
                                                 <span className="sm:hidden">Validate</span>
+                                                {validationResult && validationResult.isValid && (
+                                                    <Badge variant="default" className="ml-2 text-xs bg-green-600">
+                                                        ✓ Valid
+                                                    </Badge>
+                                                )}
+                                                {validationResult && !validationResult.isValid && validationResult.summary.errors > 0 && (
+                                                    <Badge variant="destructive" className="ml-2 text-xs">
+                                                        ✗ {validationResult.summary.errors} Error{validationResult.summary.errors !== 1 ? 's' : ''}
+                                                    </Badge>
+                                                )}
+                                                {validationResult && !validationResult.isValid && validationResult.summary.errors === 0 && validationResult.summary.warnings > 0 && (
+                                                    <Badge variant="secondary" className="ml-2 text-xs bg-yellow-600">
+                                                        ⚠ {validationResult.summary.warnings} Warning{validationResult.summary.warnings !== 1 ? 's' : ''}
+                                                    </Badge>
+                                                )}
                                             </>
                                         )}
                                     </Button>
-                                    <Button
-                                        onClick={handleSubmit}
-                                        disabled={!formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0) || !validationResult?.isValid}
-                                        className="flex items-center justify-center gap-2 px-4 py-2 h-10 font-semibold"
-                                    >
-                                        <Play className="h-4 w-4" />
-                                        <span className="hidden sm:inline">Complete Scenario</span>
-                                        <span className="sm:hidden">Complete</span>
-                                    </Button>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    onClick={handleSubmit}
+                                                    disabled={!formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0) || !validationResult || !validationResult.isValid}
+                                                    className="flex items-center justify-center gap-2 px-4 py-2 h-10 font-semibold"
+                                                >
+                                                    <Play className="h-4 w-4" />
+                                                    <span className="hidden sm:inline">Complete Scenario</span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            {!validationResult && (
+                                                <TooltipContent>
+                                                    <p>Please validate the invoice first before completing the scenario</p>
+                                                </TooltipContent>
+                                            )}
+                                            {validationResult && !validationResult.isValid && (
+                                                <TooltipContent>
+                                                    <p>Invoice validation failed. Please fix the errors and validate again.</p>
+                                                </TooltipContent>
+                                            )}
+                                            {validationResult && validationResult.isValid && (
+                                                <TooltipContent>
+                                                    <p>Invoice is validated and ready for submission</p>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </div>
 
                                 {/* Cancel Button Row */}

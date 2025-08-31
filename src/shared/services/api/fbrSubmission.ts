@@ -1,6 +1,7 @@
 import { HttpClientApi } from './http-client';
 import { saveInvoice } from '../supabase/invoice';
 import { ScenarioInvoiceFormData } from '@/shared/types/invoice';
+import { INVOICE_TYPE } from '@/shared/constants/invoice';
 
 // FBR API endpoints
 const FBR_ENDPOINTS = {
@@ -25,6 +26,7 @@ export interface FBRSubmissionResponse {
     data?: {
         fbrReference?: string;
         transactionId?: string;
+        invoiceNumber?: string;
         response?: Record<string, unknown>;
         invoiceId?: string | undefined;
     };
@@ -48,18 +50,23 @@ export interface FBRInvoiceData {
     invoiceRefNo: string;
     scenarioId?: string;
     items: Array<{
-        itemCode: string;
-        itemName: string;
+        hsCode: string;
+        productDescription: string;
+        rate: string;
+        uoM: string;
         quantity: number;
-        unitPrice: number;
-        totalAmount: number;
-        salesTax: number;
-        unitOfMeasurement: string;
-        taxRate: number;
+        totalValues: number;
         valueSalesExcludingST: number;
-        fixedNotifiedValue: number;
-        retailPrice: number;
-        invoiceNote?: string | undefined;
+        fixedNotifiedValueOrRetailPrice: number;
+        salesTaxApplicable: number;
+        salesTaxWithheldAtSource: number;
+        extraTax: number;
+        furtherTax: number;
+        sroScheduleNo: string;
+        fedPayable: number;
+        discount: number;
+        saleType: string;
+        sroItemSerialNo: string;
     }>;
     totalAmount: number;
     totalSalesTax: number;
@@ -77,6 +84,12 @@ function formatInvoiceDataForFBR(invoiceData: ScenarioInvoiceFormData): FBRInvoi
     const formatNumber = (value: number | string): number => {
         const num = typeof value === 'string' ? parseFloat(value) || 0 : value;
         return Math.round(num * 100) / 100;
+    };
+
+    // Format rate as percentage string
+    const formatRate = (rate: number | string): string => {
+        const num = typeof rate === 'string' ? parseFloat(rate) || 0 : rate;
+        return `${num}%`;
     };
 
     // Calculate totals
@@ -98,18 +111,23 @@ function formatInvoiceDataForFBR(invoiceData: ScenarioInvoiceFormData): FBRInvoi
         invoiceRefNo: invoiceData.invoiceRefNo || "",
         scenarioId: invoiceData.scenarioId,
         items: invoiceData.items.map(item => ({
-            itemCode: item.hs_code,
-            itemName: item.item_name,
+            hsCode: item.hs_code,
+            productDescription: item.item_name,
+            rate: formatRate(item.tax_rate),
+            uoM: item.uom_code,
             quantity: formatNumber(item.quantity),
-            unitPrice: formatNumber(item.unit_price),
-            totalAmount: formatNumber(item.total_amount),
-            salesTax: formatNumber(item.sales_tax || 0),
-            unitOfMeasurement: item.uom_code,
-            taxRate: formatNumber(item.tax_rate),
+            totalValues: formatNumber(item.total_amount),
             valueSalesExcludingST: formatNumber(item.value_sales_excluding_st),
-            fixedNotifiedValue: formatNumber(item.fixed_notified_value || 0),
-            retailPrice: formatNumber(item.retail_price || 0),
-            invoiceNote: item.invoice_note || undefined
+            fixedNotifiedValueOrRetailPrice: formatNumber(item.fixed_notified_value || item.retail_price || 0),
+            salesTaxApplicable: formatNumber(item.sales_tax),
+            salesTaxWithheldAtSource: formatNumber(item.sales_tax_withheld_at_source || 0),
+            extraTax: formatNumber(item.extra_tax || 0),
+            furtherTax: formatNumber(item.further_tax || 0),
+            sroScheduleNo: item.sro_schedule_no || "",
+            fedPayable: formatNumber(item.fed_payable || 0),
+            discount: formatNumber(item.discount || 0),
+            saleType: item.sale_type || "Goods at standard rate (default)",
+            sroItemSerialNo: item.sro_item_serial_no || ""
         })),
         totalAmount: formatNumber(invoiceData.totalAmount),
         totalSalesTax: formatNumber(totalSalesTax),
@@ -124,7 +142,15 @@ function validateInvoiceData(invoiceData: ScenarioInvoiceFormData): { isValid: b
     const errors: string[] = [];
 
     // Required fields validation
-    if (!invoiceData.invoiceType) errors.push('Invoice type is required');
+    if (!invoiceData.invoiceType) {
+        errors.push('Invoice type is required');
+    } else {
+        // Check if invoice type is valid
+        const validInvoiceTypes = Object.values(INVOICE_TYPE);
+        if (!validInvoiceTypes.includes(invoiceData.invoiceType as typeof validInvoiceTypes[number])) {
+            errors.push(`Invoice type is not valid or empty, please provide valid invoice type. Valid types: ${validInvoiceTypes.join(', ')}`);
+        }
+    }
     if (!invoiceData.invoiceDate) errors.push('Invoice date is required');
     if (!invoiceData.sellerNTNCNIC) errors.push('Seller NTN/CNIC is required');
     if (!invoiceData.sellerBusinessName) errors.push('Seller business name is required');
@@ -241,6 +267,55 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
             if (response.data && typeof response.data === 'object') {
                 const responseData = response.data as Record<string, unknown>;
 
+                // Check for FBR validation response structure
+                if (responseData.validationResponse) {
+                    const validationResponse = responseData.validationResponse as Record<string, unknown>;
+
+                    // Check if validation was successful
+                    if (validationResponse.statusCode === '00' && validationResponse.status === 'Valid') {
+                        // FBR validation successful - save to database
+                        const saveResult = await saveInvoice(userId, invoiceData, responseData);
+
+                        if (!saveResult.success) {
+                            console.error('Failed to save invoice:', saveResult.error);
+                            return {
+                                success: false,
+                                error: 'Invoice submitted to FBR but failed to save locally',
+                                attempt,
+                                data: {
+                                    response: responseData
+                                }
+                            };
+                        }
+
+                        return {
+                            success: true,
+                            data: {
+                                fbrReference: responseData.invoiceNumber as string || 'FBR-' + Date.now(),
+                                transactionId: responseData.invoiceNumber as string,
+                                invoiceNumber: responseData.invoiceNumber as string,
+                                response: responseData,
+                                invoiceId: saveResult.invoiceId
+                            },
+                            attempt
+                        };
+                    } else {
+                        // FBR validation failed
+                        const errorCode = validationResponse.errorCode as string || 'UNKNOWN';
+                        const errorMessage = validationResponse.error as string || 'FBR validation failed';
+
+                        return {
+                            success: false,
+                            error: `FBR Validation Error (${errorCode}): ${errorMessage}`,
+                            attempt,
+                            data: {
+                                response: responseData
+                            }
+                        };
+                    }
+                }
+
+                // Check for legacy error format
                 if ('error' in responseData) {
                     const errorMessage = typeof responseData.error === 'string'
                         ? responseData.error
@@ -256,7 +331,7 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
                     };
                 }
 
-                // Check for success indicators in response
+                // Check for other success indicators (legacy format)
                 const hasSuccessIndicator = responseData.transactionId ||
                     responseData.referenceNumber ||
                     responseData.status === 'success' ||
@@ -283,6 +358,7 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
                         data: {
                             fbrReference: responseData.transactionId as string || responseData.referenceNumber as string,
                             transactionId: responseData.transactionId as string,
+                            invoiceNumber: responseData.invoiceNumber as string || responseData.transactionId as string,
                             response: responseData,
                             invoiceId: saveResult.invoiceId
                         },

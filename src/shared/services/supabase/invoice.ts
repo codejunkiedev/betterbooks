@@ -25,7 +25,9 @@ export async function generateInvoiceNumber(userId: string, year: number): Promi
             throw error;
         }
 
-        return data;
+        // Format: INV-YYYY-XXXX (e.g., INV-2025-0001)
+        const sequenceNumber = data.split('-').pop() || '0001';
+        return `INV-${year}-${sequenceNumber.padStart(4, '0')}`;
     } catch (error) {
         console.error('Failed to generate invoice number:', error);
         throw new Error('Failed to generate invoice number');
@@ -41,10 +43,32 @@ export async function saveInvoice(
     fbrResponse?: Record<string, unknown>
 ): Promise<{ success: boolean; invoiceId?: string; error?: string }> {
     try {
+        let invoiceRefNo = invoiceData.invoiceRefNo;
+
+        // Check if FBR response contains an invoice number and use it as the invoice_ref_no
+        if (fbrResponse && fbrResponse.invoiceNumber) {
+            invoiceRefNo = fbrResponse.invoiceNumber as string;
+        }
+
         // Generate invoice number if not provided
-        if (!invoiceData.invoiceRefNo) {
+        if (!invoiceRefNo) {
             const year = new Date(invoiceData.invoiceDate).getFullYear();
-            invoiceData.invoiceRefNo = await generateInvoiceNumber(userId, year);
+            invoiceRefNo = await generateInvoiceNumber(userId, year);
+        }
+
+        // Determine invoice status based on FBR response
+        let invoiceStatus: typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS] = INVOICE_STATUS.DRAFT;
+        if (fbrResponse) {
+            if (fbrResponse.validationResponse) {
+                const validationResponse = fbrResponse.validationResponse as Record<string, unknown>;
+                if (validationResponse.statusCode === '00' && validationResponse.status === 'Valid') {
+                    invoiceStatus = INVOICE_STATUS.APPROVED;
+                } else {
+                    invoiceStatus = INVOICE_STATUS.REJECTED;
+                }
+            } else {
+                invoiceStatus = INVOICE_STATUS.SUBMITTED;
+            }
         }
 
         // Save invoice data to database
@@ -52,7 +76,7 @@ export async function saveInvoice(
             .from('invoices')
             .insert({
                 user_id: userId,
-                invoice_ref_no: invoiceData.invoiceRefNo,
+                invoice_ref_no: invoiceRefNo,
                 invoice_type: invoiceData.invoiceType,
                 invoice_date: invoiceData.invoiceDate,
                 seller_ntn_cnic: invoiceData.sellerNTNCNIC,
@@ -68,7 +92,7 @@ export async function saveInvoice(
                 total_amount: invoiceData.totalAmount,
                 notes: invoiceData.notes,
                 fbr_response: fbrResponse ? JSON.stringify(fbrResponse) : null,
-                status: fbrResponse ? INVOICE_STATUS.SUBMITTED : INVOICE_STATUS.DRAFT
+                status: invoiceStatus
             })
             .select('id')
             .single();
@@ -157,6 +181,61 @@ export async function getUserInvoices(userId: string): Promise<{ data: Record<st
         console.error('Failed to get user invoices:', error);
         return { data: [], error };
     }
+}
+
+/**
+ * Get invoices by user ID with optional filtering
+ */
+export async function getInvoicesByUser(
+    userId: string,
+    options: {
+        status?: typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS];
+        limit?: number;
+        offset?: number;
+        orderBy?: 'created_at' | 'updated_at' | 'invoice_date';
+        orderDirection?: 'asc' | 'desc';
+    } = {}
+): Promise<{ data: Record<string, unknown>[] | null; error: unknown; count?: number }> {
+    try {
+        const { status, limit = 50, offset = 0, orderBy = 'created_at', orderDirection = 'desc' } = options;
+
+        let query = supabase
+            .from('invoices')
+            .select(`
+                *,
+                invoice_items (*)
+            `, { count: 'exact' })
+            .eq('user_id', userId)
+            .order(orderBy, { ascending: orderDirection === 'asc' })
+            .range(offset, offset + limit - 1);
+
+        if (status) {
+            query = query.eq('status', status);
+        }
+
+        const { data, error, count } = await query;
+
+        return { data, error, count: count || 0 };
+    } catch (error) {
+        console.error('Failed to get invoices by user:', error);
+        return { data: null, error };
+    }
+}
+
+/**
+ * Get successful FBR submissions (approved invoices)
+ */
+export async function getSuccessfulFBRSubmissions(
+    userId: string,
+    options: {
+        limit?: number;
+        offset?: number;
+    } = {}
+): Promise<{ data: Record<string, unknown>[] | null; error: unknown; count?: number }> {
+    return getInvoicesByUser(userId, {
+        ...options,
+        status: INVOICE_STATUS.APPROVED
+    });
 }
 
 /**

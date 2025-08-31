@@ -14,10 +14,9 @@ import {
     Info
 } from 'lucide-react';
 import {
-    InvoiceValidationResponse,
-    ValidationResult,
-    ValidationSeverity
+    InvoiceValidationResponse
 } from '@/shared/services/api/invoiceValidation';
+import { ValidationResult, ValidationSeverity } from '../utils/validation';
 
 interface InvoiceValidationModalProps {
     isOpen: boolean;
@@ -78,8 +77,14 @@ const ValidationResultItem: React.FC<{ result: ValidationResult }> = ({ result }
                         <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-sm">
                                 {result.field.includes('items[')
-                                    ? `Item ${result.field.match(/\[(\d+)\]/)?.[1] || 'N/A'}: ${result.field.split('.').pop()}`
-                                    : result.field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+                                    ? (() => {
+                                        const itemMatch = result.field.match(/\[(\d+)\]/);
+                                        const itemNumber = itemMatch ? (parseInt(itemMatch[1]) + 1).toString() : 'N/A';
+                                        return `Item ${itemNumber}`;
+                                    })()
+                                    : result.field === 'fbr_validation'
+                                        ? 'FBR Validation'
+                                        : result.field.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())
                                 }
                             </span>
                             {result.code && (
@@ -89,14 +94,16 @@ const ValidationResultItem: React.FC<{ result: ValidationResult }> = ({ result }
                             )}
                         </div>
                         <p className="text-sm mb-2">{result.message}</p>
-                        {result.suggestion && (
-                            <div className="text-xs opacity-75">
+
+                        {/* Expandable content */}
+                        {isExpanded && result.suggestion && (
+                            <div className="text-xs opacity-75 mt-2 p-2 bg-white bg-opacity-50 rounded border">
                                 <strong>Suggestion:</strong> {result.suggestion}
                             </div>
                         )}
                     </div>
                 </div>
-                {(result.suggestion || result.code) && (
+                {result.suggestion && (
                     <Button
                         variant="ghost"
                         size="sm"
@@ -149,19 +156,28 @@ const ValidationSummary: React.FC<{ summary: InvoiceValidationResponse['summary'
                     <span>Errors</span>
                     <span className="font-medium">{errors}</span>
                 </div>
-                <Progress value={errorPercentage} className="h-2" />
+                <Progress
+                    value={errorPercentage}
+                    className="h-2 [&>div]:bg-red-500"
+                />
 
                 <div className="flex items-center justify-between text-sm">
                     <span>Warnings</span>
                     <span className="font-medium">{warnings}</span>
                 </div>
-                <Progress value={warningPercentage} className="h-2" />
+                <Progress
+                    value={warningPercentage}
+                    className="h-2 [&>div]:bg-yellow-500"
+                />
 
                 <div className="flex items-center justify-between text-sm">
                     <span>Passed</span>
                     <span className="font-medium">{successes}</span>
                 </div>
-                <Progress value={successPercentage} className="h-2" />
+                <Progress
+                    value={successPercentage}
+                    className="h-2 [&>div]:bg-green-500"
+                />
             </div>
         </div>
     );
@@ -260,7 +276,7 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
                             {activeTab === 'summary' ? (
                                 <ValidationSummary summary={validationResult.summary} />
                             ) : (
-                                <div className="space-y-4">
+                                <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
                                     {/* Errors */}
                                     {errorResults.length > 0 && (
                                         <div>

@@ -3,34 +3,34 @@ import { ScenarioInvoiceFormData, InvoiceItemCalculated } from '@/shared/types/i
 // Optimized business data with proper NTN/CNIC formats
 export const SAMPLE_BUSINESSES = {
     TECH: {
-        sellerNTNCNIC: '1234567890123', // 13-digit CNIC format
-        sellerBusinessName: 'Tech Solutions Pakistan Ltd.',
+        sellerNTNCNIC: '3540504912049', // Authorized seller NTN/CNIC
+        sellerBusinessName: 'Farooq Traders',
         sellerProvince: 'Punjab',
         sellerAddress: '123 Main Street, Gulberg III, Lahore',
-        buyerNTNCNIC: '9876543210987', // 13-digit CNIC format
-        buyerBusinessName: 'Digital Innovations Pvt Ltd.',
+        buyerNTNCNIC: '3562101254686', // Authorized buyer NTN/CNIC
+        buyerBusinessName: 'Al Ihsna',
         buyerProvince: 'Sindh',
         buyerAddress: '456 Business Avenue, Clifton Block 5, Karachi',
         buyerRegistrationType: 'NTN'
     },
     MANUFACTURING: {
-        sellerNTNCNIC: '2345678901234', // 13-digit CNIC format
-        sellerBusinessName: 'Pak Steel Industries Ltd.',
+        sellerNTNCNIC: '3540504912049', // Authorized seller NTN/CNIC
+        sellerBusinessName: 'Farooq Traders',
         sellerProvince: 'Punjab',
         sellerAddress: '789 Industrial Zone, Faisalabad',
-        buyerNTNCNIC: '8765432109876', // 13-digit CNIC format
-        buyerBusinessName: 'Construction Solutions Ltd.',
+        buyerNTNCNIC: '3562101254686', // Authorized buyer NTN/CNIC
+        buyerBusinessName: 'Al Ihsna',
         buyerProvince: 'Khyber Pakhtunkhwa',
         buyerAddress: '321 Business Park, Peshawar',
         buyerRegistrationType: 'CNIC'
     },
     RETAIL: {
-        sellerNTNCNIC: '3456789012345',
-        sellerBusinessName: 'Modern Retail Chain Ltd.',
+        sellerNTNCNIC: '3540504912049', // Authorized seller NTN/CNIC
+        sellerBusinessName: 'Farooq Traders',
         sellerProvince: 'Sindh',
         sellerAddress: '567 Mall Road, Karachi',
-        buyerNTNCNIC: '7654321098765',
-        buyerBusinessName: 'Local Store Network',
+        buyerNTNCNIC: '3562101254686', // Authorized buyer NTN/CNIC
+        buyerBusinessName: 'Al Ihsna',
         buyerProvince: 'Balochistan',
         buyerAddress: '654 Market Street, Quetta',
         buyerRegistrationType: 'Registered'
@@ -41,7 +41,23 @@ export const SAMPLE_BUSINESSES = {
 export const SAMPLE_PRODUCTS: Record<string, InvoiceItemCalculated[]> = {
     ELECTRONICS: [
         {
-            hs_code: '84713000',
+            hs_code: '8529.9030',
+            item_name: 'ELECTRICAL MACHINERY AND EQUIPMENT AND PARTS THEREOF; . - T.V. CONVERTER BOX',
+            quantity: 3,
+            unit_price: 5000, // Price excluding tax
+            uom_code: '69',
+            tax_rate: 16,
+            value_sales_excluding_st: 15000, // 5000 * 3
+            sales_tax: 3000, // 15000 * 0.16
+            total_amount: 18000, // 15000 + 3000
+            unit_price_excluding_tax: 5000, // Already excluding tax
+            fixed_notified_value: 10000,
+            retail_price: 15000,
+            invoice_note: 'Sample T.V. converter box',
+            is_third_schedule: true
+        },
+        {
+            hs_code: '8471.3000',
             item_name: 'Laptop Computer - Dell Latitude 5520 (Intel i7, 16GB RAM, 512GB SSD)',
             quantity: 2,
             unit_price: 150000, // Price excluding tax
@@ -57,7 +73,7 @@ export const SAMPLE_PRODUCTS: Record<string, InvoiceItemCalculated[]> = {
             is_third_schedule: true
         },
         {
-            hs_code: '85171300',
+            hs_code: '8517.1300',
             item_name: 'Smartphone - Samsung Galaxy S24 Ultra (256GB, Phantom Black)',
             quantity: 1,
             unit_price: 250000, // Price excluding tax
@@ -71,27 +87,11 @@ export const SAMPLE_PRODUCTS: Record<string, InvoiceItemCalculated[]> = {
             retail_price: 250000,
             invoice_note: 'Sample smartphone',
             is_third_schedule: true
-        },
-        {
-            hs_code: '85287200',
-            item_name: 'LED Monitor - Dell 27" 4K Ultra HD (P2723QE)',
-            quantity: 3,
-            unit_price: 85000, // Price excluding tax
-            uom_code: 'PCS',
-            tax_rate: 16,
-            value_sales_excluding_st: 255000, // 85000 * 3
-            sales_tax: 40800, // 255000 * 0.16
-            total_amount: 295800, // 255000 + 40800
-            unit_price_excluding_tax: 85000, // Already excluding tax
-            fixed_notified_value: 295800,
-            retail_price: 255000,
-            invoice_note: 'Sample LED monitors',
-            is_third_schedule: true
         }
     ],
     MANUFACTURING: [
         {
-            hs_code: '72104100',
+            hs_code: '7210.4100',
             item_name: 'Steel Sheets - Hot Rolled (3mm thickness, 1000x2000mm)',
             quantity: 5,
             unit_price: 85000, // Price excluding tax
@@ -107,7 +107,7 @@ export const SAMPLE_PRODUCTS: Record<string, InvoiceItemCalculated[]> = {
             is_third_schedule: false
         },
         {
-            hs_code: '73089000',
+            hs_code: '7308.9000',
             item_name: 'Steel Structures - Prefabricated Building Components',
             quantity: 2,
             unit_price: 120000, // Price excluding tax
@@ -125,7 +125,7 @@ export const SAMPLE_PRODUCTS: Record<string, InvoiceItemCalculated[]> = {
     ],
     RETAIL: [
         {
-            hs_code: '61044300',
+            hs_code: '6104.4300',
             item_name: 'Women\'s Dresses - Cotton Blend (Various Sizes)',
             quantity: 50,
             unit_price: 2500, // Price excluding tax
@@ -141,7 +141,7 @@ export const SAMPLE_PRODUCTS: Record<string, InvoiceItemCalculated[]> = {
             is_third_schedule: true
         },
         {
-            hs_code: '62044300',
+            hs_code: '6204.4300',
             item_name: 'Men\'s Shirts - Cotton (Various Sizes)',
             quantity: 75,
             unit_price: 1800, // Price excluding tax
@@ -157,7 +157,7 @@ export const SAMPLE_PRODUCTS: Record<string, InvoiceItemCalculated[]> = {
             is_third_schedule: true
         },
         {
-            hs_code: '64039100',
+            hs_code: '6403.9100',
             item_name: 'Leather Shoes - Men\'s Formal (Various Sizes)',
             quantity: 30,
             unit_price: 3500, // Price excluding tax
@@ -316,7 +316,7 @@ export const generateRandomSampleData = (scenarioId?: string): ScenarioInvoiceFo
 // Generate minimal sample data for quick testing
 export const generateMinimalSampleData = (scenarioId?: string): ScenarioInvoiceFormData => {
     const minimalItem: InvoiceItemCalculated = {
-        hs_code: '84713000',
+        hs_code: '8471.3000',
         item_name: 'Test Product - Sample Item',
         quantity: 1,
         unit_price: 10000, // Price excluding tax
@@ -335,12 +335,12 @@ export const generateMinimalSampleData = (scenarioId?: string): ScenarioInvoiceF
     return {
         invoiceType: 'Sale Invoice',
         invoiceDate: new Date().toISOString().split('T')[0],
-        sellerNTNCNIC: '1234567890123', // 13-digit CNIC format
-        sellerBusinessName: 'Test Company Ltd.',
+        sellerNTNCNIC: '3540504912049', // Authorized seller NTN/CNIC
+        sellerBusinessName: 'Farooq Traders',
         sellerProvince: 'Punjab',
         sellerAddress: '123 Test Street, Lahore',
-        buyerNTNCNIC: '9876543210987', // 13-digit CNIC format
-        buyerBusinessName: 'Test Buyer Ltd.',
+        buyerNTNCNIC: '3562101254686', // Authorized buyer NTN/CNIC
+        buyerBusinessName: 'Al Ihsna',
         buyerProvince: 'Sindh',
         buyerAddress: '456 Test Avenue, Karachi',
         buyerRegistrationType: 'NTN',
@@ -357,7 +357,7 @@ export const generateScenarioSpecificMinimalData = (scenarioCode: string, scenar
     // Map scenario codes to appropriate minimal items
     const scenarioMinimalItems: Record<string, InvoiceItemCalculated> = {
         'SN001': { // Standard rate to registered buyers
-            hs_code: '84713000',
+            hs_code: '8471.3000',
             item_name: 'Laptop Computer - Standard Rate Sale',
             quantity: 1,
             unit_price: 150000, // Price excluding tax
@@ -373,7 +373,7 @@ export const generateScenarioSpecificMinimalData = (scenarioCode: string, scenar
             is_third_schedule: false
         },
         'SN002': { // Standard rate to unregistered buyers
-            hs_code: '85171300',
+            hs_code: '8517.1300',
             item_name: 'Smartphone - Standard Rate Sale',
             quantity: 1,
             unit_price: 100000, // Price excluding tax
@@ -389,7 +389,7 @@ export const generateScenarioSpecificMinimalData = (scenarioCode: string, scenar
             is_third_schedule: false
         },
         'SN003': { // Steel sector
-            hs_code: '72104100',
+            hs_code: '7210.4100',
             item_name: 'Steel Sheets - Hot Rolled',
             quantity: 1,
             unit_price: 85000, // Price excluding tax
@@ -405,7 +405,7 @@ export const generateScenarioSpecificMinimalData = (scenarioCode: string, scenar
             is_third_schedule: false
         },
         'SN005': { // Reduced rate sale
-            hs_code: '61044300',
+            hs_code: '6104.4300',
             item_name: 'Women\'s Dresses - Reduced Rate',
             quantity: 10,
             unit_price: 2500, // Price excluding tax
@@ -421,7 +421,7 @@ export const generateScenarioSpecificMinimalData = (scenarioCode: string, scenar
             is_third_schedule: false
         },
         'SN006': { // Exempt goods sale
-            hs_code: '10019900',
+            hs_code: '1001.9900',
             item_name: 'Wheat - Exempt Goods',
             quantity: 100,
             unit_price: 100, // Price excluding tax
@@ -437,7 +437,7 @@ export const generateScenarioSpecificMinimalData = (scenarioCode: string, scenar
             is_third_schedule: false
         },
         'SN007': { // Zero rated sale
-            hs_code: '52085200',
+            hs_code: '5208.5200',
             item_name: 'Cotton Fabric - Zero Rated',
             quantity: 50,
             unit_price: 200, // Price excluding tax
@@ -453,7 +453,7 @@ export const generateScenarioSpecificMinimalData = (scenarioCode: string, scenar
             is_third_schedule: false
         },
         'SN008': { // 3rd schedule goods
-            hs_code: '84713000',
+            hs_code: '8471.3000',
             item_name: 'Laptop Computer - 3rd Schedule',
             quantity: 1,
             unit_price: 150000,
@@ -475,12 +475,12 @@ export const generateScenarioSpecificMinimalData = (scenarioCode: string, scenar
     return {
         invoiceType: 'Sale Invoice',
         invoiceDate: new Date().toISOString().split('T')[0],
-        sellerNTNCNIC: '1234567890123',
-        sellerBusinessName: 'Test Company Ltd.',
+        sellerNTNCNIC: '3540504912049', // Authorized seller NTN/CNIC
+        sellerBusinessName: 'Farooq Traders',
         sellerProvince: 'Punjab',
         sellerAddress: '123 Test Street, Lahore',
-        buyerNTNCNIC: '9876543210987',
-        buyerBusinessName: 'Test Buyer Ltd.',
+        buyerNTNCNIC: '3562101254686', // Authorized buyer NTN/CNIC
+        buyerBusinessName: 'Al Ihsna',
         buyerProvince: 'Sindh',
         buyerAddress: '456 Test Avenue, Karachi',
         buyerRegistrationType: 'NTN',

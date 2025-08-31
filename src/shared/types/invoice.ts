@@ -129,6 +129,14 @@ export interface InvoiceItemCalculated {
     retail_price?: number | undefined;
     invoice_note?: string | undefined;
     is_third_schedule: boolean;
+    sales_tax_withheld_at_source?: number;
+    extra_tax?: number;
+    further_tax?: number;
+    sro_schedule_no?: string;
+    fed_payable?: number;
+    discount?: number;
+    sale_type?: string;
+    sro_item_serial_no?: string;
 }
 
 export interface InvoiceRunningTotals {

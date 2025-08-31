@@ -4,10 +4,9 @@ import { useToast } from './useToast';
 import { RootState } from '@/shared/services/store';
 import { validateInvoice } from '@/shared/services/api/invoiceValidation';
 import type {
-    InvoiceValidationResponse,
-    ValidationResult
+    InvoiceValidationResponse
 } from '@/shared/services/api/invoiceValidation';
-import { ValidationSeverity } from '@/shared/services/api/invoiceValidation';
+import { ValidationSeverity, ValidationResult } from '@/shared/utils/validation';
 import type { ScenarioInvoiceFormData } from '@/shared/types/invoice';
 
 interface UseInvoiceValidationOptions {
@@ -40,8 +39,7 @@ interface UseInvoiceValidationReturn {
 
 export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}): UseInvoiceValidationReturn {
     const {
-        includeFBRValidation = true,
-        environment = 'sandbox'
+        includeFBRValidation = true
     } = options;
 
     const { user } = useSelector((s: RootState) => s.user);
@@ -60,8 +58,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
 
         try {
             const result = await validateInvoice(invoiceData, user.id, {
-                includeFBRValidation,
-                environment
+                includeFBRValidation
             });
 
             setValidationResult(result);
@@ -74,15 +71,19 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
                     variant: 'default'
                 });
             } else if (result.summary.errors > 0) {
+                const errorCount = result.summary.errors;
+                const errorText = errorCount === 1 ? 'error' : 'errors';
                 toast({
                     title: 'Validation Failed',
-                    description: `Found ${result.summary.errors} error(s) that need to be fixed.`,
+                    description: `Found ${errorCount} ${errorText} that need to be fixed.`,
                     variant: 'destructive'
                 });
             } else if (result.summary.warnings > 0) {
+                const warningCount = result.summary.warnings;
+                const warningText = warningCount === 1 ? 'warning' : 'warnings';
                 toast({
                     title: 'Validation Complete',
-                    description: `Found ${result.summary.warnings} warning(s). You can still submit.`,
+                    description: `Found ${warningCount} ${warningText}. You can still submit.`,
                     variant: 'default'
                 });
             }
@@ -92,7 +93,20 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
         } catch (error) {
             console.error('Invoice validation error:', error);
 
-            const errorMessage = error instanceof Error ? error.message : 'Validation failed';
+            let errorMessage = 'Validation failed';
+            let errorCode = 'VALIDATION_ERROR';
+
+            // Handle specific error types
+            if (error instanceof Error) {
+                errorMessage = error.message;
+                if (error.message.includes('API key')) {
+                    errorCode = 'API_KEY_ERROR';
+                } else if (error.message.includes('network') || error.message.includes('timeout')) {
+                    errorCode = 'NETWORK_ERROR';
+                } else if (error.message.includes('FBR')) {
+                    errorCode = 'FBR_ERROR';
+                }
+            }
 
             toast({
                 title: 'Validation Error',
@@ -108,7 +122,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
                     field: 'validation_error',
                     severity: ValidationSeverity.ERROR,
                     message: errorMessage,
-                    code: 'VALIDATION_ERROR'
+                    code: errorCode
                 }],
                 summary: {
                     total: 1,
@@ -124,7 +138,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
         } finally {
             setIsValidating(false);
         }
-    }, [user?.id, includeFBRValidation, environment, toast]);
+    }, [user?.id, includeFBRValidation, toast]);
 
     const clearValidation = useCallback(() => {
         setValidationResult(null);
