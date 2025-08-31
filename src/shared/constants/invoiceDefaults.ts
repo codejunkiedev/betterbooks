@@ -24,7 +24,7 @@ export const SYSTEM_DEFAULTS = {
     MAX_TAX_RATE: 100,
 
     // Maximum description length
-    MAX_DESCRIPTION_LENGTH: 200,
+    MAX_DESCRIPTION_LENGTH: 500,
 } as const;
 
 export const COMMON_UOM_PRIORITIES = [

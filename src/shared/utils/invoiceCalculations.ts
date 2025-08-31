@@ -113,8 +113,8 @@ export function validateInvoiceItem(item: InvoiceItemForm): InvoiceItemValidatio
     }
 
     // Invoice note validation
-    if (item.invoice_note && item.invoice_note.length > 200) {
-        errors.invoice_note = 'Invoice note must be 200 characters or less';
+    if (item.invoice_note && item.invoice_note.length > SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH) {
+        errors.invoice_note = `Invoice note must be ${SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH} characters or less`;
     }
 
     return {
