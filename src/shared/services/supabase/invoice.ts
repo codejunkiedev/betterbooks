@@ -1,7 +1,7 @@
 import { supabase } from './client';
 import { HSCode, HSCodeSearchResult, UoMValidationCache, InvoiceStatus, InvoiceFormData } from '@/shared/types/invoice';
 import { INVOICE_STATUS } from '@/shared/constants/invoice';
-import { convertToInvoiceDB, convertToInvoiceItemsDB } from '@/shared/utils/fbr';
+import { convertToInvoiceDB, convertCalculatedItemsToDB } from '@/shared/utils/fbr';
 
 export interface InvoiceSequence {
     user_id: string;
@@ -209,7 +209,7 @@ export async function saveInvoice(
 
         // Save invoice items
         if (invoiceData.items.length > 0) {
-            const itemsToInsert = convertToInvoiceItemsDB(invoiceData.items, data.id);
+            const itemsToInsert = convertCalculatedItemsToDB(invoiceData.items, data.id);
 
             const { error: itemsError } = await supabase
                 .from('invoice_items')

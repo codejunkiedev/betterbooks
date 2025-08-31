@@ -2,7 +2,7 @@
 import type { ApiResponse } from './types';
 import { HttpClientApi } from './http-client';
 import { saveFbrCredentials } from '../supabase/fbr';
-import type { FbrSandboxTestRequest, FbrSandboxTestResponse } from '@/shared/types/fbr';
+import type { FbrSandboxTestRequest, FbrSandboxTestResponse, SaleTypeToRateResponse } from '@/shared/types/fbr';
 import type { HSCode, HSCodeSearchResult, UOMCode } from '@/shared/types/invoice';
 import { FBR_SCENARIO_STATUS } from '@/shared/constants/fbr';
 
@@ -380,6 +380,50 @@ export async function validateUoM(apiKey: string, hsCode: string, selectedUoM: s
                 severity: 'warning',
                 message: 'UoM validation error - using selected value'
             }
+        };
+    }
+}
+
+/**
+ * Get tax rates from FBR SaleTypeToRate API
+ * @param apiKey - FBR API key for authentication
+ * @param date - Invoice date in YYYY-MM-DD format (defaults to today)
+ * @param transTypeId - Type of transaction (18 = standard goods sale)
+ * @param originationSupplier - Province ID of seller (defaults to 1)
+ * @returns Promise with available tax rates for the given parameters
+ */
+export async function getSaleTypeToRate(
+    apiKey: string,
+    date: string = new Date().toISOString().split('T')[0], // Invoice date
+    transTypeId: number = 18, // Type of transaction (e.g., standard goods sale)
+    originationSupplier: number = 1 // Province ID of seller
+): Promise<ApiResponse<SaleTypeToRateResponse[]>> {
+    try {
+        const response = await httpClient.request({
+            method: 'GET',
+            url: 'https://gw.fbr.gov.pk/pdi/v2/SaleTypeToRate',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            params: {
+                date,
+                transTypeId,
+                originationSupplier
+            }
+        });
+
+        return {
+            success: true,
+            message: 'Sale type to rate data retrieved successfully',
+            data: (response.data as SaleTypeToRateResponse[]) || []
+        };
+    } catch (error) {
+        const fbrError = error as FbrApiError;
+        return {
+            success: false,
+            message: getFbrErrorMessage(fbrError.response?.status || 500),
+            data: []
         };
     }
 }

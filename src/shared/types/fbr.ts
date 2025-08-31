@@ -133,3 +133,22 @@ export interface FbrSandboxTestResponse {
         errorDetails?: string;
     };
 }
+
+/**
+ * Response from FBR SaleTypeToRate API
+ * This API returns available tax rates based on transaction type, date, and seller province
+ */
+export interface SaleTypeToRateResponse {
+    ratE_ID: number;      // Unique rate identifier
+    ratE_DESC: string;    // Rate description (e.g., "18% along with rupees 60 per kilogram")
+    ratE_VALUE: number;   // Tax rate percentage value
+}
+
+/**
+ * Parameters for SaleTypeToRate API call
+ */
+export interface SaleTypeToRateParams {
+    date: string;              // Invoice date in YYYY-MM-DD format
+    transTypeId: number;       // Type of transaction (18 = standard goods sale)
+    originationSupplier: number; // Province ID of seller
+}
