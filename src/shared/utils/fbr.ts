@@ -1,4 +1,4 @@
-import { FBRInvoiceData, InvoiceFormData, CreateInvoiceDB, CreateInvoiceItemDB } from '@/shared/types/invoice';
+import { FBRInvoiceData, FBRInvoiceItem, InvoiceFormData, InvoiceItemCalculated, CreateInvoiceDB, CreateInvoiceItemDB } from '@/shared/types/invoice';
 
 // Transform form data to clean FBR payload
 export function transformToFBRPayload(formData: InvoiceFormData): FBRInvoiceData {
@@ -44,7 +44,7 @@ export function convertToInvoiceDB(formData: InvoiceFormData, userId: string): C
 }
 
 // Convert FBR format to database format for invoice items
-export function convertToInvoiceItemsDB(items: FBRInvoiceData['items'], invoiceId: number): CreateInvoiceItemDB[] {
+export function convertToInvoiceItemsDB(items: FBRInvoiceItem[], invoiceId: number): CreateInvoiceItemDB[] {
     return items.map(item => ({
         invoice_id: invoiceId,
         hs_code: item.hsCode,
@@ -60,6 +60,34 @@ export function convertToInvoiceItemsDB(items: FBRInvoiceData['items'], invoiceI
         retail_price: item.fixedNotifiedValueOrRetailPrice,
         is_third_schedule: false
     }));
+}
+
+// Convert InvoiceItemCalculated to database format for invoice items
+export function convertCalculatedItemsToDB(items: InvoiceItemCalculated[], invoiceId: number): CreateInvoiceItemDB[] {
+    return items.map(item => {
+        const dbItem: CreateInvoiceItemDB = {
+            invoice_id: invoiceId,
+            hs_code: item.hs_code,
+            item_name: item.item_name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total_amount: item.total_amount,
+            sales_tax: item.sales_tax,
+            uom_code: item.uom_code,
+            tax_rate: item.tax_rate,
+            value_sales_excluding_st: item.value_sales_excluding_st,
+            fixed_notified_value: item.fixed_notified_value,
+            retail_price: item.retail_price,
+            is_third_schedule: item.is_third_schedule
+        };
+
+        // Add optional properties only if they have values
+        if (item.invoice_note !== undefined) {
+            dbItem.invoice_note = item.invoice_note;
+        }
+
+        return dbItem;
+    });
 }
 
 // Format rate as percentage string

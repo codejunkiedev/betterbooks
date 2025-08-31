@@ -6,7 +6,7 @@ import type { InvoiceValidationResponse } from '@/shared/types/fbrValidation';
 export type { InvoiceValidationResponse } from '@/shared/types/fbrValidation';
 
 export async function validateInvoice(
-    invoiceData: InvoiceFormData,
+    _invoiceData: InvoiceFormData,
     options: {
         includeFBRValidation?: boolean;
     } = {}
