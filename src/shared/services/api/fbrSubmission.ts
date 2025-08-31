@@ -44,9 +44,11 @@ function convertItemToFBRFormat(item: InvoiceItemCalculated, saleType: string) {
         return `${rate}%`;
     };
 
-    // Format number to 2 decimal places as string (e.g., "2.00")
-    const formatNumberToString = (value: number): string => {
-        return value.toFixed(2);
+    // Format number to appropriate decimal places
+    // Quantities can have up to 3 decimal places (e.g., 0.125 kg)
+    // Monetary values use 2 decimal places
+    const formatNumberToString = (value: number, isQuantity: boolean = false): string => {
+        return isQuantity ? value.toFixed(3) : value.toFixed(2);
     };
 
     return {
@@ -54,7 +56,7 @@ function convertItemToFBRFormat(item: InvoiceItemCalculated, saleType: string) {
         productDescription: item.item_name,
         rate: formatRate(item.tax_rate),
         uoM: item.uom_code,
-        quantity: parseFloat(formatNumberToString(item.quantity)),
+        quantity: parseFloat(formatNumberToString(item.quantity, true)), // Quantity supports 3 decimal places
         totalValues: parseFloat(formatNumberToString(item.total_amount)),
         valueSalesExcludingST: parseFloat(formatNumberToString(item.value_sales_excluding_st)),
         fixedNotifiedValueOrRetailPrice: parseFloat(formatNumberToString(item.fixed_notified_value)),
