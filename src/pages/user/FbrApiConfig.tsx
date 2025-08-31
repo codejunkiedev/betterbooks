@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/shared/services/store";
 import { useToast } from "@/shared/hooks/useToast";
-import { FBR_API_STATUS, type FbrApiStatus } from "@/shared/constants/fbr";
+import { FBR_API_STATUS } from "@/shared/constants/fbr";
 import { testFbrConnection } from "@/shared/services/api/fbr";
 import { getFbrConfigStatus } from "@/shared/services/supabase/fbr";
 import { AlertCircle, CheckCircle, Info, Loader2, ExternalLink } from "lucide-react";
@@ -14,8 +14,8 @@ export default function FbrApiConfig() {
 	const [productionKey, setProductionKey] = useState("");
 	const [hasSandboxKey, setHasSandboxKey] = useState(false);
 	const [hasProductionKey, setHasProductionKey] = useState(false);
-	const [sandboxStatus, setSandboxStatus] = useState<FbrApiStatus>(FBR_API_STATUS.NOT_CONFIGURED);
-	const [productionStatus, setProductionStatus] = useState<FbrApiStatus>(FBR_API_STATUS.NOT_CONFIGURED);
+	const [sandboxStatus, setSandboxStatus] = useState<FBR_API_STATUS>(FBR_API_STATUS.NOT_CONFIGURED);
+	const [productionStatus, setProductionStatus] = useState<FBR_API_STATUS>(FBR_API_STATUS.NOT_CONFIGURED);
 	const [testingSandbox, setTestingSandbox] = useState(false);
 	const [testingProduction, setTestingProduction] = useState(false);
 	const [loading, setLoading] = useState(true);
@@ -30,8 +30,8 @@ export default function FbrApiConfig() {
 
 		try {
 			const config = await getFbrConfigStatus(user.id);
-			setSandboxStatus(config.sandbox_status as FbrApiStatus);
-			setProductionStatus(config.production_status as FbrApiStatus);
+			setSandboxStatus(config.sandbox_status as FBR_API_STATUS);
+			setProductionStatus(config.production_status as FBR_API_STATUS);
 			setLastSandboxTest(config.last_sandbox_test);
 			setLastProductionTest(config.last_production_test);
 			setHasSandboxKey(!!config.sandbox_api_key);
@@ -56,7 +56,7 @@ export default function FbrApiConfig() {
 		loadConfigStatus();
 	}, [loadConfigStatus]);
 
-	const getStatusDisplay = (status: FbrApiStatus) => {
+	const getStatusDisplay = (status: FBR_API_STATUS) => {
 		switch (status) {
 			case FBR_API_STATUS.CONNECTED:
 				return {
@@ -112,7 +112,7 @@ export default function FbrApiConfig() {
 
 			if (response.success) {
 				// Update local state with the saved status from database
-				const responseData = response.data as { status: string; configStatus?: { sandbox_status: FbrApiStatus; production_status: FbrApiStatus; last_sandbox_test?: string; last_production_test?: string } };
+				const responseData = response.data as { status: string; configStatus?: { sandbox_status: FBR_API_STATUS; production_status: FBR_API_STATUS; last_sandbox_test?: string; last_production_test?: string } };
 				if (responseData?.configStatus) {
 					const configStatus = responseData.configStatus;
 					setSandboxStatus(configStatus.sandbox_status);
@@ -135,7 +135,7 @@ export default function FbrApiConfig() {
 				});
 			} else {
 				// Update local state with the saved status from database
-				const responseData = response.data as { status: string; configStatus?: { sandbox_status: FbrApiStatus; production_status: FbrApiStatus; last_sandbox_test?: string; last_production_test?: string } };
+				const responseData = response.data as { status: string; configStatus?: { sandbox_status: FBR_API_STATUS; production_status: FBR_API_STATUS; last_sandbox_test?: string; last_production_test?: string } };
 				if (responseData?.configStatus) {
 					const configStatus = responseData.configStatus;
 					setSandboxStatus(configStatus.sandbox_status);

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/shared/hooks/useRedux';
 import { initializeAuth, setupAuthListener, loadUserData } from '@/shared/services/store/userSlice';
 
@@ -6,12 +6,20 @@ export const useAuth = () => {
     const dispatch = useAppDispatch();
     const { isInitialized, user, isAuthenticated, isUserDataLoaded } = useAppSelector(state => state.user);
     const { isLoading: companyLoading } = useAppSelector(state => state.company);
+    const authInitializedRef = useRef(false);
 
-    // Initialize auth on mount
+    // Initialize auth only once
     useEffect(() => {
+        if (authInitializedRef.current) return;
+
         const initialize = async () => {
-            await dispatch(initializeAuth());
-            await dispatch(setupAuthListener());
+            try {
+                await dispatch(initializeAuth());
+                await dispatch(setupAuthListener());
+                authInitializedRef.current = true;
+            } catch (error) {
+                console.error('Auth initialization failed:', error);
+            }
         };
 
         initialize();

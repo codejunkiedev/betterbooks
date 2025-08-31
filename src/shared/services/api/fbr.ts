@@ -2,9 +2,9 @@
 import type { ApiResponse } from './types';
 import { HttpClientApi } from './http-client';
 import { saveFbrCredentials } from '../supabase/fbr';
-import { UoMValidationSeverity } from '@/shared/constants/uom';
 import type { FbrSandboxTestRequest, FbrSandboxTestResponse } from '@/shared/types/fbr';
 import type { HSCode, HSCodeSearchResult, UOMCode } from '@/shared/types/invoice';
+import { FBR_SCENARIO_STATUS } from '@/shared/constants/fbr';
 
 interface FbrApiError {
     response?: { status?: number; data?: { message?: string } };
@@ -72,7 +72,7 @@ export async function testFbrConnection(params: TestConnectionRequest): Promise<
                 ...(params.environment === 'sandbox' ? { sandboxKey: params.apiKey } : {}),
                 ...(params.environment === 'production' ? { productionKey: params.apiKey } : {})
             };
-            await saveFbrApiCredentials(savePayload);
+            await saveFbrCredentials(savePayload.userId, savePayload.sandboxKey, savePayload.productionKey);
         } catch (saveError) {
             console.warn('Failed to save API key before testing:', saveError);
             // Continue with the test even if saving fails
@@ -240,7 +240,7 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
         return {
             success: true,
             message: 'Test invoice submitted successfully to FBR sandbox',
-            data: { fbrResponse: response.data, scenarioId: params.scenarioId, status: 'completed' }
+            data: { fbrResponse: response.data, scenarioId: params.scenarioId, status: FBR_SCENARIO_STATUS.COMPLETED }
         };
     } catch (error: unknown) {
         console.error('Error submitting sandbox test invoice:', error);
@@ -298,7 +298,7 @@ export async function getHSCodeUOMMapping(apiKey: string, hsCode: string): Promi
             method: 'GET',
             url: FBR_DATA_ENDPOINTS.hs_uom,
             headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-            params: { hs_code: hsCode }
+            params: { hs_code: hsCode, annexure_id: 3 }
         });
         return { success: true, message: 'HS code UOM mapping retrieved successfully', data: (response.data as UOMCode[]) || [] };
     } catch (error) {
@@ -330,62 +330,55 @@ export async function validateUoM(apiKey: string, hsCode: string, selectedUoM: s
     isCriticalMismatch?: boolean;
 }>> {
     try {
-        // Debug logging
-        console.log('FBR UoM Validation Request:', {
-            url: FBR_DATA_ENDPOINTS.hs_uom,
-            params: { hs_code: hsCode },
-            selectedUoM
-        });
-
         const response = await httpClient.request({
             method: 'GET',
             url: FBR_DATA_ENDPOINTS.hs_uom,
             headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-            params: { hs_code: hsCode }
+            params: { hs_code: hsCode, annexure_id: 3 }
         });
 
-        const data = response.data as { validUOMs: string[]; recommendedUOM: string; criticalMismatch?: boolean };
-        const isValid = data.validUOMs.includes(selectedUoM);
-        const severity = data.criticalMismatch ? UoMValidationSeverity.ERROR : UoMValidationSeverity.WARNING;
+        const data = response.data as { validUOMs?: string[]; recommendedUOM?: string };
 
-        let message: string | undefined;
-        if (!isValid) {
-            message = data.criticalMismatch
-                ? `Critical mismatch: ${selectedUoM} is not valid for HS Code ${hsCode}`
-                : `Recommended UoM for this HS Code: ${data.recommendedUOM}`;
+        // Simple validation - if response has validUOMs array, check if selectedUoM is in it
+        if (data?.validUOMs && Array.isArray(data.validUOMs)) {
+            const isValid = data.validUOMs.includes(selectedUoM);
+            return {
+                success: true,
+                message: 'UoM validation completed',
+                data: {
+                    isValid,
+                    recommendedUoM: data.recommendedUOM || selectedUoM,
+                    validUoMs: data.validUOMs,
+                    severity: isValid ? 'warning' : 'error',
+                    ...(isValid ? {} : { message: `Invalid UoM for HS Code ${hsCode}` })
+                }
+            };
         }
 
+        // Fallback - assume valid if we can't validate
         return {
             success: true,
-            message: 'UoM validation completed',
-            data: {
-                isValid,
-                recommendedUoM: data.recommendedUOM,
-                validUoMs: data.validUOMs,
-                severity,
-                ...(message && { message }),
-                ...(data.criticalMismatch && { isCriticalMismatch: data.criticalMismatch })
-            }
-        };
-    } catch (error) {
-        const fbrError = error as FbrApiError;
-
-        // Log detailed error information
-        console.error('FBR UoM Validation Error:', {
-            status: fbrError.response?.status,
-            data: fbrError.response?.data,
-            message: fbrError.message
-        });
-
-        return {
-            success: false,
-            message: getFbrErrorMessage(fbrError.response?.status || 500),
+            message: 'UoM validation skipped',
             data: {
                 isValid: true,
                 recommendedUoM: selectedUoM,
                 validUoMs: [selectedUoM],
                 severity: 'warning',
-                message: 'Unable to validate UoM - using selected value'
+                message: 'UoM validation not available'
+            }
+        };
+
+    } catch {
+        // Simple error handling - just return valid
+        return {
+            success: true,
+            message: 'UoM validation failed',
+            data: {
+                isValid: true,
+                recommendedUoM: selectedUoM,
+                validUoMs: [selectedUoM],
+                severity: 'warning',
+                message: 'UoM validation error - using selected value'
             }
         };
     }

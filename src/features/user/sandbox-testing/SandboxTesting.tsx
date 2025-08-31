@@ -123,6 +123,15 @@ export default function SandboxTesting() {
     const handleStartScenario = async (scenario: FbrScenario) => {
         if (!user?.id) return;
 
+        if (!hasValidSandboxKey) {
+            toast({
+                title: "API Not Configured",
+                description: "Please configure your FBR sandbox API key before starting scenarios.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         try {
             // Create or update progress entry with "in_progress" status
             await updateScenarioProgress(
@@ -445,6 +454,7 @@ export default function SandboxTesting() {
                             key={scenario.id}
                             scenario={scenario}
                             onStartScenario={handleStartScenario}
+                            isApiConfigured={hasValidSandboxKey}
                         />
                     ))
                 )}

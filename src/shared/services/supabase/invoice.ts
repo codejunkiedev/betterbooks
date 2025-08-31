@@ -1,6 +1,7 @@
 import { supabase } from './client';
-import { ScenarioInvoiceFormData, HSCode, HSCodeSearchResult, UoMValidationCache, InvoiceStatus } from '@/shared/types/invoice';
+import { HSCode, HSCodeSearchResult, UoMValidationCache, InvoiceStatus, InvoiceFormData } from '@/shared/types/invoice';
 import { INVOICE_STATUS } from '@/shared/constants/invoice';
+import { convertToInvoiceDB, convertToInvoiceItemsDB } from '@/shared/utils/fbr';
 
 export interface InvoiceSequence {
     user_id: string;
@@ -11,24 +12,140 @@ export interface InvoiceSequence {
 }
 
 /**
+ * Generate FBR-compliant invoice number for preview (doesn't increment sequence)
+ * Format: NTN-YYYY-MM-XXXXX
+ * Example: 1234567-2025-01-00001
+ */
+export async function generateFBRInvoiceNumberForPreview(userId: string, year: number, month: number): Promise<string> {
+    try {
+        // Get user's NTN/CNIC from fbr_profiles
+        const { data: userProfile, error: profileError } = await supabase
+            .from('fbr_profiles')
+            .select('cnic_ntn')
+            .eq('user_id', userId)
+            .single();
+
+        if (profileError || !userProfile?.cnic_ntn) {
+            console.error('Error getting user NTN/CNIC:', profileError);
+            throw new Error('User NTN/CNIC not found in FBR profile');
+        }
+
+        const ntnCnic = userProfile.cnic_ntn;
+
+        // Get current sequence number without incrementing
+        try {
+            const { data: sequenceData, error: sequenceError } = await supabase
+                .from('invoice_sequences')
+                .select('last_number')
+                .eq('user_id', userId)
+                .eq('year', year)
+                .single();
+
+            let sequenceNumber = 1; // Default to 1 if no sequence exists
+
+            if (!sequenceError && sequenceData) {
+                sequenceNumber = sequenceData.last_number + 1; // Next number without saving
+            }
+
+            // Format: NTN-YYYY-MM-XXXXX
+            return `${ntnCnic}-${year}-${month.toString().padStart(2, '0')}-${sequenceNumber.toString().padStart(5, '0')}`;
+        } catch (rpcError) {
+            console.warn('Error getting current sequence, using fallback approach:', rpcError);
+
+            // Fallback: Generate a simple sequence number based on timestamp
+            const timestamp = Date.now();
+            const sequenceNumber = (timestamp % 99999) + 1; // Ensure 5 digits max
+
+            // Format: NTN-YYYY-MM-XXXXX
+            return `${ntnCnic}-${year}-${month.toString().padStart(2, '0')}-${sequenceNumber.toString().padStart(5, '0')}`;
+        }
+    } catch (error) {
+        console.error('Failed to generate FBR invoice number for preview:', error);
+        throw new Error('Failed to generate FBR invoice number for preview');
+    }
+}
+
+/**
+ * Generate FBR-compliant invoice number (increments sequence when saving)
+ * Format: NTN-YYYY-MM-XXXXX
+ * Example: 1234567-2025-01-00001
+ */
+export async function generateFBRInvoiceNumber(userId: string, year: number, month: number): Promise<string> {
+    try {
+        // Get user's NTN/CNIC from fbr_profiles
+        const { data: userProfile, error: profileError } = await supabase
+            .from('fbr_profiles')
+            .select('cnic_ntn')
+            .eq('user_id', userId)
+            .single();
+
+        if (profileError || !userProfile?.cnic_ntn) {
+            console.error('Error getting user NTN/CNIC:', profileError);
+            throw new Error('User NTN/CNIC not found in FBR profile');
+        }
+
+        const ntnCnic = userProfile.cnic_ntn;
+
+        // Try to get next sequence number using existing invoice_sequences table
+        try {
+            const { data, error } = await supabase.rpc('get_next_invoice_number', {
+                user_uuid: userId,
+                invoice_year: year
+            });
+
+            if (error) {
+                console.error('Error calling get_next_invoice_number RPC:', error);
+                throw error;
+            }
+
+            if (!data) {
+                throw new Error('No data returned from get_next_invoice_number');
+            }
+
+            // Extract the sequence number from the returned format (YYYY-UUID-NUMBER)
+            const sequenceNumber = data.split('-').pop() || '1';
+
+            // Format: NTN-YYYY-MM-XXXXX
+            return `${ntnCnic}-${year}-${month.toString().padStart(2, '0')}-${sequenceNumber.padStart(5, '0')}`;
+        } catch (rpcError) {
+            console.warn('RPC function failed, using fallback approach:', rpcError);
+
+            // Fallback: Generate a simple sequence number based on timestamp
+            const timestamp = Date.now();
+            const sequenceNumber = (timestamp % 99999) + 1; // Ensure 5 digits max
+
+            // Format: NTN-YYYY-MM-XXXXX
+            return `${ntnCnic}-${year}-${month.toString().padStart(2, '0')}-${sequenceNumber.toString().padStart(5, '0')}`;
+        }
+    } catch (error) {
+        console.error('Failed to generate FBR invoice number:', error);
+        throw new Error('Failed to generate FBR invoice number');
+    }
+}
+
+/**
  * Generate next invoice number for a user in a specific year
  */
 export async function generateInvoiceNumber(userId: string, year: number): Promise<string> {
     try {
-        const { data, error } = await supabase.rpc('get_next_invoice_number', {
+        const currentMonth = new Date().getMonth() + 1; // 1-12
+        return await generateFBRInvoiceNumber(userId, year, currentMonth);
+    } catch (error) {
+        console.error('Failed to generate invoice number:', error);
+        // Fallback to old format if FBR generation fails
+        const { data, error: fallbackError } = await supabase.rpc('get_next_invoice_number', {
             user_uuid: userId,
             invoice_year: year
         });
 
-        if (error) {
-            console.error('Error generating invoice number:', error);
-            throw error;
+        if (fallbackError) {
+            console.error('Error generating fallback invoice number:', fallbackError);
+            throw fallbackError;
         }
 
-        return data;
-    } catch (error) {
-        console.error('Failed to generate invoice number:', error);
-        throw new Error('Failed to generate invoice number');
+        // Format: INV-YYYY-XXXX (e.g., INV-2025-0001)
+        const sequenceNumber = data.split('-').pop() || '0001';
+        return `INV-${year}-${sequenceNumber.padStart(4, '0')}`;
     }
 }
 
@@ -37,39 +154,51 @@ export async function generateInvoiceNumber(userId: string, year: number): Promi
  */
 export async function saveInvoice(
     userId: string,
-    invoiceData: ScenarioInvoiceFormData,
+    invoiceData: InvoiceFormData,
     fbrResponse?: Record<string, unknown>
 ): Promise<{ success: boolean; invoiceId?: string; error?: string }> {
     try {
-        // Generate invoice number if not provided
-        if (!invoiceData.invoiceRefNo) {
-            const year = new Date(invoiceData.invoiceDate).getFullYear();
-            invoiceData.invoiceRefNo = await generateInvoiceNumber(userId, year);
+        let invoiceRefNo = invoiceData.invoiceRefNo;
+
+        // Check if FBR response contains an invoice number and use it as the invoice_ref_no
+        if (fbrResponse && fbrResponse.invoiceNumber) {
+            invoiceRefNo = fbrResponse.invoiceNumber as string;
         }
+
+        // Generate invoice number if not provided
+        if (!invoiceRefNo) {
+            const year = new Date(invoiceData.invoiceDate).getFullYear();
+            const currentMonth = new Date(invoiceData.invoiceDate).getMonth() + 1;
+            invoiceRefNo = await generateFBRInvoiceNumber(userId, year, currentMonth);
+        }
+
+        // Determine invoice status based on FBR response
+        let invoiceStatus: typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS] = INVOICE_STATUS.DRAFT;
+        if (fbrResponse) {
+            if (fbrResponse.validationResponse) {
+                const validationResponse = fbrResponse.validationResponse as Record<string, unknown>;
+                if (validationResponse.statusCode === '00' && validationResponse.status === 'Valid') {
+                    invoiceStatus = INVOICE_STATUS.APPROVED;
+                } else {
+                    invoiceStatus = INVOICE_STATUS.REJECTED;
+                }
+            } else {
+                invoiceStatus = INVOICE_STATUS.SUBMITTED;
+            }
+        }
+
+        // Convert to database format
+        const invoiceDB = convertToInvoiceDB(invoiceData, userId);
+        invoiceDB.invoice_ref_no = invoiceRefNo;
+        if (fbrResponse) {
+            invoiceDB.fbr_response = fbrResponse;
+        }
+        invoiceDB.status = invoiceStatus;
 
         // Save invoice data to database
         const { data, error } = await supabase
             .from('invoices')
-            .insert({
-                user_id: userId,
-                invoice_ref_no: invoiceData.invoiceRefNo,
-                invoice_type: invoiceData.invoiceType,
-                invoice_date: invoiceData.invoiceDate,
-                seller_ntn_cnic: invoiceData.sellerNTNCNIC,
-                seller_business_name: invoiceData.sellerBusinessName,
-                seller_province: invoiceData.sellerProvince,
-                seller_address: invoiceData.sellerAddress,
-                buyer_ntn_cnic: invoiceData.buyerNTNCNIC,
-                buyer_business_name: invoiceData.buyerBusinessName,
-                buyer_province: invoiceData.buyerProvince,
-                buyer_address: invoiceData.buyerAddress,
-                buyer_registration_type: invoiceData.buyerRegistrationType,
-                scenario_id: invoiceData.scenarioId,
-                total_amount: invoiceData.totalAmount,
-                notes: invoiceData.notes,
-                fbr_response: fbrResponse ? JSON.stringify(fbrResponse) : null,
-                status: fbrResponse ? INVOICE_STATUS.SUBMITTED : INVOICE_STATUS.DRAFT
-            })
+            .insert(invoiceDB)
             .select('id')
             .single();
 
@@ -80,22 +209,7 @@ export async function saveInvoice(
 
         // Save invoice items
         if (invoiceData.items.length > 0) {
-            const itemsToInsert = invoiceData.items.map(item => ({
-                invoice_id: data.id,
-                hs_code: item.hs_code,
-                item_name: item.item_name,
-                quantity: item.quantity,
-                unit_price: item.unit_price,
-                total_amount: item.total_amount,
-                sales_tax: item.sales_tax || 0,
-                uom_code: item.uom_code,
-                tax_rate: item.tax_rate,
-                value_sales_excluding_st: item.value_sales_excluding_st,
-                fixed_notified_value: item.fixed_notified_value,
-                retail_price: item.retail_price,
-                invoice_note: item.invoice_note,
-                is_third_schedule: item.is_third_schedule
-            }));
+            const itemsToInsert = convertToInvoiceItemsDB(invoiceData.items, data.id);
 
             const { error: itemsError } = await supabase
                 .from('invoice_items')
@@ -157,6 +271,61 @@ export async function getUserInvoices(userId: string): Promise<{ data: Record<st
         console.error('Failed to get user invoices:', error);
         return { data: [], error };
     }
+}
+
+/**
+ * Get invoices by user ID with optional filtering
+ */
+export async function getInvoicesByUser(
+    userId: string,
+    options: {
+        status?: typeof INVOICE_STATUS[keyof typeof INVOICE_STATUS];
+        limit?: number;
+        offset?: number;
+        orderBy?: 'created_at' | 'updated_at' | 'invoice_date';
+        orderDirection?: 'asc' | 'desc';
+    } = {}
+): Promise<{ data: Record<string, unknown>[] | null; error: unknown; count?: number }> {
+    try {
+        const { status, limit = 50, offset = 0, orderBy = 'created_at', orderDirection = 'desc' } = options;
+
+        let query = supabase
+            .from('invoices')
+            .select(`
+                *,
+                invoice_items (*)
+            `, { count: 'exact' })
+            .eq('user_id', userId)
+            .order(orderBy, { ascending: orderDirection === 'asc' })
+            .range(offset, offset + limit - 1);
+
+        if (status) {
+            query = query.eq('status', status);
+        }
+
+        const { data, error, count } = await query;
+
+        return { data, error, count: count || 0 };
+    } catch (error) {
+        console.error('Failed to get invoices by user:', error);
+        return { data: null, error };
+    }
+}
+
+/**
+ * Get successful FBR submissions (approved invoices)
+ */
+export async function getSuccessfulFBRSubmissions(
+    userId: string,
+    options: {
+        limit?: number;
+        offset?: number;
+    } = {}
+): Promise<{ data: Record<string, unknown>[] | null; error: unknown; count?: number }> {
+    return getInvoicesByUser(userId, {
+        ...options,
+        status: INVOICE_STATUS.APPROVED
+    });
 }
 
 /**

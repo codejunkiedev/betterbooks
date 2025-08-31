@@ -14,13 +14,13 @@ import { Badge } from '@/shared/components/Badge';
 import { Alert, AlertDescription } from '@/shared/components/Alert';
 import { InvoiceValidationModal } from '@/shared/components/InvoiceValidationModal';
 import { FBRSubmissionModal } from '@/shared/components/FBRSubmissionModal';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/Tooltip';
 import {
     Play,
     Target,
     FileText,
     AlertCircle,
     Trash2,
-    Database,
     Eye,
     CheckCircle
 } from 'lucide-react';
@@ -28,16 +28,20 @@ import { FBR_SCENARIO_STATUS } from '@/shared/constants/fbr';
 import {
     getScenarioById,
     updateScenarioProgress,
-    getProvinceCodes
+    getProvinceCodes,
+    getFbrProfileForSellerData
 } from '@/shared/services/supabase/fbr';
 import { FbrScenario } from '@/shared/types/fbr';
-import { InvoiceItem, ScenarioInvoiceFormData, InvoiceItemCalculated, InvoiceRunningTotals } from '@/shared/types/invoice';
+import { FBRInvoiceData, InvoiceFormData, InvoiceItemCalculated } from '@/shared/types/invoice';
 import { generateRandomSampleData, generateScenarioSpecificSampleData } from '@/shared/data/fbrSampleData';
-
+import { generateFBRInvoiceNumberForPreview } from '@/shared/services/supabase/invoice';
+import { generateInvoiceRefNo } from '@/shared/services/api/fbrSubmission';
 import { BuyerManagement } from '@/features/user/buyer-management';
 import { InvoiceItemManagement } from './InvoiceItemManagement';
 import { InvoicePreview } from './InvoicePreview';
-import { InvoicePDFGenerator } from './invoicePDF';
+import { submitInvoiceToFBR } from '@/shared/services/api/fbrSubmission';
+import { getFbrConfigStatus } from '@/shared/services/supabase/fbr';
+
 
 export default function ScenarioInvoiceForm() {
     const { scenarioId } = useParams<{ scenarioId: string }>();
@@ -58,13 +62,13 @@ export default function ScenarioInvoiceForm() {
     const [scenario, setScenario] = useState<FbrScenario | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadingSampleData, setLoadingSampleData] = useState(false);
+    const [sellerDataFromFBR, setSellerDataFromFBR] = useState(false);
     const [clearingForm, setClearingForm] = useState(false);
-    const [showPreview, setShowPreview] = useState(false);
     const [showValidationModal, setShowValidationModal] = useState(false);
     const [showSubmissionModal, setShowSubmissionModal] = useState(false);
-    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [provinces, setProvinces] = useState<Array<{ state_province_code: number; state_province_desc: string }>>([]);
-    const [formData, setFormData] = useState<ScenarioInvoiceFormData>({
+    const [formData, setFormData] = useState<InvoiceFormData>({
         invoiceType: '',
         invoiceDate: new Date().toISOString().split('T')[0],
         sellerNTNCNIC: '',
@@ -93,6 +97,22 @@ export default function ScenarioInvoiceForm() {
             console.error('Error loading provinces:', error);
         }
     }, []);
+
+    const generateRefNo = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            const invoiceNumber = await generateInvoiceRefNo(user.id);
+            setFormData(prev => ({
+                ...prev,
+                invoiceRefNo: invoiceNumber
+            }));
+        } catch (error) {
+            console.error('Error generating invoice reference number:', error);
+        }
+    }, [user?.id]);
+
+
 
     const loadScenario = useCallback(async () => {
         if (!scenarioId || !user?.id) return;
@@ -127,12 +147,36 @@ export default function ScenarioInvoiceForm() {
     // Load scenario and provinces on component mount
     useEffect(() => {
         if (scenarioId && user?.id) {
-            loadScenario();
+            Promise.all([loadScenario(), loadProvinces(), generateRefNo()]);
         }
-        loadProvinces();
-    }, [scenarioId, user?.id, loadScenario, loadProvinces]);
+    }, [scenarioId, user?.id, loadScenario, loadProvinces, generateRefNo]);
 
-    const updateFormData = (field: keyof ScenarioInvoiceFormData, value: string | number | InvoiceItem[] | number) => {
+    // Auto-populate seller data from FBR profile when scenario is selected
+    useEffect(() => {
+        const autoPopulateSellerData = async () => {
+            if (user?.id && scenarioId) {
+                try {
+                    const sellerData = await getFbrProfileForSellerData(user.id);
+                    if (sellerData) {
+                        setFormData(prev => ({
+                            ...prev,
+                            sellerNTNCNIC: sellerData.sellerNTNCNIC,
+                            sellerBusinessName: sellerData.sellerBusinessName,
+                            sellerProvince: sellerData.sellerProvince,
+                            sellerAddress: sellerData.sellerAddress
+                        }));
+                        setSellerDataFromFBR(true);
+                    }
+                } catch (error) {
+                    console.error('Error auto-populating seller data:', error);
+                }
+            }
+        };
+
+        autoPopulateSellerData();
+    }, [user?.id, scenarioId]);
+
+    const updateFormData = (field: keyof InvoiceFormData, value: string | number | InvoiceItemCalculated[] | number) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
@@ -153,17 +197,10 @@ export default function ScenarioInvoiceForm() {
         }));
     };
 
-    const handleItemsChange = useCallback((newItems: InvoiceItemCalculated[]) => {
+    const handleItemsChange = useCallback((newItems: FBRInvoiceData['items']) => {
         setFormData(prev => ({
             ...prev,
             items: newItems
-        }));
-    }, []);
-
-    const handleRunningTotalsChange = useCallback((runningTotals: InvoiceRunningTotals) => {
-        setFormData(prev => ({
-            ...prev,
-            totalAmount: runningTotals.total_amount
         }));
     }, []);
 
@@ -173,16 +210,26 @@ export default function ScenarioInvoiceForm() {
             // Simulate some loading time for better UX
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            let sampleData: ScenarioInvoiceFormData;
+            let sampleData: InvoiceFormData;
 
             // Use scenario-specific data if scenario is loaded, otherwise use random data
             if (scenario?.code) {
-                sampleData = generateScenarioSpecificSampleData(scenario.code, scenarioId || '');
+                sampleData = generateScenarioSpecificSampleData(scenario.code);
             } else {
-                sampleData = generateRandomSampleData(scenarioId || '');
+                sampleData = generateRandomSampleData();
             }
 
-            setFormData(sampleData);
+            // Preserve seller data from FBR profile and generated invoice reference number (don't overwrite them)
+            setFormData(prev => ({
+                ...sampleData,
+                sellerNTNCNIC: prev.sellerNTNCNIC,
+                sellerBusinessName: prev.sellerBusinessName,
+                sellerProvince: prev.sellerProvince,
+                sellerAddress: prev.sellerAddress,
+                invoiceRefNo: prev.invoiceRefNo, // Preserve generated invoice reference number
+                totalAmount: sampleData.totalAmount || 0,
+                notes: prev.notes
+            }));
 
             toast({
                 title: "Sample Data Loaded",
@@ -200,22 +247,32 @@ export default function ScenarioInvoiceForm() {
         }
     };
 
-
-
     const clearFormData = async () => {
         setClearingForm(true);
         try {
             // Simulate some loading time for better UX
             await new Promise(resolve => setTimeout(resolve, 300));
 
-            setFormData({
-                invoiceType: '', invoiceDate: new Date().toISOString().split('T')[0], sellerNTNCNIC: '', sellerBusinessName: '',
-                sellerProvince: '', sellerAddress: '', buyerNTNCNIC: '', buyerBusinessName: '',
-                buyerProvince: '', buyerAddress: '', buyerRegistrationType: '', invoiceRefNo: '',
-                scenarioId: scenarioId || '', items: [], totalAmount: 0, notes: ''
-            });
+            setFormData(prev => ({
+                invoiceType: '',
+                invoiceDate: new Date().toISOString().split('T')[0],
+                sellerNTNCNIC: prev.sellerNTNCNIC,
+                sellerBusinessName: prev.sellerBusinessName,
+                sellerProvince: prev.sellerProvince,
+                sellerAddress: prev.sellerAddress,
+                buyerNTNCNIC: '',
+                buyerBusinessName: '',
+                buyerProvince: '',
+                buyerAddress: '',
+                buyerRegistrationType: '',
+                invoiceRefNo: prev.invoiceRefNo,
+                scenarioId: scenarioId || '',
+                items: [],
+                totalAmount: 0,
+                notes: ''
+            }));
 
-            toast({ title: "Form Cleared", description: "All form data has been cleared." });
+            toast({ title: "Form Cleared", description: "Form data has been cleared. Seller information preserved from FBR profile." });
         } catch (error) {
             console.error('Error clearing form:', error);
             toast({
@@ -228,38 +285,66 @@ export default function ScenarioInvoiceForm() {
         }
     };
 
-    const handlePreview = () => {
-        setShowPreview(true);
-    };
-
-
-
-    const handleDownloadPDF = async () => {
-        try {
-            setIsGeneratingPDF(true);
-            await InvoicePDFGenerator.downloadPDF(formData);
-            toast({
-                title: "PDF Downloaded",
-                description: "Invoice PDF has been downloaded successfully.",
-            });
-        } catch (error) {
-            console.error('Error downloading PDF:', error);
-            toast({
-                title: "Download Failed",
-                description: "Failed to download PDF. Please try again.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsGeneratingPDF(false);
-        }
-    };
-
     const handleValidateInvoice = async () => {
         try {
+            // Basic validation before calling FBR
+            if (!formData.buyerNTNCNIC || formData.items.length === 0) {
+                toast({
+                    title: 'Validation Error',
+                    description: 'Please fill in buyer details and add at least one item before validating.',
+                    variant: 'destructive'
+                });
+                return;
+            }
+
+            // Check if items have required data
+            const invalidItems = formData.items.filter(item =>
+                !item.quantity || item.quantity <= 0 || !item.total_amount || item.total_amount <= 0
+            );
+
+            if (invalidItems.length > 0) {
+                toast({
+                    title: 'Validation Error',
+                    description: 'Please ensure all items have valid quantity and unit price.',
+                    variant: 'destructive'
+                });
+                return;
+            }
+
             await validateInvoiceData(formData);
             setShowValidationModal(true);
         } catch (error) {
             console.error('Validation error:', error);
+            toast({
+                title: 'Validation Error',
+                description: 'Failed to validate invoice. Please try again.',
+                variant: 'destructive'
+            });
+        }
+    };
+
+    const handlePreviewInvoice = async () => {
+        try {
+            // Only generate invoice number if not already present
+            if (!formData.invoiceRefNo) {
+                // Use current date for FBR reference number (not invoice date)
+                const currentDate = new Date();
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth() + 1;
+                const invoiceNumber = await generateFBRInvoiceNumberForPreview(user?.id || '', year, month);
+                setFormData(prev => ({
+                    ...prev,
+                    invoiceRefNo: invoiceNumber
+                }));
+            }
+            setShowPreviewModal(true);
+        } catch (error) {
+            console.error('Error generating invoice number:', error);
+            toast({
+                title: "Error",
+                description: "Failed to generate invoice number. Please try again.",
+                variant: "destructive"
+            });
         }
     };
 
@@ -277,7 +362,6 @@ export default function ScenarioInvoiceForm() {
 
         try {
             // Get user's FBR API key
-            const { getFbrConfigStatus } = await import('@/shared/services/supabase/fbr');
             const config = await getFbrConfigStatus(user.id);
 
             if (!config.sandbox_api_key) {
@@ -286,9 +370,6 @@ export default function ScenarioInvoiceForm() {
                     error: 'FBR API Key Required - Please configure your FBR sandbox API key before submitting invoices.'
                 };
             }
-
-            // Import the submission service
-            const { submitInvoiceToFBR } = await import('@/shared/services/api/fbrSubmission');
 
             const response = await submitInvoiceToFBR({
                 userId: user.id,
@@ -429,7 +510,7 @@ export default function ScenarioInvoiceForm() {
                                         </>
                                     ) : (
                                         <>
-                                            <Database className="h-4 w-4" />
+                                            <FileText className="h-4 w-4" />
                                             <span className="hidden sm:inline">Load Sample Data</span>
                                             <span className="sm:hidden">Load Data</span>
                                         </>
@@ -501,12 +582,15 @@ export default function ScenarioInvoiceForm() {
 
                         {/* Seller Information */}
                         <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
-                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                                    <span className="text-primary-foreground text-xs font-bold">2</span>
-                                </div>
-                                Seller Information
-                            </h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                                    <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                        <span className="text-primary-foreground text-xs font-bold">2</span>
+                                    </div>
+                                    Seller Information
+                                </h3>
+
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                 <div>
                                     <Label htmlFor="sellerNTNCNIC" className="text-sm font-medium">Seller NTN/CNIC</Label>
@@ -516,6 +600,7 @@ export default function ScenarioInvoiceForm() {
                                         onChange={(e) => updateFormData('sellerNTNCNIC', e.target.value)}
                                         placeholder="Enter NTN (7 digits) or CNIC (13 digits)"
                                         className="mt-1"
+                                        disabled={sellerDataFromFBR}
                                     />
                                     <p className="text-xs text-muted-foreground mt-1">
                                         Must be 7 digits for NTN or 13 digits for CNIC
@@ -529,6 +614,7 @@ export default function ScenarioInvoiceForm() {
                                         onChange={(e) => updateFormData('sellerBusinessName', e.target.value)}
                                         placeholder="Enter seller business name"
                                         className="mt-1"
+                                        disabled={sellerDataFromFBR}
                                     />
                                 </div>
                                 <div>
@@ -536,6 +622,7 @@ export default function ScenarioInvoiceForm() {
                                     <Select
                                         value={formData.sellerProvince}
                                         onValueChange={(value) => updateFormData('sellerProvince', value)}
+                                        disabled={sellerDataFromFBR}
                                     >
                                         <SelectTrigger className="mt-1">
                                             <SelectValue placeholder="Select seller province" />
@@ -557,6 +644,7 @@ export default function ScenarioInvoiceForm() {
                                         onChange={(e) => updateFormData('sellerAddress', e.target.value)}
                                         placeholder="Enter seller address"
                                         className="mt-1"
+                                        disabled={sellerDataFromFBR}
                                     />
                                 </div>
                             </div>
@@ -587,10 +675,14 @@ export default function ScenarioInvoiceForm() {
                                 <Input
                                     id="invoiceRefNo"
                                     value={formData.invoiceRefNo}
-                                    onChange={(e) => updateFormData('invoiceRefNo', e.target.value)}
-                                    placeholder="Enter invoice reference number"
+                                    placeholder="Auto-generated FBR reference number"
                                     className="mt-1"
+                                    disabled={true}
+                                    readOnly={true}
                                 />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Auto-generated FBR-compliant reference number
+                                </p>
                             </div>
                         </div>
 
@@ -609,23 +701,8 @@ export default function ScenarioInvoiceForm() {
                                 invoiceId={1} // This will be the actual invoice ID when integrated
                                 items={formData.items}
                                 onItemsChange={handleItemsChange}
-                                onRunningTotalsChange={handleRunningTotalsChange}
+                                onRunningTotalsChange={() => { }}
                             />
-                        </div>
-
-                        {/* Total Amount */}
-                        <div className="bg-muted/30 rounded-lg p-4 sm:p-6 border">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <Label className="text-lg font-semibold">Total Amount</Label>
-                                    <p className="text-sm text-muted-foreground">Sum of all item values</p>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-3xl font-bold text-green-600">
-                                        Rs. {formData.totalAmount.toLocaleString()}
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Notes */}
@@ -648,8 +725,8 @@ export default function ScenarioInvoiceForm() {
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <Button
                                         variant="outline"
-                                        onClick={handlePreview}
-                                        disabled={!formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0)}
+                                        onClick={handlePreviewInvoice}
+                                        disabled={!formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.total_amount === 0)}
                                         className="flex items-center justify-center gap-2 px-4 py-2 h-10"
                                     >
                                         <Eye className="h-4 w-4" />
@@ -659,7 +736,7 @@ export default function ScenarioInvoiceForm() {
                                     <Button
                                         variant="outline"
                                         onClick={handleValidateInvoice}
-                                        disabled={isValidating || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0)}
+                                        disabled={isValidating || !formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.total_amount === 0)}
                                         className="flex items-center justify-center gap-2 px-4 py-2 h-10"
                                     >
                                         {isValidating ? (
@@ -673,18 +750,53 @@ export default function ScenarioInvoiceForm() {
                                                 <CheckCircle className="h-4 w-4" />
                                                 <span className="hidden sm:inline">Validate Invoice</span>
                                                 <span className="sm:hidden">Validate</span>
+                                                {validationResult && validationResult.isValid && (
+                                                    <Badge variant="default" className="ml-2 text-xs bg-green-600">
+                                                        ✓ Valid
+                                                    </Badge>
+                                                )}
+                                                {validationResult && !validationResult.isValid && validationResult.summary.errors > 0 && (
+                                                    <Badge variant="destructive" className="ml-2 text-xs">
+                                                        ✗ {validationResult.summary.errors} Error{validationResult.summary.errors !== 1 ? 's' : ''}
+                                                    </Badge>
+                                                )}
+                                                {validationResult && !validationResult.isValid && validationResult.summary.errors === 0 && validationResult.summary.warnings > 0 && (
+                                                    <Badge variant="secondary" className="ml-2 text-xs bg-yellow-600">
+                                                        ⚠ {validationResult.summary.warnings} Warning{validationResult.summary.warnings !== 1 ? 's' : ''}
+                                                    </Badge>
+                                                )}
                                             </>
                                         )}
                                     </Button>
-                                    <Button
-                                        onClick={handleSubmit}
-                                        disabled={!formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.unit_price === 0) || !validationResult?.isValid}
-                                        className="flex items-center justify-center gap-2 px-4 py-2 h-10 font-semibold"
-                                    >
-                                        <Play className="h-4 w-4" />
-                                        <span className="hidden sm:inline">Complete Scenario</span>
-                                        <span className="sm:hidden">Complete</span>
-                                    </Button>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    onClick={handleSubmit}
+                                                    disabled={!formData.buyerNTNCNIC || formData.items.length === 0 || formData.items.some(item => item.quantity === 0 || item.total_amount === 0) || !validationResult || !validationResult.isValid}
+                                                    className="flex items-center justify-center gap-2 px-4 py-2 h-10 font-semibold"
+                                                >
+                                                    <Play className="h-4 w-4" />
+                                                    <span className="hidden sm:inline">Complete Scenario</span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            {!validationResult && (
+                                                <TooltipContent>
+                                                    <p>Please validate the invoice first before completing the scenario</p>
+                                                </TooltipContent>
+                                            )}
+                                            {validationResult && !validationResult.isValid && (
+                                                <TooltipContent>
+                                                    <p>Invoice validation failed. Please fix the errors and validate again.</p>
+                                                </TooltipContent>
+                                            )}
+                                            {validationResult && validationResult.isValid && (
+                                                <TooltipContent>
+                                                    <p>Invoice is validated and ready for submission</p>
+                                                </TooltipContent>
+                                            )}
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </div>
 
                                 {/* Cancel Button Row */}
@@ -705,11 +817,9 @@ export default function ScenarioInvoiceForm() {
 
             {/* Invoice Preview Modal */}
             <InvoicePreview
-                isOpen={showPreview}
-                onClose={() => setShowPreview(false)}
                 invoiceData={formData}
-                onDownloadPDF={handleDownloadPDF}
-                isGeneratingPDF={isGeneratingPDF}
+                isOpen={showPreviewModal}
+                onClose={() => setShowPreviewModal(false)}
             />
 
             {/* Invoice Validation Modal */}
@@ -719,6 +829,10 @@ export default function ScenarioInvoiceForm() {
                 validationResult={validationResult}
                 isLoading={isValidating}
                 onValidate={handleValidateInvoice}
+                onSubmit={() => {
+                    setShowValidationModal(false);
+                    setShowSubmissionModal(true);
+                }}
             />
 
             {/* FBR Submission Modal */}
@@ -727,6 +841,7 @@ export default function ScenarioInvoiceForm() {
                 onClose={() => setShowSubmissionModal(false)}
                 invoiceData={formData}
                 environment="sandbox"
+                userId={user?.id || ''}
                 onSubmit={handleSubmitToFBRWrapper}
                 maxRetries={3}
             />
