@@ -15,12 +15,12 @@ import {
     ExternalLink,
     Loader2
 } from 'lucide-react';
-import { ScenarioInvoiceFormData } from '@/shared/types/invoice';
+import { InvoiceFormData } from '@/shared/types/invoice';
 
 export interface FBRSubmissionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    invoiceData: ScenarioInvoiceFormData;
+    invoiceData: InvoiceFormData;
     environment: 'sandbox' | 'production';
     onSubmit: () => Promise<{
         success: boolean;

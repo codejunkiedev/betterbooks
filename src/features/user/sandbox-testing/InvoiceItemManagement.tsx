@@ -7,7 +7,6 @@ import { Badge } from '@/shared/components/Badge';
 import { Input } from '@/shared/components/Input';
 import { Label } from '@/shared/components/Label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/Select';
-import { Textarea } from '@/shared/components/Textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/components/Dialog';
 import { useToast } from '@/shared/hooks/useToast';
 import {
@@ -19,7 +18,7 @@ import {
 } from '@/shared/types/invoice';
 import {
     calculateInvoiceItem,
-    calculateRunningTotals,
+    calculateRunningTotalsForCalculatedItems,
     validateInvoiceItem,
     formatCurrency,
     formatQuantity,
@@ -35,7 +34,9 @@ import {
 } from '@/shared/services/supabase/invoice';
 import { getFbrConfigStatus } from '@/shared/services/supabase/fbr';
 import { Plus, Trash2, Edit, MoveUp, MoveDown } from 'lucide-react';
-import { getAllHSCodes, getHSCodeUOMMapping } from '@/shared/services/api/fbr';
+import { getAllHSCodes } from '@/shared/services/api/fbr';
+import { getUOMCodes } from '@/shared/services/api/fbr';
+
 interface InvoiceItemManagementProps {
     invoiceId: number;
     items: InvoiceItemCalculated[];
@@ -72,31 +73,62 @@ export function InvoiceItemManagement({
     const [allHSCodes, setAllHSCodes] = useState<HSCodeSearchResult[]>([]);
     const [isCaching, setIsCaching] = useState(false);
     const [hasLoadedData, setHasLoadedData] = useState(false);
+    const [filteredUomOptions, setFilteredUomOptions] = useState<UOMCode[]>([]);
 
-    // Helper function to get UOM description by ID
-    const getUomDescription = (uomId: string | number): string => {
+    const getUomDescription = (uomId: string | number | undefined | null): string => {
+        if (!uomId) return 'N/A';
         const uom = uomOptions.find(option => option.uoM_ID.toString() === uomId.toString());
         return uom ? uom.description : uomId.toString();
     };
 
-    // Calculate running totals only when items change
-    useEffect(() => {
-        const totals = calculateRunningTotals(items);
-        onRunningTotalsChange(totals);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [items]);
+    const filterUomOptionsByHSCode = useCallback(async (hsCode: string) => {
+        if (!hsCode) {
+            setFilteredUomOptions(uomOptions);
+            return;
+        }
 
+        try {
+            const fbrConfig = await getFbrConfigStatus(user?.id || '');
+            const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
+
+            if (!apiKey) {
+                setFilteredUomOptions(uomOptions);
+                return;
+            }
+
+            const { getHSCodeUOMMapping } = await import('@/shared/services/api/fbr');
+            const response = await getHSCodeUOMMapping(apiKey, hsCode);
+
+            if (response.success && response.data && response.data.length > 0) {
+                setFilteredUomOptions(response.data);
+            } else {
+                setFilteredUomOptions(uomOptions);
+            }
+        } catch {
+            setFilteredUomOptions(uomOptions);
+        }
+    }, [uomOptions, user?.id]);
+
+    useEffect(() => {
+        if (!items || items.length === 0) {
+            onRunningTotalsChange({
+                total_items: 0,
+                total_value_excluding_tax: 0,
+                total_sales_tax: 0,
+                total_amount: 0
+            });
+            return;
+        }
+
+        const totals = calculateRunningTotalsForCalculatedItems(items);
+        onRunningTotalsChange(totals);
+    }, [items, onRunningTotalsChange]);
 
     const loadFbrApiKeyAndAllData = useCallback(async () => {
-        if (!user?.id) return;
-
-        // Prevent multiple simultaneous calls
-        if (isCaching) return;
+        if (!user?.id || isCaching) return;
 
         try {
             setIsCaching(true);
-
-            // Get FBR API configuration
             const fbrConfig = await getFbrConfigStatus(user.id);
             const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
 
@@ -109,20 +141,17 @@ export function InvoiceItemManagement({
                 return;
             }
 
-            // Check if we already have HS codes loaded
             if (allHSCodes.length > 0) {
                 setHasLoadedData(true);
                 return;
             }
 
-            // Load all HS codes from FBR API only if not already loaded
             if (allHSCodes.length === 0) {
                 const hsCodeResponse = await getAllHSCodes(apiKey);
 
                 if (hsCodeResponse.success) {
                     setAllHSCodes(hsCodeResponse.data);
 
-                    // Check if cache is already populated
                     try {
                         const { checkCacheStatus } = await import('@/shared/services/supabase/invoice');
                         const cacheStatus = await checkCacheStatus();
@@ -136,7 +165,6 @@ export function InvoiceItemManagement({
                                 is_third_schedule: isThirdScheduleItem(item.hS_CODE)
                             }));
 
-                            // Cache in batches to avoid overwhelming the database
                             const batchSize = 50;
                             for (let i = 0; i < hsCodeCache.length; i += batchSize) {
                                 const batch = hsCodeCache.slice(i, i + batchSize);
@@ -144,11 +172,20 @@ export function InvoiceItemManagement({
                             }
                         }
                     } catch {
-                        // Don't throw error as this is optional
+                        // Optional caching
                     }
                 } else {
                     throw new Error(hsCodeResponse.message);
                 }
+            }
+
+            const uomResponse = await getUOMCodes(apiKey);
+
+            if (uomResponse.success && uomResponse.data && uomResponse.data.length > 0) {
+                const uniqueUomOptions = uomResponse.data.filter((uom, index, self) =>
+                    index === self.findIndex(u => u.uoM_ID === uom.uoM_ID)
+                );
+                setUomOptions(uniqueUomOptions);
             }
         } catch {
             toast({
@@ -160,14 +197,17 @@ export function InvoiceItemManagement({
             setIsCaching(false);
             setHasLoadedData(true);
         }
-    }, [user?.id, toast]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [user?.id, toast, allHSCodes.length, uomOptions.length, isCaching]);
 
-    // Load FBR API key and all data on component mount (only once)
     useEffect(() => {
         if (!hasLoadedData && user?.id) {
             loadFbrApiKeyAndAllData();
         }
     }, [loadFbrApiKeyAndAllData, hasLoadedData, user?.id]);
+
+    useEffect(() => {
+        setFilteredUomOptions(uomOptions);
+    }, [uomOptions]);
 
     const searchHSCodesFromFrontend = useCallback((searchTerm: string) => {
         if (!searchTerm.trim()) {
@@ -186,12 +226,9 @@ export function InvoiceItemManagement({
 
         setIsSearchingHSCodes(true);
 
-        // Use setTimeout to make the search non-blocking
         setTimeout(() => {
-            // Filter HS codes on frontend with null safety
             const searchTermLower = searchTerm.toLowerCase();
             const filteredResults = allHSCodes.filter(item => {
-                // Ensure both hs_code and description are strings before using toLowerCase
                 const hsCode = item.hS_CODE?.toString() || '';
                 const description = item.description?.toString() || '';
 
@@ -204,15 +241,14 @@ export function InvoiceItemManagement({
         }, 0);
     }, [allHSCodes, toast]);
 
-    const handleHSCodeSearch = useCallback((searchTerm: unknown) => {
+    const handleHSCodeSearch = useCallback((term: unknown) => {
         debounce((term: unknown) => {
             searchHSCodesFromFrontend(term as string);
-        }, 100)(searchTerm); // Further reduced debounce for better responsiveness
+        }, 100)(term);
     }, [searchHSCodesFromFrontend]);
 
     const handleHSCodeSelect = async (hsCode: string) => {
         try {
-            // Find the selected HS code from the frontend data
             const selectedHSCode = allHSCodes.find(item => item.hS_CODE === hsCode);
 
             if (!selectedHSCode) {
@@ -224,105 +260,63 @@ export function InvoiceItemManagement({
                 return;
             }
 
-            // Get FBR API configuration for UOM mapping
-            const fbrConfig = await getFbrConfigStatus(user?.id || '');
-            const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
-
-            if (!apiKey) {
-                toast({
-                    title: 'FBR API Not Configured',
-                    description: 'Please configure your FBR API credentials first',
-                    variant: 'destructive'
-                });
-                return;
-            }
-
-            // Get UOM codes specific to this HS code
-            const uomResponse = await getHSCodeUOMMapping(apiKey, hsCode);
-
-            let availableUomOptions: UOMCode[] = [];
-            if (uomResponse.success && uomResponse.data && uomResponse.data.length > 0) {
-                // Filter out duplicates to ensure unique keys
-                availableUomOptions = uomResponse.data.filter((uom, index, self) =>
-                    index === self.findIndex(u => u.uoM_ID === uom.uoM_ID)
-                );
-                setUomOptions(availableUomOptions);
-            } else {
-                setUomOptions([]);
-            }
-
-            // Get HS code details from cache or use defaults
             let hsCodeDetails = await getCachedHSCodeDetails(hsCode);
 
             if (!hsCodeDetails) {
                 hsCodeDetails = {
                     hs_code: hsCode,
                     description: selectedHSCode.description,
-                    default_uom: availableUomOptions.length > 0 ? availableUomOptions[0].uoM_ID.toString() : '50',
+                    default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50',
                     default_tax_rate: getDefaultTaxRate(hsCode),
                     is_third_schedule: isThirdScheduleItem(hsCode)
                 };
 
                 try {
                     await cacheHSCode(hsCodeDetails);
-                } catch (error) {
-                    console.warn('Failed to cache HS code:', error);
+                } catch {
+                    // Optional caching
                 }
             }
-
-            const bestUom = hsCodeDetails.default_uom || (availableUomOptions.length > 0 ? availableUomOptions[0].uoM_ID.toString() : '50');
-            const bestTaxRate = hsCodeDetails.default_tax_rate !== undefined ? hsCodeDetails.default_tax_rate : SYSTEM_DEFAULTS.DEFAULT_TAX_RATE;
 
             setFormData(prev => ({
                 ...prev,
                 hs_code: hsCode,
-                item_name: hsCodeDetails.description,
-                uom_code: bestUom,
-                tax_rate: bestTaxRate,
-                is_third_schedule: hsCodeDetails.is_third_schedule || false
+                item_name: selectedHSCode.description,
+                tax_rate: hsCodeDetails.default_tax_rate || getDefaultTaxRate(hsCode),
+                is_third_schedule: hsCodeDetails.is_third_schedule || isThirdScheduleItem(hsCode)
             }));
 
-            setHsCodeResults([]);
             setHsCodeSearchTerm(hsCode);
-        } catch (error) {
-            console.error('Failed to get HS code details:', error);
+            setHsCodeResults([]);
+
+            await filterUomOptionsByHSCode(hsCode);
+
+            setValidationErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.hs_code;
+                return newErrors;
+            });
+
+        } catch {
             toast({
                 title: 'Error',
-                description: 'Failed to get HS code details',
+                description: 'Failed to select HS code. Please try again.',
                 variant: 'destructive'
             });
         }
     };
 
-    const handleFormChange = (field: keyof InvoiceItemForm, value: string | number | boolean) => {
+    const handleFormChange = (field: keyof InvoiceItemForm, value: string | number | boolean | undefined) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
 
-
-        setFormData(prev => {
-            const updated = { ...prev, [field]: value };
-
-            // Auto-calculate if quantity or unit price changes
-            if (field === 'quantity' || field === 'unit_price') {
-                const calculated = calculateInvoiceItem(updated);
-                return {
-                    ...updated,
-                    // Update MRP fields for 3rd schedule items
-                    mrp_including_tax: calculated.fixed_notified_value || 0,
-                    mrp_excluding_tax: calculated.retail_price || 0
-                };
-            }
-
-
-
-            return updated;
+        setValidationErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors[field];
+            return newErrors;
         });
 
-        // Clear validation errors for this field
-        if (validationErrors[field]) {
-            setValidationErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[field];
-                return newErrors;
-            });
+        if (field === 'hs_code' && !value) {
+            setFilteredUomOptions(uomOptions);
         }
     };
 
@@ -333,29 +327,20 @@ export function InvoiceItemManagement({
     };
 
     const handleSaveItem = () => {
-        if (!validateForm()) {
-            toast({
-                title: 'Validation Error',
-                description: 'Please fix the errors in the form',
-                variant: 'destructive'
-            });
-            return;
-        }
+        if (!validateForm()) return;
 
         const calculatedItem = calculateInvoiceItem(formData);
 
         if (editingItemIndex !== null) {
-            // Update existing item
             const updatedItems = [...items];
             updatedItems[editingItemIndex] = calculatedItem;
             onItemsChange(updatedItems);
-            setEditingItemIndex(null);
         } else {
-            // Add new item
             onItemsChange([...items, calculatedItem]);
         }
 
-        // Reset form with dynamic defaults
+        setIsAddItemOpen(false);
+        setEditingItemIndex(null);
         setFormData({
             hs_code: '',
             item_name: '',
@@ -367,7 +352,9 @@ export function InvoiceItemManagement({
             is_third_schedule: false
         });
         setValidationErrors({});
-        setIsAddItemOpen(false);
+        setHsCodeSearchTerm('');
+        setHsCodeResults([]);
+        setFilteredUomOptions(uomOptions);
 
         toast({
             title: 'Success',
@@ -378,15 +365,15 @@ export function InvoiceItemManagement({
     const handleEditItem = (index: number) => {
         const item = items[index];
         setFormData({
-            id: item.id || '',
+            id: item.id,
             hs_code: item.hs_code,
             item_name: item.item_name,
             quantity: item.quantity,
             unit_price: item.unit_price,
             uom_code: item.uom_code,
             tax_rate: item.tax_rate,
-            mrp_including_tax: item.fixed_notified_value || 0,
-            mrp_excluding_tax: item.retail_price || 0,
+            mrp_including_tax: item.mrp_including_tax || 0,
+            mrp_excluding_tax: item.mrp_excluding_tax || 0,
             invoice_note: item.invoice_note || '',
             is_third_schedule: item.is_third_schedule
         });
@@ -412,19 +399,49 @@ export function InvoiceItemManagement({
         onItemsChange(updatedItems);
     };
 
-    const runningTotals = calculateRunningTotals(items);
+    const openAddModal = () => {
+        setFormData({
+            hs_code: '',
+            item_name: '',
+            quantity: SYSTEM_DEFAULTS.DEFAULT_QUANTITY,
+            unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
+            uom_code: '',
+            tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
+            invoice_note: '',
+            is_third_schedule: false
+        });
+        setValidationErrors({});
+        setHsCodeSearchTerm('');
+        setHsCodeResults([]);
+        setEditingItemIndex(null);
+        setIsAddItemOpen(true);
+        setFilteredUomOptions(uomOptions);
+    };
+
+    const runningTotals = items && items.length > 0
+        ? calculateRunningTotalsForCalculatedItems(items)
+        : {
+            total_items: 0,
+            total_value_excluding_tax: 0,
+            total_sales_tax: 0,
+            total_amount: 0
+        };
+
+    function debounce<T extends (...args: unknown[]) => unknown>(func: T, delay: number): (...args: Parameters<T>) => void {
+        let timeoutId: NodeJS.Timeout;
+        return (...args: Parameters<T>) => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func(...args), delay);
+        };
+    }
 
     return (
         <div className={`space-y-6 ${className}`}>
-            {/* Items Table */}
             <Card>
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold">Invoice Items</h3>
-                        <Button
-                            onClick={() => setIsAddItemOpen(true)}
-                            className="flex items-center gap-2"
-                        >
+                        <Button onClick={openAddModal} className="flex items-center gap-2">
                             <Plus className="w-4 h-4" />
                             Add Item
                         </Button>
@@ -451,12 +468,12 @@ export function InvoiceItemManagement({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {items.map((item, index) => (
+                                    {(items || []).map((item, index) => (
                                         <TableRow key={item.id || index}>
                                             <TableCell className="font-medium">{index + 1}</TableCell>
                                             <TableCell>
                                                 <div>
-                                                    <div className="font-mono text-sm">{item.hs_code}</div>
+                                                    <div className="font-mono text-sm">{item.hs_code || 'N/A'}</div>
                                                     {item.is_third_schedule && (
                                                         <Badge variant="secondary" className="text-xs">
                                                             3rd Schedule
@@ -465,60 +482,35 @@ export function InvoiceItemManagement({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="max-w-xs">
-                                                <div
-                                                    className="truncate cursor-help"
-                                                    title={`Full Description: ${item.item_name}`}
-                                                >
-                                                    {item.item_name}
+                                                <div className="truncate cursor-help" title={`Full Description: ${item.item_name || 'N/A'}`}>
+                                                    {item.item_name || 'N/A'}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right font-mono">
-                                                {formatQuantity(item.quantity)}
+                                                {formatQuantity(item.quantity || 0)}
                                             </TableCell>
                                             <TableCell className="text-right font-mono">
-                                                {formatCurrency(item.unit_price)}
+                                                {formatCurrency(item.unit_price || 0)}
                                             </TableCell>
                                             <TableCell className="font-mono">{getUomDescription(item.uom_code)}</TableCell>
                                             <TableCell className="text-right">
-                                                {formatPercentage(item.tax_rate)}
+                                                {formatPercentage(item.tax_rate || 0)}
                                             </TableCell>
                                             <TableCell className="text-right font-mono font-semibold">
-                                                {formatCurrency(item.total_amount)}
+                                                {formatCurrency(item.total_amount || 0)}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleEditItem(index)}
-                                                        title="Edit"
-                                                    >
+                                                    <Button variant="ghost" size="sm" onClick={() => handleEditItem(index)} title="Edit">
                                                         <Edit className="w-4 h-4" />
                                                     </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleMoveItem(index, 'up')}
-                                                        disabled={index === 0}
-                                                        title="Move Up"
-                                                    >
+                                                    <Button variant="ghost" size="sm" onClick={() => handleMoveItem(index, 'up')} disabled={index === 0} title="Move Up">
                                                         <MoveUp className="w-4 h-4" />
                                                     </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleMoveItem(index, 'down')}
-                                                        disabled={index === items.length - 1}
-                                                        title="Move Down"
-                                                    >
+                                                    <Button variant="ghost" size="sm" onClick={() => handleMoveItem(index, 'down')} disabled={index === items.length - 1} title="Move Down">
                                                         <MoveDown className="w-4 h-4" />
                                                     </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleDeleteItem(index)}
-                                                        title="Delete"
-                                                    >
+                                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteItem(index)} title="Delete">
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
                                                 </div>
@@ -532,34 +524,24 @@ export function InvoiceItemManagement({
                 </div>
             </Card>
 
-            {/* Running Totals */}
-            {items.length > 0 && (
+            {items && items.length > 0 && runningTotals && (
                 <Card>
                     <div className="p-4 sm:p-6">
-                        <h3 className="text-lg font-semibold mb-4">Running Totals</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                             <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                <div className="text-xl sm:text-2xl font-bold text-blue-600">
-                                    {runningTotals.total_items}
-                                </div>
+                                <div className="text-xl sm:text-2xl font-bold text-blue-600">{runningTotals.total_items || 0}</div>
                                 <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Items</div>
                             </div>
                             <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                                <div className="text-xl sm:text-2xl font-bold text-green-600">
-                                    {formatCurrency(runningTotals.total_value_excluding_tax)}
-                                </div>
+                                <div className="text-xl sm:text-2xl font-bold text-green-600">{formatCurrency(runningTotals.total_value_excluding_tax || 0)}</div>
                                 <div className="text-xs sm:text-sm text-gray-600 font-medium">Value Excluding Tax</div>
                             </div>
                             <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                <div className="text-xl sm:text-2xl font-bold text-orange-600">
-                                    {formatCurrency(runningTotals.total_sales_tax)}
-                                </div>
+                                <div className="text-xl sm:text-2xl font-bold text-orange-600">{formatCurrency(runningTotals.total_sales_tax || 0)}</div>
                                 <div className="text-xs sm:text-sm text-gray-600 font-medium">Sales Tax</div>
                             </div>
                             <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
-                                <div className="text-xl sm:text-2xl font-bold text-purple-600">
-                                    {formatCurrency(runningTotals.total_amount)}
-                                </div>
+                                <div className="text-xl sm:text-2xl font-bold text-purple-600">{formatCurrency(runningTotals.total_amount || 0)}</div>
                                 <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Amount</div>
                             </div>
                         </div>
@@ -567,22 +549,16 @@ export function InvoiceItemManagement({
                 </Card>
             )}
 
-            {/* Add/Edit Item Dialog */}
             <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>
-                            {editingItemIndex !== null ? 'Edit Item' : 'Add New Item'}
-                        </DialogTitle>
+                        <DialogTitle>{editingItemIndex !== null ? 'Edit Item' : 'Add New Item'}</DialogTitle>
                         <DialogDescription>
-                            {editingItemIndex !== null
-                                ? 'Modify the details of this invoice item below.'
-                                : 'Enter the details for a new invoice item below.'}
+                            {editingItemIndex !== null ? 'Modify the details of this invoice item below.' : 'Enter the details for a new invoice item below.'}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-6">
-                        {/* HS Code Search */}
                         <div className="space-y-2">
                             <Label htmlFor="hs-code">HS Code *</Label>
                             <div className="relative">
@@ -603,46 +579,32 @@ export function InvoiceItemManagement({
                                     </div>
                                 )}
                             </div>
-                            {validationErrors.hs_code && (
-                                <p className="text-sm text-red-500">{validationErrors.hs_code}</p>
-                            )}
+                            {validationErrors.hs_code && <p className="text-sm text-red-500">{validationErrors.hs_code}</p>}
 
-                            {/* HS Code Search Results */}
                             {hsCodeResults.length > 0 && (
                                 <div className="border rounded-md max-h-48 overflow-y-auto">
                                     {hsCodeResults.map((result) => (
-                                        <div
-                                            key={result.hS_CODE}
-                                            className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                                            onClick={() => handleHSCodeSelect(result.hS_CODE)}
-                                        >
-                                            <div className="font-mono text-sm font-semibold">
-                                                {result.hS_CODE}
-                                            </div>
-                                            <div className="text-sm text-gray-600">
-                                                {result.description}
-                                            </div>
+                                        <div key={result.hS_CODE} className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0" onClick={() => handleHSCodeSelect(result.hS_CODE)}>
+                                            <div className="font-mono text-sm font-semibold">{result.hS_CODE}</div>
+                                            <div className="text-sm text-gray-600">{result.description}</div>
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
 
-                        {/* Product Description */}
                         <div className="space-y-2">
                             <Label htmlFor="item-name">Product Description *</Label>
                             <Input
                                 id="item-name"
                                 value={formData.item_name}
                                 onChange={(e) => handleFormChange('item_name', e.target.value)}
+                                placeholder="Enter product description..."
                                 className={validationErrors.item_name ? 'border-red-500' : ''}
                             />
-                            {validationErrors.item_name && (
-                                <p className="text-sm text-red-500">{validationErrors.item_name}</p>
-                            )}
+                            {validationErrors.item_name && <p className="text-sm text-red-500">{validationErrors.item_name}</p>}
                         </div>
 
-                        {/* Quantity and Unit Price */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="quantity">Quantity *</Label>
@@ -655,9 +617,7 @@ export function InvoiceItemManagement({
                                     onChange={(e) => handleFormChange('quantity', parseFloat(e.target.value) || 0)}
                                     className={validationErrors.quantity ? 'border-red-500' : ''}
                                 />
-                                {validationErrors.quantity && (
-                                    <p className="text-sm text-red-500">{validationErrors.quantity}</p>
-                                )}
+                                {validationErrors.quantity && <p className="text-sm text-red-500">{validationErrors.quantity}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="unit-price">Unit Price *</Label>
@@ -670,26 +630,20 @@ export function InvoiceItemManagement({
                                     onChange={(e) => handleFormChange('unit_price', parseFloat(e.target.value) || 0)}
                                     className={validationErrors.unit_price ? 'border-red-500' : ''}
                                 />
-                                {validationErrors.unit_price && (
-                                    <p className="text-sm text-red-500">{validationErrors.unit_price}</p>
-                                )}
+                                {validationErrors.unit_price && <p className="text-sm text-red-500">{validationErrors.unit_price}</p>}
                             </div>
                         </div>
 
-                        {/* UoM and Tax Rate */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="uom">Unit of Measure *</Label>
-                                <Select
-                                    {...(formData.uom_code ? { value: formData.uom_code } : {})}
-                                    onValueChange={(value) => handleFormChange('uom_code', value)}
-                                >
+                                <Select {...(formData.uom_code ? { value: formData.uom_code } : {})} onValueChange={(value) => handleFormChange('uom_code', value)}>
                                     <SelectTrigger className={validationErrors.uom_code ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Select UoM" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {uomOptions.length > 0 ? (
-                                            uomOptions.map((uom, index) => (
+                                        {(filteredUomOptions.length > 0 ? filteredUomOptions : uomOptions).length > 0 ? (
+                                            (filteredUomOptions.length > 0 ? filteredUomOptions : uomOptions).map((uom, index) => (
                                                 <SelectItem key={`${uom.uoM_ID}-${index}`} value={uom.uoM_ID.toString()}>
                                                     {uom.description}
                                                 </SelectItem>
@@ -701,10 +655,7 @@ export function InvoiceItemManagement({
                                         )}
                                     </SelectContent>
                                 </Select>
-                                {validationErrors.uom_code && (
-                                    <p className="text-sm text-red-500">{validationErrors.uom_code}</p>
-                                )}
-
+                                {validationErrors.uom_code && <p className="text-sm text-red-500">{validationErrors.uom_code}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="tax-rate">Tax Rate (%) *</Label>
@@ -718,13 +669,10 @@ export function InvoiceItemManagement({
                                     onChange={(e) => handleFormChange('tax_rate', parseFloat(e.target.value) || 0)}
                                     className={validationErrors.tax_rate ? 'border-red-500' : ''}
                                 />
-                                {validationErrors.tax_rate && (
-                                    <p className="text-sm text-red-500">{validationErrors.tax_rate}</p>
-                                )}
+                                {validationErrors.tax_rate && <p className="text-sm text-red-500">{validationErrors.tax_rate}</p>}
                             </div>
                         </div>
 
-                        {/* 3rd Schedule Fields */}
                         {formData.is_third_schedule && (
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -738,9 +686,7 @@ export function InvoiceItemManagement({
                                         onChange={(e) => handleFormChange('mrp_including_tax', parseFloat(e.target.value) || 0)}
                                         className={validationErrors.mrp_including_tax ? 'border-red-500' : ''}
                                     />
-                                    {validationErrors.mrp_including_tax && (
-                                        <p className="text-sm text-red-500">{validationErrors.mrp_including_tax}</p>
-                                    )}
+                                    {validationErrors.mrp_including_tax && <p className="text-sm text-red-500">{validationErrors.mrp_including_tax}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="mrp-excluding-tax">MRP Excluding Tax</Label>
@@ -754,74 +700,23 @@ export function InvoiceItemManagement({
                                         className={validationErrors.mrp_excluding_tax ? 'border-red-500' : ''}
                                         disabled
                                     />
-                                    {validationErrors.mrp_excluding_tax && (
-                                        <p className="text-sm text-red-500">{validationErrors.mrp_excluding_tax}</p>
-                                    )}
+                                    {validationErrors.mrp_excluding_tax && <p className="text-sm text-red-500">{validationErrors.mrp_excluding_tax}</p>}
                                 </div>
                             </div>
                         )}
 
-                        {/* Invoice Note */}
-                        <div className="space-y-2">
-                            <Label htmlFor="invoice-note">Invoice Note (Optional)</Label>
-                            <Textarea
-                                id="invoice-note"
-                                value={formData.invoice_note}
-                                onChange={(e) => handleFormChange('invoice_note', e.target.value)}
-                                placeholder="Additional notes for this item..."
-                                maxLength={SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH}
-                                className={validationErrors.invoice_note ? 'border-red-500' : ''}
-                            />
-                            <div className="flex justify-between text-sm text-gray-500">
-                                <span>Max {SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH} characters</span>
-                                <span>{formData.invoice_note?.length || 0}/{SYSTEM_DEFAULTS.MAX_DESCRIPTION_LENGTH}</span>
-                            </div>
-                            {validationErrors.invoice_note && (
-                                <p className="text-sm text-red-500">{validationErrors.invoice_note}</p>
-                            )}
-                        </div>
+                    </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex justify-end gap-3 pt-4">
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setIsAddItemOpen(false);
-                                    setEditingItemIndex(null);
-                                    setFormData({
-                                        hs_code: '',
-                                        item_name: '',
-                                        quantity: SYSTEM_DEFAULTS.DEFAULT_QUANTITY,
-                                        unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
-                                        uom_code: '',
-                                        tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
-                                        invoice_note: '',
-                                        is_third_schedule: false
-                                    });
-                                    setValidationErrors({});
-                                }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button onClick={handleSaveItem}>
-                                {editingItemIndex !== null ? 'Update Item' : 'Add Item'}
-                            </Button>
-                        </div>
+                    <div className="flex justify-end gap-3 pt-6">
+                        <Button variant="outline" onClick={() => setIsAddItemOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaveItem}>
+                            {editingItemIndex !== null ? 'Update Item' : 'Add Item'}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>
         </div>
     );
-}
-
-// Debounce utility function
-function debounce<T extends (...args: unknown[]) => unknown>(
-    func: T,
-    wait: number
-): (...args: Parameters<T>) => void {
-    let timeout: NodeJS.Timeout;
-    return (...args: Parameters<T>) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), wait);
-    };
 }

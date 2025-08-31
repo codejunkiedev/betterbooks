@@ -1,7 +1,6 @@
 import { HttpClientApi } from './http-client';
 import { saveInvoice } from '../supabase/invoice';
-import { ScenarioInvoiceFormData } from '@/shared/types/invoice';
-import { INVOICE_TYPE } from '@/shared/constants/invoice';
+import { FBRInvoiceData, InvoiceFormData } from '@/shared/types/invoice';
 
 // FBR API endpoints
 const FBR_ENDPOINTS = {
@@ -14,7 +13,7 @@ const httpClient = new HttpClientApi();
 
 export interface FBRSubmissionRequest {
     userId: string;
-    invoiceData: ScenarioInvoiceFormData;
+    invoiceData: FBRInvoiceData;
     environment: 'sandbox' | 'production';
     apiKey: string;
     maxRetries?: number;
@@ -32,51 +31,12 @@ export interface FBRSubmissionResponse {
     };
     error?: string;
     attempt?: number;
-    isTimeout?: boolean;
-}
-
-export interface FBRInvoiceData {
-    invoiceType: string;
-    invoiceDate: string;
-    sellerNTNCNIC: string;
-    sellerBusinessName: string;
-    sellerProvince: string;
-    sellerAddress: string;
-    buyerNTNCNIC: string;
-    buyerBusinessName: string;
-    buyerProvince: string;
-    buyerAddress: string;
-    buyerRegistrationType: string;
-    invoiceRefNo: string;
-    scenarioId?: string;
-    items: Array<{
-        hsCode: string;
-        productDescription: string;
-        rate: string;
-        uoM: string;
-        quantity: number;
-        totalValues: number;
-        valueSalesExcludingST: number;
-        fixedNotifiedValueOrRetailPrice: number;
-        salesTaxApplicable: number;
-        salesTaxWithheldAtSource: number;
-        extraTax: number;
-        furtherTax: number;
-        sroScheduleNo: string;
-        fedPayable: number;
-        discount: number;
-        saleType: string;
-        sroItemSerialNo: string;
-    }>;
-    totalAmount: number;
-    totalSalesTax: number;
-    totalValueSalesExcludingST: number;
 }
 
 /**
  * Format invoice data according to FBR API requirements
  */
-function formatInvoiceDataForFBR(invoiceData: ScenarioInvoiceFormData): FBRInvoiceData {
+function formatInvoiceDataForFBR(invoiceData: FBRInvoiceData): FBRInvoiceData {
     // Clean NTN/CNIC by removing non-digits
     const cleanNTNCNIC = (value: string) => value.replace(/\D/g, '');
 
@@ -91,10 +51,6 @@ function formatInvoiceDataForFBR(invoiceData: ScenarioInvoiceFormData): FBRInvoi
         const num = typeof rate === 'string' ? parseFloat(rate) || 0 : rate;
         return `${num}%`;
     };
-
-    // Calculate totals
-    const totalSalesTax = invoiceData.items.reduce((sum, item) => sum + (item.sales_tax || 0), 0);
-    const totalValueSalesExcludingST = invoiceData.items.reduce((sum, item) => sum + (item.value_sales_excluding_st || 0), 0);
 
     return {
         invoiceType: invoiceData.invoiceType || "Sale Invoice",
@@ -111,73 +67,58 @@ function formatInvoiceDataForFBR(invoiceData: ScenarioInvoiceFormData): FBRInvoi
         invoiceRefNo: invoiceData.invoiceRefNo || "",
         scenarioId: invoiceData.scenarioId,
         items: invoiceData.items.map(item => ({
-            hsCode: item.hs_code,
-            productDescription: item.item_name,
-            rate: formatRate(item.tax_rate),
-            uoM: item.uom_code,
+            hsCode: item.hsCode,
+            productDescription: item.productDescription,
+            rate: formatRate(item.rate),
+            uoM: item.uoM,
             quantity: formatNumber(item.quantity),
-            totalValues: formatNumber(item.total_amount),
-            valueSalesExcludingST: formatNumber(item.value_sales_excluding_st),
-            fixedNotifiedValueOrRetailPrice: formatNumber(item.fixed_notified_value || item.retail_price || 0),
-            salesTaxApplicable: formatNumber(item.sales_tax),
-            salesTaxWithheldAtSource: formatNumber(item.sales_tax_withheld_at_source || 0),
-            extraTax: formatNumber(item.extra_tax || 0),
-            furtherTax: formatNumber(item.further_tax || 0),
-            sroScheduleNo: item.sro_schedule_no || "",
-            fedPayable: formatNumber(item.fed_payable || 0),
-            discount: formatNumber(item.discount || 0),
-            saleType: item.sale_type || "Goods at standard rate (default)",
-            sroItemSerialNo: item.sro_item_serial_no || ""
-        })),
-        totalAmount: formatNumber(invoiceData.totalAmount),
-        totalSalesTax: formatNumber(totalSalesTax),
-        totalValueSalesExcludingST: formatNumber(totalValueSalesExcludingST)
+            totalValues: formatNumber(item.totalValues),
+            valueSalesExcludingST: formatNumber(item.valueSalesExcludingST),
+            fixedNotifiedValueOrRetailPrice: formatNumber(item.fixedNotifiedValueOrRetailPrice),
+            salesTaxApplicable: formatNumber(item.salesTaxApplicable),
+            salesTaxWithheldAtSource: formatNumber(item.salesTaxWithheldAtSource),
+            extraTax: formatNumber(item.extraTax),
+            furtherTax: formatNumber(item.furtherTax),
+            sroScheduleNo: item.sroScheduleNo || "",
+            fedPayable: formatNumber(item.fedPayable),
+            discount: formatNumber(item.discount),
+            saleType: item.saleType || "Goods at standard rate (default)",
+            sroItemSerialNo: item.sroItemSerialNo || ""
+        }))
     };
 }
 
 /**
  * Validate invoice data before submission
  */
-function validateInvoiceData(invoiceData: ScenarioInvoiceFormData): { isValid: boolean; errors: string[] } {
+function validateInvoiceData(invoiceData: FBRInvoiceData): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     // Required fields validation
-    if (!invoiceData.invoiceType) {
-        errors.push('Invoice type is required');
-    } else {
-        // Check if invoice type is valid
-        const validInvoiceTypes = Object.values(INVOICE_TYPE);
-        if (!validInvoiceTypes.includes(invoiceData.invoiceType as typeof validInvoiceTypes[number])) {
-            errors.push(`Invoice type is not valid or empty, please provide valid invoice type. Valid types: ${validInvoiceTypes.join(', ')}`);
-        }
-    }
+    if (!invoiceData.invoiceType) errors.push('Invoice type is required');
     if (!invoiceData.invoiceDate) errors.push('Invoice date is required');
     if (!invoiceData.sellerNTNCNIC) errors.push('Seller NTN/CNIC is required');
     if (!invoiceData.sellerBusinessName) errors.push('Seller business name is required');
+    if (!invoiceData.sellerProvince) errors.push('Seller province is required');
+    if (!invoiceData.sellerAddress) errors.push('Seller address is required');
     if (!invoiceData.buyerNTNCNIC) errors.push('Buyer NTN/CNIC is required');
     if (!invoiceData.buyerBusinessName) errors.push('Buyer business name is required');
-    if (!invoiceData.items || invoiceData.items.length === 0) errors.push('At least one item is required');
-
-    // NTN/CNIC format validation
-    const validateNTNCNIC = (ntnCnic: string): boolean => {
-        const clean = ntnCnic.replace(/\D/g, '');
-        return clean.length === 7 || clean.length === 13;
-    };
-
-    if (!validateNTNCNIC(invoiceData.sellerNTNCNIC)) {
-        errors.push('Seller NTN/CNIC must be 7 digits (NTN) or 13 digits (CNIC)');
-    }
-    if (!validateNTNCNIC(invoiceData.buyerNTNCNIC)) {
-        errors.push('Buyer NTN/CNIC must be 7 digits (NTN) or 13 digits (CNIC)');
-    }
+    if (!invoiceData.buyerProvince) errors.push('Buyer province is required');
+    if (!invoiceData.buyerAddress) errors.push('Buyer address is required');
+    if (!invoiceData.buyerRegistrationType) errors.push('Buyer registration type is required');
+    if (!invoiceData.scenarioId) errors.push('Scenario ID is required');
 
     // Items validation
-    if (invoiceData.items) {
+    if (!invoiceData.items || invoiceData.items.length === 0) {
+        errors.push('At least one item is required');
+    } else {
         invoiceData.items.forEach((item, index) => {
-            if (!item.hs_code) errors.push(`Item ${index + 1}: HS Code is required`);
-            if (!item.item_name) errors.push(`Item ${index + 1}: Item name is required`);
+            if (!item.hsCode) errors.push(`Item ${index + 1}: HS Code is required`);
+            if (!item.productDescription) errors.push(`Item ${index + 1}: Product description is required`);
+            if (!item.rate) errors.push(`Item ${index + 1}: Rate is required`);
+            if (!item.uoM) errors.push(`Item ${index + 1}: Unit of Measure is required`);
             if (item.quantity <= 0) errors.push(`Item ${index + 1}: Quantity must be greater than 0`);
-            if (item.unit_price <= 0) errors.push(`Item ${index + 1}: Unit price must be greater than 0`);
+            if (item.totalValues <= 0) errors.push(`Item ${index + 1}: Total values must be greater than 0`);
         });
     }
 
@@ -273,8 +214,15 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
 
                     // Check if validation was successful
                     if (validationResponse.statusCode === '00' && validationResponse.status === 'Valid') {
+                        // Convert FBR data to InvoiceFormData for database save
+                        const invoiceFormData: InvoiceFormData = {
+                            ...invoiceData,
+                            totalAmount: invoiceData.items.reduce((sum, item) => sum + item.totalValues, 0),
+                            notes: ''
+                        };
+
                         // FBR validation successful - save to database
-                        const saveResult = await saveInvoice(userId, invoiceData, responseData);
+                        const saveResult = await saveInvoice(userId, invoiceFormData, responseData);
 
                         if (!saveResult.success) {
                             console.error('Failed to save invoice:', saveResult.error);
@@ -295,7 +243,7 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
                                 transactionId: responseData.invoiceNumber as string,
                                 invoiceNumber: responseData.invoiceNumber as string,
                                 response: responseData,
-                                invoiceId: saveResult.invoiceId
+                                invoiceId: saveResult.invoiceId || undefined
                             },
                             attempt
                         };
@@ -338,8 +286,15 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
                     responseData.success === true;
 
                 if (hasSuccessIndicator) {
+                    // Convert FBR data to InvoiceFormData for database save
+                    const invoiceFormData: InvoiceFormData = {
+                        ...invoiceData,
+                        totalAmount: invoiceData.items.reduce((sum, item) => sum + item.totalValues, 0),
+                        notes: ''
+                    };
+
                     // Save invoice to database
-                    const saveResult = await saveInvoice(userId, invoiceData, responseData);
+                    const saveResult = await saveInvoice(userId, invoiceFormData, responseData);
 
                     if (!saveResult.success) {
                         console.error('Failed to save invoice:', saveResult.error);
@@ -380,12 +335,10 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
             console.error(`FBR Submission Attempt ${attempt} failed:`, error);
 
             let errorMessage = 'Failed to submit invoice to FBR';
-            let isTimeout = false;
 
             // Handle different types of errors
             if (error instanceof Error && error.message === 'Request timeout') {
                 errorMessage = 'Request timeout - FBR server took too long to respond';
-                isTimeout = true;
             } else if (error && typeof error === 'object' && 'response' in error) {
                 const errorObj = error as { response: { status: number; data: unknown } };
                 const status = errorObj.response.status;
@@ -401,8 +354,7 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
                 return {
                     success: false,
                     error: errorMessage,
-                    attempt,
-                    isTimeout
+                    attempt
                 };
             }
 

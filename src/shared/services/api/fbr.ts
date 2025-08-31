@@ -334,7 +334,7 @@ export async function validateUoM(apiKey: string, hsCode: string, selectedUoM: s
             method: 'GET',
             url: FBR_DATA_ENDPOINTS.hs_uom,
             headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-            params: { hs_code: hsCode }
+            params: { hs_code: hsCode, annexure_id: 3 }
         });
 
         const data = response.data as { validUOMs?: string[]; recommendedUOM?: string };

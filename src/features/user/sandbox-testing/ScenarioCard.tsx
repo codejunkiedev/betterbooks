@@ -19,11 +19,13 @@ import { FBR_SCENARIO_STATUS } from "@/shared/constants/fbr";
 interface ScenarioCardProps {
     scenario: FbrScenario;
     onStartScenario: (scenario: FbrScenario) => void;
+    isApiConfigured?: boolean;
 }
 
 export function ScenarioCard({
     scenario,
-    onStartScenario
+    onStartScenario,
+    isApiConfigured = true
 }: ScenarioCardProps) {
     const getStatusInfo = () => {
         switch (scenario.status) {
@@ -145,7 +147,7 @@ export function ScenarioCard({
                 <div className="pt-2 mt-auto">
                     <Button
                         onClick={() => onStartScenario(scenario)}
-                        disabled={scenario.status === FBR_SCENARIO_STATUS.COMPLETED}
+                        disabled={scenario.status === FBR_SCENARIO_STATUS.COMPLETED || !isApiConfigured}
                         className="w-full"
                         size="lg"
                         variant={statusInfo.buttonVariant}

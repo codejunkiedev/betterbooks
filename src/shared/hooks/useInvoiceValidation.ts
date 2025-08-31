@@ -7,7 +7,7 @@ import type {
     InvoiceValidationResponse
 } from '@/shared/services/api/invoiceValidation';
 import { ValidationSeverity, ValidationResult } from '@/shared/utils/validation';
-import type { ScenarioInvoiceFormData } from '@/shared/types/invoice';
+import type { InvoiceFormData } from '@/shared/types/invoice';
 
 interface UseInvoiceValidationOptions {
     includeFBRValidation?: boolean;
@@ -21,7 +21,7 @@ interface UseInvoiceValidationReturn {
     isValidating: boolean;
 
     // Methods
-    validateInvoice: (invoiceData: ScenarioInvoiceFormData) => Promise<InvoiceValidationResponse>;
+    validateInvoice: (invoiceData: InvoiceFormData) => Promise<InvoiceValidationResponse>;
     clearValidation: () => void;
     getFieldErrors: (fieldName: string) => ValidationResult[];
     hasFieldErrors: (fieldName: string) => boolean;
@@ -49,7 +49,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
 
     const [isValidating, setIsValidating] = useState(false);
 
-    const validateInvoiceData = useCallback(async (invoiceData: ScenarioInvoiceFormData): Promise<InvoiceValidationResponse> => {
+    const validateInvoiceData = useCallback(async (invoiceData: InvoiceFormData): Promise<InvoiceValidationResponse> => {
         if (!user?.id) {
             throw new Error('User not authenticated');
         }
@@ -57,7 +57,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
         setIsValidating(true);
 
         try {
-            const result = await validateInvoice(invoiceData, user.id, {
+            const result = await validateInvoice(invoiceData, {
                 includeFBRValidation
             });
 
@@ -99,41 +99,40 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
             // Handle specific error types
             if (error instanceof Error) {
                 errorMessage = error.message;
-                if (error.message.includes('API key')) {
-                    errorCode = 'API_KEY_ERROR';
-                } else if (error.message.includes('network') || error.message.includes('timeout')) {
+                if (error.message.includes('network')) {
                     errorCode = 'NETWORK_ERROR';
-                } else if (error.message.includes('FBR')) {
-                    errorCode = 'FBR_ERROR';
+                } else if (error.message.includes('timeout')) {
+                    errorCode = 'TIMEOUT_ERROR';
                 }
             }
 
+            // Show error toast
             toast({
                 title: 'Validation Error',
                 description: errorMessage,
                 variant: 'destructive'
             });
 
-            // Create a failed validation result
-            const failedResult: InvoiceValidationResponse = {
+            // Create error response
+            const errorResponse: InvoiceValidationResponse = {
                 isValid: false,
                 canSubmit: false,
-                results: [{
-                    field: 'validation_error',
-                    severity: ValidationSeverity.ERROR,
-                    message: errorMessage,
-                    code: errorCode
-                }],
                 summary: {
                     total: 1,
                     errors: 1,
                     warnings: 0,
                     successes: 0
-                }
+                },
+                results: [{
+                    field: 'general',
+                    severity: ValidationSeverity.ERROR,
+                    message: errorMessage,
+                    code: errorCode
+                }]
             };
 
-            setValidationResult(failedResult);
-            return failedResult;
+            setValidationResult(errorResponse);
+            return errorResponse;
 
         } finally {
             setIsValidating(false);
@@ -145,11 +144,9 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
     }, []);
 
     const getFieldErrors = useCallback((fieldName: string): ValidationResult[] => {
-        if (!validationResult) return [];
-
-        return validationResult.results.filter(result =>
-            result.severity === ValidationSeverity.ERROR &&
-            result.field === fieldName
+        if (!validationResult?.results) return [];
+        return validationResult.results.filter(
+            result => result.field === fieldName && result.severity === ValidationSeverity.ERROR
         );
     }, [validationResult]);
 
@@ -158,11 +155,9 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
     }, [getFieldErrors]);
 
     const getFieldWarnings = useCallback((fieldName: string): ValidationResult[] => {
-        if (!validationResult) return [];
-
-        return validationResult.results.filter(result =>
-            result.severity === ValidationSeverity.WARNING &&
-            result.field === fieldName
+        if (!validationResult?.results) return [];
+        return validationResult.results.filter(
+            result => result.field === fieldName && result.severity === ValidationSeverity.WARNING
         );
     }, [validationResult]);
 
@@ -171,12 +166,12 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
     }, [getFieldWarnings]);
 
     // Computed values
-    const hasErrors = validationResult?.summary.errors ? validationResult.summary.errors > 0 : false;
-    const hasWarnings = validationResult?.summary.warnings ? validationResult.summary.warnings > 0 : false;
+    const hasErrors = (validationResult?.summary?.errors || 0) > 0;
+    const hasWarnings = (validationResult?.summary?.warnings || 0) > 0;
     const canSubmit = validationResult?.canSubmit || false;
-    const errorCount = validationResult?.summary.errors || 0;
-    const warningCount = validationResult?.summary.warnings || 0;
-    const successCount = validationResult?.summary.successes || 0;
+    const errorCount = validationResult?.summary?.errors || 0;
+    const warningCount = validationResult?.summary?.warnings || 0;
+    const successCount = validationResult?.summary?.successes || 0;
 
     return {
         // State
