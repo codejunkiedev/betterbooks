@@ -616,6 +616,7 @@ export function InvoiceItemManagement({
                                     value={formData.quantity}
                                     onChange={(e) => handleFormChange('quantity', parseFloat(e.target.value) || 0)}
                                     className={validationErrors.quantity ? 'border-red-500' : ''}
+                                    placeholder="e.g., 1.5 kg, 0.75 L"
                                 />
                                 {validationErrors.quantity && <p className="text-sm text-red-500">{validationErrors.quantity}</p>}
                             </div>

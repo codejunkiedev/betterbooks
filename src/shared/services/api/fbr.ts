@@ -184,7 +184,10 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
 
         // Format data
         const cleanNTNCNIC = (value: string) => value.replace(/\D/g, '');
-        const formatNumber = (value: number | string) => Math.round((typeof value === 'string' ? parseFloat(value) || 0 : value) * 100) / 100;
+        const formatNumber = (value: number | string, isQuantity: boolean = false) => {
+            const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+            return isQuantity ? Math.round(numValue * 1000) / 1000 : Math.round(numValue * 100) / 100;
+        };
         const formatRate = (rate: number | string) => `${typeof rate === 'string' ? parseFloat(rate) || 0 : rate}%`;
 
         const formattedInvoiceData = {
@@ -206,7 +209,7 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
                 productDescription: item.productDescription || "",
                 rate: formatRate(item.rate),
                 uoM: item.uoM || "PCS",
-                quantity: formatNumber(item.quantity),
+                quantity: formatNumber(item.quantity, true), // Quantity supports 3 decimal places
                 totalValues: formatNumber(item.totalValues),
                 valueSalesExcludingST: formatNumber(item.valueSalesExcludingST),
                 fixedNotifiedValueOrRetailPrice: formatNumber(item.fixedNotifiedValueOrRetailPrice),
