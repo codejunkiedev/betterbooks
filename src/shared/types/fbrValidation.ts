@@ -1,4 +1,12 @@
-import { ValidationResult } from '@/shared/utils/validation';
+import { ValidationSeverity } from '@/shared/constants/fbr';
+
+export interface ValidationResult {
+    field: string;
+    severity: ValidationSeverity;
+    message: string;
+    code?: string;
+    suggestion?: string;
+}
 
 // Complete validation response
 export interface InvoiceValidationResponse {

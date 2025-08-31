@@ -1,4 +1,9 @@
-import { ValidationSeverity } from '@/shared/utils/validation';
+// Validation severity enum
+export enum ValidationSeverity {
+    SUCCESS = 'success',
+    WARNING = 'warning',
+    ERROR = 'error'
+}
 
 // FBR API Status
 export enum FBR_API_STATUS {

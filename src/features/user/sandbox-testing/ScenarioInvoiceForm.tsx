@@ -35,12 +35,13 @@ import { FbrScenario } from '@/shared/types/fbr';
 import { FBRInvoiceData, InvoiceFormData, InvoiceItemCalculated } from '@/shared/types/invoice';
 import { generateRandomSampleData, generateScenarioSpecificSampleData } from '@/shared/data/fbrSampleData';
 import { generateFBRInvoiceNumberForPreview } from '@/shared/services/supabase/invoice';
-
-
+import { generateInvoiceRefNo } from '@/shared/services/api/fbrSubmission';
 import { BuyerManagement } from '@/features/user/buyer-management';
 import { InvoiceItemManagement } from './InvoiceItemManagement';
 import { InvoicePreview } from './InvoicePreview';
 import { submitInvoiceToFBR } from '@/shared/services/api/fbrSubmission';
+import { getFbrConfigStatus } from '@/shared/services/supabase/fbr';
+
 
 export default function ScenarioInvoiceForm() {
     const { scenarioId } = useParams<{ scenarioId: string }>();
@@ -51,7 +52,8 @@ export default function ScenarioInvoiceForm() {
     // Invoice validation hook
     const {
         validationResult,
-        isValidating
+        isValidating,
+        validateInvoice: validateInvoiceData
     } = useInvoiceValidation({
         includeFBRValidation: true,
         environment: 'sandbox'
@@ -96,6 +98,22 @@ export default function ScenarioInvoiceForm() {
         }
     }, []);
 
+    const generateRefNo = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            const invoiceNumber = await generateInvoiceRefNo(user.id);
+            setFormData(prev => ({
+                ...prev,
+                invoiceRefNo: invoiceNumber
+            }));
+        } catch (error) {
+            console.error('Error generating invoice reference number:', error);
+        }
+    }, [user?.id]);
+
+
+
     const loadScenario = useCallback(async () => {
         if (!scenarioId || !user?.id) return;
 
@@ -129,10 +147,9 @@ export default function ScenarioInvoiceForm() {
     // Load scenario and provinces on component mount
     useEffect(() => {
         if (scenarioId && user?.id) {
-            loadScenario();
+            Promise.all([loadScenario(), loadProvinces(), generateRefNo()]);
         }
-        loadProvinces();
-    }, [scenarioId, user?.id, loadScenario, loadProvinces]);
+    }, [scenarioId, user?.id, loadScenario, loadProvinces, generateRefNo]);
 
     // Auto-populate seller data from FBR profile when scenario is selected
     useEffect(() => {
@@ -202,13 +219,14 @@ export default function ScenarioInvoiceForm() {
                 sampleData = generateRandomSampleData();
             }
 
-            // Preserve seller data from FBR profile (don't overwrite it)
+            // Preserve seller data from FBR profile and generated invoice reference number (don't overwrite them)
             setFormData(prev => ({
                 ...sampleData,
                 sellerNTNCNIC: prev.sellerNTNCNIC,
                 sellerBusinessName: prev.sellerBusinessName,
                 sellerProvince: prev.sellerProvince,
                 sellerAddress: prev.sellerAddress,
+                invoiceRefNo: prev.invoiceRefNo, // Preserve generated invoice reference number
                 totalAmount: sampleData.totalAmount || 0,
                 notes: prev.notes
             }));
@@ -247,7 +265,7 @@ export default function ScenarioInvoiceForm() {
                 buyerProvince: '',
                 buyerAddress: '',
                 buyerRegistrationType: '',
-                invoiceRefNo: '',
+                invoiceRefNo: prev.invoiceRefNo,
                 scenarioId: scenarioId || '',
                 items: [],
                 totalAmount: 0,
@@ -293,8 +311,8 @@ export default function ScenarioInvoiceForm() {
                 return;
             }
 
-            // await validateInvoiceData(formData);
-            // setShowValidationModal(true);
+            await validateInvoiceData(formData);
+            setShowValidationModal(true);
         } catch (error) {
             console.error('Validation error:', error);
             toast({
@@ -309,8 +327,10 @@ export default function ScenarioInvoiceForm() {
         try {
             // Only generate invoice number if not already present
             if (!formData.invoiceRefNo) {
-                const year = new Date(formData.invoiceDate).getFullYear();
-                const month = new Date(formData.invoiceDate).getMonth() + 1;
+                // Use current date for FBR reference number (not invoice date)
+                const currentDate = new Date();
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth() + 1;
                 const invoiceNumber = await generateFBRInvoiceNumberForPreview(user?.id || '', year, month);
                 setFormData(prev => ({
                     ...prev,
@@ -342,7 +362,6 @@ export default function ScenarioInvoiceForm() {
 
         try {
             // Get user's FBR API key
-            const { getFbrConfigStatus } = await import('@/shared/services/supabase/fbr');
             const config = await getFbrConfigStatus(user.id);
 
             if (!config.sandbox_api_key) {
@@ -656,10 +675,14 @@ export default function ScenarioInvoiceForm() {
                                 <Input
                                     id="invoiceRefNo"
                                     value={formData.invoiceRefNo}
-                                    onChange={(e) => updateFormData('invoiceRefNo', e.target.value)}
-                                    placeholder="Enter invoice reference number"
+                                    placeholder="Auto-generated FBR reference number"
                                     className="mt-1"
+                                    disabled={true}
+                                    readOnly={true}
                                 />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Auto-generated FBR-compliant reference number
+                                </p>
                             </div>
                         </div>
 
@@ -806,6 +829,10 @@ export default function ScenarioInvoiceForm() {
                 validationResult={validationResult}
                 isLoading={isValidating}
                 onValidate={handleValidateInvoice}
+                onSubmit={() => {
+                    setShowValidationModal(false);
+                    setShowSubmissionModal(true);
+                }}
             />
 
             {/* FBR Submission Modal */}
@@ -814,6 +841,7 @@ export default function ScenarioInvoiceForm() {
                 onClose={() => setShowSubmissionModal(false)}
                 invoiceData={formData}
                 environment="sandbox"
+                userId={user?.id || ''}
                 onSubmit={handleSubmitToFBRWrapper}
                 maxRetries={3}
             />

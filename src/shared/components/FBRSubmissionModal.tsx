@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './Dialog';
 import { Button } from './Button';
 import { Alert, AlertDescription } from './Alert';
@@ -16,12 +16,14 @@ import {
     Loader2
 } from 'lucide-react';
 import { InvoiceFormData } from '@/shared/types/invoice';
+import { generateFBRInvoiceNumberForPreview } from '@/shared/services/supabase/invoice';
 
 export interface FBRSubmissionModalProps {
     isOpen: boolean;
     onClose: () => void;
     invoiceData: InvoiceFormData;
     environment: 'sandbox' | 'production';
+    userId: string; // Add userId prop
     onSubmit: () => Promise<{
         success: boolean;
         data?: {
@@ -51,6 +53,7 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
     onClose,
     invoiceData,
     environment,
+    userId,
     onSubmit,
     onRetry,
     maxRetries = 3
@@ -61,6 +64,27 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
         progress: 0
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [generatedRefNo, setGeneratedRefNo] = useState<string>('');
+
+    // Generate reference number when modal opens
+    useEffect(() => {
+        if (isOpen && !invoiceData.invoiceRefNo) {
+            const generateRefNo = async () => {
+                try {
+                    const year = new Date(invoiceData.invoiceDate).getFullYear();
+                    const month = new Date(invoiceData.invoiceDate).getMonth() + 1;
+                    const refNo = await generateFBRInvoiceNumberForPreview(userId, year, month);
+                    setGeneratedRefNo(refNo);
+                } catch (error) {
+                    console.warn('Failed to generate reference number for preview:', error);
+                    setGeneratedRefNo('Auto-generated');
+                }
+            };
+            generateRefNo();
+        } else if (invoiceData.invoiceRefNo) {
+            setGeneratedRefNo(invoiceData.invoiceRefNo);
+        }
+    }, [isOpen, invoiceData.invoiceRefNo, invoiceData.invoiceDate, userId]);
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -254,7 +278,7 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
                                     </div>
                                     <div>
                                         <span className="font-medium">Reference No:</span>
-                                        <p className="text-muted-foreground">{invoiceData.invoiceRefNo}</p>
+                                        <p className="text-muted-foreground">{generatedRefNo || invoiceData.invoiceRefNo || 'Generating...'}</p>
                                     </div>
                                     <div>
                                         <span className="font-medium">Total Amount:</span>

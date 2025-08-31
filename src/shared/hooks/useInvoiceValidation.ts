@@ -6,7 +6,8 @@ import { validateInvoice } from '@/shared/services/api/invoiceValidation';
 import type {
     InvoiceValidationResponse
 } from '@/shared/services/api/invoiceValidation';
-import { ValidationSeverity, ValidationResult } from '@/shared/utils/validation';
+import { ValidationResult } from '@/shared/types/fbrValidation';
+import { ValidationSeverity } from '@/shared/constants/fbr';
 import type { InvoiceFormData } from '@/shared/types/invoice';
 
 interface UseInvoiceValidationOptions {

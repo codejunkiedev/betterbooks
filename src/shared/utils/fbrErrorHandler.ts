@@ -1,4 +1,5 @@
-import { ValidationSeverity, ValidationResult } from '@/shared/utils/validation';
+import { ValidationResult } from '@/shared/types/fbrValidation';
+import { ValidationSeverity } from '@/shared/constants/fbr';
 import {
     FBR_ERROR_MESSAGES,
     FBR_ERROR_CATEGORY,

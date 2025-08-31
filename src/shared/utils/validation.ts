@@ -1,4 +1,4 @@
-import { INVOICE_TYPE } from '../constants/invoice';
+import { BUYER_REGISTRATION_TYPE, INVOICE_TYPE } from '../constants/invoice';
 import { InvoiceFormData } from '../types/invoice';
 
 export enum ValidationSeverity {
@@ -29,7 +29,8 @@ export const validateRequiredFields = (data: InvoiceFormData): ValidationResult[
         { field: 'buyerBusinessName', value: data.buyerBusinessName, name: 'Buyer business name' },
         { field: 'buyerProvince', value: data.buyerProvince, name: 'Buyer province' },
         { field: 'buyerAddress', value: data.buyerAddress, name: 'Buyer address' },
-        { field: 'buyerRegistrationType', value: data.buyerRegistrationType, name: 'Buyer registration type' }
+        { field: 'buyerRegistrationType', value: data.buyerRegistrationType, name: 'Buyer registration type' },
+        { field: 'scenarioId', value: data.scenarioId, name: 'Scenario ID' }
     ];
 
     requiredFields.forEach(({ field, value, name }) => {
@@ -57,6 +58,16 @@ export const validateRequiredFields = (data: InvoiceFormData): ValidationResult[
             severity: ValidationSeverity.ERROR,
             message: `Invoice type must be one of: ${Object.values(INVOICE_TYPE).join(', ')}`,
             code: 'INVALID_INVOICE_TYPE'
+        });
+    }
+
+    // Validate buyer registration type
+    if (data.buyerRegistrationType && !Object.values(BUYER_REGISTRATION_TYPE).includes(data.buyerRegistrationType as typeof BUYER_REGISTRATION_TYPE[keyof typeof BUYER_REGISTRATION_TYPE])) {
+        results.push({
+            field: 'buyerRegistrationType',
+            severity: ValidationSeverity.ERROR,
+            message: `Buyer registration type must be one of: ${Object.values(BUYER_REGISTRATION_TYPE).join(', ')}`,
+            code: 'INVALID_BUYER_REGISTRATION_TYPE'
         });
     }
 
@@ -139,6 +150,16 @@ export const validateBusinessRules = (data: InvoiceFormData): ValidationResult[]
         });
     }
 
+    // Validate that seller and buyer are different
+    if (data.sellerNTNCNIC && data.buyerNTNCNIC && data.sellerNTNCNIC === data.buyerNTNCNIC) {
+        results.push({
+            field: 'buyerNTNCNIC',
+            severity: ValidationSeverity.ERROR,
+            message: 'Buyer and seller cannot be the same',
+            code: 'SAME_SELLER_BUYER'
+        });
+    }
+
     return results;
 };
 
@@ -149,29 +170,17 @@ export const validateTaxCalculations = (data: InvoiceFormData): ValidationResult
     if (!data.items) return results;
 
     data.items.forEach((item, index) => {
-        const taxRate = parseFloat(item.rate.replace('%', ''));
-        const unitPrice = item.totalValues / item.quantity;
-        const expectedTax = (unitPrice * item.quantity * taxRate) / 100;
-        const taxDifference = Math.abs(item.salesTaxApplicable - expectedTax);
-
-        if (taxDifference > 0.01) {
+        // Validate tax rate
+        if (item.tax_rate < 0 || item.tax_rate > 100) {
             results.push({
-                field: `items[${index}].salesTaxApplicable`,
-                severity: ValidationSeverity.ERROR,
-                message: `Tax calculation mismatch. Expected: ${expectedTax.toFixed(2)}, Actual: ${item.salesTaxApplicable.toFixed(2)}`,
-                code: 'TAX_CALCULATION_ERROR'
-            });
-        }
-
-        if (taxRate < 0 || taxRate > 100) {
-            results.push({
-                field: `items[${index}].rate`,
+                field: `items[${index}].tax_rate`,
                 severity: ValidationSeverity.ERROR,
                 message: 'Tax rate must be between 0 and 100',
                 code: 'INVALID_TAX_RATE'
             });
         }
 
+        // Validate quantity
         if (item.quantity <= 0) {
             results.push({
                 field: `items[${index}].quantity`,
@@ -181,12 +190,72 @@ export const validateTaxCalculations = (data: InvoiceFormData): ValidationResult
             });
         }
 
-        if (item.totalValues < 0) {
+        // Validate unit price
+        if (item.unit_price <= 0) {
             results.push({
-                field: `items[${index}].totalValues`,
+                field: `items[${index}].unit_price`,
                 severity: ValidationSeverity.ERROR,
-                message: 'Total values cannot be negative',
-                code: 'INVALID_PRICE'
+                message: 'Unit price must be greater than zero',
+                code: 'INVALID_UNIT_PRICE'
+            });
+        }
+
+        // Validate total amount calculation
+        const expectedTotal = item.quantity * item.unit_price;
+        const totalDifference = Math.abs(item.total_amount - expectedTotal);
+
+        if (totalDifference > 0.01) {
+            results.push({
+                field: `items[${index}].total_amount`,
+                severity: ValidationSeverity.ERROR,
+                message: `Total amount calculation mismatch. Expected: ${expectedTotal.toFixed(2)}, Actual: ${item.total_amount.toFixed(2)}`,
+                code: 'TOTAL_CALCULATION_ERROR'
+            });
+        }
+
+        // Validate sales tax calculation
+        const expectedTax = (expectedTotal * item.tax_rate) / 100;
+        const taxDifference = Math.abs(item.sales_tax - expectedTax);
+
+        if (taxDifference > 0.01) {
+            results.push({
+                field: `items[${index}].sales_tax`,
+                severity: ValidationSeverity.ERROR,
+                message: `Sales tax calculation mismatch. Expected: ${expectedTax.toFixed(2)}, Actual: ${item.sales_tax.toFixed(2)}`,
+                code: 'TAX_CALCULATION_ERROR'
+            });
+        }
+
+        // Validate value sales excluding ST
+        const expectedValueExcludingST = expectedTotal;
+        const valueExcludingSTDifference = Math.abs((item.value_sales_excluding_st || 0) - expectedValueExcludingST);
+
+        if (valueExcludingSTDifference > 0.01) {
+            results.push({
+                field: `items[${index}].value_sales_excluding_st`,
+                severity: ValidationSeverity.ERROR,
+                message: `Value sales excluding ST calculation mismatch. Expected: ${expectedValueExcludingST.toFixed(2)}, Actual: ${(item.value_sales_excluding_st || 0).toFixed(2)}`,
+                code: 'VALUE_EXCLUDING_ST_CALCULATION_ERROR'
+            });
+        }
+
+        // Validate that total amount is not negative
+        if (item.total_amount < 0) {
+            results.push({
+                field: `items[${index}].total_amount`,
+                severity: ValidationSeverity.ERROR,
+                message: 'Total amount cannot be negative',
+                code: 'NEGATIVE_TOTAL'
+            });
+        }
+
+        // Validate that sales tax is not negative
+        if (item.sales_tax < 0) {
+            results.push({
+                field: `items[${index}].sales_tax`,
+                severity: ValidationSeverity.ERROR,
+                message: 'Sales tax cannot be negative',
+                code: 'NEGATIVE_TAX'
             });
         }
     });
@@ -201,22 +270,105 @@ export const validateHSCodes = (data: InvoiceFormData): ValidationResult[] => {
     if (!data.items) return results;
 
     data.items.forEach((item, index) => {
-        if (!item.hsCode?.trim()) {
+        if (!item.hs_code?.trim()) {
             results.push({
-                field: `items[${index}].hsCode`,
+                field: `items[${index}].hs_code`,
                 severity: ValidationSeverity.ERROR,
                 message: 'HS Code is required',
                 code: 'MISSING_HS_CODE'
             });
-        } else if (!/^\d{2,8}$/.test(item.hsCode.replace(/\D/g, ''))) {
+        } else if (!/^\d{2,8}$/.test(item.hs_code.replace(/\D/g, ''))) {
             results.push({
-                field: `items[${index}].hsCode`,
+                field: `items[${index}].hs_code`,
                 severity: ValidationSeverity.ERROR,
                 message: 'Invalid HS Code format. Must be 2-8 digits',
                 code: 'INVALID_HS_CODE_FORMAT'
             });
+        } else {
+            results.push({
+                field: `items[${index}].hs_code`,
+                severity: ValidationSeverity.SUCCESS,
+                message: 'HS Code format is valid',
+                code: 'HS_CODE_VALID'
+            });
         }
     });
+
+    return results;
+};
+
+// Validate item details
+export const validateItemDetails = (data: InvoiceFormData): ValidationResult[] => {
+    const results: ValidationResult[] = [];
+
+    if (!data.items) return results;
+
+    data.items.forEach((item, index) => {
+        // Validate item name
+        if (!item.item_name?.trim()) {
+            results.push({
+                field: `items[${index}].item_name`,
+                severity: ValidationSeverity.ERROR,
+                message: 'Item name is required',
+                code: 'MISSING_ITEM_NAME'
+            });
+        } else if (item.item_name.length < 3) {
+            results.push({
+                field: `items[${index}].item_name`,
+                severity: ValidationSeverity.WARNING,
+                message: 'Item name should be at least 3 characters long',
+                code: 'SHORT_ITEM_NAME'
+            });
+        }
+
+        // Validate UOM code
+        if (!item.uom_code?.trim()) {
+            results.push({
+                field: `items[${index}].uom_code`,
+                severity: ValidationSeverity.ERROR,
+                message: 'Unit of measure is required',
+                code: 'MISSING_UOM'
+            });
+        }
+
+        // Validate invoice note length if provided
+        if (item.invoice_note && item.invoice_note.length > 500) {
+            results.push({
+                field: `items[${index}].invoice_note`,
+                severity: ValidationSeverity.WARNING,
+                message: 'Invoice note should be less than 500 characters',
+                code: 'LONG_INVOICE_NOTE'
+            });
+        }
+    });
+
+    return results;
+};
+
+// Validate invoice totals
+export const validateInvoiceTotals = (data: InvoiceFormData): ValidationResult[] => {
+    const results: ValidationResult[] = [];
+
+    if (!data.items || data.items.length === 0) return results;
+
+    // Calculate expected totals
+    const expectedTotals = data.items.reduce((acc, item) => {
+        acc.subtotal += item.value_sales_excluding_st || 0;
+        acc.tax += item.sales_tax || 0;
+        acc.total += item.total_amount || 0;
+        return acc;
+    }, { subtotal: 0, tax: 0, total: 0 });
+
+    // Validate total amount
+    const totalDifference = Math.abs(data.totalAmount - expectedTotals.total);
+    if (totalDifference > 0.01) {
+        results.push({
+            field: 'totalAmount',
+            severity: ValidationSeverity.ERROR,
+            message: `Invoice total mismatch. Expected: ${expectedTotals.total.toFixed(2)}, Actual: ${data.totalAmount.toFixed(2)}`,
+            code: 'INVOICE_TOTAL_MISMATCH'
+        });
+    }
 
     return results;
 };
