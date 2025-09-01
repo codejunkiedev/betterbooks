@@ -1,22 +1,16 @@
 import React, { useState } from 'react';
-import { Card } from './Card';
-import { Button } from './Button';
-import { Alert, AlertDescription } from './Alert';
-import { Badge } from './Badge';
-import { Progress } from './Progress';
+import { Card, Button, Alert, AlertDescription, Badge, Progress } from '@/shared/components';
 import {
     CheckCircle,
     XCircle,
     AlertTriangle,
     Loader2,
-    ChevronDown,
-    ChevronUp,
-    Info
+    RefreshCw,
 } from 'lucide-react';
 import {
     InvoiceValidationResponse
 } from '@/shared/services/api/invoiceValidation';
-import { ValidationResult } from '@/shared/types/fbrValidation';
+
 import { ValidationSeverity } from '@/shared/constants/fbr';
 
 interface InvoiceValidationModalProps {
@@ -27,98 +21,6 @@ interface InvoiceValidationModalProps {
     onValidate: () => void;
     onSubmit?: () => void;
 }
-
-const getSeverityIcon = (severity: ValidationSeverity) => {
-    switch (severity) {
-        case ValidationSeverity.SUCCESS:
-            return <CheckCircle className="w-4 h-4 text-green-600" />;
-        case ValidationSeverity.WARNING:
-            return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
-        case ValidationSeverity.ERROR:
-            return <XCircle className="w-4 h-4 text-red-600" />;
-        default:
-            return <Info className="w-4 h-4 text-gray-600" />;
-    }
-};
-
-const getSeverityColor = (severity: ValidationSeverity) => {
-    switch (severity) {
-        case ValidationSeverity.SUCCESS:
-            return 'bg-green-50 border-green-200 text-green-800';
-        case ValidationSeverity.WARNING:
-            return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-        case ValidationSeverity.ERROR:
-            return 'bg-red-50 border-red-200 text-red-800';
-        default:
-            return 'bg-gray-50 border-gray-200 text-gray-800';
-    }
-};
-
-const getSeverityBadgeColor = (severity: ValidationSeverity) => {
-    switch (severity) {
-        case ValidationSeverity.SUCCESS:
-            return 'bg-green-100 text-green-800';
-        case ValidationSeverity.WARNING:
-            return 'bg-yellow-100 text-yellow-800';
-        case ValidationSeverity.ERROR:
-            return 'bg-red-100 text-red-800';
-        default:
-            return 'bg-gray-100 text-gray-800';
-    }
-};
-
-const ValidationResultItem: React.FC<{ result: ValidationResult }> = ({ result }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-
-    return (
-        <div className={`border rounded-lg p-3 ${getSeverityColor(result.severity)}`}>
-            <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3 flex-1">
-                    {getSeverityIcon(result.severity)}
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-sm">
-                                {result.field.includes('items[')
-                                    ? (() => {
-                                        const itemMatch = result.field.match(/\[(\d+)\]/);
-                                        const itemNumber = itemMatch ? (parseInt(itemMatch[1]) + 1).toString() : 'N/A';
-                                        return `Item ${itemNumber}`;
-                                    })()
-                                    : result.field === 'fbr_validation'
-                                        ? 'FBR Validation'
-                                        : result.field.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())
-                                }
-                            </span>
-                            {result.code && (
-                                <Badge className={`text-xs ${getSeverityBadgeColor(result.severity)}`}>
-                                    {result.code}
-                                </Badge>
-                            )}
-                        </div>
-                        <p className="text-sm mb-2">{result.message}</p>
-
-                        {/* Expandable content */}
-                        {isExpanded && result.suggestion && (
-                            <div className="text-xs opacity-75 mt-2 p-2 bg-white bg-opacity-50 rounded border">
-                                <strong>Suggestion:</strong> {result.suggestion}
-                            </div>
-                        )}
-                    </div>
-                </div>
-                {result.suggestion && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="p-1 h-auto"
-                    >
-                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </Button>
-                )}
-            </div>
-        </div>
-    );
-};
 
 const ValidationSummary: React.FC<{ summary: InvoiceValidationResponse['summary'] }> = ({ summary }) => {
     const total = summary.total;
@@ -153,7 +55,7 @@ const ValidationSummary: React.FC<{ summary: InvoiceValidationResponse['summary'
                 </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                     <span>Errors</span>
                     <span className="font-medium">{errors}</span>
@@ -221,7 +123,7 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
                     </div>
                 </div>
 
-                <div className="p-6 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="p-6 flex-1 overflow-y-auto">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-12">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mr-3" />
@@ -279,17 +181,39 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
                             {activeTab === 'summary' ? (
                                 <ValidationSummary summary={validationResult.summary} />
                             ) : (
-                                <div className="space-y-4 pr-2 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                                <div className="space-y-4">
                                     {/* Errors */}
                                     {errorResults.length > 0 && (
                                         <div>
-                                            <h4 className="font-semibold text-red-800 mb-3 flex items-center gap-2 sticky top-0 bg-white py-2 z-10">
+                                            <h4 className="font-semibold text-red-800 mb-3 flex items-center gap-2">
                                                 <XCircle className="w-4 h-4" />
                                                 Errors ({errorResults.length})
                                             </h4>
                                             <div className="space-y-3">
                                                 {errorResults.map((result, index) => (
-                                                    <ValidationResultItem key={`error-${index}`} result={result} />
+                                                    <div key={`error-${index}`} className="border rounded-lg p-3 bg-red-50 border-red-200">
+                                                        <div className="flex items-start gap-3">
+                                                            <XCircle className="w-4 h-4 text-red-600 mt-0.5" />
+                                                            <div>
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className="font-medium text-sm">
+                                                                        {result.field.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())}
+                                                                    </span>
+                                                                    {result.code && (
+                                                                        <Badge className="text-xs bg-red-100 text-red-800">
+                                                                            {result.code}
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-sm text-red-800">{result.message}</p>
+                                                                {result.suggestion && (
+                                                                    <p className="text-xs text-red-600 mt-2">
+                                                                        <strong>Suggestion:</strong> {result.suggestion}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
@@ -298,13 +222,35 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
                                     {/* Warnings */}
                                     {warningResults.length > 0 && (
                                         <div>
-                                            <h4 className="font-semibold text-yellow-800 mb-3 flex items-center gap-2 sticky top-0 bg-white py-2 z-10">
+                                            <h4 className="font-semibold text-yellow-800 mb-3 flex items-center gap-2">
                                                 <AlertTriangle className="w-4 h-4" />
                                                 Warnings ({warningResults.length})
                                             </h4>
                                             <div className="space-y-3">
                                                 {warningResults.map((result, index) => (
-                                                    <ValidationResultItem key={`warning-${index}`} result={result} />
+                                                    <div key={`warning-${index}`} className="border rounded-lg p-3 bg-yellow-50 border-yellow-200">
+                                                        <div className="flex items-start gap-3">
+                                                            <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                                                            <div>
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className="font-medium text-sm">
+                                                                        {result.field.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())}
+                                                                    </span>
+                                                                    {result.code && (
+                                                                        <Badge className="text-xs bg-yellow-100 text-yellow-800">
+                                                                            {result.code}
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-sm text-yellow-800">{result.message}</p>
+                                                                {result.suggestion && (
+                                                                    <p className="text-xs text-yellow-600 mt-2">
+                                                                        <strong>Suggestion:</strong> {result.suggestion}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
@@ -313,13 +259,30 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
                                     {/* Successes */}
                                     {successResults.length > 0 && (
                                         <div>
-                                            <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2 sticky top-0 bg-white py-2 z-10">
+                                            <h4 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
                                                 <CheckCircle className="w-4 h-4" />
                                                 Passed ({successResults.length})
                                             </h4>
                                             <div className="space-y-3">
                                                 {successResults.map((result, index) => (
-                                                    <ValidationResultItem key={`success-${index}`} result={result} />
+                                                    <div key={`success-${index}`} className="border rounded-lg p-3 bg-green-50 border-green-200">
+                                                        <div className="flex items-start gap-3">
+                                                            <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                                                            <div>
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className="font-medium text-sm">
+                                                                        {result.field.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())}
+                                                                    </span>
+                                                                    {result.code && (
+                                                                        <Badge className="text-xs bg-green-100 text-green-800">
+                                                                            {result.code}
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-sm text-green-800">{result.message}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
@@ -327,19 +290,7 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
                                 </div>
                             )}
                         </div>
-                    ) : (
-                        <div className="text-center py-12">
-                            <Info className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">Ready to Validate</h3>
-                            <p className="text-gray-600 mb-6">
-                                Click the validate button to check your invoice for errors and compliance.
-                            </p>
-                            <Button onClick={onValidate} className="w-full max-w-xs">
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Validate Invoice
-                            </Button>
-                        </div>
-                    )}
+                    ) : null}
                 </div>
 
                 {/* Footer Actions */}
@@ -364,7 +315,7 @@ export const InvoiceValidationModal: React.FC<InvoiceValidationModalProps> = ({
                         {validationResult && (
                             <div className="flex gap-2">
                                 <Button variant="outline" onClick={onValidate} disabled={isLoading}>
-                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    <RefreshCw className="w-4 h-4 mr-2" />
                                     Re-validate
                                 </Button>
                                 {validationResult.isValid && onSubmit && (

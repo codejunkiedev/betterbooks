@@ -8,7 +8,7 @@ interface RoleGuardProps {
   allowedRoles: UserRoleEnum[];
 }
 
-export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
+export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const location = useLocation();
   const { user, isAuthenticated, userRole } = useAppSelector((state) => state.user);
 

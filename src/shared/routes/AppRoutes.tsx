@@ -1,6 +1,6 @@
 import { useRoutes, Navigate } from "react-router-dom";
 import { SignUp, ForgotPassword, ResetPassword, LoginPortal } from "@/pages/shared/auth";
-import Unauthorized from "@/shared/components/Unauthorized";
+import { Unauthorized } from "@/shared/components/Unauthorized";
 
 // Role-specific login pages
 import UserLogin from "@/pages/user/Login";
