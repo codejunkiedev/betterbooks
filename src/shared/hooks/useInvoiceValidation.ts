@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { useToast } from './useToast';
+
 import { RootState } from '@/shared/services/store';
 import { validateInvoice } from '@/shared/services/api/invoiceValidation';
 import type {
@@ -44,7 +44,6 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
     } = options;
 
     const { user } = useSelector((s: RootState) => s.user);
-    const { toast } = useToast();
 
     const [validationResult, setValidationResult] = useState<InvoiceValidationResponse | null>(null);
 
@@ -59,35 +58,11 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
 
         try {
             const result = await validateInvoice(invoiceData, {
-                includeFBRValidation
+                includeFBRValidation,
+                userId: user.id
             });
 
             setValidationResult(result);
-
-            // Show toast notification based on validation result
-            if (result.isValid) {
-                toast({
-                    title: 'Validation Successful',
-                    description: 'Your invoice is ready for submission to FBR.',
-                    variant: 'default'
-                });
-            } else if (result.summary.errors > 0) {
-                const errorCount = result.summary.errors;
-                const errorText = errorCount === 1 ? 'error' : 'errors';
-                toast({
-                    title: 'Validation Failed',
-                    description: `Found ${errorCount} ${errorText} that need to be fixed.`,
-                    variant: 'destructive'
-                });
-            } else if (result.summary.warnings > 0) {
-                const warningCount = result.summary.warnings;
-                const warningText = warningCount === 1 ? 'warning' : 'warnings';
-                toast({
-                    title: 'Validation Complete',
-                    description: `Found ${warningCount} ${warningText}. You can still submit.`,
-                    variant: 'default'
-                });
-            }
 
             return result;
 
@@ -107,12 +82,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
                 }
             }
 
-            // Show error toast
-            toast({
-                title: 'Validation Error',
-                description: errorMessage,
-                variant: 'destructive'
-            });
+
 
             // Create error response
             const errorResponse: InvoiceValidationResponse = {
@@ -138,7 +108,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
         } finally {
             setIsValidating(false);
         }
-    }, [user?.id, includeFBRValidation, toast]);
+    }, [user?.id, includeFBRValidation]);
 
     const clearValidation = useCallback(() => {
         setValidationResult(null);
@@ -147,7 +117,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
     const getFieldErrors = useCallback((fieldName: string): ValidationResult[] => {
         if (!validationResult?.results) return [];
         return validationResult.results.filter(
-            result => result.field === fieldName && result.severity === ValidationSeverity.ERROR
+            (result: ValidationResult) => result.field === fieldName && result.severity === ValidationSeverity.ERROR
         );
     }, [validationResult]);
 
@@ -158,7 +128,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
     const getFieldWarnings = useCallback((fieldName: string): ValidationResult[] => {
         if (!validationResult?.results) return [];
         return validationResult.results.filter(
-            result => result.field === fieldName && result.severity === ValidationSeverity.WARNING
+            (result: ValidationResult) => result.field === fieldName && result.severity === ValidationSeverity.WARNING
         );
     }, [validationResult]);
 

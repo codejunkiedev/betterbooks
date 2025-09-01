@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './Dialog';
-import { Button } from './Button';
-import { Alert, AlertDescription } from './Alert';
-import { Badge } from './Badge';
-import { Progress } from './Progress';
-import { Card, CardContent, CardHeader, CardTitle } from './Card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/Dialog';
+import { Button } from '@/shared/components/Button';
+import { Alert, AlertDescription } from '@/shared/components/Alert';
+import { Badge } from '@/shared/components/Badge';
+import { Progress } from '@/shared/components/Progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
 import {
     AlertCircle,
     CheckCircle,
@@ -226,36 +226,149 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
                                 {status.message}
                             </p>
 
-                            {status.stage === 'submitting' && (
-                                <div className="space-y-3">
-                                    <Progress value={status.progress} className="w-full" />
-                                    <p className="text-xs text-muted-foreground">
-                                        Progress: {status.progress}%
-                                    </p>
+                            {/* Progress Bars - Always Show */}
+                            {status.stage === 'confirming' && (
+                                <div className="space-y-4">
+                                    <h4 className="font-semibold text-gray-800 mb-3">Submission Overview</h4>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">Data Validation</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-green-500 rounded-full" style={{ width: '100%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">✓</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">FBR Compliance</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-green-500 rounded-full" style={{ width: '100%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">✓</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">Ready to Submit</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-blue-500 rounded-full" style={{ width: '0%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-blue-600">Pending</span>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
-                            {status.stage === 'success' && status.fbrReference && (
-                                <Alert className="bg-green-50 border-green-200">
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
-                                    <AlertDescription className="text-green-800">
-                                        <strong>FBR Reference:</strong> {status.fbrReference}
-                                    </AlertDescription>
-                                </Alert>
+                            {status.stage === 'submitting' && (
+                                <div className="space-y-4">
+                                    <div className="space-y-3">
+                                        <Progress value={status.progress} className="w-full" />
+                                        <p className="text-xs text-muted-foreground">
+                                            Progress: {status.progress}%
+                                        </p>
+                                    </div>
+
+                                    {/* Submission Progress Bars */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">Connecting to FBR</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-blue-500 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-blue-600">✓</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">Validating Data</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-blue-500 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-blue-600">✓</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">Submitting Invoice</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-blue-500 rounded-full animate-pulse" style={{ width: `${Math.max(60, status.progress)}%` }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-blue-600">{Math.max(60, status.progress)}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {status.stage === 'success' && (
+                                <div className="space-y-4">
+                                    {status.fbrReference && (
+                                        <Alert className="bg-green-50 border-green-200">
+                                            <CheckCircle className="h-4 w-4 text-green-600" />
+                                            <AlertDescription className="text-green-800">
+                                                <strong>FBR Reference:</strong> {status.fbrReference}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+
+                                    {/* Success Progress Bars */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">Data Validation</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-green-500 rounded-full" style={{ width: '100%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">✓</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">FBR Submission</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-green-500 rounded-full" style={{ width: '100%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">✓</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">Confirmation</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-green-500 rounded-full" style={{ width: '100%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">✓</span>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
 
                             {(status.stage === 'error' || status.stage === 'timeout') && (
-                                <Alert className="bg-red-50 border-red-200">
-                                    <AlertCircle className="h-4 w-4 text-red-600" />
-                                    <AlertDescription className="text-red-800">
-                                        {status.error}
-                                        {status.attempt && (
-                                            <span className="block mt-1 text-sm">
-                                                Attempt {status.attempt} of {maxRetries}
-                                            </span>
-                                        )}
-                                    </AlertDescription>
-                                </Alert>
+                                <div className="space-y-4">
+                                    <Alert className="bg-red-50 border-red-200">
+                                        <AlertCircle className="h-4 w-4 text-red-600" />
+                                        <AlertDescription className="text-red-800">
+                                            {status.error}
+                                            {status.attempt && (
+                                                <span className="block mt-1 text-sm">
+                                                    Attempt {status.attempt} of {maxRetries}
+                                                </span>
+                                            )}
+                                        </AlertDescription>
+                                    </Alert>
+
+                                    {/* Error Progress Bars */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">Data Validation</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-green-500 rounded-full" style={{ width: '100%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-green-600">✓</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">FBR Submission</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-red-500 rounded-full" style={{ width: '60%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-red-600">✗</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-600">Confirmation</span>
+                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                <div className="h-full bg-gray-300 rounded-full" style={{ width: '0%' }}></div>
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-400">-</span>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
                         </CardContent>
                     </Card>

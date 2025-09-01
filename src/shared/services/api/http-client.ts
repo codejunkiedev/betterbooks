@@ -57,11 +57,6 @@ export class HttpClientApi implements HttpClient {
             try {
                 const errorData = await response.json();
                 if (errorData && typeof errorData === 'object') {
-                    console.error('HTTP Error Response:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        data: errorData
-                    });
 
                     // If there's a specific error message in the response, use it
                     if (errorData.message) {

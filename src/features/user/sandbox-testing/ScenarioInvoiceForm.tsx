@@ -12,8 +12,9 @@ import { Textarea } from '@/shared/components/Textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/Select';
 import { Badge } from '@/shared/components/Badge';
 import { Alert, AlertDescription } from '@/shared/components/Alert';
-import { InvoiceValidationModal } from '@/shared/components/InvoiceValidationModal';
-import { FBRSubmissionModal } from '@/shared/components/FBRSubmissionModal';
+import { InvoiceValidationModal } from './InvoiceValidationModal';
+import { FBRSubmissionModal } from './FBRSubmissionModal';
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/Tooltip';
 import {
     Play,
@@ -66,6 +67,7 @@ export default function ScenarioInvoiceForm() {
     const [clearingForm, setClearingForm] = useState(false);
     const [showValidationModal, setShowValidationModal] = useState(false);
     const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [provinces, setProvinces] = useState<Array<{ state_province_code: number; state_province_desc: string }>>([]);
     const [formData, setFormData] = useState<InvoiceFormData>({
@@ -287,7 +289,6 @@ export default function ScenarioInvoiceForm() {
 
     const handleValidateInvoice = async () => {
         try {
-            // Basic validation before calling FBR
             if (!formData.buyerNTNCNIC || formData.items.length === 0) {
                 toast({
                     title: 'Validation Error',
@@ -325,9 +326,8 @@ export default function ScenarioInvoiceForm() {
 
     const handlePreviewInvoice = async () => {
         try {
-            // Only generate invoice number if not already present
+            // Generate invoice number if needed
             if (!formData.invoiceRefNo) {
-                // Use current date for FBR reference number (not invoice date)
                 const currentDate = new Date();
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth() + 1;
@@ -338,8 +338,7 @@ export default function ScenarioInvoiceForm() {
                 }));
             }
             setShowPreviewModal(true);
-        } catch (error) {
-            console.error('Error generating invoice number:', error);
+        } catch {
             toast({
                 title: "Error",
                 description: "Failed to generate invoice number. Please try again.",
@@ -825,7 +824,9 @@ export default function ScenarioInvoiceForm() {
             {/* Invoice Validation Modal */}
             <InvoiceValidationModal
                 isOpen={showValidationModal}
-                onClose={() => setShowValidationModal(false)}
+                onClose={() => {
+                    setShowValidationModal(false);
+                }}
                 validationResult={validationResult}
                 isLoading={isValidating}
                 onValidate={handleValidateInvoice}
@@ -845,6 +846,7 @@ export default function ScenarioInvoiceForm() {
                 onSubmit={handleSubmitToFBRWrapper}
                 maxRetries={3}
             />
+
         </div>
     );
 }
