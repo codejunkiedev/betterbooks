@@ -1,333 +1,252 @@
-import type {
-    InvoiceItemForm,
-    InvoiceItemCalculated,
-    InvoiceItemValidation,
-    InvoiceRunningTotals
-} from '@/shared/types/invoice';
+import { FBRInvoiceItem } from '@/shared/types/invoice';
+import { InvoiceItemForm, InvoiceItemCalculated, InvoiceRunningTotals } from '@/shared/types/invoice';
+export interface ValidationErrors {
+    [key: string]: string;
+}
 
 /**
- * Calculate tax and totals for an invoice item
+ * Calculate running totals for invoice items
  */
-export function calculateInvoiceItem(item: InvoiceItemForm): InvoiceItemCalculated {
-    const quantity = Number(item.quantity) || 0;
-    const unitPrice = Number(item.unit_price) || 0;
-    const taxRate = Number(item.tax_rate) || 0;
+export function calculateRunningTotals(items: FBRInvoiceItem[]): InvoiceRunningTotals {
+    const totals = items.reduce(
+        (acc, item) => {
+            acc.total_quantity += item.quantity;
+            acc.total_value_excluding_tax += item.valueSalesExcludingST;
+            acc.total_sales_tax += item.salesTaxApplicable;
+            acc.total_amount += item.totalValues;
+            acc.total_items += 1;
+            return acc;
+        },
+        {
+            total_quantity: 0,
+            total_value_excluding_tax: 0,
+            total_sales_tax: 0,
+            total_amount: 0,
+            total_items: 0
+        }
+    );
 
-    // Calculate basic totals - unit_price is the price excluding tax
+    return totals;
+}
+
+/**
+ * Calculate item totals based on quantity and unit price
+ */
+export function calculateItemTotals(
+    quantity: number,
+    unitPrice: number,
+    taxRate: number
+): {
+    valueSalesExcludingST: number;
+    salesTaxApplicable: number;
+    totalValues: number;
+} {
     const valueSalesExcludingST = quantity * unitPrice;
-    const salesTax = (valueSalesExcludingST * taxRate) / 100;
-    const totalAmount = valueSalesExcludingST + salesTax;
-    const unitPriceExcludingTax = unitPrice; // Already excluding tax
-
-    // Handle 3rd schedule items (MRP fields)
-    let fixedNotifiedValue = undefined;
-    let retailPrice = undefined;
-
-    if (item.is_third_schedule) {
-        fixedNotifiedValue = item.mrp_including_tax || totalAmount;
-        retailPrice = item.mrp_excluding_tax || valueSalesExcludingST;
-    }
+    const salesTaxApplicable = valueSalesExcludingST * (taxRate / 100);
+    const totalValues = valueSalesExcludingST + salesTaxApplicable;
 
     return {
-        id: item.id,
-        hs_code: item.hs_code,
-        item_name: item.item_name,
-        quantity,
-        unit_price: unitPrice,
-        uom_code: item.uom_code,
-        tax_rate: taxRate,
-        value_sales_excluding_st: valueSalesExcludingST,
-        sales_tax: salesTax,
-        total_amount: totalAmount,
-        unit_price_excluding_tax: unitPriceExcludingTax,
-        fixed_notified_value: fixedNotifiedValue,
-        retail_price: retailPrice,
-        invoice_note: item.invoice_note,
-        is_third_schedule: item.is_third_schedule
+        valueSalesExcludingST: Math.round(valueSalesExcludingST * 100) / 100,
+        salesTaxApplicable: Math.round(salesTaxApplicable * 100) / 100,
+        totalValues: Math.round(totalValues * 100) / 100
     };
 }
 
 /**
- * Calculate running totals for multiple invoice items
+ * Validate invoice items
  */
-export function calculateRunningTotals(items: InvoiceItemCalculated[]): InvoiceRunningTotals {
-    return items.reduce((totals, item) => ({
-        total_quantity: totals.total_quantity + (item.quantity || 0),
-        total_value_excluding_tax: totals.total_value_excluding_tax + (item.value_sales_excluding_st || 0),
-        total_sales_tax: totals.total_sales_tax + (item.sales_tax || 0),
-        total_amount: totals.total_amount + (item.total_amount || 0),
-        total_items: totals.total_items + 1
-    }), {
-        total_quantity: 0,
-        total_value_excluding_tax: 0,
-        total_sales_tax: 0,
-        total_amount: 0,
-        total_items: 0
-    });
-}
+export function validateInvoiceItems(items: FBRInvoiceItem[]): ValidationErrors {
+    const errors: ValidationErrors = {};
 
-/**
- * Validate an invoice item form
- */
-export function validateInvoiceItem(item: InvoiceItemForm): InvoiceItemValidation {
-    const errors: Record<string, string> = {};
-
-    // Required fields
-    if (!item.hs_code?.trim()) {
-        errors.hs_code = 'HS Code is required';
-    }
-
-    if (!item.item_name?.trim()) {
-        errors.item_name = 'Product description is required';
-    } else if (item.item_name.length > 200) {
-        errors.item_name = 'Product description must be 200 characters or less';
-    }
-
-    if (!item.quantity || item.quantity <= 0) {
-        errors.quantity = 'Quantity must be greater than 0';
-    } else if (item.quantity < 0.01) {
-        errors.quantity = 'Quantity must be at least 0.01';
-    }
-
-    if (!item.unit_price || item.unit_price < 0) {
-        errors.unit_price = 'Unit price must be 0 or greater';
-    }
-
-    if (!item.uom_code?.trim()) {
-        errors.uom_code = 'Unit of measure is required';
-    }
-
-    if (item.tax_rate < 0 || item.tax_rate > 100) {
-        errors.tax_rate = 'Tax rate must be between 0 and 100';
-    }
-
-    // 3rd schedule validation
-    if (item.is_third_schedule) {
-        if (item.mrp_including_tax !== undefined && item.mrp_including_tax < 0) {
-            errors.mrp_including_tax = 'MRP including tax must be 0 or greater';
-        }
-        if (item.mrp_excluding_tax !== undefined && item.mrp_excluding_tax < 0) {
-            errors.mrp_excluding_tax = 'MRP excluding tax must be 0 or greater';
-        }
-    }
-
-    // Invoice note validation
-    if (item.invoice_note && item.invoice_note.length > 200) {
-        errors.invoice_note = 'Invoice note must be 200 characters or less';
-    }
-
-    return {
-        isValid: Object.keys(errors).length === 0,
-        errors
-    };
-}
-
-/**
- * Validate multiple invoice items
- */
-export function validateInvoiceItems(items: InvoiceItemForm[]): InvoiceItemValidation {
-    const errors: Record<string, string> = {};
-
-    if (items.length === 0) {
-        errors.items = 'At least one item is required';
-        return { isValid: false, errors };
-    }
-
-    // Validate each item
     items.forEach((item, index) => {
-        const itemValidation = validateInvoiceItem(item);
-        if (!itemValidation.isValid) {
-            Object.entries(itemValidation.errors).forEach(([field, error]) => {
-                errors[`item_${index}_${field}`] = error;
-            });
+        // Validate HS Code
+        if (!item.hsCode?.trim()) {
+            errors[`item_${index}_hsCode`] = 'HS Code is required';
+        } else if (!/^\d{2,8}$/.test(item.hsCode.replace(/\D/g, ''))) {
+            errors[`item_${index}_hsCode`] = 'Invalid HS Code format';
+        }
+
+        // Validate product description
+        if (!item.productDescription?.trim()) {
+            errors[`item_${index}_productDescription`] = 'Product description is required';
+        }
+
+        // Validate quantity
+        if (item.quantity <= 0) {
+            errors[`item_${index}_quantity`] = 'Quantity must be greater than 0';
+        }
+
+        // Validate total values
+        if (item.totalValues <= 0) {
+            errors[`item_${index}_totalValues`] = 'Total value must be greater than 0';
+        }
+
+        // Validate tax rate
+        const taxRate = parseFloat(item.rate.replace('%', ''));
+        if (isNaN(taxRate) || taxRate < 0 || taxRate > 100) {
+            errors[`item_${index}_rate`] = 'Tax rate must be between 0% and 100%';
+        }
+
+        // Validate UoM
+        if (!item.uoM?.trim()) {
+            errors[`item_${index}_uoM`] = 'Unit of measure is required';
         }
     });
 
-    return {
-        isValid: Object.keys(errors).length === 0,
-        errors
-    };
+    return errors;
 }
 
 /**
- * Format currency values for display
+ * Format currency for display
  */
 export function formatCurrency(amount: number): string {
     return new Intl.NumberFormat('en-PK', {
         style: 'currency',
         currency: 'PKR',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        minimumFractionDigits: 2
     }).format(amount);
 }
 
 /**
- * Format percentage values for display
+ * Parse tax rate string to number
  */
-export function formatPercentage(value: number): string {
-    return `${value.toFixed(2)}%`;
+export function parseTaxRate(rateString: string): number {
+    return parseFloat(rateString.replace('%', '')) || 0;
 }
 
 /**
- * Format quantity values for display
+ * Format tax rate number to string
+ */
+export function formatTaxRate(rate: number): string {
+    return `${rate}%`;
+}
+/**
+ * Calculate invoice item with all computed values
+ */
+export function calculateInvoiceItem(formData: InvoiceItemForm): InvoiceItemCalculated {
+    const valueSalesExcludingST = formData.quantity * formData.unit_price;
+    const salesTaxApplicable = valueSalesExcludingST * (formData.tax_rate / 100);
+    const totalAmount = valueSalesExcludingST + salesTaxApplicable;
+
+    const result: InvoiceItemCalculated = {
+        id: formData.id || `item_${Date.now()}`,
+        hs_code: formData.hs_code,
+        item_name: formData.item_name,
+        quantity: formData.quantity,
+        unit_price: formData.unit_price,
+        uom_code: formData.uom_code,
+        tax_rate: formData.tax_rate,
+        is_third_schedule: formData.is_third_schedule,
+        total_amount: Math.round(totalAmount * 100) / 100,
+        sales_tax: Math.round(salesTaxApplicable * 100) / 100,
+        value_sales_excluding_st: Math.round(valueSalesExcludingST * 100) / 100,
+        fixed_notified_value: formData.mrp_including_tax || 0,
+        retail_price: formData.mrp_excluding_tax || 0
+    };
+
+    // Add optional properties only if they have values
+    if (formData.invoice_note !== undefined) {
+        result.invoice_note = formData.invoice_note;
+    }
+    if (formData.mrp_including_tax !== undefined) {
+        result.mrp_including_tax = formData.mrp_including_tax;
+    }
+    if (formData.mrp_excluding_tax !== undefined) {
+        result.mrp_excluding_tax = formData.mrp_excluding_tax;
+    }
+
+    return result;
+}
+
+/**
+ * Calculate running totals for calculated invoice items
+ */
+export function calculateRunningTotalsForCalculatedItems(items: InvoiceItemCalculated[]): InvoiceRunningTotals {
+    const totals = items.reduce(
+        (acc, item) => {
+            acc.total_value_excluding_tax += item.value_sales_excluding_st;
+            acc.total_sales_tax += item.sales_tax;
+            acc.total_amount += item.total_amount;
+            acc.total_items += 1;
+            return acc;
+        },
+        {
+            total_value_excluding_tax: 0,
+            total_sales_tax: 0,
+            total_amount: 0,
+            total_items: 0
+        }
+    );
+
+    return totals;
+}
+
+/**
+ * Validate invoice item form
+ */
+export function validateInvoiceItem(formData: InvoiceItemForm): { isValid: boolean; errors: Record<string, string> } {
+    const errors: Record<string, string> = {};
+
+    if (!formData.hs_code?.trim()) {
+        errors.hs_code = 'HS Code is required';
+    }
+
+    if (!formData.item_name?.trim()) {
+        errors.item_name = 'Product description is required';
+    }
+
+    if (formData.quantity <= 0) {
+        errors.quantity = 'Quantity must be greater than 0';
+    }
+
+    if (formData.unit_price <= 0) {
+        errors.unit_price = 'Unit price must be greater than 0';
+    }
+
+    if (!formData.uom_code?.trim()) {
+        errors.uom_code = 'Unit of measure is required';
+    }
+
+    if (formData.tax_rate < 0 || formData.tax_rate > 100) {
+        errors.tax_rate = 'Tax rate must be between 0% and 100%';
+    }
+
+    return {
+        isValid: Object.keys(errors).length === 0,
+        errors
+    };
+}
+
+/**
+ * Format quantity for display
  */
 export function formatQuantity(quantity: number): string {
-    return new Intl.NumberFormat('en-PK', {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3
-    }).format(quantity);
+    return quantity.toFixed(3);
 }
 
 /**
- * Check if an item is 3rd schedule based on HS code
+ * Format percentage for display
+ */
+export function formatPercentage(rate: number): string {
+    return `${rate.toFixed(2)}%`;
+}
+
+/**
+ * Check if HS code is third schedule item
  */
 export function isThirdScheduleItem(hsCode: string): boolean {
-    // This is a simplified check - in practice, this would be determined by FBR API
-    // or a comprehensive list of 3rd schedule items
-    const thirdSchedulePatterns = [
-        /^8471/, // Automatic data processing machines
-        /^8517/, // Telephone sets
-        /^8528/, // Television receivers
-        /^8527/, // Radio receivers
-        /^8519/, // Sound recording apparatus
-        /^8521/, // Video recording apparatus
-        /^8523/, // Prepared unrecorded media
-        /^8525/, // Transmission apparatus
-        /^8526/, // Radar apparatus
-        /^8529/, // Parts for TV/radio apparatus
-        /^8531/, // Electric sound/visual signaling apparatus
-        /^8532/, // Electric capacitors
-        /^8533/, // Electrical resistors
-        /^8534/, // Printed circuits
-        /^8535/, // Electrical apparatus for switching
-        /^8536/, // Electrical apparatus for protecting electrical circuits
-        /^8537/, // Boards, panels, consoles for electric control
-        /^8538/, // Parts for electrical apparatus
-        /^8539/, // Electric filament lamps
-        /^8540/, // Thermionic, cold cathode or photo-cathode tubes
-        /^8541/, // Diodes, transistors and similar semiconductor devices
-        /^8542/, // Electronic integrated circuits
-        /^8543/, // Electrical machines and apparatus
-        /^8544/, // Insulated wire, cable and other insulated electric conductors
-        /^8545/, // Carbon electrodes, carbon brushes, lamp carbons
-        /^8546/, // Electrical insulators
-        /^8547/, // Insulating fittings for electrical machines
-        /^8548/, // Waste and scrap of primary cells
-        /^9001/, // Optical fibers and optical fiber bundles
-        /^9002/, // Optical elements
-        /^9003/, // Frames and mountings for spectacles
-        /^9004/, // Spectacles, goggles and the like
-        /^9005/, // Binoculars, monoculars, other optical telescopes
-        /^9006/, // Photographic cameras
-        /^9007/, // Cinematographic cameras and projectors
-        /^9008/, // Image projectors
-        /^9009/, // Photocopying apparatus
-        /^9010/, // Apparatus and equipment for photographic laboratories
-        /^9011/, // Compound optical microscopes
-        /^9012/, // Microscopes other than optical microscopes
-        /^9013/, // Other optical appliances and instruments
-        /^9014/, // Direction finding compasses
-        /^9015/, // Surveying instruments
-        /^9016/, // Balances of a sensitivity of 5 cg or better
-        /^9017/, // Drawing, marking-out or mathematical calculating instruments
-        /^9018/, // Medical, surgical, dental or veterinary instruments
-        /^9019/, // Mechano-therapy appliances
-        /^9020/, // Other breathing appliances and gas masks
-        /^9021/, // Orthopedic appliances
-        /^9022/, // X-ray apparatus
-        /^9023/, // Instruments, apparatus and models
-        /^9024/, // Machines and appliances for testing
-        /^9025/, // Hydrometers and similar floating instruments
-        /^9026/, // Instruments and apparatus for measuring or checking
-        /^9027/, // Instruments and apparatus for physical or chemical analysis
-        /^9028/, // Gas, liquid or electricity supply or production meters
-        /^9029/, // Revolution counters, production counters, taximeters
-        /^9030/, // Speed indicators and tachometers
-        /^9031/, // Measuring or checking instruments
-        /^9032/, // Automatic regulating or controlling instruments
-        /^9033/, // Parts and accessories for instruments
-        /^9503/, // Other toys
-        /^9504/, // Video game consoles and machines
-        /^9505/, // Festive, carnival or other entertainment articles
-        /^9506/, // Articles and equipment for general physical exercise
-        /^9507/, // Fishing rods, fish-hooks and other line fishing tackle
-        /^9508/, // Roundabouts, swings, shooting galleries and other fairground amusements
-        /^9603/, // Brooms, brushes, mops and feather dusters
-        /^9604/, // Hand sieves and hand riddles
-        /^9605/, // Travel sets for personal toilet, sewing or shoe cleaning
-        /^9606/, // Buttons, press-fasteners, snap-fasteners and press-studs
-        /^9607/, // Slide fasteners
-        /^9608/, // Ball point pens
-        /^9609/, // Pencils, crayons, pencil leads
-        /^9610/, // Slates and boards
-        /^9611/, // Date, sealing or numbering stamps
-        /^9612/, // Typewriter or similar ribbons
-        /^9613/, // Cigarette lighters and other lighters
-        /^9614/, // Smoking pipes and cigar or cigarette holders
-        /^9615/, // Combs, hair-slides and the like
-        /^9616/, // Scent sprays and similar toilet sprays
-        /^9617/, // Vacuum flasks and other vacuum vessels
-        /^9618/, // Tailors' dummies and other lay figures
-        /^9619/, // Sanitary towels and tampons
-        /^9620/, // Monopods, bipods, tripods and similar articles
-    ];
-
-    return thirdSchedulePatterns.some(pattern => pattern.test(hsCode));
+    // This is a simplified check - in real implementation, this would check against FBR's third schedule list
+    const thirdSchedulePrefixes = ['2402', '2403', '2404', '2405', '2406', '2407', '2408', '2409', '2410'];
+    return thirdSchedulePrefixes.some(prefix => hsCode.startsWith(prefix));
 }
 
 /**
  * Get default tax rate for HS code
  */
 export function getDefaultTaxRate(hsCode: string): number {
-    // This is a simplified implementation - in practice, this would come from FBR API
+    // This is a simplified implementation - in real implementation, this would check against FBR's tax rate database
     if (isThirdScheduleItem(hsCode)) {
-        return 16; // Standard rate for 3rd schedule items
+        return 16.0; // Third schedule items typically have 16% tax
     }
-
-    // Default tax rates based on HS code categories
-    const code = hsCode.substring(0, 4);
-
-    // Zero-rated items
-    const zeroRatedCodes = ['0101', '0102', '0103', '0104', '0105', '0106', '0201', '0202', '0203', '0204', '0205', '0206', '0207', '0208', '0209', '0210'];
-    if (zeroRatedCodes.includes(code)) {
-        return 0;
-    }
-
-    // Reduced rate items (5%)
-    const reducedRateCodes = ['1001', '1002', '1003', '1004', '1005', '1006', '1007', '1008'];
-    if (reducedRateCodes.includes(code)) {
-        return 5;
-    }
-
-    // Standard rate (16%)
-    return 16;
-}
-
-/**
- * Get default UOM for HS code
- */
-export function getDefaultUOM(hsCode: string): string {
-    // This is a simplified implementation - in practice, this would come from FBR API
-    const code = hsCode.substring(0, 4);
-
-    // Weight-based items
-    const weightCodes = ['0101', '0102', '0103', '0104', '0105', '0106', '0201', '0202', '0203', '0204', '0205', '0206', '0207', '0208', '0209', '0210'];
-    if (weightCodes.includes(code)) {
-        return 'KG';
-    }
-
-    // Volume-based items
-    const volumeCodes = ['2201', '2202', '2203', '2204', '2205', '2206', '2207', '2208', '2209'];
-    if (volumeCodes.includes(code)) {
-        return 'LTR';
-    }
-
-    // Length-based items
-    const lengthCodes = ['5201', '5202', '5203', '5204', '5205', '5206', '5207', '5208', '5209'];
-    if (lengthCodes.includes(code)) {
-        return 'MTR';
-    }
-
-    // Default to pieces
-    return 'PCS';
+    return 18.0; // Default tax rate
 }

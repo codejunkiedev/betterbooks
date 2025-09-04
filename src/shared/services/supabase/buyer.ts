@@ -50,9 +50,9 @@ export const createBuyer = async (data: CreateBuyerData): Promise<ApiResponse<Bu
             .select('id')
             .eq('user_id', user.id)
             .eq('ntn_cnic', data.ntn_cnic)
-            .single();
+            .maybeSingle();
 
-        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found"
+        if (checkError) {
             throw checkError;
         }
 
@@ -177,9 +177,9 @@ export const updateBuyer = async (data: UpdateBuyerData): Promise<ApiResponse<Bu
                 .eq('user_id', user.id)
                 .eq('ntn_cnic', data.ntn_cnic)
                 .neq('id', data.id)
-                .single();
+                .maybeSingle();
 
-            if (checkError && checkError.code !== 'PGRST116') {
+            if (checkError) {
                 throw checkError;
             }
 

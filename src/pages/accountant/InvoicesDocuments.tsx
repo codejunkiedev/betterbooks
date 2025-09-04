@@ -117,7 +117,13 @@ const InvoicesDocuments = () => {
 
 
     const handleFilterApply = () => {
-        setFilters(tempFilters);
+        const normalized: FilterState = {
+            type: tempFilters.type || undefined,
+            status: tempFilters.status || undefined,
+            date_from: tempFilters.date_from || undefined,
+            date_to: tempFilters.date_to || undefined,
+        };
+        setFilters(normalized);
         setCurrentPage(1);
         setIsFilterModalOpen(false);
     };
@@ -408,12 +414,12 @@ const InvoicesDocuments = () => {
                     <div className="space-y-4">
                         <div>
                             <Label htmlFor="type">Document Type</Label>
-                            <Select value={tempFilters.type || ''} onValueChange={(value) => setTempFilters(prev => ({ ...prev, type: value as DocumentType }))}>
+                            <Select value={tempFilters.type || ''} onValueChange={(value) => setTempFilters(prev => ({ ...prev, type: (value === '__ALL__' ? undefined : (value as DocumentType)) }))}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="All types" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All types</SelectItem>
+                                    <SelectItem value="__ALL__">All types</SelectItem>
                                     <SelectItem value="INVOICE">Invoice</SelectItem>
                                     <SelectItem value="RECEIPT">Receipt</SelectItem>
                                     <SelectItem value="BANK_STATEMENT">Bank Statement</SelectItem>
@@ -427,12 +433,12 @@ const InvoicesDocuments = () => {
 
                         <div>
                             <Label htmlFor="status">Status</Label>
-                            <Select value={tempFilters.status || ''} onValueChange={(value) => setTempFilters(prev => ({ ...prev, status: value as DocumentStatus }))}>
+                            <Select value={tempFilters.status || ''} onValueChange={(value) => setTempFilters(prev => ({ ...prev, status: (value === '__ALL__' ? undefined : (value as DocumentStatus)) }))}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="All statuses" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">All statuses</SelectItem>
+                                    <SelectItem value="__ALL__">All statuses</SelectItem>
                                     <SelectItem value="PENDING_REVIEW">Pending Review</SelectItem>
                                     <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                                     <SelectItem value="COMPLETED">Completed</SelectItem>

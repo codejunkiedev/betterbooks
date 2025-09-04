@@ -183,8 +183,7 @@ const SelectedClient: React.FC<SelectedClientProps> = ({
                     document={journalEntryDocument}
                     company={selectedClient}
                     onSuccess={() => {
-                        // Refresh the documents list or update the status
-                        window.location.reload();
+                        setJournalEntryDocument(null);
                     }}
                 />
             )}

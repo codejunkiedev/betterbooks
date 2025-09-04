@@ -45,7 +45,7 @@ export default function FbrProfile({
 	const [provinces, setProvinces] = useState<Province[]>([]);
 	const [activityRows, setActivityRows] = useState<BusinessActivityRow[]>([]);
 
-	const form = {
+	const form = useMemo(() => ({
 		cnic_ntn: cnicNtn,
 		business_name: businessName,
 		province_code: provinceCode,
@@ -53,7 +53,7 @@ export default function FbrProfile({
 		mobile_number: mobileNumber,
 		activity_name: activityName,
 		sector: sector,
-	};
+	}), [cnicNtn, businessName, provinceCode, address, mobileNumber, activityName, sector]);
 
 	const activityNames = useMemo(
 		() => Array.from(new Set(activityRows.map(a => a.business_activity))),

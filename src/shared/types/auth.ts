@@ -1,6 +1,12 @@
 import { User, AuthError } from "@supabase/supabase-js";
 
-export type UserRole = 'USER' | 'ACCOUNTANT' | 'ADMIN';
+export enum UserRoleEnum {
+    USER = 'USER',
+    ACCOUNTANT = 'ACCOUNTANT',
+    ADMIN = 'ADMIN'
+}
+
+export type UserRole = UserRoleEnum;
 
 export interface SignInPayload {
     email: string;

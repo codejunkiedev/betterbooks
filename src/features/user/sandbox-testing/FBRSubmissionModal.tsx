@@ -1,27 +1,28 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './Dialog';
-import { Button } from './Button';
-import { Alert, AlertDescription } from './Alert';
-import { Badge } from './Badge';
-import { Progress } from './Progress';
-import { Card, CardContent, CardHeader, CardTitle } from './Card';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/Dialog';
+import { Button } from '@/shared/components/Button';
+import { Alert, AlertDescription } from '@/shared/components/Alert';
+import { Badge } from '@/shared/components/Badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
+
 import {
     AlertCircle,
-    CheckCircle,
-    XCircle,
-    Clock,
     RefreshCw,
-    FileText,
     ExternalLink,
-    Loader2
+    Loader2,
+    AlertTriangle
 } from 'lucide-react';
-import { ScenarioInvoiceFormData } from '@/shared/types/invoice';
+import { InvoiceFormData } from '@/shared/types/invoice';
+import { generateFBRInvoiceNumberForPreview } from '@/shared/services/supabase/invoice';
+import { FBRErrorHandler } from '@/shared/utils/fbrErrorHandler';
+import { ValidationResult } from '@/shared/types/fbrValidation';
 
 export interface FBRSubmissionModalProps {
     isOpen: boolean;
     onClose: () => void;
-    invoiceData: ScenarioInvoiceFormData;
+    invoiceData: InvoiceFormData;
     environment: 'sandbox' | 'production';
+    userId: string;
     onSubmit: () => Promise<{
         success: boolean;
         data?: {
@@ -37,13 +38,15 @@ export interface FBRSubmissionModalProps {
 }
 
 export interface SubmissionStatus {
-    stage: 'confirming' | 'submitting' | 'success' | 'error' | 'timeout';
+    stage: 'confirming' | 'submitting' | 'success' | 'error' | 'timeout' | 'validation_failed';
     message: string;
     progress: number;
-    attempt?: number;
-    fbrReference?: string;
-    error?: string;
-    canRetry?: boolean;
+    attempt?: number | undefined;
+    fbrReference?: string | undefined;
+    error?: string | undefined;
+    canRetry?: boolean | undefined;
+    validationErrors?: ValidationResult[];
+    fbrResponse?: Record<string, unknown>;
 }
 
 export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
@@ -51,6 +54,7 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
     onClose,
     invoiceData,
     environment,
+    userId,
     onSubmit,
     onRetry,
     maxRetries = 3
@@ -61,6 +65,27 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
         progress: 0
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [generatedRefNo, setGeneratedRefNo] = useState<string>('');
+
+    // Generate reference number when modal opens
+    useEffect(() => {
+        if (isOpen && !invoiceData.invoiceRefNo) {
+            const generateRefNo = async () => {
+                try {
+                    const year = new Date(invoiceData.invoiceDate).getFullYear();
+                    const month = new Date(invoiceData.invoiceDate).getMonth() + 1;
+                    const refNo = await generateFBRInvoiceNumberForPreview(userId, year, month);
+                    setGeneratedRefNo(refNo);
+                } catch (error) {
+                    console.warn('Failed to generate reference number for preview:', error);
+                    setGeneratedRefNo('Auto-generated');
+                }
+            };
+            generateRefNo();
+        } else if (invoiceData.invoiceRefNo) {
+            setGeneratedRefNo(invoiceData.invoiceRefNo);
+        }
+    }, [isOpen, invoiceData.invoiceRefNo, invoiceData.invoiceDate, userId]);
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -88,9 +113,29 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
                     stage: 'success',
                     message: 'Invoice submitted successfully to FBR',
                     progress: 100,
-                    fbrReference: result.data?.fbrReference || result.data?.transactionId
+                    fbrReference: result.data?.fbrReference || result.data?.transactionId || undefined
                 });
             } else {
+                // Check if this is a validation error from FBR
+                if (result.data?.response) {
+                    const fbrResponse = result.data.response as Record<string, unknown>;
+                    const validationErrors = FBRErrorHandler.processFBRResponse(fbrResponse);
+
+                    if (validationErrors.length > 0) {
+                        // This is a validation failure from FBR
+                        setStatus({
+                            stage: 'validation_failed',
+                            message: '',
+                            progress: 0,
+                            attempt: result.attempt || undefined,
+                            validationErrors,
+                            fbrResponse,
+                            canRetry: (result.attempt || 0) < maxRetries
+                        });
+                        return;
+                    }
+                }
+
                 const isTimeout = result.error?.includes('timeout') || result.error?.includes('Timeout');
                 const canRetry = (result.attempt || 0) < maxRetries;
 
@@ -98,8 +143,8 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
                     stage: isTimeout ? 'timeout' : 'error',
                     message: result.error || 'Submission failed',
                     progress: 0,
-                    attempt: result.attempt,
-                    error: result.error,
+                    attempt: result.attempt || undefined,
+                    error: result.error || undefined,
                     canRetry
                 });
             }
@@ -138,46 +183,64 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
         }, 300);
     };
 
-    const getStageIcon = () => {
-        switch (status.stage) {
-            case 'confirming':
-                return <FileText className="h-5 w-5 text-blue-500" />;
-            case 'submitting':
-                return <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />;
-            case 'success':
-                return <CheckCircle className="h-5 w-5 text-green-500" />;
-            case 'error':
-                return <XCircle className="h-5 w-5 text-red-500" />;
-            case 'timeout':
-                return <Clock className="h-5 w-5 text-orange-500" />;
-            default:
-                return <FileText className="h-5 w-5 text-blue-500" />;
-        }
-    };
 
-    const getStageColor = () => {
-        switch (status.stage) {
-            case 'confirming':
-                return 'bg-blue-50 border-blue-200';
-            case 'submitting':
-                return 'bg-blue-50 border-blue-200';
-            case 'success':
-                return 'bg-green-50 border-green-200';
-            case 'error':
-                return 'bg-red-50 border-red-200';
-            case 'timeout':
-                return 'bg-orange-50 border-orange-200';
-            default:
-                return 'bg-blue-50 border-blue-200';
+
+    const renderValidationErrors = () => {
+        if (!status.validationErrors || status.validationErrors.length === 0) {
+            return null;
         }
+
+        const prioritizedErrors = FBRErrorHandler.getPrioritizedErrors(status.validationErrors, 10);
+
+        return (
+            <div className="space-y-4">
+                {/* Simple Error Display */}
+                <Card className="bg-orange-50 border-orange-200">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center gap-2 text-orange-800">
+                            <AlertTriangle className="h-5 w-5" />
+                            Validation Errors
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            {prioritizedErrors.map((error, index) => (
+                                <Alert key={index} className="bg-red-50 border-red-200">
+                                    <AlertCircle className="h-4 w-4 text-red-600" />
+                                    <AlertDescription className="text-red-800">
+                                        <div className="font-medium mb-1">
+                                            {error.code && (
+                                                <Badge variant="outline" className="mr-2">
+                                                    Error {error.code}
+                                                </Badge>
+                                            )}
+                                            {FBRErrorHandler.formatErrorMessage(error)}
+                                        </div>
+                                        {error.suggestion && (
+                                            <div className="text-sm text-red-700 mt-1">
+                                                <strong>How to fix:</strong> {error.suggestion}
+                                            </div>
+                                        )}
+                                        {error.field && error.field !== 'general' && (
+                                            <div className="text-xs text-red-600 mt-1">
+                                                <strong>Field:</strong> {error.field}
+                                            </div>
+                                        )}
+                                    </AlertDescription>
+                                </Alert>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        {getStageIcon()}
                         FBR Invoice Submission
                         <Badge variant={environment === 'production' ? 'destructive' : 'secondary'}>
                             {environment === 'production' ? 'Production' : 'Sandbox'}
@@ -186,55 +249,9 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
                 </DialogHeader>
 
                 <div className="space-y-6">
-                    {/* Status Card */}
-                    <Card className={getStageColor()}>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                {status.stage === 'confirming' && 'Review Submission'}
-                                {status.stage === 'submitting' && 'Submitting to FBR'}
-                                {status.stage === 'success' && 'Submission Successful'}
-                                {status.stage === 'error' && 'Submission Failed'}
-                                {status.stage === 'timeout' && 'Submission Timeout'}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground mb-4">
-                                {status.message}
-                            </p>
 
-                            {status.stage === 'submitting' && (
-                                <div className="space-y-3">
-                                    <Progress value={status.progress} className="w-full" />
-                                    <p className="text-xs text-muted-foreground">
-                                        Progress: {status.progress}%
-                                    </p>
-                                </div>
-                            )}
-
-                            {status.stage === 'success' && status.fbrReference && (
-                                <Alert className="bg-green-50 border-green-200">
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
-                                    <AlertDescription className="text-green-800">
-                                        <strong>FBR Reference:</strong> {status.fbrReference}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            {(status.stage === 'error' || status.stage === 'timeout') && (
-                                <Alert className="bg-red-50 border-red-200">
-                                    <AlertCircle className="h-4 w-4 text-red-600" />
-                                    <AlertDescription className="text-red-800">
-                                        {status.error}
-                                        {status.attempt && (
-                                            <span className="block mt-1 text-sm">
-                                                Attempt {status.attempt} of {maxRetries}
-                                            </span>
-                                        )}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-                        </CardContent>
-                    </Card>
+                    {/* Validation Errors */}
+                    {status.stage === 'validation_failed' && renderValidationErrors()}
 
                     {/* Invoice Details */}
                     {status.stage === 'confirming' && (
@@ -254,7 +271,7 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
                                     </div>
                                     <div>
                                         <span className="font-medium">Reference No:</span>
-                                        <p className="text-muted-foreground">{invoiceData.invoiceRefNo}</p>
+                                        <p className="text-muted-foreground">{generatedRefNo || invoiceData.invoiceRefNo || 'Generating...'}</p>
                                     </div>
                                     <div>
                                         <span className="font-medium">Total Amount:</span>
@@ -356,7 +373,7 @@ export const FBRSubmissionModal: React.FC<FBRSubmissionModalProps> = ({
                         </Button>
                     )}
 
-                    {(status.stage === 'error' || status.stage === 'timeout') && (
+                    {(status.stage === 'error' || status.stage === 'timeout' || status.stage === 'validation_failed') && (
                         <>
                             <Button variant="outline" onClick={handleClose}>
                                 Close

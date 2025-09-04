@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/shared/components/Button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/Tooltip';
@@ -28,16 +28,7 @@ export function UoMValidationField({
     const [isValidating, setIsValidating] = useState(false);
     const [showTooltip, setShowTooltip] = useState(false);
 
-    // Validate UoM when HS code or selected UoM changes
-    useEffect(() => {
-        if (hsCode && selectedUoM) {
-            validateUoMField();
-        } else {
-            setValidationResult(null);
-        }
-    }, [hsCode, selectedUoM]);
-
-    const validateUoMField = async () => {
+    const validateUoMField = useCallback(async () => {
         if (!hsCode || !selectedUoM) return;
 
         setIsValidating(true);
@@ -50,7 +41,16 @@ export function UoMValidationField({
         } finally {
             setIsValidating(false);
         }
-    };
+    }, [hsCode, selectedUoM, onValidationResult, validateUoM]);
+
+    // Validate UoM when HS code or selected UoM changes
+    useEffect(() => {
+        if (hsCode && selectedUoM) {
+            validateUoMField();
+        } else {
+            setValidationResult(null);
+        }
+    }, [hsCode, selectedUoM, validateUoMField]);
 
     const handleUseRecommended = () => {
         if (validationResult?.recommendedUoM) {

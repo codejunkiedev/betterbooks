@@ -1,6 +1,7 @@
 import { HttpClientApi } from './http-client';
-import { saveInvoice } from '../supabase/invoice';
-import { ScenarioInvoiceFormData } from '@/shared/types/invoice';
+import { saveInvoice, generateFBRInvoiceNumber } from '../supabase/invoice';
+import { FBRInvoiceData, InvoiceFormData, InvoiceItemCalculated } from '@/shared/types/invoice';
+import { getScenarioById } from '../supabase/fbr';
 
 // FBR API endpoints
 const FBR_ENDPOINTS = {
@@ -13,7 +14,7 @@ const httpClient = new HttpClientApi();
 
 export interface FBRSubmissionRequest {
     userId: string;
-    invoiceData: ScenarioInvoiceFormData;
+    invoiceData: FBRInvoiceData;
     environment: 'sandbox' | 'production';
     apiKey: string;
     maxRetries?: number;
@@ -25,63 +26,93 @@ export interface FBRSubmissionResponse {
     data?: {
         fbrReference?: string;
         transactionId?: string;
+        invoiceNumber?: string;
         response?: Record<string, unknown>;
         invoiceId?: string | undefined;
+        generatedInvoiceRefNo?: string; // Add generated reference number
     };
     error?: string;
     attempt?: number;
-    isTimeout?: boolean;
 }
 
-export interface FBRInvoiceData {
-    invoiceType: string;
-    invoiceDate: string;
-    sellerNTNCNIC: string;
-    sellerBusinessName: string;
-    sellerProvince: string;
-    sellerAddress: string;
-    buyerNTNCNIC: string;
-    buyerBusinessName: string;
-    buyerProvince: string;
-    buyerAddress: string;
-    buyerRegistrationType: string;
-    invoiceRefNo: string;
-    scenarioId?: string;
-    items: Array<{
-        itemCode: string;
-        itemName: string;
-        quantity: number;
-        unitPrice: number;
-        totalAmount: number;
-        salesTax: number;
-        unitOfMeasurement: string;
-        taxRate: number;
-        valueSalesExcludingST: number;
-        fixedNotifiedValue: number;
-        retailPrice: number;
-        invoiceNote?: string | undefined;
-    }>;
-    totalAmount: number;
-    totalSalesTax: number;
-    totalValueSalesExcludingST: number;
+/**
+ * Convert InvoiceItemCalculated to FBR API format
+ */
+function convertItemToFBRFormat(item: InvoiceItemCalculated, saleType: string) {
+    // Format rate as percentage string
+    const formatRate = (rate: number): string => {
+        return `${rate}%`;
+    };
+
+    // Format number to appropriate decimal places
+    // Quantities can have up to 3 decimal places (e.g., 0.125 kg)
+    // Monetary values use 2 decimal places
+    const formatNumberToString = (value: number, isQuantity: boolean = false): string => {
+        return isQuantity ? value.toFixed(3) : value.toFixed(2);
+    };
+
+    return {
+        hsCode: item.hs_code,
+        productDescription: item.item_name,
+        rate: formatRate(item.tax_rate),
+        uoM: item.uom_code,
+        quantity: parseFloat(formatNumberToString(item.quantity, true)), // Quantity supports 3 decimal places
+        totalValues: parseFloat(formatNumberToString(item.total_amount)),
+        valueSalesExcludingST: parseFloat(formatNumberToString(item.value_sales_excluding_st)),
+        fixedNotifiedValueOrRetailPrice: parseFloat(formatNumberToString(item.fixed_notified_value)),
+        salesTaxApplicable: parseFloat(formatNumberToString(item.sales_tax)),
+        salesTaxWithheldAtSource: 0.00, // Default value - should be calculated based on business rules
+        extraTax: 0.00, // Default value - should be calculated based on business rules
+        furtherTax: 0.00, // Default value - should be calculated based on business rules
+        sroScheduleNo: item.is_third_schedule ? "3" : "", // Third schedule indicator
+        fedPayable: 0.00, // Default value - should be calculated based on business rules
+        discount: 0.00, // Default value - should be calculated based on business rules
+        saleType: saleType, // Dynamic sale type from scenario
+        sroItemSerialNo: ""
+    };
+}
+
+/**
+ * Generate a unique invoice reference number if not provided
+ * FBR Standard Format: NTN-YYYY-MM-XXXXX
+ * Example: 1234567-2025-01-00001
+ */
+export async function generateInvoiceRefNo(userId: string): Promise<string> {
+    try {
+        // Use current date for FBR reference number (not invoice date)
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        return await generateFBRInvoiceNumber(userId, year, month);
+    } catch (error) {
+        console.warn('Failed to generate FBR-compliant invoice number, using fallback:', error);
+        // Fallback to simple format if FBR generation fails
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return `INV-${timestamp}-${random}`;
+    }
 }
 
 /**
  * Format invoice data according to FBR API requirements
  */
-function formatInvoiceDataForFBR(invoiceData: ScenarioInvoiceFormData): FBRInvoiceData {
+async function formatInvoiceDataForFBR(invoiceData: FBRInvoiceData, userId: string): Promise<Record<string, unknown>> {
     // Clean NTN/CNIC by removing non-digits
     const cleanNTNCNIC = (value: string) => value.replace(/\D/g, '');
 
-    // Format number to 2 decimal places
-    const formatNumber = (value: number | string): number => {
-        const num = typeof value === 'string' ? parseFloat(value) || 0 : value;
-        return Math.round(num * 100) / 100;
-    };
+    // Generate invoice reference number if not provided
+    const invoiceRefNo = invoiceData.invoiceRefNo || await generateInvoiceRefNo(userId);
 
-    // Calculate totals
-    const totalSalesTax = invoiceData.items.reduce((sum, item) => sum + (item.sales_tax || 0), 0);
-    const totalValueSalesExcludingST = invoiceData.items.reduce((sum, item) => sum + (item.value_sales_excluding_st || 0), 0);
+    // Get scenario details to get the sale type
+    let saleType = "Goods at standard rate (default)"; // Default fallback
+    try {
+        const scenario = await getScenarioById(invoiceData.scenarioId);
+        if (scenario && scenario.sale_type) {
+            saleType = scenario.sale_type;
+        }
+    } catch (error) {
+        console.warn('Failed to fetch scenario details, using default sale type:', error);
+    }
 
     return {
         invoiceType: invoiceData.invoiceType || "Sale Invoice",
@@ -95,32 +126,16 @@ function formatInvoiceDataForFBR(invoiceData: ScenarioInvoiceFormData): FBRInvoi
         buyerProvince: invoiceData.buyerProvince,
         buyerAddress: invoiceData.buyerAddress,
         buyerRegistrationType: invoiceData.buyerRegistrationType || "Registered",
-        invoiceRefNo: invoiceData.invoiceRefNo || "",
+        invoiceRefNo: invoiceRefNo,
         scenarioId: invoiceData.scenarioId,
-        items: invoiceData.items.map(item => ({
-            itemCode: item.hs_code,
-            itemName: item.item_name,
-            quantity: formatNumber(item.quantity),
-            unitPrice: formatNumber(item.unit_price),
-            totalAmount: formatNumber(item.total_amount),
-            salesTax: formatNumber(item.sales_tax || 0),
-            unitOfMeasurement: item.uom_code,
-            taxRate: formatNumber(item.tax_rate),
-            valueSalesExcludingST: formatNumber(item.value_sales_excluding_st),
-            fixedNotifiedValue: formatNumber(item.fixed_notified_value || 0),
-            retailPrice: formatNumber(item.retail_price || 0),
-            invoiceNote: item.invoice_note || undefined
-        })),
-        totalAmount: formatNumber(invoiceData.totalAmount),
-        totalSalesTax: formatNumber(totalSalesTax),
-        totalValueSalesExcludingST: formatNumber(totalValueSalesExcludingST)
+        items: invoiceData.items.map(item => convertItemToFBRFormat(item, saleType))
     };
 }
 
 /**
  * Validate invoice data before submission
  */
-function validateInvoiceData(invoiceData: ScenarioInvoiceFormData): { isValid: boolean; errors: string[] } {
+function validateInvoiceData(invoiceData: FBRInvoiceData): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     // Required fields validation
@@ -128,30 +143,27 @@ function validateInvoiceData(invoiceData: ScenarioInvoiceFormData): { isValid: b
     if (!invoiceData.invoiceDate) errors.push('Invoice date is required');
     if (!invoiceData.sellerNTNCNIC) errors.push('Seller NTN/CNIC is required');
     if (!invoiceData.sellerBusinessName) errors.push('Seller business name is required');
+    if (!invoiceData.sellerProvince) errors.push('Seller province is required');
+    if (!invoiceData.sellerAddress) errors.push('Seller address is required');
     if (!invoiceData.buyerNTNCNIC) errors.push('Buyer NTN/CNIC is required');
     if (!invoiceData.buyerBusinessName) errors.push('Buyer business name is required');
-    if (!invoiceData.items || invoiceData.items.length === 0) errors.push('At least one item is required');
-
-    // NTN/CNIC format validation
-    const validateNTNCNIC = (ntnCnic: string): boolean => {
-        const clean = ntnCnic.replace(/\D/g, '');
-        return clean.length === 7 || clean.length === 13;
-    };
-
-    if (!validateNTNCNIC(invoiceData.sellerNTNCNIC)) {
-        errors.push('Seller NTN/CNIC must be 7 digits (NTN) or 13 digits (CNIC)');
-    }
-    if (!validateNTNCNIC(invoiceData.buyerNTNCNIC)) {
-        errors.push('Buyer NTN/CNIC must be 7 digits (NTN) or 13 digits (CNIC)');
-    }
+    if (!invoiceData.buyerProvince) errors.push('Buyer province is required');
+    if (!invoiceData.buyerAddress) errors.push('Buyer address is required');
+    if (!invoiceData.buyerRegistrationType) errors.push('Buyer registration type is required');
+    if (!invoiceData.scenarioId) errors.push('Scenario ID is required');
+    // Note: invoiceRefNo is optional and will be auto-generated if not provided
 
     // Items validation
-    if (invoiceData.items) {
+    if (!invoiceData.items || invoiceData.items.length === 0) {
+        errors.push('At least one item is required');
+    } else {
         invoiceData.items.forEach((item, index) => {
             if (!item.hs_code) errors.push(`Item ${index + 1}: HS Code is required`);
-            if (!item.item_name) errors.push(`Item ${index + 1}: Item name is required`);
+            if (!item.item_name) errors.push(`Item ${index + 1}: Product description is required`);
+            if (item.tax_rate <= 0) errors.push(`Item ${index + 1}: Tax rate must be greater than 0`);
+            if (!item.uom_code) errors.push(`Item ${index + 1}: Unit of Measure is required`);
             if (item.quantity <= 0) errors.push(`Item ${index + 1}: Quantity must be greater than 0`);
-            if (item.unit_price <= 0) errors.push(`Item ${index + 1}: Unit price must be greater than 0`);
+            if (item.total_amount <= 0) errors.push(`Item ${index + 1}: Total amount must be greater than 0`);
         });
     }
 
@@ -188,6 +200,64 @@ function getFBRErrorMessage(status: number, responseData?: Record<string, unknow
 }
 
 /**
+ * Process FBR API response to determine success/failure
+ */
+function processFBRResponse(responseData: Record<string, unknown>): {
+    isSuccess: boolean;
+    invoiceNumber?: string;
+    errorMessage?: string;
+    errorCode?: string;
+} {
+    // Check for validation response structure (new format)
+    if (responseData.validationResponse) {
+        const validationResponse = responseData.validationResponse as Record<string, unknown>;
+
+        if (validationResponse.statusCode === '00' && validationResponse.status === 'Valid') {
+            return {
+                isSuccess: true,
+                invoiceNumber: responseData.invoiceNumber as string
+            };
+        } else {
+            const errorCode = validationResponse.errorCode as string || 'UNKNOWN';
+            const errorMessage = validationResponse.error as string || 'FBR validation failed';
+            return {
+                isSuccess: false,
+                errorMessage: `FBR Validation Error (${errorCode}): ${errorMessage}`,
+                errorCode
+            };
+        }
+    }
+
+    // Check for legacy success indicators
+    if (responseData.invoiceNumber || responseData.transactionId || responseData.referenceNumber) {
+        return {
+            isSuccess: true,
+            invoiceNumber: responseData.invoiceNumber as string ||
+                responseData.transactionId as string ||
+                responseData.referenceNumber as string
+        };
+    }
+
+    // Check for error indicators
+    if (responseData.error || responseData.errorCode) {
+        const errorCode = responseData.errorCode as string || 'UNKNOWN';
+        const errorMessage = responseData.error as string || 'Unknown FBR error';
+        return {
+            isSuccess: false,
+            errorMessage: `FBR API Error (${errorCode}): ${errorMessage}`,
+            errorCode
+        };
+    }
+
+    // If we can't determine success/failure, assume success but log warning
+    console.warn('Unable to determine FBR response status, assuming success:', responseData);
+    return {
+        isSuccess: true,
+        invoiceNumber: 'FBR-' + Date.now()
+    };
+}
+
+/**
  * Submit invoice to FBR with retry logic and timeout handling
  */
 export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<FBRSubmissionResponse> {
@@ -196,6 +266,7 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
     // Validate invoice data
     const validation = validateInvoiceData(invoiceData);
     if (!validation.isValid) {
+        console.error('Invoice validation failed:', validation.errors);
         return {
             success: false,
             error: `Validation failed: ${validation.errors.join(', ')}`,
@@ -203,14 +274,34 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
         };
     }
 
+    // Additional check for critical missing data
+    if (!invoiceData.items || invoiceData.items.length === 0) {
+        return {
+            success: false,
+            error: 'No invoice items found. Please add at least one item to the invoice.',
+            attempt: 0
+        };
+    }
+
+    // Check if total amount is zero
+    const totalAmount = invoiceData.items.reduce((sum, item) => sum + item.total_amount, 0);
+    if (totalAmount <= 0) {
+        return {
+            success: false,
+            error: 'Invoice total amount is zero or negative. Please check item quantities and prices.',
+            attempt: 0
+        };
+    }
+
     // Format invoice data for FBR
-    const fbrInvoiceData = formatInvoiceDataForFBR(invoiceData);
+    const fbrInvoiceData = await formatInvoiceDataForFBR(invoiceData, userId);
     const endpoint = FBR_ENDPOINTS[environment];
 
     console.log('FBR Submission Request:', {
         endpoint,
         environment,
-        invoiceData: fbrInvoiceData
+        invoiceData: invoiceData,
+        fbrInvoiceData: fbrInvoiceData
     });
 
     // Retry logic with exponential backoff
@@ -237,79 +328,72 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
             // Race between submission and timeout
             const response = await Promise.race([submissionPromise, timeoutPromise]);
 
-            // Check if FBR returned an error response
-            if (response.data && typeof response.data === 'object') {
-                const responseData = response.data as Record<string, unknown>;
+            // Process FBR response
+            const responseData = response.data as Record<string, unknown>;
+            const result = processFBRResponse(responseData);
 
-                if ('error' in responseData) {
-                    const errorMessage = typeof responseData.error === 'string'
-                        ? responseData.error
-                        : 'Unknown FBR error';
+            if (result.isSuccess) {
+                // Convert FBR data to InvoiceFormData for database save
+                const invoiceFormData: InvoiceFormData = {
+                    ...invoiceData,
+                    totalAmount: invoiceData.items.reduce((sum, item) => sum + item.total_amount, 0),
+                    notes: ''
+                };
 
+                // Save invoice to database
+                const saveResult = await saveInvoice(userId, invoiceFormData, responseData);
+
+                if (!saveResult.success) {
+                    console.error('Failed to save invoice:', saveResult.error);
                     return {
                         success: false,
-                        error: `FBR API Error: ${errorMessage}`,
+                        error: 'Invoice submitted to FBR but failed to save locally',
                         attempt,
                         data: {
-                            response: responseData
+                            response: responseData,
+                            generatedInvoiceRefNo: fbrInvoiceData.invoiceRefNo as string // Return the generated reference number
                         }
                     };
                 }
 
-                // Check for success indicators in response
-                const hasSuccessIndicator = responseData.transactionId ||
-                    responseData.referenceNumber ||
-                    responseData.status === 'success' ||
-                    responseData.success === true;
+                const data: FBRSubmissionResponse['data'] = {
+                    response: responseData,
+                    invoiceId: saveResult.invoiceId,
+                    generatedInvoiceRefNo: fbrInvoiceData.invoiceRefNo as string // Return the generated reference number
+                };
 
-                if (hasSuccessIndicator) {
-                    // Save invoice to database
-                    const saveResult = await saveInvoice(userId, invoiceData, responseData);
-
-                    if (!saveResult.success) {
-                        console.error('Failed to save invoice:', saveResult.error);
-                        return {
-                            success: false,
-                            error: 'Invoice submitted to FBR but failed to save locally',
-                            attempt,
-                            data: {
-                                response: responseData
-                            }
-                        };
-                    }
-
-                    return {
-                        success: true,
-                        data: {
-                            fbrReference: responseData.transactionId as string || responseData.referenceNumber as string,
-                            transactionId: responseData.transactionId as string,
-                            response: responseData,
-                            invoiceId: saveResult.invoiceId
-                        },
-                        attempt
-                    };
+                if (result.invoiceNumber) {
+                    data.fbrReference = result.invoiceNumber;
+                    data.transactionId = result.invoiceNumber;
+                    data.invoiceNumber = result.invoiceNumber;
                 }
-            }
 
-            // If we reach here, the request was successful but no clear success indicator
-            return {
-                success: true,
-                data: {
-                    response: response.data as Record<string, unknown>
-                },
-                attempt
-            };
+                return {
+                    success: true,
+                    data,
+                    attempt
+                };
+            } else {
+                // FBR validation/processing failed
+                return {
+                    success: false,
+                    error: result.errorMessage || 'FBR processing failed',
+                    attempt,
+                    data: {
+                        response: responseData,
+                        generatedInvoiceRefNo: fbrInvoiceData.invoiceRefNo as string // Return the generated reference number even on error
+                    }
+                };
+            }
 
         } catch (error: unknown) {
             console.error(`FBR Submission Attempt ${attempt} failed:`, error);
 
             let errorMessage = 'Failed to submit invoice to FBR';
-            let isTimeout = false;
 
             // Handle different types of errors
             if (error instanceof Error && error.message === 'Request timeout') {
                 errorMessage = 'Request timeout - FBR server took too long to respond';
-                isTimeout = true;
             } else if (error && typeof error === 'object' && 'response' in error) {
                 const errorObj = error as { response: { status: number; data: unknown } };
                 const status = errorObj.response.status;
@@ -325,8 +409,7 @@ export async function submitInvoiceToFBR(params: FBRSubmissionRequest): Promise<
                 return {
                     success: false,
                     error: errorMessage,
-                    attempt,
-                    isTimeout
+                    attempt
                 };
             }
 

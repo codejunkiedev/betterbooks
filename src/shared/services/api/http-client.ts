@@ -34,14 +34,42 @@ export class HttpClientApi implements HttpClient {
             requestOptions.body = JSON.stringify(config.data);
         }
 
-        // Make the request
-        const response = await fetch(url, requestOptions);
+        // Create a promise that rejects after timeout
+        const timeoutPromise = config.timeout
+            ? new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error('Request timeout')), config.timeout);
+            })
+            : null;
+
+        // Make the request with timeout
+        const fetchPromise = fetch(url, requestOptions);
+        const response = timeoutPromise
+            ? await Promise.race([fetchPromise, timeoutPromise])
+            : await fetchPromise;
 
         // Handle HTTP errors
         if (!response.ok) {
-            const errorMessage = response.status === 405
+            let errorMessage = response.status === 405
                 ? 'Method not allowed - CORS issue detected'
                 : `HTTP ${response.status}: ${response.statusText}`;
+
+            // Try to get more detailed error information from response
+            try {
+                const errorData = await response.json();
+                if (errorData && typeof errorData === 'object') {
+
+                    // If there's a specific error message in the response, use it
+                    if (errorData.message) {
+                        errorMessage = errorData.message;
+                    } else if (errorData.hs_code) {
+                        errorMessage = `Validation error: ${JSON.stringify(errorData)}`;
+                    }
+                }
+            } catch (parseError) {
+                // If we can't parse the error response, use the default message
+                console.error('Failed to parse error response:', parseError);
+            }
+
             throw new Error(errorMessage);
         }
 

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { ScenarioInvoiceFormData } from '@/shared/types/invoice';
+import { InvoiceFormData } from '@/shared/types/invoice';
 import { format } from 'date-fns';
 
 export interface PDFGenerationOptions {
@@ -20,34 +20,34 @@ export class InvoicePDFGenerator {
      * Generate PDF from invoice preview element
      */
     static async generatePDF(
-        invoiceData: ScenarioInvoiceFormData,
+        invoiceData: InvoiceFormData,
         options: PDFGenerationOptions = {}
     ): Promise<Blob> {
         const opts = { ...this.DEFAULT_OPTIONS, ...options };
         let lastError: Error | null = null;
 
-        for (let attempt = 1; attempt <= opts.retryAttempts; attempt++) {
+        for (let attempt = 1; attempt <= (opts.retryAttempts || 3); attempt++) {
             try {
                 return await this.generatePDFAttempt(invoiceData, opts);
             } catch (error) {
                 lastError = error as Error;
                 console.warn(`PDF generation attempt ${attempt} failed:`, error);
 
-                if (attempt < opts.retryAttempts) {
+                if (attempt < (opts.retryAttempts || 3)) {
                     // Wait before retry
                     await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
                 }
             }
         }
 
-        throw new Error(`PDF generation failed after ${opts.retryAttempts} attempts: ${lastError?.message}`);
+        throw new Error(`PDF generation failed after ${opts.retryAttempts || 3} attempts: ${lastError?.message}`);
     }
 
     /**
      * Single attempt at PDF generation
      */
     private static async generatePDFAttempt(
-        invoiceData: ScenarioInvoiceFormData,
+        invoiceData: InvoiceFormData,
         options: PDFGenerationOptions
     ): Promise<Blob> {
         // Create a temporary container for the invoice
@@ -65,12 +65,12 @@ export class InvoicePDFGenerator {
         document.body.appendChild(container);
 
         try {
-            // Generate the invoice HTML
-            container.innerHTML = this.generateInvoiceHTML(invoiceData);
+            // Generate the invoice HTML with QR code
+            container.innerHTML = await this.generateInvoiceHTML(invoiceData);
 
             // Convert to canvas
             const canvas = await html2canvas(container, {
-                scale: options.scale,
+                scale: options.scale || 2,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#ffffff',
@@ -125,7 +125,7 @@ export class InvoicePDFGenerator {
     /**
      * Generate HTML content for the invoice
      */
-    private static generateInvoiceHTML(invoiceData: ScenarioInvoiceFormData): string {
+    private static async generateInvoiceHTML(invoiceData: InvoiceFormData): Promise<string> {
         const formatCurrency = (amount: number) => {
             return new Intl.NumberFormat('en-PK', {
                 style: 'currency',
@@ -138,18 +138,51 @@ export class InvoicePDFGenerator {
             const summary = {
                 subtotal: 0,
                 totalTax: 0,
-                total: invoiceData.totalAmount
+                total: 0
             };
 
             invoiceData.items.forEach(item => {
                 summary.subtotal += item.value_sales_excluding_st || 0;
                 summary.totalTax += item.sales_tax || 0;
+                summary.total += item.total_amount || 0;
             });
+
+            // Ensure we have valid totals
+            if (summary.total === 0 && summary.subtotal > 0) {
+                summary.total = summary.subtotal + summary.totalTax;
+            }
 
             return summary;
         };
 
+        const generateQRCodeDataURL = async () => {
+            try {
+                const QRCode = (await import('qrcode')).default;
+                const totalAmount = invoiceData.items.reduce((sum, item) => sum + item.total_amount, 0);
+                const qrData = {
+                    invoiceNumber: invoiceData.invoiceRefNo,
+                    sellerNTN: invoiceData.sellerNTNCNIC,
+                    totalAmount: totalAmount,
+                    date: invoiceData.invoiceDate,
+                    fbr: "FBR"
+                };
+
+                return await QRCode.toDataURL(JSON.stringify(qrData), {
+                    width: 80,
+                    margin: 1,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                });
+            } catch (error) {
+                console.error('Error generating QR code:', error);
+                return '';
+            }
+        };
+
         const taxSummary = calculateTaxSummary();
+        const qrCodeDataURL = await generateQRCodeDataURL();
 
         return `
             <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
@@ -160,19 +193,17 @@ export class InvoicePDFGenerator {
                             ${invoiceData.invoiceType}
                         </h1>
                         <div style="font-size: 14px; color: #666; line-height: 1.6;">
-                            <p style="margin: 5px 0;"><strong>Invoice No:</strong> ${invoiceData.invoiceRefNo}</p>
+                            <p style="margin: 5px 0;"><strong>Invoice No:</strong> ${invoiceData.invoiceRefNo || 'N/A'}</p>
                             <p style="margin: 5px 0;"><strong>Date:</strong> ${format(new Date(invoiceData.invoiceDate), 'PPP')}</p>
                             <p style="margin: 5px 0;"><strong>Time:</strong> ${format(new Date(), 'HH:mm:ss')}</p>
                             ${invoiceData.scenarioId ? `<p style="margin: 5px 0;"><strong>Scenario ID:</strong> ${invoiceData.scenarioId}</p>` : ''}
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="width: 120px; height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                            <img 
-                                src="https://fbrstapp.com/fbrlogo1.svg" 
-                                alt="FBR Logo" 
-                                style="height: 48px; width: auto; object-fit: contain;"
-                            />
+                        <div style="width: 120px; height: 60px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 4px;">
+                            <div style="font-size: 14px; font-weight: bold; color: #333; text-align: center;">
+                                FBR<br/>LOGO
+                            </div>
                         </div>
                         <div style="font-size: 12px; color: #666; border: 1px solid #ccc; padding: 5px 10px; display: inline-block;">
                             FBR Compliant
@@ -232,7 +263,7 @@ export class InvoicePDFGenerator {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${invoiceData.items.map((item, index) => `
+                                ${invoiceData.items.map((item) => `
                                     <tr style="border-bottom: 1px solid #eee;">
                                         <td style="padding: 12px;">
                                             <div>
@@ -292,7 +323,7 @@ export class InvoicePDFGenerator {
                     </div>
                     <div style="text-align: center;">
                         <div style="width: 80px; height: 80px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa;">
-                            <span style="font-size: 10px; color: #999;">QR Code</span>
+                            <img src="${qrCodeDataURL}" alt="FBR QR Code" style="width: 100%; height: 100%; object-fit: contain;" />
                         </div>
                         <p style="font-size: 10px; color: #999; margin: 5px 0 0 0;">FBR QR Code</p>
                     </div>
@@ -304,16 +335,16 @@ export class InvoicePDFGenerator {
     /**
      * Generate filename for the PDF
      */
-    static generateFilename(invoiceData: ScenarioInvoiceFormData): string {
+    static generateFilename(invoiceData: InvoiceFormData): string {
         const date = format(new Date(invoiceData.invoiceDate), 'yyyy-MM-dd');
-        return `Invoice_${invoiceData.invoiceRefNo}_${date}.pdf`;
+        return `Invoice_${invoiceData.invoiceRefNo || 'N/A'}_${date}.pdf`;
     }
 
     /**
      * Download PDF with automatic retry
      */
     static async downloadPDF(
-        invoiceData: ScenarioInvoiceFormData,
+        invoiceData: InvoiceFormData,
         options: PDFGenerationOptions = {}
     ): Promise<void> {
         try {

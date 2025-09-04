@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RootState } from "@/shared/services/store";
@@ -41,18 +41,7 @@ export default function SandboxTesting() {
     const [hasValidSandboxKey, setHasValidSandboxKey] = useState(false);
     const [isAllCompleted, setIsAllCompleted] = useState(false);
 
-    useEffect(() => {
-        loadScenarios();
-    }, []);
-
-    useEffect(() => {
-        if (location.state?.refresh) {
-            loadScenarios();
-            navigate(location.pathname, { replace: true, state: {} });
-        }
-    }, [location.state]);
-
-    const loadScenarios = async (filters?: SandboxSearchFilters) => {
+    const loadScenarios = useCallback(async (filters?: SandboxSearchFilters) => {
         if (!user?.id) return;
 
         try {
@@ -67,7 +56,7 @@ export default function SandboxTesting() {
                     variant: "destructive"
                 });
 
-                return;
+                return; // finally block will unset loading
             }
 
             const filteredScenariosData = await getFilteredMandatoryScenarios(
@@ -100,10 +89,13 @@ export default function SandboxTesting() {
                 scenariosWithProgress.every(scenario => scenario.status === FBR_SCENARIO_STATUS.COMPLETED);
             setIsAllCompleted(allCompleted);
 
-            const { getFbrConfigStatus } = await import("@/shared/services/supabase/fbr");
-            const config = await getFbrConfigStatus(user.id);
-            const hasValidKey = config.sandbox_status === FBR_API_STATUS.CONNECTED && !!config.sandbox_api_key;
-            setHasValidSandboxKey(hasValidKey);
+            // Only check FBR config if we don't already have the status
+            if (hasValidSandboxKey === false) {
+                const { getFbrConfigStatus } = await import("@/shared/services/supabase/fbr");
+                const config = await getFbrConfigStatus(user.id);
+                const hasValidKey = config.sandbox_status === FBR_API_STATUS.CONNECTED && !!config.sandbox_api_key;
+                setHasValidSandboxKey(hasValidKey);
+            }
 
         } catch {
             toast({
@@ -114,10 +106,31 @@ export default function SandboxTesting() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.id, toast, hasValidSandboxKey]);
+
+    // Load scenarios on component mount
+    useEffect(() => {
+        loadScenarios();
+    }, [loadScenarios]);
+
+    useEffect(() => {
+        if (location.state?.refresh) {
+            loadScenarios();
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, loadScenarios, location.pathname, navigate]);
 
     const handleStartScenario = async (scenario: FbrScenario) => {
         if (!user?.id) return;
+
+        if (!hasValidSandboxKey) {
+            toast({
+                title: "API Not Configured",
+                description: "Please configure your FBR sandbox API key before starting scenarios.",
+                variant: "destructive"
+            });
+            return;
+        }
 
         try {
             // Create or update progress entry with "in_progress" status
@@ -440,8 +453,8 @@ export default function SandboxTesting() {
                         <ScenarioCard
                             key={scenario.id}
                             scenario={scenario}
-                            hasValidSandboxKey={hasValidSandboxKey}
                             onStartScenario={handleStartScenario}
+                            isApiConfigured={hasValidSandboxKey}
                         />
                     ))
                 )}
