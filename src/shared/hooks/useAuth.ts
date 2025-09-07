@@ -1,14 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/shared/hooks/useRedux';
 import { initializeAuth, setupAuthListener, loadUserData } from '@/shared/services/store/userSlice';
-import { usePageVisibility } from './usePageVisibility';
 
 export const useAuth = () => {
     const dispatch = useAppDispatch();
     const { isInitialized, user, isAuthenticated, isUserDataLoaded } = useAppSelector(state => state.user);
     const { isLoading: companyLoading } = useAppSelector(state => state.company);
     const authInitializedRef = useRef(false);
-    const isPageVisible = usePageVisibility();
 
     // Initialize auth only once
     useEffect(() => {
@@ -27,12 +25,12 @@ export const useAuth = () => {
         initialize();
     }, [dispatch]);
 
-    // Load user data when authenticated (only when page is visible)
+    // Load user data when authenticated
     useEffect(() => {
-        if (isAuthenticated && user?.id && !isUserDataLoaded && isPageVisible) {
+        if (isAuthenticated && user?.id && !isUserDataLoaded) {
             dispatch(loadUserData(user.id));
         }
-    }, [isAuthenticated, user, isUserDataLoaded, dispatch, isPageVisible]);
+    }, [isAuthenticated, user, isUserDataLoaded, dispatch]);
 
     return {
         isInitialized,

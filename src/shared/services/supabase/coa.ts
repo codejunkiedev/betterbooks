@@ -10,7 +10,6 @@ export async function getCOATemplate(): Promise<{ data: COATemplate[] | null; er
       .select("*")
       .order("id");
 
-
     if (error) {
       console.error("Error fetching COA template:", error);
       return { data: null, error };

@@ -68,7 +68,6 @@ export const loadUserData = createAsyncThunk(
 
 // Track if auth listener is already set up
 let authListenerSetup = false;
-let currentSession: Session | null = null;
 
 // Async thunk for setting up auth state listener
 export const setupAuthListener = createAsyncThunk(
@@ -84,25 +83,16 @@ export const setupAuthListener = createAsyncThunk(
 
       supabase.auth.onAuthStateChange(
         async (event, session) => {
-          // Prevent unnecessary updates for same session
-          if (currentSession?.access_token === session?.access_token && 
-              currentSession?.user?.id === session?.user?.id) {
-            return;
-          }
-
-          // Update current session reference
-          currentSession = session;
-
           if (event === 'SIGNED_OUT') {
             dispatch(clearAuth());
             // Clear company data when user signs out
             const { clearCompany } = await import('@/shared/services/store/companySlice');
             dispatch(clearCompany());
-          } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          } else {
             dispatch(setUser(session ? { user: session.user, session } : null));
 
-            // Load user data only when user signs in, not on token refresh
-            if (event === 'SIGNED_IN' && session?.user?.id) {
+            // Load user data when user signs in
+            if (session?.user?.id) {
               dispatch(loadUserData(session.user.id));
             }
           }

@@ -34,12 +34,6 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: true,
-      hmr: {
-        overlay: false
-      },
-      watch: {
-        ignored: ['**/node_modules/**', '**/.git/**']
-      }
     },
     preview: {
       port: 4173,

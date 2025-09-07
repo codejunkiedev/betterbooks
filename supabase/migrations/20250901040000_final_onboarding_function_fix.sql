@@ -143,7 +143,8 @@ BEGIN
             tax_year_end,
             assigned_accountant_id,
             is_active,
-            created_at
+            created_at,
+            updated_at
         ) VALUES (
             p_user_id,
             v_company_name,
@@ -153,6 +154,7 @@ BEGIN
             CASE WHEN p_skip_tax_info THEN NULL ELSE v_tax_year_end END,
             v_assigned_accountant_id,
             TRUE,
+            NOW(),
             NOW()
         ) RETURNING id INTO v_company_id;
         
