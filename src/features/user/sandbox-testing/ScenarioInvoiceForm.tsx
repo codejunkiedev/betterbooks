@@ -88,6 +88,7 @@ export default function ScenarioInvoiceForm() {
         totalAmount: 0,
         notes: ''
     });
+    const [sellerProvinceCode, setSellerProvinceCode] = useState<number | null>(null);
 
     const loadProvinces = useCallback(async () => {
         try {
@@ -167,6 +168,7 @@ export default function ScenarioInvoiceForm() {
                             sellerProvince: sellerData.sellerProvince,
                             sellerAddress: sellerData.sellerAddress
                         }));
+                        setSellerProvinceCode(sellerData.sellerProvinceCode);
                         setSellerDataFromFBR(true);
                     }
                 } catch (error) {
@@ -697,10 +699,12 @@ export default function ScenarioInvoiceForm() {
                             </div>
 
                             <InvoiceItemManagement
-                                invoiceId={1} // This will be the actual invoice ID when integrated
+                                invoiceId={1}
                                 items={formData.items}
                                 onItemsChange={handleItemsChange}
                                 onRunningTotalsChange={() => { }}
+                                scenario={scenario}
+                                sellerProvinceId={sellerProvinceCode || 1}
                             />
                         </div>
 

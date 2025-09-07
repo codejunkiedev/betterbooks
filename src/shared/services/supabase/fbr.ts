@@ -52,7 +52,7 @@ export async function getFbrProfileForSellerData(userId: string) {
 		// Get province description
 		const { data: provinceData, error: provinceError } = await supabase
 			.from("province_codes")
-			.select("state_province_desc")
+			.select("*")
 			.eq("state_province_code", data.province_code)
 			.single();
 
@@ -65,11 +65,13 @@ export async function getFbrProfileForSellerData(userId: string) {
 				throw provinceError;
 			}
 		}
+		console.log('Province data:', provinceData);
 
 		return {
 			sellerNTNCNIC: data.cnic_ntn,
 			sellerBusinessName: data.business_name,
 			sellerProvince: provinceData?.state_province_desc || '',
+			sellerProvinceCode: provinceData?.state_province_code,
 			sellerAddress: data.address
 		};
 	} catch (error) {
@@ -346,6 +348,7 @@ export async function getMandatoryScenarios(businessActivityId: number): Promise
 		description: string;
 		sale_type: string;
 		category: string;
+		transaction_type_id: number;
 	};
 }>> {
 	const { data, error } = await supabase
@@ -356,7 +359,8 @@ export async function getMandatoryScenarios(businessActivityId: number): Promise
 				code,
 				description,
 				sale_type,
-				category
+				category,
+				transaction_type_id
 			)
 		`)
 		.eq('business_activity_id', businessActivityId);
@@ -378,7 +382,7 @@ export async function getMandatoryScenarios(businessActivityId: number): Promise
 export async function getScenarioDetails(scenarioId: string) {
 	const { data, error } = await supabase
 		.from('scenario')
-		.select('code, description, sale_type, category')
+		.select('code, description, sale_type, category, transaction_type_id')
 		.eq('code', scenarioId)
 		.single();
 
@@ -569,7 +573,7 @@ export async function getFilteredMandatoryScenarios(
 ): Promise<ScenarioWithProgress[]> {
 	let query = supabase
 		.from('business_activity_scenario')
-		.select('scenario_id, scenario!scenario_id (code, description, sale_type, category)')
+		.select('scenario_id, scenario!scenario_id (code, description, sale_type, category, transaction_type_id)')
 		.eq('business_activity_id', businessActivityId);
 
 	if (filters.category) query = query.eq('scenario.category', filters.category);
@@ -604,6 +608,7 @@ export async function getFilteredMandatoryScenarios(
 			category: scenario?.category || '',
 			sale_type: scenario?.sale_type || '',
 			description: scenario?.description || '',
+			transaction_type_id: scenario?.transaction_type_id,
 			status: progress?.status || FBR_SCENARIO_STATUS.NOT_STARTED,
 			attempts: progress?.attempts || 0,
 			last_attempt: progress?.last_attempt || null,
@@ -645,6 +650,7 @@ export async function getScenarioById(
 			description: scenarioData.description,
 			sale_type: scenarioData.sale_type,
 			category: scenarioData.category,
+			transaction_type_id: scenarioData.transaction_type_id,
 			status: FBR_SCENARIO_STATUS.NOT_STARTED,
 			attempts: 0,
 			last_attempt: null,

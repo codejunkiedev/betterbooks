@@ -6,6 +6,7 @@ export interface FbrScenario {
     description: string;
     sale_type: string;
     category: string;
+    transaction_type_id?: number;
     status: FbrScenarioStatus;
     attempts: number;
     last_attempt: string | null;
@@ -25,6 +26,7 @@ export interface ScenarioWithProgress {
     category: string;
     sale_type: string;
     description: string;
+    transaction_type_id?: number;
     status: FbrScenarioStatus;
     attempts: number;
     last_attempt: string | null;

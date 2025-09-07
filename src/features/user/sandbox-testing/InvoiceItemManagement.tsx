@@ -23,8 +23,7 @@ import {
     formatCurrency,
     formatQuantity,
     formatPercentage,
-    isThirdScheduleItem,
-    getDefaultTaxRate
+    isThirdScheduleItem
 } from '@/shared/utils/invoiceCalculations';
 import { SYSTEM_DEFAULTS } from '@/shared/constants/invoiceDefaults';
 import {
@@ -36,12 +35,16 @@ import { getFbrConfigStatus } from '@/shared/services/supabase/fbr';
 import { Plus, Trash2, Edit, MoveUp, MoveDown } from 'lucide-react';
 import { getAllHSCodes } from '@/shared/services/api/fbr';
 import { getUOMCodes } from '@/shared/services/api/fbr';
+import { fetchTaxRates, type TaxRateInfo } from '@/shared/services/api/fbrTaxRates';
+import { FbrScenario } from '@/shared/types/fbr';
 
 interface InvoiceItemManagementProps {
     invoiceId: number;
     items: InvoiceItemCalculated[];
     onItemsChange: (items: InvoiceItemCalculated[]) => void;
     onRunningTotalsChange: (totals: InvoiceRunningTotals) => void;
+    scenario?: FbrScenario | null;
+    sellerProvinceId?: number;
     className?: string;
 }
 
@@ -49,6 +52,8 @@ export function InvoiceItemManagement({
     items,
     onItemsChange,
     onRunningTotalsChange,
+    scenario,
+    sellerProvinceId,
     className = ''
 }: InvoiceItemManagementProps) {
     const { user } = useAppSelector((state) => state.user);
@@ -74,12 +79,72 @@ export function InvoiceItemManagement({
     const [isCaching, setIsCaching] = useState(false);
     const [hasLoadedData, setHasLoadedData] = useState(false);
     const [filteredUomOptions, setFilteredUomOptions] = useState<UOMCode[]>([]);
+    const [availableTaxRates, setAvailableTaxRates] = useState<TaxRateInfo[]>([]);
+    const [isLoadingTaxRates, setIsLoadingTaxRates] = useState(false);
+    const [selectedTaxRate, setSelectedTaxRate] = useState<TaxRateInfo | null>(null);
 
     const getUomDescription = (uomId: string | number | undefined | null): string => {
         if (!uomId) return 'N/A';
         const uom = uomOptions.find(option => option.uoM_ID.toString() === uomId.toString());
         return uom ? uom.description : uomId.toString();
     };
+
+    // Fetch tax rates based on scenario's transaction_type_id
+    const fetchTaxRatesForScenario = useCallback(async () => {
+        if (!scenario?.transaction_type_id || !user?.id || !sellerProvinceId) {
+            return;
+        }
+
+        setIsLoadingTaxRates(true);
+        try {
+            const rates = await fetchTaxRates(scenario.transaction_type_id, sellerProvinceId, user.id, 'sandbox');
+
+            setAvailableTaxRates(rates);
+
+            // Set the first rate as default if available
+            if (rates.length > 0) {
+                const defaultRate = rates[0];
+                setSelectedTaxRate(defaultRate);
+                setFormData(prev => ({
+                    ...prev,
+                    tax_rate: defaultRate.value
+                }));
+            }
+        } catch (error) {
+            console.error('Error fetching tax rates:', error);
+
+            // Set a default tax rate when API fails
+            const defaultRate: TaxRateInfo = {
+                rateId: 0,
+                description: 'Default tax rate (API unavailable)',
+                value: SYSTEM_DEFAULTS.MIN_TAX_RATE,
+                unit: 'percentage',
+                formattedValue: `${SYSTEM_DEFAULTS.MIN_TAX_RATE}%`
+            };
+
+            setAvailableTaxRates([defaultRate]);
+            setSelectedTaxRate(defaultRate);
+            setFormData(prev => ({
+                ...prev,
+                tax_rate: defaultRate.value
+            }));
+
+            toast({
+                title: 'Warning',
+                description: 'FBR tax rate API is currently unavailable. This may be due to server issues or invalid parameters. Using default rate. You can manually adjust the tax rate.',
+                variant: 'destructive'
+            });
+        } finally {
+            setIsLoadingTaxRates(false);
+        }
+    }, [scenario?.transaction_type_id, user?.id, sellerProvinceId, toast]);
+
+    // Fetch tax rates when scenario changes
+    useEffect(() => {
+        if (scenario?.transaction_type_id && sellerProvinceId) {
+            fetchTaxRatesForScenario();
+        }
+    }, [scenario?.transaction_type_id, sellerProvinceId, fetchTaxRatesForScenario]);
 
     const filterUomOptionsByHSCode = useCallback(async (hsCode: string) => {
         if (!hsCode) {
@@ -161,7 +226,7 @@ export function InvoiceItemManagement({
                                 hs_code: item.hS_CODE,
                                 description: item.description,
                                 default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50',
-                                default_tax_rate: getDefaultTaxRate(item.hS_CODE),
+                                default_tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
                                 is_third_schedule: isThirdScheduleItem(item.hS_CODE)
                             }));
 
@@ -197,7 +262,7 @@ export function InvoiceItemManagement({
             setIsCaching(false);
             setHasLoadedData(true);
         }
-    }, [user?.id, toast, allHSCodes.length, uomOptions.length, isCaching]);
+    }, [user?.id, toast, allHSCodes.length, uomOptions, isCaching]);
 
     useEffect(() => {
         if (!hasLoadedData && user?.id) {
@@ -267,7 +332,7 @@ export function InvoiceItemManagement({
                     hs_code: hsCode,
                     description: selectedHSCode.description,
                     default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : '50',
-                    default_tax_rate: getDefaultTaxRate(hsCode),
+                    default_tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
                     is_third_schedule: isThirdScheduleItem(hsCode)
                 };
 
@@ -278,13 +343,15 @@ export function InvoiceItemManagement({
                 }
             }
 
-            setFormData(prev => ({
-                ...prev,
-                hs_code: hsCode,
-                item_name: selectedHSCode.description,
-                tax_rate: hsCodeDetails.default_tax_rate || getDefaultTaxRate(hsCode),
-                is_third_schedule: hsCodeDetails.is_third_schedule || isThirdScheduleItem(hsCode)
-            }));
+            if (hsCodeDetails) {
+                setFormData(prev => ({
+                    ...prev,
+                    hs_code: hsCode,
+                    item_name: selectedHSCode.description,
+                    tax_rate: hsCodeDetails.default_tax_rate || SYSTEM_DEFAULTS.MIN_TAX_RATE,
+                    is_third_schedule: hsCodeDetails.is_third_schedule || isThirdScheduleItem(hsCode)
+                }));
+            }
 
             setHsCodeSearchTerm(hsCode);
             setHsCodeResults([]);
@@ -659,17 +726,52 @@ export function InvoiceItemManagement({
                                 {validationErrors.uom_code && <p className="text-sm text-red-500">{validationErrors.uom_code}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="tax-rate">Tax Rate (%) *</Label>
-                                <Input
-                                    id="tax-rate"
-                                    type="number"
-                                    min={SYSTEM_DEFAULTS.MIN_TAX_RATE}
-                                    max={SYSTEM_DEFAULTS.MAX_TAX_RATE}
-                                    step="0.01"
-                                    value={formData.tax_rate}
-                                    onChange={(e) => handleFormChange('tax_rate', parseFloat(e.target.value) || 0)}
-                                    className={validationErrors.tax_rate ? 'border-red-500' : ''}
-                                />
+                                <Label htmlFor="tax-rate">
+                                    Tax Rate {selectedTaxRate ? `(${selectedTaxRate.unit === 'percentage' ? '%' : selectedTaxRate.unit === 'rupee' ? 'Rs.' : 'Fixed'})` : '(%)'} *
+                                </Label>
+                                {isLoadingTaxRates ? (
+                                    <div className="flex items-center space-x-2">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                        <span className="text-sm text-gray-500">Loading tax rates...</span>
+                                    </div>
+                                ) : availableTaxRates.length > 0 ? (
+                                    <Select
+                                        value={selectedTaxRate?.rateId.toString() || ''}
+                                        onValueChange={(value) => {
+                                            const rate = availableTaxRates.find(r => r.rateId.toString() === value);
+                                            if (rate) {
+                                                setSelectedTaxRate(rate);
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    tax_rate: rate.value
+                                                }));
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger className={validationErrors.tax_rate ? 'border-red-500' : ''}>
+                                            <SelectValue placeholder="Select tax rate" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {availableTaxRates.map((rate) => (
+                                                <SelectItem key={rate.rateId} value={rate.rateId.toString()}>
+                                                    {rate.formattedValue}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Input
+                                        id="tax-rate"
+                                        type="number"
+                                        min={SYSTEM_DEFAULTS.MIN_TAX_RATE}
+                                        max={SYSTEM_DEFAULTS.MAX_TAX_RATE}
+                                        step="0.01"
+                                        value={formData.tax_rate}
+                                        onChange={(e) => handleFormChange('tax_rate', parseFloat(e.target.value) || 0)}
+                                        className={validationErrors.tax_rate ? 'border-red-500' : ''}
+                                        placeholder="Enter tax rate"
+                                    />
+                                )}
                                 {validationErrors.tax_rate && <p className="text-sm text-red-500">{validationErrors.tax_rate}</p>}
                             </div>
                         </div>
