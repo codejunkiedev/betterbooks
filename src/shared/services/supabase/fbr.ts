@@ -57,8 +57,13 @@ export async function getFbrProfileForSellerData(userId: string) {
 			.single();
 
 		if (provinceError) {
-			console.error('Error fetching province data:', provinceError);
-			throw provinceError;
+			if (provinceError.code === 'PGRST116') {
+				console.warn(`Province code ${data.province_code} not found in province_codes table`);
+				// Continue without province description
+			} else {
+				console.error('Error fetching province data:', provinceError);
+				throw provinceError;
+			}
 		}
 
 		return {
@@ -378,6 +383,10 @@ export async function getScenarioDetails(scenarioId: string) {
 		.single();
 
 	if (error) {
+		if (error.code === 'PGRST116') {
+			console.warn(`Scenario ${scenarioId} not found`);
+			return null;
+		}
 		throw error;
 	}
 
@@ -617,7 +626,15 @@ export async function getScenarioById(
 			.eq('code', scenarioId)
 			.single();
 
-		if (scenarioError || !scenarioData) {
+		if (scenarioError) {
+			if (scenarioError.code === 'PGRST116') {
+				console.warn(`Scenario ${scenarioId} not found`);
+				return null;
+			}
+			throw scenarioError;
+		}
+
+		if (!scenarioData) {
 			return null;
 		}
 
@@ -679,7 +696,20 @@ export async function cleanupScenarioProgressData(userId: string): Promise<void>
 					.eq('code', record.scenario_id)
 					.single();
 
-				if (scenarioError || !scenarioData) {
+				if (scenarioError) {
+					if (scenarioError.code === 'PGRST116') {
+						console.log(`Scenario not found for code ${record.scenario_id}, deleting progress record`);
+						// Delete the incorrect record
+						await supabase
+							.from('fbr_scenario_progress')
+							.delete()
+							.eq('id', record.id);
+						continue;
+					}
+					throw scenarioError;
+				}
+
+				if (!scenarioData) {
 					console.log(`Scenario not found for code ${record.scenario_id}, deleting progress record`);
 					// Delete the incorrect record
 					await supabase
