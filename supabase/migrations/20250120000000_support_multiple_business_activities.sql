@@ -5,8 +5,7 @@
 CREATE TABLE IF NOT EXISTS public.user_business_activities (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    business_activity_id INTEGER NOT NULL REFERENCES public.business_activities(id) ON DELETE CASCADE,
-    business_activity_sector_combination_id INTEGER REFERENCES public.business_activity_sector_combinations(id) ON DELETE CASCADE,
+    business_activity_id INTEGER NOT NULL REFERENCES public.business_activity(id) ON DELETE CASCADE,
     is_primary boolean DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -73,14 +72,12 @@ RETURNS TABLE (
 BEGIN
     RETURN QUERY
     SELECT 
-        basc.id,
-        basc.sr,
-        ba.name as business_activity,
-        s.name as sector
+        ba.id,
+        ba.sr,
+        ba.business_activity,
+        ba.sector
     FROM public.user_business_activities uba
-    JOIN public.business_activities ba ON uba.business_activity_id = ba.id
-    LEFT JOIN public.business_activity_sector_combinations basc ON uba.business_activity_sector_combination_id = basc.id
-    LEFT JOIN public.sectors s ON basc.sector_id = s.id
+    JOIN public.business_activity ba ON uba.business_activity_id = ba.id
     WHERE uba.user_id = p_user_id 
     AND uba.is_primary = true
     LIMIT 1;
@@ -100,16 +97,14 @@ RETURNS TABLE (
 BEGIN
     RETURN QUERY
     SELECT 
-        basc.id,
-        basc.sr,
-        ba.name as business_activity,
-        s.name as sector,
+        ba.id,
+        ba.sr,
+        ba.business_activity,
+        ba.sector,
         uba.is_primary,
         uba.created_at
     FROM public.user_business_activities uba
-    JOIN public.business_activities ba ON uba.business_activity_id = ba.id
-    LEFT JOIN public.business_activity_sector_combinations basc ON uba.business_activity_sector_combination_id = basc.id
-    LEFT JOIN public.sectors s ON basc.sector_id = s.id
+    JOIN public.business_activity ba ON uba.business_activity_id = ba.id
     WHERE uba.user_id = p_user_id
     ORDER BY uba.is_primary DESC, uba.created_at ASC;
 END;
