@@ -82,6 +82,8 @@ SELECT
 FROM public.business_activity old_ba
 JOIN public.business_activity_sector_combinations new_comb ON new_comb.sr = old_ba.sr;
 
+-- Note: scenario table is created in foundation migration 20250101000001_create_scenario_table_early.sql
+
 -- Create new junction table for scenarios
 CREATE TABLE IF NOT EXISTS public.business_activity_sector_scenario (
     business_activity_sector_combination_id INT NOT NULL REFERENCES public.business_activity_sector_combinations(id) ON DELETE CASCADE,
