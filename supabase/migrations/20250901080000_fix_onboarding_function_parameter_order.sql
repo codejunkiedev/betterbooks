@@ -1,6 +1,8 @@
 -- Migration: Fix complete_onboarding_transaction function parameter order
 -- This creates the function with the correct parameter order to match the TypeScript code
 
+-- Note: All required enums are created in the foundation migration 20250101000000_create_foundation_enums.sql
+
 -- Drop the existing function with wrong parameter order
 DROP FUNCTION IF EXISTS public.complete_onboarding_transaction(
     p_company_data JSONB,

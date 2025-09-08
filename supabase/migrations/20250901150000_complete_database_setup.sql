@@ -1,6 +1,8 @@
 -- Migration: Complete database setup
 -- This migration ensures all database components are properly configured
 
+-- Note: All required enums are created in the foundation migration 20250101000000_create_foundation_enums.sql
+
 -- Ensure all required tables exist with proper structure
 -- Companies table
 CREATE TABLE IF NOT EXISTS public.companies (
