@@ -28,6 +28,29 @@ CREATE TABLE IF NOT EXISTS public.business_activity_sector_combinations (
     UNIQUE(business_activity_id, sector_id)
 );
 
+-- Enable RLS on tables if not already enabled
+ALTER TABLE public.business_activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sectors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.business_activity_sector_combinations ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies for public access (these tables should be readable by all authenticated users)
+DO $$ 
+BEGIN
+    -- Drop existing policies if they exist
+    DROP POLICY IF EXISTS business_activities_select_all ON public.business_activities;
+    DROP POLICY IF EXISTS sectors_select_all ON public.sectors;
+    DROP POLICY IF EXISTS business_activity_sector_combinations_select_all ON public.business_activity_sector_combinations;
+    
+    -- Create new policies
+    CREATE POLICY business_activities_select_all ON public.business_activities FOR SELECT USING (true);
+    CREATE POLICY sectors_select_all ON public.sectors FOR SELECT USING (true);
+    CREATE POLICY business_activity_sector_combinations_select_all ON public.business_activity_sector_combinations FOR SELECT USING (true);
+EXCEPTION
+    WHEN OTHERS THEN
+        -- If policies already exist, continue
+        NULL;
+END $$;
+
 -- Update the user_business_activities table to ensure it has the correct structure
 -- Add the business_activity_sector_combination_id column if it doesn't exist
 ALTER TABLE public.user_business_activities 
@@ -48,12 +71,26 @@ BEGIN
         ALTER TABLE public.user_business_activities 
         DROP CONSTRAINT user_business_activities_business_activity_id_fkey;
     END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- If constraint doesn't exist or can't be dropped, continue
+        NULL;
 END $$;
 
 -- Add the correct foreign key constraint
-ALTER TABLE public.user_business_activities 
-ADD CONSTRAINT user_business_activities_business_activity_id_fkey 
-FOREIGN KEY (business_activity_id) REFERENCES public.business_activities(id) ON DELETE CASCADE;
+DO $$
+BEGIN
+    ALTER TABLE public.user_business_activities 
+    ADD CONSTRAINT user_business_activities_business_activity_id_fkey 
+    FOREIGN KEY (business_activity_id) REFERENCES public.business_activities(id) ON DELETE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN
+        -- Constraint already exists, continue
+        NULL;
+    WHEN OTHERS THEN
+        -- Other errors, continue
+        NULL;
+END $$;
 
 -- Recreate the functions with the correct table references
 CREATE OR REPLACE FUNCTION public.get_user_primary_business_activity(p_user_id uuid)
