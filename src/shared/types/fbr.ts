@@ -66,9 +66,56 @@ export interface FbrProfile {
     province_code: number;
     address: string;
     mobile_number: string;
-    business_activity_id: number;
+    business_activity_id: number; // Keep for backward compatibility - will be the primary activity
     created_at: string;
     updated_at: string;
+}
+
+export interface UserBusinessActivity {
+    id: string;
+    user_id: string;
+    business_activity_id: number;
+    is_primary: boolean;
+    created_at: string;
+    updated_at: string;
+    // Joined data from business_activity table
+    sr?: number;
+    business_activity?: string;
+    sector?: string;
+}
+
+export interface BusinessActivity {
+    id: number;
+    sr: number;
+    business_activity: string;
+    sector: string;
+}
+
+export interface BusinessActivityType {
+    id: number;
+    name: string;
+    description?: string;
+}
+
+export interface Sector {
+    id: number;
+    name: string;
+    description?: string;
+}
+
+export interface BusinessActivitySectorCombination {
+    id: number;
+    sr: number;
+    business_activity: string;
+    sector: string;
+    business_activity_description?: string;
+    sector_description?: string;
+}
+
+export interface UserBusinessActivitySelection {
+    business_activity_ids: number[];
+    sector_ids: number[];
+    combinations: BusinessActivitySectorCombination[];
 }
 
 export type FbrProfilePayload = {
@@ -78,7 +125,8 @@ export type FbrProfilePayload = {
     province_code: number;
     address: string;
     mobile_number: string;
-    business_activity_id: number;
+    business_activity_id: number; // Keep for backward compatibility
+    business_activities?: number[]; // New field for multiple activities
     ntn_number?: string;
     strn_number?: string;
 };

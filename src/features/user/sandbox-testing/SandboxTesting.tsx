@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 import type { FbrScenario } from "@/shared/types/fbr";
 import {
-    getFilteredMandatoryScenarios,
-    getUserBusinessActivityId,
+    getFilteredMandatoryScenariosForUser,
     updateScenarioProgress
 } from '@/shared/services/supabase/fbr';
 import { FBR_API_STATUS, FBR_SCENARIO_STATUS } from "@/shared/constants/fbr";
@@ -47,25 +46,17 @@ export default function SandboxTesting() {
         try {
             setLoading(true);
 
-            const businessActivityId = await getUserBusinessActivityId(user.id);
-
-            if (!businessActivityId) {
-                toast({
-                    title: "No Business Activity",
-                    description: "Please complete your business profile first.",
-                    variant: "destructive"
-                });
-
-                return; // finally block will unset loading
-            }
-
-            const filteredScenariosData = await getFilteredMandatoryScenarios(
-                businessActivityId,
+            const filteredScenariosData = await getFilteredMandatoryScenariosForUser(
                 user.id,
                 filters || {}
             );
 
             if (!filteredScenariosData || filteredScenariosData.length === 0) {
+                toast({
+                    title: "No Business Activities",
+                    description: "Please complete your business profile with business activities and sectors first.",
+                    variant: "destructive"
+                });
                 setFilteredScenarios([]);
                 if (!filters) {
                     setScenarios([]);
@@ -434,7 +425,7 @@ export default function SandboxTesting() {
                             <p className="text-gray-500">
                                 {searchFilters.searchTerm
                                     ? `No scenarios match "${searchFilters.searchTerm}". Try adjusting your filters.`
-                                    : "No scenarios available for your business activity."
+                                    : "No scenarios available for your selected business activities and sectors. Please complete your business profile first."
                                 }
                             </p>
                             {searchFilters.searchTerm && (

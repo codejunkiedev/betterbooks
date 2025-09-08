@@ -2,20 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/shared/components/Input";
 import { Textarea } from "@/shared/components/Textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/Select";
+import { Button } from "@/shared/components/Button";
+import { Badge } from "@/shared/components/Badge";
 import { useToast } from "@/shared/hooks/useToast";
 import { getProvinceCodes, getBusinessActivities } from "@/shared/services/supabase/fbr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
+import { BusinessActivity, UserBusinessActivity } from "@/shared/types/fbr";
 
 interface Province {
 	state_province_code: number;
 	state_province_desc: string;
-}
-
-interface BusinessActivityRow {
-	id: number;
-	sr: number;
-	business_activity: string;
-	sector: string;
 }
 
 interface FbrProfileProps {
@@ -24,9 +20,8 @@ interface FbrProfileProps {
 	provinceCode: string;
 	address: string;
 	mobileNumber: string;
-	activityName: string;
-	sector: string;
-	onFieldChange: (field: string, value: string) => void;
+	selectedActivities: UserBusinessActivity[];
+	onFieldChange: (field: string, value: string | UserBusinessActivity[]) => void;
 }
 
 export default function FbrProfile({
@@ -35,15 +30,17 @@ export default function FbrProfile({
 	provinceCode,
 	address,
 	mobileNumber,
-	activityName,
-	sector,
+	selectedActivities,
 	onFieldChange
 }: FbrProfileProps) {
 	const { toast } = useToast();
 	const [loading, setLoading] = useState(true);
+	const [showAddActivity, setShowAddActivity] = useState(false);
+	const [newActivityName, setNewActivityName] = useState("");
+	const [newSector, setNewSector] = useState("");
 
 	const [provinces, setProvinces] = useState<Province[]>([]);
-	const [activityRows, setActivityRows] = useState<BusinessActivityRow[]>([]);
+	const [activityRows, setActivityRows] = useState<BusinessActivity[]>([]);
 
 	const form = useMemo(() => ({
 		cnic_ntn: cnicNtn,
@@ -51,9 +48,7 @@ export default function FbrProfile({
 		province_code: provinceCode,
 		address: address,
 		mobile_number: mobileNumber,
-		activity_name: activityName,
-		sector: sector,
-	}), [cnicNtn, businessName, provinceCode, address, mobileNumber, activityName, sector]);
+	}), [cnicNtn, businessName, provinceCode, address, mobileNumber]);
 
 	const activityNames = useMemo(
 		() => Array.from(new Set(activityRows.map(a => a.business_activity))),
@@ -61,14 +56,17 @@ export default function FbrProfile({
 	);
 
 	const sectorsForSelected = useMemo(
-		() => activityRows.filter(a => a.business_activity === form.activity_name).map(a => a.sector),
-		[activityRows, form.activity_name]
+		() => activityRows.filter(a => a.business_activity === newActivityName).map(a => a.sector),
+		[activityRows, newActivityName]
 	);
 
-	const selectedActivityId = useMemo(() => {
-		const match = activityRows.find(a => a.business_activity === form.activity_name && a.sector === form.sector);
-		return match?.id ?? null;
-	}, [activityRows, form.activity_name, form.sector]);
+	const selectedActivityIds = useMemo(() => {
+		return selectedActivities.map(a => a.business_activity_id);
+	}, [selectedActivities]);
+
+	const primaryActivity = useMemo(() => {
+		return selectedActivities.find(a => a.is_primary);
+	}, [selectedActivities]);
 
 	useEffect(() => {
 		const run = async () => {
@@ -93,16 +91,70 @@ export default function FbrProfile({
 
 	const errors = useMemo(() => {
 		const errs: Record<string, string> = {};
-		if (!form.cnic_ntn.match(/^\d{7}$|^\d{13}$/)) errs.cnic_ntn = "Enter exactly 7 or 13 digits";
+		if (!form.cnic_ntn || !form.cnic_ntn.match(/^\d{7}$|^\d{13}$/)) errs.cnic_ntn = "Enter exactly 7 or 13 digits";
 		if (!form.business_name || form.business_name.length > 100) errs.business_name = "Required, max 100 chars";
 		if (!form.province_code) errs.province_code = "Province is required";
 		if (!form.address || form.address.length > 250) errs.address = "Required, max 250 chars";
 		if (!/^\+92\d{10}$/.test(form.mobile_number)) errs.mobile_number = "Format: +92XXXXXXXXXX";
-		if (!form.activity_name) errs.activity_name = "Business activity is required";
-		if (!form.sector) errs.sector = "Business sector is required";
-		if (!selectedActivityId) errs.business_activity_id = "Select a valid activity and sector";
+		if (selectedActivities.length === 0) errs.business_activities = "At least one business activity is required";
+		if (selectedActivities.length > 0 && !primaryActivity) errs.primary_activity = "One activity must be set as primary";
 		return errs;
-	}, [form, selectedActivityId]);
+	}, [form, selectedActivities, primaryActivity]);
+
+	const handleAddActivity = () => {
+		const selectedActivity = activityRows.find(
+			a => a.business_activity === newActivityName && a.sector === newSector
+		);
+
+		if (!selectedActivity) {
+			toast({ title: "Error", description: "Please select a valid activity and sector", variant: "destructive" });
+			return;
+		}
+
+		if (selectedActivityIds.includes(selectedActivity.id)) {
+			toast({ title: "Error", description: "This business activity is already selected", variant: "destructive" });
+			return;
+		}
+
+		const newUserActivity: UserBusinessActivity = {
+			id: `temp-${Date.now()}`,
+			user_id: "",
+			business_activity_id: selectedActivity.id,
+			is_primary: selectedActivities.length === 0, // First activity is primary
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
+			sr: selectedActivity.sr,
+			business_activity: selectedActivity.business_activity,
+			sector: selectedActivity.sector
+		};
+
+		const updatedActivities = [...selectedActivities, newUserActivity];
+		onFieldChange("fbr_business_activities", updatedActivities);
+
+		setNewActivityName("");
+		setNewSector("");
+		setShowAddActivity(false);
+	};
+
+	const handleRemoveActivity = (activityId: number) => {
+		const updatedActivities = selectedActivities.filter(a => a.business_activity_id !== activityId);
+
+		// If we removed the primary activity, make the first remaining one primary
+		if (updatedActivities.length > 0 && !updatedActivities.some(a => a.is_primary)) {
+			updatedActivities[0].is_primary = true;
+		}
+
+		onFieldChange("fbr_business_activities", updatedActivities);
+	};
+
+	const handleSetPrimary = (activityId: number) => {
+		const updatedActivities = selectedActivities.map(a => ({
+			...a,
+			is_primary: a.business_activity_id === activityId
+		}));
+
+		onFieldChange("fbr_business_activities", updatedActivities);
+	};
 
 
 
@@ -179,42 +231,118 @@ export default function FbrProfile({
 						{errors.mobile_number && <p className="text-red-600 text-xs mt-1">{errors.mobile_number}</p>}
 					</div>
 					<div>
-						<label className="block text-sm font-medium mb-1">Business Activity</label>
-						<Select
-							value={form.activity_name}
-							onValueChange={v => {
-								onFieldChange("fbr_activity_name", v);
-								onFieldChange("fbr_sector", "");
-							}}
-						>
-							<SelectTrigger className={errors.activity_name ? "border-red-500" : undefined}>
-								<SelectValue placeholder="Select activity" />
-							</SelectTrigger>
-							<SelectContent>
-								{activityNames.map(name => (
-									<SelectItem key={name} value={name}>{name}</SelectItem>
+						<label className="block text-sm font-medium mb-1">Business Activities</label>
+
+						{/* Selected Activities */}
+						{selectedActivities.length > 0 && (
+							<div className="space-y-2 mb-4">
+								{selectedActivities.map((activity) => (
+									<div key={activity.business_activity_id} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+										<div className="flex items-center space-x-2">
+											<span className="font-medium">{activity.business_activity}</span>
+											<span className="text-gray-500">-</span>
+											<span className="text-gray-600">{activity.sector}</span>
+											{activity.is_primary && (
+												<Badge variant="default" className="text-xs">Primary</Badge>
+											)}
+										</div>
+										<div className="flex items-center space-x-2">
+											{!activity.is_primary && (
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() => handleSetPrimary(activity.business_activity_id)}
+												>
+													Set Primary
+												</Button>
+											)}
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => handleRemoveActivity(activity.business_activity_id)}
+											>
+												Remove
+											</Button>
+										</div>
+									</div>
 								))}
-							</SelectContent>
-						</Select>
-						{errors.activity_name && <p className="text-red-600 text-xs mt-1">{errors.activity_name}</p>}
-					</div>
-					<div>
-						<label className="block text-sm font-medium mb-1">Business Sector</label>
-						<Select
-							value={form.sector}
-							onValueChange={v => onFieldChange("fbr_sector", v)}
-							disabled={!form.activity_name}
-						>
-							<SelectTrigger className={errors.sector ? "border-red-500" : undefined}>
-								<SelectValue placeholder="Select sector" />
-							</SelectTrigger>
-							<SelectContent>
-								{sectorsForSelected.map(sec => (
-									<SelectItem key={sec} value={sec}>{sec}</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-						{errors.sector && <p className="text-red-600 text-xs mt-1">{errors.sector}</p>}
+							</div>
+						)}
+
+						{/* Add New Activity */}
+						{!showAddActivity ? (
+							<Button
+								variant="outline"
+								onClick={() => setShowAddActivity(true)}
+								className="w-full"
+							>
+								+ Add Business Activity
+							</Button>
+						) : (
+							<div className="space-y-3 p-4 border rounded-lg bg-gray-50">
+								<div>
+									<label className="block text-sm font-medium mb-1">Business Activity</label>
+									<Select
+										value={newActivityName}
+										onValueChange={v => {
+											setNewActivityName(v);
+											setNewSector("");
+										}}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="Select activity" />
+										</SelectTrigger>
+										<SelectContent>
+											{activityNames.map(name => (
+												<SelectItem key={name} value={name}>{name}</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+
+								<div>
+									<label className="block text-sm font-medium mb-1">Business Sector</label>
+									<Select
+										value={newSector}
+										onValueChange={setNewSector}
+										disabled={!newActivityName}
+									>
+										<SelectTrigger>
+											<SelectValue placeholder="Select sector" />
+										</SelectTrigger>
+										<SelectContent>
+											{sectorsForSelected.map(sec => (
+												<SelectItem key={sec} value={sec}>{sec}</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+
+								<div className="flex space-x-2">
+									<Button
+										onClick={handleAddActivity}
+										disabled={!newActivityName || !newSector}
+										className="flex-1"
+									>
+										Add Activity
+									</Button>
+									<Button
+										variant="outline"
+										onClick={() => {
+											setShowAddActivity(false);
+											setNewActivityName("");
+											setNewSector("");
+										}}
+										className="flex-1"
+									>
+										Cancel
+									</Button>
+								</div>
+							</div>
+						)}
+
+						{errors.business_activities && <p className="text-red-600 text-xs mt-1">{errors.business_activities}</p>}
+						{errors.primary_activity && <p className="text-red-600 text-xs mt-1">{errors.primary_activity}</p>}
 					</div>
 				</div>
 			</CardContent>

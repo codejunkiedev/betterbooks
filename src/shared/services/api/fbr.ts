@@ -404,7 +404,7 @@ export async function getSaleTypeToRate(
     try {
         const response = await httpClient.request({
             method: 'GET',
-            url: 'https://gw.fbr.gov.pk/pdi/v2/SaleTypeToRate',
+            url: 'https://gw.fbr.gov.pk/pdi/v1/SaleTypeToRate',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
