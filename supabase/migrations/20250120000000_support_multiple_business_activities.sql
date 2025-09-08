@@ -32,14 +32,23 @@ CREATE POLICY user_business_activities_update_own ON public.user_business_activi
 CREATE POLICY user_business_activities_delete_own ON public.user_business_activities
     FOR DELETE USING (auth.uid() = user_id);
 
--- Admin policies
-CREATE POLICY user_business_activities_admin_all ON public.user_business_activities
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM public.admins 
-            WHERE user_id = auth.uid()
-        )
-    );
+-- Admin policies (conditional - only create if admins table exists)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'admins' AND table_schema = 'public') THEN
+        CREATE POLICY user_business_activities_admin_all ON public.user_business_activities
+            FOR ALL USING (
+                EXISTS (
+                    SELECT 1 FROM public.admins 
+                    WHERE user_id = auth.uid()
+                )
+            );
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- If policy creation fails, continue without it
+        NULL;
+END $$;
 
 -- Create trigger to update updated_at
 CREATE OR REPLACE FUNCTION public.set_updated_at()
