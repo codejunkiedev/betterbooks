@@ -21,13 +21,55 @@ CREATE TABLE IF NOT EXISTS public.business_activity_scenario (
 CREATE INDEX IF NOT EXISTS idx_business_activity_scenario_activity ON public.business_activity_scenario(business_activity_id);
 CREATE INDEX IF NOT EXISTS idx_business_activity_scenario_scenario ON public.business_activity_scenario(scenario_id);
 
--- Enable RLS on the tables
-ALTER TABLE public.business_activity ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.business_activity_scenario ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on the tables (only if not already enabled)
+DO $$
+BEGIN
+    -- Enable RLS on business_activity if not already enabled
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public' 
+        AND c.relname = 'business_activity' 
+        AND c.relrowsecurity = true
+    ) THEN
+        ALTER TABLE public.business_activity ENABLE ROW LEVEL SECURITY;
+    END IF;
+    
+    -- Enable RLS on business_activity_scenario if not already enabled
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public' 
+        AND c.relname = 'business_activity_scenario' 
+        AND c.relrowsecurity = true
+    ) THEN
+        ALTER TABLE public.business_activity_scenario ENABLE ROW LEVEL SECURITY;
+    END IF;
+END $$;
 
--- Create RLS policies for public read access
-CREATE POLICY business_activity_select_all ON public.business_activity FOR SELECT USING (true);
-CREATE POLICY business_activity_scenario_select_all ON public.business_activity_scenario FOR SELECT USING (true);
+-- Create RLS policies for public read access (only if they don't exist)
+DO $$
+BEGIN
+    -- Create business_activity policy if it doesn't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' 
+        AND tablename = 'business_activity' 
+        AND policyname = 'business_activity_select_all'
+    ) THEN
+        CREATE POLICY business_activity_select_all ON public.business_activity FOR SELECT USING (true);
+    END IF;
+    
+    -- Create business_activity_scenario policy if it doesn't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' 
+        AND tablename = 'business_activity_scenario' 
+        AND policyname = 'business_activity_scenario_select_all'
+    ) THEN
+        CREATE POLICY business_activity_scenario_select_all ON public.business_activity_scenario FOR SELECT USING (true);
+    END IF;
+END $$;
 
 -- Grant permissions
 GRANT SELECT ON public.business_activity TO authenticated;
