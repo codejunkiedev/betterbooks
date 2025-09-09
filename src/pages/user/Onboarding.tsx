@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/shared/hooks/useToast";
-import { useAppSelector, useAppDispatch } from "@/shared/hooks/useRedux";
-import { setCurrentCompany, checkOnboardingStatus } from "@/shared/services/store/companySlice";
+import { useAppDispatch, useAppSelector } from "@/shared/hooks/useRedux";
 import {
     StepIndicator,
     CompanyInfoStep,
@@ -14,17 +13,20 @@ import {
 } from "@/features/user/company";
 import { useState } from "react";
 import { getBusinessActivities } from "@/shared/services/supabase/fbr";
-import { completeOnboarding } from "@/shared/services/supabase/onboarding";
+// import { completeOnboarding } from "@/shared/services/supabase/onboarding";
 import { formatOnboardingError } from "@/shared/utils/onboarding";
 import logo from "@/assets/logo.png";
-import FbrProfileNew from "./FbrProfileNew";
+import FbrProfile from "./FbrProfile";
 import { CompanySetupData, OnboardingPayload } from "@/shared/types/onboarding";
 import { UserBusinessActivity, UserBusinessActivitySelection } from "@/shared/types/fbr";
+import { completeOnboarding } from "@/shared/services/supabase/onboarding";
+import { checkOnboardingStatus, setCurrentCompany } from "@/shared/services/store/companySlice";
 
 export default function Onboarding() {
     const navigate = useNavigate();
-    const { toast } = useToast();
     const dispatch = useAppDispatch();
+    const { toast } = useToast();
+    // const dispatch = useAppDispatch();
     const { user } = useAppSelector(state => state.user);
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -47,7 +49,7 @@ export default function Onboarding() {
         fbr_sector: "",
         fbr_business_activities: [],
         fbr_business_activity_selection: {
-            business_activity_ids: [],
+            business_activity_type_ids: [],
             sector_ids: [],
             combinations: []
         },
@@ -77,7 +79,7 @@ export default function Onboarding() {
     const validateFbrProfile = (data: CompanySetupData) => {
         // Check if using new business activity selection system
         if (data.fbr_business_activity_selection &&
-            data.fbr_business_activity_selection.business_activity_ids.length > 0 &&
+            data.fbr_business_activity_selection.business_activity_type_ids.length > 0 &&
             data.fbr_business_activity_selection.sector_ids.length > 0) {
             return !!(
                 data.fbr_cnic_ntn &&
@@ -89,7 +91,7 @@ export default function Onboarding() {
                 data.fbr_address.length <= 250 &&
                 data.fbr_mobile_number &&
                 data.fbr_mobile_number.match(/^\+92\d{10}$/) &&
-                data.fbr_business_activity_selection.business_activity_ids.length > 0 &&
+                data.fbr_business_activity_selection.business_activity_type_ids.length > 0 &&
                 data.fbr_business_activity_selection.sector_ids.length > 0
             );
         }
@@ -157,18 +159,18 @@ export default function Onboarding() {
             let primaryActivityId: number;
 
             if (formData.fbr_business_activity_selection &&
-                formData.fbr_business_activity_selection.business_activity_ids.length > 0) {
+                formData.fbr_business_activity_selection.business_activity_type_ids.length > 0) {
                 // Use the new business activity selection system
                 // For now, use the first business activity as primary
                 // In the future, we might want to let users select which combination is primary
-                primaryActivityId = formData.fbr_business_activity_selection.business_activity_ids[0];
+                primaryActivityId = formData.fbr_business_activity_selection.business_activity_type_ids[0];
             } else if (formData.fbr_business_activities.length > 0) {
                 // Use the primary activity from the old multiple activities system
                 const primaryActivity = formData.fbr_business_activities.find(a => a.is_primary);
                 if (!primaryActivity) {
                     throw new Error("No primary business activity selected");
                 }
-                primaryActivityId = primaryActivity.business_activity_id;
+                primaryActivityId = primaryActivity.business_activity_type_id;
             } else {
                 // Fallback to old system for backward compatibility
                 const { data: activities } = await getBusinessActivities();
@@ -200,7 +202,7 @@ export default function Onboarding() {
                     address: formData.fbr_address,
                     mobile_number: formData.fbr_mobile_number,
                     business_activity_id: primaryActivityId,
-                    business_activities: formData.fbr_business_activities.map(a => a.business_activity_id),
+                    business_activities: formData.fbr_business_activities.map(a => a.business_activity_type_id),
                     business_activity_selection: formData.fbr_business_activity_selection,
                 },
                 opening_balance: formData.skip_balance ? null : {
@@ -211,6 +213,7 @@ export default function Onboarding() {
                 skip_tax_info: formData.skip_tax_info,
             };
 
+            console.log('payload', payload);
             // Call the onboarding service
             const data = await completeOnboarding(payload);
 
@@ -300,7 +303,7 @@ export default function Onboarding() {
                 );
             case 4:
                 return (
-                    <FbrProfileNew
+                    <FbrProfile
                         cnicNtn={formData.fbr_cnic_ntn}
                         businessName={formData.fbr_business_name}
                         provinceCode={formData.fbr_province_code}

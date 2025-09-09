@@ -323,7 +323,7 @@ export async function getBusinessActivities() {
  */
 export async function getBusinessActivityTypes() {
 	const { data, error } = await supabase
-		.from("business_activities")
+		.from("business_activity_types")
 		.select("*")
 		.order("name");
 
@@ -343,13 +343,25 @@ export async function getSectors() {
 }
 
 /**
- * Get available sectors for selected business activities
+ * Get available sectors for selected business activity types
+ * This is an alias for getAvailableSectorsForBusinessActivityTypes for backward compatibility
  */
-export async function getAvailableSectorsForActivities(businessActivityIds: number[]) {
+export async function getAvailableSectorsForActivities(businessActivityTypeIds: number[]) {
+	return getAvailableSectorsForBusinessActivityTypes(businessActivityTypeIds);
+}
+
+/**
+ * Get scenarios for business activity and sector combinations
+ */
+export async function getScenariosForCombinations(
+	businessActivityTypeIds: number[],
+	sectorIds: number[]
+) {
 	const { data, error } = await supabase
-		.rpc('get_available_sectors_for_activities', {
-			p_business_activity_ids: businessActivityIds
-		});
+		.from('business_activity_scenarios')
+		.select('scenario_id')
+		.in('business_activity_type_id', businessActivityTypeIds)
+		.in('sector_id', sectorIds);
 
 	if (error) {
 		throw error;
@@ -359,15 +371,80 @@ export async function getAvailableSectorsForActivities(businessActivityIds: numb
 }
 
 /**
- * Get scenarios for business activity and sector combinations
+ * Get all business activity types with their scenario counts per sector
  */
-export async function getScenariosForCombinations(
-	businessActivityIds: number[],
+export async function getBusinessActivityTypesWithCounts() {
+	const { data, error } = await supabase
+		.from('business_activity_types')
+		.select(`
+			id,
+			name,
+			description,
+			created_at
+		`)
+		.order('name');
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data || [], error: null };
+}
+
+/**
+ * Get available sectors for specific business activity types
+ * This now fetches all sectors and filters them based on business_activity_scenarios
+ */
+export async function getAvailableSectorsForBusinessActivityTypes(businessActivityTypeIds: number[]) {
+	if (!businessActivityTypeIds || businessActivityTypeIds.length === 0) {
+		return { data: [], error: null };
+	}
+
+	const { data, error } = await supabase
+		.from('business_activity_scenarios')
+		.select(`
+			sector_id,
+			sectors (
+				id,
+				name,
+				description
+			)
+		`)
+		.in('business_activity_type_id', businessActivityTypeIds);
+
+	if (error) {
+		throw error;
+	}
+
+	// Remove duplicates and transform data using Map for better performance
+	const sectorMap = new Map<number, { sector_id: number; sector_name: string; sector_description: string }>();
+
+	data?.forEach((item: { sector_id: number; sectors: { id: number; name: string; description: string | null } | { id: number; name: string; description: string | null }[] }) => {
+		// Handle both single object and array responses from Supabase
+		const sector = Array.isArray(item.sectors) ? item.sectors[0] : item.sectors;
+		if (sector && sector.id && !sectorMap.has(sector.id)) {
+			sectorMap.set(sector.id, {
+				sector_id: sector.id,
+				sector_name: sector.name || '',
+				sector_description: sector.description || ''
+			});
+		}
+	});
+
+	const uniqueSectors = Array.from(sectorMap.values());
+	return { data: uniqueSectors, error: null };
+}
+
+/**
+ * Get scenarios for business activity types and sectors
+ */
+export async function getScenariosForBusinessActivityAndSector(
+	businessActivityTypeIds: number[],
 	sectorIds: number[]
 ) {
 	const { data, error } = await supabase
-		.rpc('get_scenarios_for_combinations', {
-			p_business_activity_ids: businessActivityIds,
+		.rpc('get_scenarios_for_business_activity_and_sector', {
+			p_business_activity_type_ids: businessActivityTypeIds,
 			p_sector_ids: sectorIds
 		});
 
@@ -431,13 +508,15 @@ export async function getUserBusinessActivities(userId: string) {
  */
 export async function addUserBusinessActivity(
 	userId: string,
-	businessActivityId: number,
+	businessActivityTypeId: number,
+	sectorId: number | null = null,
 	isPrimary: boolean = false
 ) {
 	const { data, error } = await supabase
 		.rpc('add_user_business_activity', {
 			p_user_id: userId,
-			p_business_activity_id: businessActivityId,
+			p_business_activity_type_id: businessActivityTypeId,
+			p_sector_id: sectorId,
 			p_is_primary: isPrimary
 		});
 
@@ -453,12 +532,12 @@ export async function addUserBusinessActivity(
  */
 export async function removeUserBusinessActivity(
 	userId: string,
-	businessActivityId: number
+	businessActivityTypeId: number
 ) {
 	const { data, error } = await supabase
 		.rpc('remove_user_business_activity', {
 			p_user_id: userId,
-			p_business_activity_id: businessActivityId
+			p_business_activity_type_id: businessActivityTypeId
 		});
 
 	if (error) {
@@ -473,12 +552,12 @@ export async function removeUserBusinessActivity(
  */
 export async function setPrimaryBusinessActivity(
 	userId: string,
-	businessActivityId: number
+	businessActivityTypeId: number
 ) {
 	const { data, error } = await supabase
 		.rpc('set_primary_business_activity', {
 			p_user_id: userId,
-			p_business_activity_id: businessActivityId
+			p_business_activity_type_id: businessActivityTypeId
 		});
 
 	if (error) {
@@ -779,12 +858,8 @@ export async function getFilteredMandatoryScenariosForUser(
 	const { data: userActivities, error: activitiesError } = await supabase
 		.from('user_business_activities')
 		.select(`
-			business_activity_id,
-			business_activity_sector_combination_id,
-			business_activity_sector_combinations!business_activity_sector_combination_id (
-				business_activity_id,
-				sector_id
-			)
+			business_activity_type_id,
+			sector_id
 		`)
 		.eq('user_id', userId);
 
@@ -794,25 +869,24 @@ export async function getFilteredMandatoryScenariosForUser(
 		return [];
 	}
 
-	// Extract business activity IDs and sector IDs
-	const businessActivityIds = [...new Set(userActivities.map(ua => ua.business_activity_id))];
+	// Extract business activity type IDs and sector IDs
+	const businessActivityTypeIds = [...new Set(userActivities.map(ua => ua.business_activity_type_id))];
 	const sectorIds = [...new Set(
 		userActivities
-			.filter(ua => ua.business_activity_sector_combinations)
-			.map(ua => (ua.business_activity_sector_combinations as { sector_id: number }[])[0]?.sector_id)
+			.map(ua => ua.sector_id)
 			.filter(Boolean)
 	)];
 
-	if (businessActivityIds.length === 0) {
+	if (businessActivityTypeIds.length === 0) {
 		return [];
 	}
 
-	// Get scenarios for all business activity and sector combinations
+	// Get scenarios for all business activity type and sector combinations
 	const { data: scenarios, error } = await supabase
-		.rpc('get_scenarios_for_combinations', {
-			p_business_activity_ids: businessActivityIds,
-			p_sector_ids: sectorIds
-		});
+		.from('business_activity_scenarios')
+		.select('scenario_id')
+		.in('business_activity_type_id', businessActivityTypeIds)
+		.in('sector_id', sectorIds);
 
 	if (error) throw error;
 
@@ -821,7 +895,7 @@ export async function getFilteredMandatoryScenariosForUser(
 	}
 
 	// Get scenario details
-	const scenarioIds = [...new Set(scenarios.map((s: { scenario_id: number; }) => s.scenario_id))];
+	const scenarioIds = [...new Set(scenarios.map(s => s.scenario_id))];
 	let query = supabase
 		.from('scenario')
 		.select('id, code, description, sale_type, category, transaction_type_id')

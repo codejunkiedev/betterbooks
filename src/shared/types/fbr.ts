@@ -74,16 +74,40 @@ export interface FbrProfile {
 export interface UserBusinessActivity {
     id: string;
     user_id: string;
-    business_activity_id: number;
+    business_activity_type_id: number;
+    sector_id: number | null;
     is_primary: boolean;
     created_at: string;
     updated_at: string;
-    // Joined data from business_activity table
-    sr?: number;
-    business_activity?: string;
-    sector?: string;
+    // Joined data from business_activity_types and sectors tables
+    business_activity_name?: string;
+    sector_name?: string;
 }
 
+export interface BusinessActivityType {
+    id: number;
+    name: string;
+    description: string | null;
+    created_at: string;
+}
+
+export interface Sector {
+    id: number;
+    name: string;
+    description: string | null;
+    created_at: string;
+}
+
+// Actual database table interfaces
+export interface BusinessActivityScenario {
+    id: number;
+    business_activity_type_id: number;
+    sector_id: number;
+    scenario_id: number;
+    created_at: string;
+}
+
+// Legacy interface for backward compatibility - will be removed
 export interface BusinessActivity {
     id: number;
     sr: number;
@@ -91,18 +115,7 @@ export interface BusinessActivity {
     sector: string;
 }
 
-export interface BusinessActivityType {
-    id: number;
-    name: string;
-    description?: string;
-}
-
-export interface Sector {
-    id: number;
-    name: string;
-    description?: string;
-}
-
+// Legacy interface for backward compatibility - will be removed
 export interface BusinessActivitySectorCombination {
     id: number;
     sr: number;
@@ -113,9 +126,19 @@ export interface BusinessActivitySectorCombination {
 }
 
 export interface UserBusinessActivitySelection {
-    business_activity_ids: number[];
+    business_activity_type_ids: number[];
     sector_ids: number[];
-    combinations: BusinessActivitySectorCombination[];
+    combinations: Array<{
+        business_activity_type_id: number;
+        business_activity_name: string;
+        business_activity_description: string | null;
+        sector_id: number;
+        sector_name: string;
+        sector_description: string | null;
+        is_primary: boolean;
+    }>;
+    primary_business_activity_type_id?: number;
+    primary_sector_id?: number;
 }
 
 export type FbrProfilePayload = {
@@ -125,8 +148,13 @@ export type FbrProfilePayload = {
     province_code: number;
     address: string;
     mobile_number: string;
-    business_activity_id: number; // Keep for backward compatibility
-    business_activities?: number[]; // New field for multiple activities
+    business_activity_type_id?: number; // Primary business activity type
+    sector_id?: number; // Primary sector
+    business_activities?: Array<{
+        business_activity_type_id: number;
+        sector_id: number | null;
+        is_primary: boolean;
+    }>; // Multiple business activities
     ntn_number?: string;
     strn_number?: string;
 };

@@ -19,8 +19,13 @@ CREATE INDEX IF NOT EXISTS idx_scenario_code ON public.scenario(code);
 -- Enable RLS on the table
 ALTER TABLE public.scenario ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policy for public read access
-CREATE POLICY scenario_select_all ON public.scenario FOR SELECT USING (true);
+-- Create RLS policy for public read access (only if it doesn't exist)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'scenario_select_all' AND tablename = 'scenario') THEN
+        CREATE POLICY scenario_select_all ON public.scenario FOR SELECT USING (true);
+    END IF;
+END $$;
 
 -- Grant permissions
 GRANT SELECT ON public.scenario TO authenticated;

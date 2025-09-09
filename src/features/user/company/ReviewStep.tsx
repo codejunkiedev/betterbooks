@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 import { Badge } from "@/shared/components/Badge";
-import { UserBusinessActivity, UserBusinessActivitySelection, BusinessActivitySectorCombination } from "@/shared/types/fbr";
+import { UserBusinessActivity, UserBusinessActivitySelection } from "@/shared/types/fbr";
 
 interface ReviewStepProps {
     companyName: string;
@@ -134,21 +134,21 @@ export function ReviewStep({
                             </div>
                             {/* Display new business activity selection if available */}
                             {fbrBusinessActivitySelection &&
-                                fbrBusinessActivitySelection.business_activity_ids.length > 0 &&
-                                fbrBusinessActivitySelection.sector_ids.length > 0 ? (
+                                fbrBusinessActivitySelection?.business_activity_type_ids?.length > 0 &&
+                                fbrBusinessActivitySelection?.sector_ids?.length > 0 ? (
                                 <div className="space-y-2">
                                     <div className="font-medium">Business Activity & Sector Combinations:</div>
-                                    {fbrBusinessActivitySelection.combinations.map((combination: BusinessActivitySectorCombination, index: number) => (
-                                        <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                                    {fbrBusinessActivitySelection.combinations?.map((combination, index: number) => (
+                                        <div key={`review-combination-${index}`} className="flex items-center justify-between bg-white p-2 rounded border">
                                             <div className="flex items-center space-x-2">
-                                                <span className="text-sm">{combination.business_activity} - {combination.sector}</span>
+                                                <span className="text-sm">{combination.business_activity_name} - {combination.sector_name}</span>
                                             </div>
                                         </div>
                                     ))}
                                     <div className="text-xs text-gray-500 mt-2">
-                                        Selected Activities: {fbrBusinessActivitySelection.business_activity_ids.length} |
-                                        Selected Sectors: {fbrBusinessActivitySelection.sector_ids.length} |
-                                        Total Combinations: {fbrBusinessActivitySelection.combinations.length}
+                                        Selected Activities: {fbrBusinessActivitySelection.business_activity_type_ids?.length || 0} |
+                                        Selected Sectors: {fbrBusinessActivitySelection.sector_ids?.length || 0} |
+                                        Total Combinations: {fbrBusinessActivitySelection.combinations?.length || 0}
                                     </div>
                                 </div>
                             ) : fbrBusinessActivities && fbrBusinessActivities.length > 0 ? (
@@ -156,9 +156,9 @@ export function ReviewStep({
                                 <div className="space-y-2">
                                     <div className="font-medium">Business Activities:</div>
                                     {fbrBusinessActivities.map((activity, index) => (
-                                        <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                                        <div key={`review-activity-${index}`} className="flex items-center justify-between bg-white p-2 rounded border">
                                             <div className="flex items-center space-x-2">
-                                                <span className="text-sm">{activity.business_activity} - {activity.sector}</span>
+                                                <span className="text-sm">{activity.business_activity_name} - {activity.sector_name}</span>
                                                 {activity.is_primary && (
                                                     <Badge variant="default" className="text-xs">Primary</Badge>
                                                 )}
