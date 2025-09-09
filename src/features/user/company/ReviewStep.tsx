@@ -1,4 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
+import { Badge } from "@/shared/components/Badge";
+import { UserBusinessActivity, UserBusinessActivitySelection, BusinessActivitySectorCombination } from "@/shared/types/fbr";
 
 interface ReviewStepProps {
     companyName: string;
@@ -16,8 +18,10 @@ interface ReviewStepProps {
     fbrProvinceCode: string;
     fbrAddress: string;
     fbrMobileNumber: string;
-    fbrActivityName: string;
-    fbrSector: string;
+    fbrActivityName: string; // Keep for backward compatibility
+    fbrSector: string; // Keep for backward compatibility
+    fbrBusinessActivities?: UserBusinessActivity[]; // Keep for backward compatibility
+    fbrBusinessActivitySelection?: UserBusinessActivitySelection; // New field for new structure
 }
 
 export function ReviewStep({
@@ -36,7 +40,9 @@ export function ReviewStep({
     fbrAddress,
     fbrMobileNumber,
     fbrActivityName,
-    fbrSector
+    fbrSector,
+    fbrBusinessActivities,
+    fbrBusinessActivitySelection
 }: ReviewStepProps) {
     const formatCompanyType = (type: string) => {
         return type
@@ -126,14 +132,53 @@ export function ReviewStep({
                                 <span className="font-medium">Mobile Number:</span>
                                 <span>{fbrMobileNumber}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium">Business Activity:</span>
-                                <span>{fbrActivityName}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="font-medium">Business Sector:</span>
-                                <span>{fbrSector}</span>
-                            </div>
+                            {/* Display new business activity selection if available */}
+                            {fbrBusinessActivitySelection &&
+                                fbrBusinessActivitySelection.business_activity_ids.length > 0 &&
+                                fbrBusinessActivitySelection.sector_ids.length > 0 ? (
+                                <div className="space-y-2">
+                                    <div className="font-medium">Business Activity & Sector Combinations:</div>
+                                    {fbrBusinessActivitySelection.combinations.map((combination: BusinessActivitySectorCombination, index: number) => (
+                                        <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                                            <div className="flex items-center space-x-2">
+                                                <span className="text-sm">{combination.business_activity} - {combination.sector}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="text-xs text-gray-500 mt-2">
+                                        Selected Activities: {fbrBusinessActivitySelection.business_activity_ids.length} |
+                                        Selected Sectors: {fbrBusinessActivitySelection.sector_ids.length} |
+                                        Total Combinations: {fbrBusinessActivitySelection.combinations.length}
+                                    </div>
+                                </div>
+                            ) : fbrBusinessActivities && fbrBusinessActivities.length > 0 ? (
+                                /* Display old multiple business activities for backward compatibility */
+                                <div className="space-y-2">
+                                    <div className="font-medium">Business Activities:</div>
+                                    {fbrBusinessActivities.map((activity, index) => (
+                                        <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                                            <div className="flex items-center space-x-2">
+                                                <span className="text-sm">{activity.business_activity} - {activity.sector}</span>
+                                                {activity.is_primary && (
+                                                    <Badge variant="default" className="text-xs">Primary</Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                /* Fallback to old single activity display for backward compatibility */
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="font-medium">Business Activity:</span>
+                                        <span>{fbrActivityName || 'Not provided'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-medium">Business Sector:</span>
+                                        <span>{fbrSector || 'Not provided'}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}

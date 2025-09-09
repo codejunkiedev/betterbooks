@@ -17,8 +17,9 @@ import { getBusinessActivities } from "@/shared/services/supabase/fbr";
 import { completeOnboarding } from "@/shared/services/supabase/onboarding";
 import { formatOnboardingError } from "@/shared/utils/onboarding";
 import logo from "@/assets/logo.png";
-import FbrProfile from "./FbrProfile";
+import FbrProfileNew from "./FbrProfileNew";
 import { CompanySetupData, OnboardingPayload } from "@/shared/types/onboarding";
+import { UserBusinessActivity, UserBusinessActivitySelection } from "@/shared/types/fbr";
 
 export default function Onboarding() {
     const navigate = useNavigate();
@@ -44,10 +45,16 @@ export default function Onboarding() {
         fbr_mobile_number: "",
         fbr_activity_name: "",
         fbr_sector: "",
+        fbr_business_activities: [],
+        fbr_business_activity_selection: {
+            business_activity_ids: [],
+            sector_ids: [],
+            combinations: []
+        },
     });
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleFieldChange = (field: string, value: string) => {
+    const handleFieldChange = (field: string, value: string | UserBusinessActivity[] | UserBusinessActivitySelection) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
@@ -68,6 +75,44 @@ export default function Onboarding() {
     };
 
     const validateFbrProfile = (data: CompanySetupData) => {
+        // Check if using new business activity selection system
+        if (data.fbr_business_activity_selection &&
+            data.fbr_business_activity_selection.business_activity_ids.length > 0 &&
+            data.fbr_business_activity_selection.sector_ids.length > 0) {
+            return !!(
+                data.fbr_cnic_ntn &&
+                data.fbr_cnic_ntn.match(/^\d{7}$|^\d{13}$/) &&
+                data.fbr_business_name &&
+                data.fbr_business_name.length <= 100 &&
+                data.fbr_province_code &&
+                data.fbr_address &&
+                data.fbr_address.length <= 250 &&
+                data.fbr_mobile_number &&
+                data.fbr_mobile_number.match(/^\+92\d{10}$/) &&
+                data.fbr_business_activity_selection.business_activity_ids.length > 0 &&
+                data.fbr_business_activity_selection.sector_ids.length > 0
+            );
+        }
+
+        // Check if using old multiple business activities system
+        if (data.fbr_business_activities && data.fbr_business_activities.length > 0) {
+            const hasPrimaryActivity = data.fbr_business_activities.some(activity => activity.is_primary);
+            return !!(
+                data.fbr_cnic_ntn &&
+                data.fbr_cnic_ntn.match(/^\d{7}$|^\d{13}$/) &&
+                data.fbr_business_name &&
+                data.fbr_business_name.length <= 100 &&
+                data.fbr_province_code &&
+                data.fbr_address &&
+                data.fbr_address.length <= 250 &&
+                data.fbr_mobile_number &&
+                data.fbr_mobile_number.match(/^\+92\d{10}$/) &&
+                data.fbr_business_activities.length > 0 &&
+                hasPrimaryActivity
+            );
+        }
+
+        // Fallback to old single business activity validation for backward compatibility
         return !!(
             data.fbr_cnic_ntn &&
             data.fbr_cnic_ntn.match(/^\d{7}$|^\d{13}$/) &&
@@ -108,15 +153,34 @@ export default function Onboarding() {
         setIsLoading(true);
 
         try {
-            // Get business activity ID from the activity name and sector
-            const { data: activities } = await getBusinessActivities();
-            const selectedActivity = activities?.find(
-                (a: { id: number; business_activity: string; sector: string }) =>
-                    a.business_activity === formData.fbr_activity_name && a.sector === formData.fbr_sector
-            );
+            // Get primary business activity ID
+            let primaryActivityId: number;
 
-            if (!selectedActivity) {
-                throw new Error("Selected business activity not found");
+            if (formData.fbr_business_activity_selection &&
+                formData.fbr_business_activity_selection.business_activity_ids.length > 0) {
+                // Use the new business activity selection system
+                // For now, use the first business activity as primary
+                // In the future, we might want to let users select which combination is primary
+                primaryActivityId = formData.fbr_business_activity_selection.business_activity_ids[0];
+            } else if (formData.fbr_business_activities.length > 0) {
+                // Use the primary activity from the old multiple activities system
+                const primaryActivity = formData.fbr_business_activities.find(a => a.is_primary);
+                if (!primaryActivity) {
+                    throw new Error("No primary business activity selected");
+                }
+                primaryActivityId = primaryActivity.business_activity_id;
+            } else {
+                // Fallback to old system for backward compatibility
+                const { data: activities } = await getBusinessActivities();
+                const selectedActivity = activities?.find(
+                    (a: { id: number; business_activity: string; sector: string }) =>
+                        a.business_activity === formData.fbr_activity_name && a.sector === formData.fbr_sector
+                );
+
+                if (!selectedActivity) {
+                    throw new Error("Selected business activity not found");
+                }
+                primaryActivityId = selectedActivity.id;
             }
 
             // Prepare the payload for the database function
@@ -135,7 +199,9 @@ export default function Onboarding() {
                     province_code: parseInt(formData.fbr_province_code),
                     address: formData.fbr_address,
                     mobile_number: formData.fbr_mobile_number,
-                    business_activity_id: selectedActivity.id,
+                    business_activity_id: primaryActivityId,
+                    business_activities: formData.fbr_business_activities.map(a => a.business_activity_id),
+                    business_activity_selection: formData.fbr_business_activity_selection,
                 },
                 opening_balance: formData.skip_balance ? null : {
                     amount: parseFloat(formData.cash_balance) || 0,
@@ -148,6 +214,7 @@ export default function Onboarding() {
             // Call the onboarding service
             const data = await completeOnboarding(payload);
 
+            console.log('response from onboarding', data);
             // Create company object for Redux
             const company = {
                 id: data.company_id,
@@ -233,14 +300,13 @@ export default function Onboarding() {
                 );
             case 4:
                 return (
-                    <FbrProfile
+                    <FbrProfileNew
                         cnicNtn={formData.fbr_cnic_ntn}
                         businessName={formData.fbr_business_name}
                         provinceCode={formData.fbr_province_code}
                         address={formData.fbr_address}
                         mobileNumber={formData.fbr_mobile_number}
-                        activityName={formData.fbr_activity_name}
-                        sector={formData.fbr_sector}
+                        businessActivitySelection={formData.fbr_business_activity_selection}
                         onFieldChange={handleFieldChange}
                     />
                 );
@@ -263,6 +329,8 @@ export default function Onboarding() {
                         fbrMobileNumber={formData.fbr_mobile_number}
                         fbrActivityName={formData.fbr_activity_name}
                         fbrSector={formData.fbr_sector}
+                        fbrBusinessActivities={formData.fbr_business_activities}
+                        fbrBusinessActivitySelection={formData.fbr_business_activity_selection}
                     />
                 );
             default:

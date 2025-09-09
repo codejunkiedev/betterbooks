@@ -9,7 +9,7 @@ import type {
 	FbrProfile,
 	FbrProfilePayload,
 	ScenarioFilters,
-	ScenarioWithProgress
+	ScenarioWithProgress,
 } from '@/shared/types/fbr';
 
 /**
@@ -307,7 +307,7 @@ export async function getProvinceCodes() {
 }
 
 /**
- * Get all business activities
+ * Get all business activities (legacy - for backward compatibility)
  */
 export async function getBusinessActivities() {
 	const { data, error } = await supabase
@@ -319,7 +319,67 @@ export async function getBusinessActivities() {
 }
 
 /**
- * Get user's business activity ID from FBR profile
+ * Get all business activity types (Manufacturer, Importer, etc.)
+ */
+export async function getBusinessActivityTypes() {
+	const { data, error } = await supabase
+		.from("business_activities")
+		.select("*")
+		.order("name");
+
+	return { data, error };
+}
+
+/**
+ * Get all sectors
+ */
+export async function getSectors() {
+	const { data, error } = await supabase
+		.from("sectors")
+		.select("*")
+		.order("name");
+
+	return { data, error };
+}
+
+/**
+ * Get available sectors for selected business activities
+ */
+export async function getAvailableSectorsForActivities(businessActivityIds: number[]) {
+	const { data, error } = await supabase
+		.rpc('get_available_sectors_for_activities', {
+			p_business_activity_ids: businessActivityIds
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data || [], error: null };
+}
+
+/**
+ * Get scenarios for business activity and sector combinations
+ */
+export async function getScenariosForCombinations(
+	businessActivityIds: number[],
+	sectorIds: number[]
+) {
+	const { data, error } = await supabase
+		.rpc('get_scenarios_for_combinations', {
+			p_business_activity_ids: businessActivityIds,
+			p_sector_ids: sectorIds
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data || [], error: null };
+}
+
+/**
+ * Get user's business activity ID from FBR profile (backward compatibility)
  */
 export async function getUserBusinessActivityId(userId: string): Promise<number | null> {
 	const { data, error } = await supabase
@@ -336,6 +396,96 @@ export async function getUserBusinessActivityId(userId: string): Promise<number 
 	}
 
 	return data.business_activity_id;
+}
+
+/**
+ * Get user's primary business activity
+ */
+export async function getUserPrimaryBusinessActivity(userId: string) {
+	const { data, error } = await supabase
+		.rpc('get_user_primary_business_activity', { p_user_id: userId });
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data?.[0] || null, error: null };
+}
+
+/**
+ * Get all user business activities
+ */
+export async function getUserBusinessActivities(userId: string) {
+	const { data, error } = await supabase
+		.rpc('get_user_business_activities', { p_user_id: userId });
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data || [], error: null };
+}
+
+/**
+ * Add business activity to user
+ */
+export async function addUserBusinessActivity(
+	userId: string,
+	businessActivityId: number,
+	isPrimary: boolean = false
+) {
+	const { data, error } = await supabase
+		.rpc('add_user_business_activity', {
+			p_user_id: userId,
+			p_business_activity_id: businessActivityId,
+			p_is_primary: isPrimary
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return { data, error: null };
+}
+
+/**
+ * Remove business activity from user
+ */
+export async function removeUserBusinessActivity(
+	userId: string,
+	businessActivityId: number
+) {
+	const { data, error } = await supabase
+		.rpc('remove_user_business_activity', {
+			p_user_id: userId,
+			p_business_activity_id: businessActivityId
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return { data, error: null };
+}
+
+/**
+ * Set primary business activity for user
+ */
+export async function setPrimaryBusinessActivity(
+	userId: string,
+	businessActivityId: number
+) {
+	const { data, error } = await supabase
+		.rpc('set_primary_business_activity', {
+			p_user_id: userId,
+			p_business_activity_id: businessActivityId
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return { data, error: null };
 }
 
 /**
@@ -609,6 +759,108 @@ export async function getFilteredMandatoryScenarios(
 			sale_type: scenario?.sale_type || '',
 			description: scenario?.description || '',
 			transaction_type_id: scenario?.transaction_type_id,
+			status: progress?.status || FBR_SCENARIO_STATUS.NOT_STARTED,
+			attempts: progress?.attempts || 0,
+			last_attempt: progress?.last_attempt || null,
+			completion_timestamp: progress?.completion_timestamp || null
+		};
+	});
+}
+
+/**
+ * Get filtered mandatory scenarios based on user's complete business activity selection
+ * This uses the new business activity/sector combination structure
+ */
+export async function getFilteredMandatoryScenariosForUser(
+	userId: string,
+	filters: ScenarioFilters = {}
+): Promise<ScenarioWithProgress[]> {
+	// Get user's business activity and sector combinations
+	const { data: userActivities, error: activitiesError } = await supabase
+		.from('user_business_activities')
+		.select(`
+			business_activity_id,
+			business_activity_sector_combination_id,
+			business_activity_sector_combinations!business_activity_sector_combination_id (
+				business_activity_id,
+				sector_id
+			)
+		`)
+		.eq('user_id', userId);
+
+	if (activitiesError) throw activitiesError;
+
+	if (!userActivities || userActivities.length === 0) {
+		return [];
+	}
+
+	// Extract business activity IDs and sector IDs
+	const businessActivityIds = [...new Set(userActivities.map(ua => ua.business_activity_id))];
+	const sectorIds = [...new Set(
+		userActivities
+			.filter(ua => ua.business_activity_sector_combinations)
+			.map(ua => (ua.business_activity_sector_combinations as { sector_id: number }[])[0]?.sector_id)
+			.filter(Boolean)
+	)];
+
+	if (businessActivityIds.length === 0) {
+		return [];
+	}
+
+	// Get scenarios for all business activity and sector combinations
+	const { data: scenarios, error } = await supabase
+		.rpc('get_scenarios_for_combinations', {
+			p_business_activity_ids: businessActivityIds,
+			p_sector_ids: sectorIds
+		});
+
+	if (error) throw error;
+
+	if (!scenarios || scenarios.length === 0) {
+		return [];
+	}
+
+	// Get scenario details
+	const scenarioIds = [...new Set(scenarios.map((s: { scenario_id: number; }) => s.scenario_id))];
+	let query = supabase
+		.from('scenario')
+		.select('id, code, description, sale_type, category, transaction_type_id')
+		.in('id', scenarioIds);
+
+	if (filters.category) query = query.eq('category', filters.category);
+	if (filters.saleType) query = query.eq('sale_type', filters.saleType);
+	if (filters.scenarioId) query = query.eq('code', filters.scenarioId);
+	if (filters.searchTerm) {
+		query = query.or(`description.ilike.%${filters.searchTerm}%,code.ilike.%${filters.searchTerm}%`);
+	}
+
+	const { data: scenarioDetails, error: detailsError } = await query;
+	if (detailsError) throw detailsError;
+
+	// Get user's progress for these scenarios
+	const progressMap = new Map<string, Pick<FbrScenarioProgress, 'scenario_id' | 'status' | 'attempts' | 'last_attempt' | 'completion_timestamp'>>();
+
+	if (scenarioDetails?.length) {
+		const { data: progress } = await supabase
+			.from('fbr_scenario_progress')
+			.select('scenario_id, status, attempts, last_attempt, completion_timestamp')
+			.eq('user_id', userId)
+			.in('scenario_id', scenarioDetails.map(s => s.id));
+
+		progress?.forEach(p => progressMap.set(String(p.scenario_id), p));
+	}
+
+	// Combine scenario details with progress
+	return (scenarioDetails || []).map(scenario => {
+		const progress = progressMap.get(String(scenario.id));
+
+		return {
+			id: scenario.id,
+			code: scenario.code || '',
+			category: scenario.category || '',
+			sale_type: scenario.sale_type || '',
+			description: scenario.description || '',
+			transaction_type_id: scenario.transaction_type_id,
 			status: progress?.status || FBR_SCENARIO_STATUS.NOT_STARTED,
 			attempts: progress?.attempts || 0,
 			last_attempt: progress?.last_attempt || null,

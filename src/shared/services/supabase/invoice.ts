@@ -25,8 +25,15 @@ export async function generateFBRInvoiceNumberForPreview(userId: string, year: n
             .eq('user_id', userId)
             .single();
 
-        if (profileError || !userProfile?.cnic_ntn) {
+        if (profileError) {
+            if (profileError.code === 'PGRST116') {
+                throw new Error('FBR profile not found. Please complete onboarding first.');
+            }
             console.error('Error getting user NTN/CNIC:', profileError);
+            throw new Error('User NTN/CNIC not found in FBR profile');
+        }
+
+        if (!userProfile?.cnic_ntn) {
             throw new Error('User NTN/CNIC not found in FBR profile');
         }
 
@@ -79,8 +86,15 @@ export async function generateFBRInvoiceNumber(userId: string, year: number, mon
             .eq('user_id', userId)
             .single();
 
-        if (profileError || !userProfile?.cnic_ntn) {
+        if (profileError) {
+            if (profileError.code === 'PGRST116') {
+                throw new Error('FBR profile not found. Please complete onboarding first.');
+            }
             console.error('Error getting user NTN/CNIC:', profileError);
+            throw new Error('User NTN/CNIC not found in FBR profile');
+        }
+
+        if (!userProfile?.cnic_ntn) {
             throw new Error('User NTN/CNIC not found in FBR profile');
         }
 
