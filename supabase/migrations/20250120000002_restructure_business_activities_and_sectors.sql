@@ -91,14 +91,20 @@ CREATE TABLE IF NOT EXISTS public.business_activity_sector_scenario (
     PRIMARY KEY (business_activity_sector_combination_id, scenario_id)
 );
 
--- Migrate existing scenario relationships
-INSERT INTO public.business_activity_sector_scenario (business_activity_sector_combination_id, scenario_id)
-SELECT 
-    mapping.new_id,
-    bas.scenario_id
-FROM public.business_activity_scenario bas
-JOIN business_activity_mapping mapping ON mapping.old_id = bas.business_activity_id
-ON CONFLICT DO NOTHING;
+-- Migrate existing scenario relationships (only if source table exists)
+DO $$
+BEGIN
+    -- Check if the business_activity_scenario table exists before trying to migrate data
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'business_activity_scenario' AND table_schema = 'public') THEN
+        INSERT INTO public.business_activity_sector_scenario (business_activity_sector_combination_id, scenario_id)
+        SELECT 
+            mapping.new_id,
+            bas.scenario_id
+        FROM public.business_activity_scenario bas
+        JOIN business_activity_mapping mapping ON mapping.old_id = bas.business_activity_id
+        ON CONFLICT DO NOTHING;
+    END IF;
+END $$;
 
 -- Create indexes for the new scenario table
 CREATE INDEX IF NOT EXISTS idx_business_activity_sector_scenario_combination ON public.business_activity_sector_scenario(business_activity_sector_combination_id);
