@@ -807,3 +807,120 @@ export const RETAILER_ONLY_SCENARIOS = ['SN026', 'SN027', 'SN028'];
 export const SCENARIO_NOTES = {
     RETAILER_ONLY: 'Scenarios SN026, SN027 & SN028 are applicable only if registered as retailer in sales tax profile.'
 };
+
+export interface BusinessActivityType {
+    id: number;
+    name: string;
+    description?: string;
+}
+
+export const BUSINESS_ACTIVITY_TYPES: BusinessActivityType[] = [
+    { id: 1, name: 'Manufacturer', description: 'Manufacturing businesses' },
+    { id: 2, name: 'Importer', description: 'Import businesses' },
+    { id: 3, name: 'Distributor', description: 'Distribution businesses' },
+    { id: 4, name: 'Wholesaler', description: 'Wholesale businesses' },
+    { id: 5, name: 'Exporter', description: 'Export businesses' },
+    { id: 6, name: 'Retailer', description: 'Retail businesses' },
+    { id: 7, name: 'Service Provider', description: 'Service providing businesses' },
+    { id: 8, name: 'Other', description: 'Other business types' }
+];
+
+export interface Sector {
+    id: number;
+    name: string;
+    description?: string;
+}
+
+export const SECTORS: Sector[] = [
+    { id: 1, name: 'All Other Sectors', description: 'General sectors not specified elsewhere' },
+    { id: 2, name: 'Steel', description: 'Steel manufacturing and related' },
+    { id: 3, name: 'FMCG', description: 'Fast Moving Consumer Goods' },
+    { id: 4, name: 'Textile', description: 'Textile manufacturing and related' },
+    { id: 5, name: 'Telecom', description: 'Telecommunications services' },
+    { id: 6, name: 'Petroleum', description: 'Petroleum products and services' },
+    { id: 7, name: 'Electricity Distribution', description: 'Electricity distribution services' },
+    { id: 8, name: 'Gas Distribution', description: 'Gas distribution services' },
+    { id: 9, name: 'Services', description: 'General services' },
+    { id: 10, name: 'Automobile', description: 'Automobile manufacturing and related' },
+    { id: 11, name: 'CNG Stations', description: 'CNG stations and related services' },
+    { id: 12, name: 'Pharmaceuticals', description: 'Pharmaceutical products and services' },
+    { id: 13, name: 'Wholesale / Retails', description: 'Wholesale and retail businesses' }
+];
+
+export function getBusinessActivityTypeByName(name: string): BusinessActivityType | undefined {
+    return BUSINESS_ACTIVITY_TYPES.find(type =>
+        type.name.toLowerCase() === name.toLowerCase()
+    );
+}
+
+export function getSectorByName(name: string): Sector | undefined {
+    return SECTORS.find(sector =>
+        sector.name.toLowerCase() === name.toLowerCase()
+    );
+}
+
+export function getAvailableSectorsForBusinessActivities(businessActivityTypeIds: number[]): Sector[] {
+    if (!businessActivityTypeIds || businessActivityTypeIds.length === 0) {
+        return [];
+    }
+
+    // Get unique sectors from business activity scenarios that match the selected business activities
+    const availableSectorNames = new Set<string>();
+
+    BUSINESS_ACTIVITY_SCENARIOS.forEach(scenario => {
+        const businessActivityType = getBusinessActivityTypeByName(scenario.businessActivity);
+        if (businessActivityType && businessActivityTypeIds.includes(businessActivityType.id)) {
+            availableSectorNames.add(scenario.sector);
+        }
+    });
+
+    // Return sector objects for the available sector names
+    return SECTORS.filter(sector => availableSectorNames.has(sector.name));
+}
+
+export function getScenariosForBusinessActivityAndSectorCombinations(
+    businessActivityTypeIds: number[],
+    sectorIds: number[]
+): string[] {
+    if (!businessActivityTypeIds.length || !sectorIds.length) {
+        return [];
+    }
+
+    const scenarios = new Set<string>();
+
+    businessActivityTypeIds.forEach(activityId => {
+        const activityType = BUSINESS_ACTIVITY_TYPES.find(t => t.id === activityId);
+        if (!activityType) return;
+
+        sectorIds.forEach(sectorId => {
+            const sector = SECTORS.find(s => s.id === sectorId);
+            if (!sector) return;
+
+            // Find matching business activity scenario
+            const matchingScenario = BUSINESS_ACTIVITY_SCENARIOS.find(
+                bas => bas.businessActivity === activityType.name && bas.sector === sector.name
+            );
+
+            if (matchingScenario) {
+                matchingScenario.scenarios.forEach(scenarioId => scenarios.add(scenarioId));
+            }
+        });
+    });
+
+    return Array.from(scenarios);
+}
+
+export interface Province {
+    state_province_code: number;
+    state_province_desc: string;
+}
+
+export const PROVINCES: Province[] = [
+    { state_province_code: 2, state_province_desc: 'Balochistan' },
+    { state_province_code: 4, state_province_desc: 'Azad Jammu And Kashmir' },
+    { state_province_code: 5, state_province_desc: 'Capital Territory' },
+    { state_province_code: 6, state_province_desc: 'Khyber Pakhtunkhwa' },
+    { state_province_code: 7, state_province_desc: 'Punjab' },
+    { state_province_code: 8, state_province_desc: 'Sindh' },
+    { state_province_code: 9, state_province_desc: 'Northern Areas' }
+];

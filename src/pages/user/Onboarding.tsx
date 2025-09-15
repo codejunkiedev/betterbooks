@@ -12,7 +12,6 @@ import {
     validateTaxInformation,
 } from "@/features/user/company";
 import { useState } from "react";
-import { getBusinessActivities } from "@/shared/services/supabase/fbr";
 // import { completeOnboarding } from "@/shared/services/supabase/onboarding";
 import { formatOnboardingError } from "@/shared/utils/onboarding";
 import logo from "@/assets/logo.png";
@@ -172,17 +171,8 @@ export default function Onboarding() {
                 }
                 primaryActivityId = primaryActivity.business_activity_type_id;
             } else {
-                // Fallback to old system for backward compatibility
-                const { data: activities } = await getBusinessActivities();
-                const selectedActivity = activities?.find(
-                    (a: { id: number; business_activity: string; sector: string }) =>
-                        a.business_activity === formData.fbr_activity_name && a.sector === formData.fbr_sector
-                );
-
-                if (!selectedActivity) {
-                    throw new Error("Selected business activity not found");
-                }
-                primaryActivityId = selectedActivity.id;
+                // This should not happen with the new system
+                throw new Error("No business activities selected");
             }
 
             // Prepare the payload for the database function
