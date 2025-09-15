@@ -38,10 +38,6 @@ export default function FbrProfileNew({
   const [availableSectors, setAvailableSectors] = useState<Sector[]>([]);
   const [applicableScenarios, setApplicableScenarios] = useState<string[]>([]);
 
-  const provinces = PROVINCES;
-  const businessActivityTypes = BUSINESS_ACTIVITY_TYPES;
-  const allSectors = SECTORS;
-
   const form = useMemo(
     () => ({
       cnic_ntn: cnicNtn,
@@ -53,11 +49,10 @@ export default function FbrProfileNew({
     [cnicNtn, businessName, provinceCode, address, mobileNumber]
   );
 
-  // Ensure combinations have proper business activity and sector names
   const enrichedCombinations = useMemo(() => {
     return businessActivitySelection.combinations.map((combination) => {
-      const activity = businessActivityTypes.find((a) => a.id === combination.business_activity_type_id);
-      const sector = allSectors.find((s) => s.id === combination.sector_id);
+      const activity = BUSINESS_ACTIVITY_TYPES.find((a) => a.id === combination.business_activity_type_id);
+      const sector = SECTORS.find((s) => s.id === combination.sector_id);
 
       return {
         ...combination,
@@ -67,11 +62,8 @@ export default function FbrProfileNew({
         sector_description: sector?.description || combination.sector_description,
       };
     });
-  }, [businessActivitySelection.combinations, businessActivityTypes, allSectors]);
+  }, [businessActivitySelection.combinations]);
 
-  // No need to load initial data from API anymore - using constants
-
-  // Load available sectors when business activities change
   useEffect(() => {
     if (businessActivitySelection.business_activity_type_ids.length > 0) {
       const sectors = getAvailableSectorsForBusinessActivities(businessActivitySelection.business_activity_type_ids);
@@ -81,7 +73,6 @@ export default function FbrProfileNew({
     }
   }, [businessActivitySelection.business_activity_type_ids]);
 
-  // Load applicable scenarios when both business activities and sectors are selected
   useEffect(() => {
     if (
       businessActivitySelection.business_activity_type_ids.length > 0 &&
@@ -147,8 +138,8 @@ export default function FbrProfileNew({
     const combinations: UserBusinessActivitySelection["combinations"] = [];
     for (const activityId of businessActivitySelection.business_activity_type_ids) {
       for (const sectorId of newSectorIds) {
-        const activity = businessActivityTypes.find((a) => a.id === activityId);
-        const sector = allSectors.find((s) => s.id === sectorId);
+        const activity = BUSINESS_ACTIVITY_TYPES.find((a) => a.id === activityId);
+        const sector = SECTORS.find((s) => s.id === sectorId);
         if (activity && sector) {
           combinations.push({
             business_activity_type_id: activity.id,
@@ -207,7 +198,7 @@ export default function FbrProfileNew({
                 <SelectValue placeholder="Select a province" />
               </SelectTrigger>
               <SelectContent>
-                {provinces.map((p) => (
+                {PROVINCES.map((p) => (
                   <SelectItem key={p.state_province_code} value={String(p.state_province_code)}>
                     {p.state_province_desc}
                   </SelectItem>
@@ -246,7 +237,7 @@ export default function FbrProfileNew({
               </span>
             </label>
             <div className="space-y-2 p-4 border rounded-lg bg-gray-50">
-              {businessActivityTypes.map((activity) => (
+              {BUSINESS_ACTIVITY_TYPES.map((activity) => (
                 <div
                   key={activity.id}
                   className="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 transition-colors"
