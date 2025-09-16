@@ -2,6 +2,7 @@ export interface TaxScenario {
   id: string;
   description: string;
   saleType: string;
+  saleTypeId: number;
 }
 
 export const TAX_SCENARIOS: TaxScenario[] = [
@@ -9,141 +10,169 @@ export const TAX_SCENARIOS: TaxScenario[] = [
     id: "SN001",
     description: "Goods at standard rate to registered buyers",
     saleType: "Goods at Standard Rate (default)",
+    saleTypeId: 75,
   },
   {
     id: "SN002",
     description: "Goods at standard rate to unregistered buyers",
     saleType: "Goods at Standard Rate (default)",
+    saleTypeId: 75,
   },
   {
     id: "SN003",
     description: "Sale of Steel (Melted and Re-Rolled)",
     saleType: "Steel Melting and re-rolling",
+    saleTypeId: 123,
   },
   {
     id: "SN004",
     description: "Sale by Ship Breakers",
     saleType: "Ship breaking",
+    saleTypeId: 125,
   },
   {
     id: "SN005",
     description: "Reduced rate sale",
     saleType: "Goods at Reduced Rate",
+    saleTypeId: 24,
   },
   {
     id: "SN006",
     description: "Exempt goods sale",
     saleType: "Exempt Goods",
+    saleTypeId: 81,
   },
   {
     id: "SN007",
     description: "Zero rated sale",
     saleType: "Goods at zero-rate",
+    saleTypeId: 80,
   },
   {
     id: "SN008",
     description: "Sale of 3rd schedule goods",
     saleType: "3rd Schedule Goods",
+    saleTypeId: 23,
   },
   {
     id: "SN009",
     description: "Cotton Spinners purchase from Cotton Ginners (Textile Sector)",
     saleType: "Cotton Ginners",
+    saleTypeId: 130,
   },
   {
     id: "SN010",
     description: "Telecom services rendered or provided",
     saleType: "Telecommunication services",
+    saleTypeId: 84,
   },
   {
     id: "SN011",
     description: "Toll Manufacturing sale by Steel sector",
     saleType: "Toll Manufacturing",
+    saleTypeId: 181,
   },
   {
     id: "SN012",
     description: "Sale of Petroleum products",
     saleType: "Petroleum Products",
+    saleTypeId: 85,
   },
   {
     id: "SN013",
     description: "Electricity Supply to Retailers",
     saleType: "Electricity Supply to Retailers",
+    saleTypeId: 62,
   },
   {
     id: "SN014",
     description: "Sale of Gas to CNG stations",
     saleType: "Gas to CNG stations",
+    saleTypeId: 77,
   },
   {
     id: "SN015",
     description: "Sale of mobile phones",
     saleType: "Mobile Phones",
+    saleTypeId: 122,
   },
   {
     id: "SN016",
     description: "Processing / Conversion of Goods",
     saleType: "Processing/ Conversion of Goods",
+    saleTypeId: 25,
   },
   {
     id: "SN017",
     description: "Sale of Goods where FED is charged in ST mode",
     saleType: "Goods (FED in ST Mode)",
+    saleTypeId: 21,
   },
   {
     id: "SN018",
     description: "Services rendered or provided where FED is charged in ST mode",
     saleType: "Services (FED in ST Mode)",
+    saleTypeId: 22,
   },
   {
     id: "SN019",
     description: "Services rendered or provided",
     saleType: "Services",
+    saleTypeId: 18,
   },
   {
     id: "SN020",
     description: "Sale of Electric Vehicles",
     saleType: "Electric Vehicle",
+    saleTypeId: 132,
   },
   {
     id: "SN021",
     description: "Sale of Cement /Concrete Block",
     saleType: "Cement /Concrete Block",
+    saleTypeId: 134,
   },
   {
     id: "SN022",
     description: "Sale of Potassium Chlorate",
     saleType: "Potassium Chlorate",
+    saleTypeId: 115,
   },
   {
     id: "SN023",
     description: "Sale of CNG",
     saleType: "CNG Sales",
+    saleTypeId: 178,
   },
   {
     id: "SN024",
     description: "Goods sold that are listed in SRO 297(1)/2023",
     saleType: "Goods as per SRO.297(|)/2023",
+    saleTypeId: 139,
   },
   {
     id: "SN025",
     description: "Drugs sold at fixed ST rate under serial 81 of Eighth Schedule Table 1",
     saleType: "Non-Adjustable Supplies",
+    saleTypeId: 138,
   },
   {
     id: "SN026",
     description: "Sale to End Consumer by retailers",
     saleType: "Goods at Standard Rate (default)",
+    saleTypeId: 75,
   },
   {
     id: "SN027",
     description: "Sale to End Consumer by retailers",
     saleType: "3rd Schedule Goods",
+    saleTypeId: 23,
   },
   {
     id: "SN028",
     description: "Sale to End Consumer by retailers",
     saleType: "Goods at Reduced Rate",
+    saleTypeId: 24,
   },
 ];
 
