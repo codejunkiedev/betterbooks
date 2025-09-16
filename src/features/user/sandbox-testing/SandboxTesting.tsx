@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { RootState } from "@/shared/services/store";
@@ -7,7 +7,7 @@ import { Card } from "@/shared/components/Card";
 import { Button } from "@/shared/components/Button";
 import { Alert, AlertDescription } from "@/shared/components/Alert";
 import { ScenarioCard } from "./ScenarioCard";
-import { AlertCircle, FileText } from "lucide-react";
+import { AlertCircle, FileText, Search } from "lucide-react";
 import { getFbrConfigStatus, getFbrProfileByUser } from "@/shared/services/supabase/fbr";
 import { FBR_API_STATUS } from "@/shared/constants/fbr";
 import { getTaxScenariosByBusinessActivityAndSector, TaxScenario } from "@/shared/constants";
@@ -20,6 +20,7 @@ export default function SandboxTesting() {
   const [scenarios, setScenarios] = useState<TaxScenario[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasValidSandboxKey, setHasValidSandboxKey] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -81,6 +82,18 @@ export default function SandboxTesting() {
       }
     })();
   }, [hasValidSandboxKey, toast, user?.id]);
+
+  const filteredScenarios = useMemo(() => {
+    if (!searchQuery.trim()) return scenarios;
+
+    const query = searchQuery.toLowerCase().trim();
+    return scenarios.filter(
+      (scenario) =>
+        scenario.id.toLowerCase().includes(query) ||
+        scenario.description.toLowerCase().includes(query) ||
+        scenario.saleType.toLowerCase().includes(query)
+    );
+  }, [scenarios, searchQuery]);
 
   const handleStartScenario = async (scenario: TaxScenario) => {
     if (!user?.id) return;
@@ -187,9 +200,25 @@ export default function SandboxTesting() {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
-      <div className="space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight">FBR Sandbox Testing</h1>
-        <p className="text-gray-500 text-lg">Start testing your FBR integration with these mandatory scenarios.</p>
+      <div className="flex items-center justify-between gap-6">
+        <div className="space-y-3">
+          <h1 className="text-3xl font-bold tracking-tight">FBR Sandbox Testing</h1>
+          <p className="text-gray-500 text-lg">Start testing your FBR integration with these mandatory scenarios.</p>
+        </div>
+        {scenarios.length > 0 && (
+          <div className="flex-shrink-0 w-80">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search scenarios..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {!hasValidSandboxKey && (
@@ -208,6 +237,12 @@ export default function SandboxTesting() {
         </Alert>
       )}
 
+      {searchQuery && scenarios.length > 0 && (
+        <div className="text-sm text-gray-600">
+          Showing {filteredScenarios.length} of {scenarios.length} scenarios
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-stretch">
         {scenarios.length === 0 ? (
           <Card className="p-6 text-center md:col-span-2">
@@ -220,8 +255,16 @@ export default function SandboxTesting() {
               </p>
             </div>
           </Card>
+        ) : filteredScenarios.length === 0 && searchQuery ? (
+          <Card className="p-6 text-center md:col-span-2">
+            <div className="space-y-2">
+              <Search className="h-8 w-8 text-gray-400 mx-auto" />
+              <h3 className="text-lg font-medium text-gray-900">No matching scenarios</h3>
+              <p className="text-gray-500">No scenarios match your search criteria. Try a different search term.</p>
+            </div>
+          </Card>
         ) : (
-          scenarios.map((scenario) => (
+          filteredScenarios.map((scenario) => (
             <ScenarioCard
               key={scenario.id}
               scenario={scenario}
