@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Input } from "@/shared/components/Input";
+import { PasswordInput } from "@/shared/components/PasswordInput";
 import { Button } from "@/shared/components/Button";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/shared/components/Card";
 import { useToast } from "@/shared/hooks/useToast";
@@ -108,15 +109,13 @@ export default function SignUp() {
               required
               autoFocus
             />
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="Password"
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               required
             />
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="Confirm Password"
               value={confirm}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirm(e.target.value)}
