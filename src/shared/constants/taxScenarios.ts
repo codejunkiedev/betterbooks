@@ -1496,6 +1496,18 @@ export function getScenarioById(scenarioId: string): TaxScenario | undefined {
   return TAX_SCENARIOS.find((scenario) => scenario.id === scenarioId);
 }
 
+export function getTaxScenariosByBusinessActivityAndSector(
+  businessActivity: string[],
+  sector: string[]
+): TaxScenario[] {
+  const businessScenarios = BUSINESS_ACTIVITY_SCENARIOS.filter(
+    (item) => businessActivity.includes(item.businessActivity) && sector.includes(item.sector)
+  );
+  const scenarioCodes = businessScenarios.flatMap((item) => item.scenarios);
+  const uniqueScenarioCodes = Array.from(new Set<string>(scenarioCodes));
+  return TAX_SCENARIOS.filter((scenario) => uniqueScenarioCodes.includes(scenario.id));
+}
+
 export function getCombinationsByActivitiesAndSectors(
   activities: string[],
   sectors: string[]
