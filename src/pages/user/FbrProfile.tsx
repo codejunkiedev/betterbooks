@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Input } from "@/shared/components/Input";
 import { Textarea } from "@/shared/components/Textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/Select";
@@ -7,37 +7,34 @@ import { Checkbox } from "@/shared/components/Checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 import {
   PROVINCES,
-  BUSINESS_ACTIVITY_TYPES,
-  SECTORS,
-  getAvailableSectorsForBusinessActivities,
+  BUSINESS_ACTIVITIES,
+  BUSINESS_SECTORS,
   getScenariosForBusinessActivityAndSectorCombinations,
   getScenarioById,
-  Sector,
+  getCombinationsByActivitiesAndSectors,
 } from "@/shared/constants/taxScenarios";
-import { UserBusinessActivitySelection } from "@/shared/types/fbr";
 
-interface FbrProfileNewProps {
+interface FbrProfileProps {
   cnicNtn: string;
   businessName: string;
   provinceCode: string;
   address: string;
   mobileNumber: string;
-  businessActivitySelection: UserBusinessActivitySelection;
-  onFieldChange: (field: string, value: string | UserBusinessActivitySelection) => void;
+  activities: string[];
+  sectors: string[];
+  onFieldChange: (field: string, value: string | string[]) => void;
 }
 
-export default function FbrProfileNew({
+export default function FbrProfile({
   cnicNtn,
   businessName,
   provinceCode,
   address,
   mobileNumber,
-  businessActivitySelection,
+  activities,
+  sectors,
   onFieldChange,
-}: FbrProfileNewProps) {
-  const [availableSectors, setAvailableSectors] = useState<Sector[]>([]);
-  const [applicableScenarios, setApplicableScenarios] = useState<string[]>([]);
-
+}: FbrProfileProps) {
   const form = useMemo(
     () => ({
       cnic_ntn: cnicNtn,
@@ -49,44 +46,9 @@ export default function FbrProfileNew({
     [cnicNtn, businessName, provinceCode, address, mobileNumber]
   );
 
-  const enrichedCombinations = useMemo(() => {
-    return businessActivitySelection.combinations.map((combination) => {
-      const activity = BUSINESS_ACTIVITY_TYPES.find((a) => a.id === combination.business_activity_type_id);
-      const sector = SECTORS.find((s) => s.id === combination.sector_id);
-
-      return {
-        ...combination,
-        business_activity_name: activity?.name || combination.business_activity_name || "Unknown Activity",
-        business_activity_description: activity?.description || combination.business_activity_description,
-        sector_name: sector?.name || combination.sector_name || "Unknown Sector",
-        sector_description: sector?.description || combination.sector_description,
-      };
-    });
-  }, [businessActivitySelection.combinations]);
-
-  useEffect(() => {
-    if (businessActivitySelection.business_activity_type_ids.length > 0) {
-      const sectors = getAvailableSectorsForBusinessActivities(businessActivitySelection.business_activity_type_ids);
-      setAvailableSectors(sectors);
-    } else {
-      setAvailableSectors([]);
-    }
-  }, [businessActivitySelection.business_activity_type_ids]);
-
-  useEffect(() => {
-    if (
-      businessActivitySelection.business_activity_type_ids.length > 0 &&
-      businessActivitySelection.sector_ids.length > 0
-    ) {
-      const scenarios = getScenariosForBusinessActivityAndSectorCombinations(
-        businessActivitySelection.business_activity_type_ids,
-        businessActivitySelection.sector_ids
-      );
-      setApplicableScenarios(scenarios);
-    } else {
-      setApplicableScenarios([]);
-    }
-  }, [businessActivitySelection.business_activity_type_ids, businessActivitySelection.sector_ids]);
+  const combinationsByActivitiesAndSectors = useMemo(() => {
+    return getCombinationsByActivitiesAndSectors(activities, sectors);
+  }, [activities, sectors]);
 
   const errors = useMemo(() => {
     const errs: Record<string, string> = {};
@@ -95,73 +57,54 @@ export default function FbrProfileNew({
     if (!form.province_code) errs.province_code = "Province is required";
     if (!form.address || form.address.length > 250) errs.address = "Required, max 250 chars";
     if (!/^\+92\d{10}$/.test(form.mobile_number)) errs.mobile_number = "Format: +92XXXXXXXXXX";
-    if (businessActivitySelection.business_activity_type_ids.length === 0)
-      errs.business_activities = "At least one business activity is required";
-    if (
-      businessActivitySelection.business_activity_type_ids.length > 0 &&
-      businessActivitySelection.sector_ids.length === 0
-    ) {
-      errs.sectors = "At least one sector is required when business activities are selected";
-    }
-    if (
-      businessActivitySelection.combinations.length === 0 &&
-      businessActivitySelection.business_activity_type_ids.length > 0 &&
-      businessActivitySelection.sector_ids.length > 0
-    ) {
-      errs.combinations = "No valid combinations found for selected business activities and sectors";
-    }
+    if (activities.length === 0) errs.activities = "At least one business activity is required";
+    if (sectors.length === 0) errs.sectors = "At least one sector is required";
     return errs;
-  }, [form, businessActivitySelection]);
+  }, [form, activities, sectors]);
 
-  const handleBusinessActivityChange = (activityId: number, checked: boolean) => {
-    const newActivityIds = checked
-      ? [...businessActivitySelection.business_activity_type_ids, activityId]
-      : businessActivitySelection.business_activity_type_ids.filter((id) => id !== activityId);
-
-    // Clear sectors when business activities change
-    const updatedSelection: UserBusinessActivitySelection = {
-      ...businessActivitySelection,
-      business_activity_type_ids: newActivityIds,
-      sector_ids: [],
-      combinations: [],
-    };
-
-    onFieldChange("fbr_business_activity_selection", updatedSelection);
+  const handleActivityChange = (activityName: string, checked: boolean) => {
+    if (checked) {
+      onFieldChange("fbr_activities", [...activities, activityName]);
+    } else {
+      onFieldChange(
+        "fbr_activities",
+        activities.filter((a) => a !== activityName)
+      );
+    }
   };
 
-  const handleSectorChange = (sectorId: number, checked: boolean) => {
-    const newSectorIds = checked
-      ? [...businessActivitySelection.sector_ids, sectorId]
-      : businessActivitySelection.sector_ids.filter((id) => id !== sectorId);
+  const handleSectorChange = (sectorName: string, checked: boolean) => {
+    if (checked) {
+      onFieldChange("fbr_sectors", [...sectors, sectorName]);
+    } else {
+      onFieldChange(
+        "fbr_sectors",
+        sectors.filter((s) => s !== sectorName)
+      );
+    }
+  };
 
-    // Generate combinations based on selected business activities and sectors
-    const combinations: UserBusinessActivitySelection["combinations"] = [];
-    for (const activityId of businessActivitySelection.business_activity_type_ids) {
-      for (const sectorId of newSectorIds) {
-        const activity = BUSINESS_ACTIVITY_TYPES.find((a) => a.id === activityId);
-        const sector = SECTORS.find((s) => s.id === sectorId);
-        if (activity && sector) {
-          combinations.push({
-            business_activity_type_id: activity.id,
-            business_activity_name: activity.name,
-            business_activity_description: activity?.description || null,
-            sector_id: sector.id,
-            sector_name: sector.name,
-            sector_description: sector?.description || null,
-            is_primary: false,
-          });
-        }
-      }
+  const applicableScenarios = useMemo(() => {
+    if (activities.length === 0 || sectors.length === 0) {
+      return [];
     }
 
-    const updatedSelection: UserBusinessActivitySelection = {
-      ...businessActivitySelection,
-      sector_ids: newSectorIds,
-      combinations,
-    };
+    // Get activity IDs from selected activity names
+    const selectedActivityIds = activities
+      .map((activityName) => BUSINESS_ACTIVITIES.find((a) => a.name === activityName)?.id)
+      .filter((id) => id !== undefined) as number[];
 
-    onFieldChange("fbr_business_activity_selection", updatedSelection);
-  };
+    // Get sector IDs from selected sector names
+    const selectedSectorIds = sectors
+      .map((sectorName) => BUSINESS_SECTORS.find((s) => s.name === sectorName)?.id)
+      .filter((id) => id !== undefined) as number[];
+
+    if (selectedActivityIds.length === 0 || selectedSectorIds.length === 0) {
+      return [];
+    }
+
+    return getScenariosForBusinessActivityAndSectorCombinations(selectedActivityIds, selectedSectorIds);
+  }, [activities, sectors]);
 
   return (
     <Card className="shadow-lg border-0">
@@ -232,20 +175,18 @@ export default function FbrProfileNew({
           <div>
             <label className="block text-sm font-medium mb-1">
               Business Activities
-              <span className="text-xs text-gray-500 ml-2">
-                ({businessActivitySelection.business_activity_type_ids.length} selected)
-              </span>
+              <span className="text-xs text-gray-500 ml-2">({activities.length} selected)</span>
             </label>
-            <div className="space-y-2 p-4 border rounded-lg bg-gray-50">
-              {BUSINESS_ACTIVITY_TYPES.map((activity) => (
+            <div className="space-y-2 p-4 border rounded-lg bg-gray-50 max-h-60 overflow-y-auto">
+              {BUSINESS_ACTIVITIES.map((activity) => (
                 <div
                   key={activity.id}
                   className="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 transition-colors"
                 >
                   <Checkbox
                     id={`activity-${activity.id}`}
-                    checked={businessActivitySelection.business_activity_type_ids.includes(activity.id)}
-                    onCheckedChange={(checked) => handleBusinessActivityChange(activity.id, checked as boolean)}
+                    checked={activities.includes(activity.name)}
+                    onCheckedChange={(checked) => handleActivityChange(activity.name, checked as boolean)}
                   />
                   <label htmlFor={`activity-${activity.id}`} className="text-sm font-medium cursor-pointer flex-1">
                     {activity.name}
@@ -254,71 +195,61 @@ export default function FbrProfileNew({
                 </div>
               ))}
             </div>
-            {errors.business_activities && <p className="text-red-600 text-xs mt-1">{errors.business_activities}</p>}
+
+            {errors.activities && <p className="text-red-600 text-xs mt-1">{errors.activities}</p>}
           </div>
 
           {/* Sectors Selection */}
-          {businessActivitySelection.business_activity_type_ids.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Available Sectors
-                <span className="text-xs text-gray-500 ml-2">
-                  ({businessActivitySelection.sector_ids.length} selected)
-                </span>
-              </label>
-              <div className="space-y-2 p-4 border rounded-lg bg-gray-50">
-                {availableSectors.length > 0 ? (
-                  availableSectors.map((sector, index) => (
-                    <div
-                      key={`sector-${sector.id}-${index}`}
-                      className="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 transition-colors"
-                    >
-                      <Checkbox
-                        id={`sector-${sector.id}-${index}`}
-                        checked={businessActivitySelection.sector_ids.includes(sector.id)}
-                        onCheckedChange={(checked) => handleSectorChange(sector.id, checked as boolean)}
-                      />
-                      <label
-                        htmlFor={`sector-${sector.id}-${index}`}
-                        className="text-sm font-medium cursor-pointer flex-1"
-                      >
-                        {sector.name}
-                      </label>
-                      {sector.description && (
-                        <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded">
-                          {sector.description}
-                        </span>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500">No sectors available for selected business activities</p>
-                )}
-              </div>
-              {errors.sectors && <p className="text-red-600 text-xs mt-1">{errors.sectors}</p>}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Sectors
+              <span className="text-xs text-gray-500 ml-2">({sectors.length} selected)</span>
+            </label>
+            <div className="space-y-2 p-4 border rounded-lg bg-gray-50 max-h-60 overflow-y-auto">
+              {BUSINESS_SECTORS.map((sector) => (
+                <div
+                  key={sector.id}
+                  className="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 transition-colors"
+                >
+                  <Checkbox
+                    id={`sector-${sector.id}`}
+                    checked={sectors.includes(sector.name)}
+                    onCheckedChange={(checked) => handleSectorChange(sector.name, checked as boolean)}
+                  />
+                  <label htmlFor={`sector-${sector.id}`} className="text-sm font-medium cursor-pointer flex-1">
+                    {sector.name}
+                  </label>
+                  {sector.description && (
+                    <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded">{sector.description}</span>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
+            {errors.sectors && <p className="text-red-600 text-xs mt-1">{errors.sectors}</p>}
+          </div>
 
           {/* Selected Combinations */}
-          {enrichedCombinations.length > 0 && (
+          {combinationsByActivitiesAndSectors.length > 0 && (
             <div>
               <label className="block text-sm font-medium mb-1">
                 Selected Combinations
-                <span className="text-xs text-gray-500 ml-2">({enrichedCombinations.length} combinations)</span>
+                <span className="text-xs text-gray-500 ml-2">
+                  ({combinationsByActivitiesAndSectors.length} combinations)
+                </span>
               </label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {enrichedCombinations.map((combination, index) => (
+                {combinationsByActivitiesAndSectors.map((combination, index) => (
                   <div
-                    key={`combination-${combination.business_activity_type_id}-${combination.sector_id}-${index}`}
+                    key={`combination-${combination.businessActivity}-${combination.sector}-${index}`}
                     className="flex items-center justify-between p-3 border rounded-lg bg-white shadow-sm"
                   >
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                        {combination.business_activity_name}
+                        {combination.businessActivity}
                       </Badge>
                       <span className="text-gray-400">×</span>
                       <Badge variant="outline" className="bg-green-50 text-green-700">
-                        {combination.sector_name}
+                        {combination.sector}
                       </Badge>
                     </div>
                   </div>

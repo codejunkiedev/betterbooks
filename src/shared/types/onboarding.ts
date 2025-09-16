@@ -1,4 +1,3 @@
-import { UserBusinessActivity, UserBusinessActivitySelection } from "./fbr";
 
 export interface CompanySetupData {
     company_name: string;
@@ -15,10 +14,8 @@ export interface CompanySetupData {
     fbr_province_code: string;
     fbr_address: string;
     fbr_mobile_number: string;
-    fbr_activity_name: string; // Keep for backward compatibility
-    fbr_sector: string; // Keep for backward compatibility
-    fbr_business_activities: UserBusinessActivity[]; // Keep for backward compatibility
-    fbr_business_activity_selection: UserBusinessActivitySelection; // New field for new structure
+    fbr_activities: string[];
+    fbr_sectors: string[];
 }
 
 export interface OnboardingPayload {
@@ -36,9 +33,8 @@ export interface OnboardingPayload {
         province_code: number;
         address: string;
         mobile_number: string;
-        business_activity_id: number; // Keep for backward compatibility - will be primary activity
-        business_activities?: number[]; // Keep for backward compatibility
-        business_activity_selection?: UserBusinessActivitySelection; // New field for new structure
+        activities: string[];
+        sectors: string[];
     };
     opening_balance?: {
         amount: number;
