@@ -69,7 +69,7 @@ export default function ScenarioInvoiceForm() {
     buyerAddress: "",
     buyerRegistrationType: "",
     invoiceRefNo: "",
-    scenarioId: "",
+    scenarioId: scenarioId || "",
     items: [],
     totalAmount: 0,
     notes: "",
@@ -395,14 +395,14 @@ export default function ScenarioInvoiceForm() {
       console.error("Error submitting to FBR:", error);
 
       // Mark scenario as failed on error
-      if (scenario && user?.id) {
-        await updateScenarioProgress(
-          user.id,
-          scenario.id,
-          FBR_SCENARIO_STATUS.FAILED,
-          error instanceof Error ? error.message : "Unknown error occurred"
-        );
-      }
+      // if (scenario && user?.id) {
+      //   await updateScenarioProgress(
+      //     user.id,
+      //     scenario.id,
+      //     FBR_SCENARIO_STATUS.FAILED,
+      //     error instanceof Error ? error.message : "Unknown error occurred"
+      //   );
+      // }
 
       return {
         success: false,
