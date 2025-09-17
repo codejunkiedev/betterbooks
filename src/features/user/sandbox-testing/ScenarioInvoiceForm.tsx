@@ -370,24 +370,24 @@ export default function ScenarioInvoiceForm() {
       });
 
       if (response.success) {
-        // Mark scenario as completed
-        await updateScenarioProgress(
-          user.id,
-          scenario.id,
-          FBR_SCENARIO_STATUS.COMPLETED,
-          JSON.stringify(response.data?.response)
-        );
+        // // Mark scenario as completed
+        // await updateScenarioProgress(
+        //   user.id,
+        //   scenario.id,
+        //   FBR_SCENARIO_STATUS.COMPLETED,
+        //   JSON.stringify(response.data?.response)
+        // );
 
         // Navigate back to sandbox testing with a flag to refresh
         navigate("/fbr/sandbox-testing", { state: { refresh: true } });
       } else {
-        // Mark scenario as failed
-        await updateScenarioProgress(
-          user.id,
-          scenario.id,
-          FBR_SCENARIO_STATUS.FAILED,
-          response.error || "Submission failed"
-        );
+        // // Mark scenario as failed
+        // await updateScenarioProgress(
+        //   user.id,
+        //   scenario.id,
+        //   FBR_SCENARIO_STATUS.FAILED,
+        //   response.error || "Submission failed"
+        // );
       }
 
       return response;
