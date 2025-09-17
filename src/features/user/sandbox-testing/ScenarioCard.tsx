@@ -17,7 +17,9 @@ export function ScenarioCard({ scenario, onStartScenario, isApiConfigured = true
         {/* Header Section */}
         <div className="space-y-3 flex-1">
           {/* Title */}
-          <h3 className="text-lg font-semibold text-foreground leading-tight">{scenario.description}</h3>
+          <h3 className="text-lg font-semibold text-foreground leading-tight">
+            {scenario.id} - {scenario.description}
+          </h3>
 
           {/* Metadata */}
           <div className="flex flex-wrap gap-3 text-sm">
