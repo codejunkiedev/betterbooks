@@ -17,9 +17,8 @@ import { FBRSubmissionModal } from "./FBRSubmissionModal";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/components/Tooltip";
 import { Play, Target, FileText, AlertCircle, Trash2, Eye, CheckCircle } from "lucide-react";
-import { FBR_SCENARIO_STATUS } from "@/shared/constants/fbr";
-import { updateScenarioProgress, getProvinceCodes, getFbrProfileForSellerData } from "@/shared/services/supabase/fbr";
-import { FBRInvoiceData, InvoiceFormData, InvoiceItemCalculated } from "@/shared/types/invoice";
+import { getProvinceCodes, getFbrProfileForSellerData } from "@/shared/services/supabase/fbr";
+import { FBRInvoiceData, FBRInvoicePayload, InvoiceFormData, InvoiceItemCalculated } from "@/shared/types/invoice";
 import { generateRandomSampleData, generateScenarioSpecificSampleData } from "@/shared/data/fbrSampleData";
 import { generateFBRInvoiceNumberForPreview } from "@/shared/services/supabase/invoice";
 import { generateInvoiceRefNo } from "@/shared/services/api/fbrSubmission";
@@ -302,7 +301,30 @@ export default function ScenarioInvoiceForm() {
         return;
       }
 
-      await validateInvoiceData(formData);
+      const payload: FBRInvoicePayload = {
+        ...formData,
+        items: formData.items.map((item) => ({
+          hsCode: item.hs_code,
+          productDescription: item.item_name,
+          rate: item.tax_rate.toString(),
+          uoM: item.uom_code,
+          discount: 0.0,
+          totalValues: item.total_amount,
+          valueSalesExcludingST: item.value_sales_excluding_st,
+          fixedNotifiedValueOrRetailPrice: 0.0,
+          salesTaxApplicable: item.sales_tax,
+          salesTaxWithheldAtSource: 0.0,
+          extraTax: 0.0,
+          furtherTax: 0.0,
+          sroScheduleNo: "",
+          fedPayable: 0.0,
+          saleType: scenario?.saleType || "",
+          sroItemSerialNo: "",
+          quantity: item.quantity,
+        })),
+      };
+
+      await validateInvoiceData(payload);
       setShowValidationModal(true);
     } catch (error) {
       console.error("Validation error:", error);
