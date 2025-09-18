@@ -306,7 +306,7 @@ export default function ScenarioInvoiceForm() {
         items: formData.items.map((item) => ({
           hsCode: item.hs_code,
           productDescription: item.item_name,
-          rate: item.tax_rate.toString(),
+          rate: `${item.tax_rate.toString()}%`,
           uoM: item.uom_code,
           discount: 0.0,
           totalValues: item.total_amount,

@@ -115,6 +115,29 @@ function processFBRValidationResponse(fbrResponse: Record<string, unknown>): Inv
       };
     }
 
+    // Check for error case (statusCode "01" and status "Invalid")
+    if (validationResponse.status === "Invalid") {
+      // Process errors using the FBR error handler
+      const errorResults = FBRErrorHandler.processFBRResponse(fbrResponse);
+
+      return {
+        isValid: false,
+        canSubmit: false,
+        results: errorResults,
+        summary: {
+          total: errorResults.length,
+          errors: errorResults.filter((r: ValidationResult) => r.severity === ValidationSeverity.ERROR).length,
+          warnings: errorResults.filter((r: ValidationResult) => r.severity === ValidationSeverity.WARNING).length,
+          successes: errorResults.filter((r: ValidationResult) => r.severity === ValidationSeverity.SUCCESS).length,
+        },
+        fbrValidation: {
+          success: false,
+          message: "FBR validation failed",
+          data: fbrResponse,
+        },
+      };
+    }
+
     // Check for warnings (status valid but with warnings)
     if (validationResponse.status === "Valid" && validationResponse.invoiceStatuses) {
       const invoiceStatuses = validationResponse.invoiceStatuses as Array<Record<string, unknown>>;
