@@ -409,6 +409,10 @@ export default function ScenarioInvoiceForm() {
         // );
 
         // Navigate back to sandbox testing with a flag to refresh
+        toast({
+          title: "Invoice Submitted",
+          description: "Invoice submitted successfully.",
+        });
         navigate("/fbr/sandbox-testing", { state: { refresh: true } });
       } else {
         // // Mark scenario as failed
