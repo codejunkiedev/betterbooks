@@ -1,6 +1,6 @@
 import { HttpClientApi } from "./http-client";
-import { saveInvoice, generateFBRInvoiceNumber } from "../supabase/invoice";
-import { FBRInvoiceData, InvoiceFormData, InvoiceItemCalculated } from "@/shared/types/invoice";
+import { generateFBRInvoiceNumber } from "../supabase/invoice";
+import { FBRInvoiceData, InvoiceItemCalculated } from "@/shared/types/invoice";
 import { getScenarioById } from "@/shared/constants";
 
 // FBR API endpoints
