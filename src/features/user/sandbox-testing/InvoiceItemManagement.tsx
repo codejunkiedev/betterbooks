@@ -748,7 +748,7 @@ export function InvoiceItemManagement({
                   <SelectContent>
                     {(filteredUomOptions.length > 0 ? filteredUomOptions : uomOptions).length > 0 ? (
                       (filteredUomOptions.length > 0 ? filteredUomOptions : uomOptions).map((uom, index) => (
-                        <SelectItem key={`${uom.uoM_ID}-${index}`} value={uom.uoM_ID.toString()}>
+                        <SelectItem key={`${uom.uoM_ID}-${index}`} value={uom.description}>
                           {uom.description}
                         </SelectItem>
                       ))
