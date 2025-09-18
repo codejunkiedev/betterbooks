@@ -301,9 +301,18 @@ export default function ScenarioInvoiceForm() {
         return;
       }
 
-      const payload: FBRInvoicePayload = {
-        ...formData,
-        items: formData.items.map((item) => ({
+      if (!scenario?.id) {
+        toast({
+          title: "Validation Error",
+          description: "Scenario ID is required.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const items: FBRInvoicePayload["items"] = formData.items.map((item) => {
+        const check = ["SN008", "SN027"].includes(scenario?.id);
+        return {
           hsCode: item.hs_code,
           productDescription: item.item_name,
           rate: `${item.tax_rate.toString()}%`,
@@ -311,7 +320,7 @@ export default function ScenarioInvoiceForm() {
           discount: 0.0,
           totalValues: item.total_amount,
           valueSalesExcludingST: item.value_sales_excluding_st,
-          fixedNotifiedValueOrRetailPrice: 0.0,
+          fixedNotifiedValueOrRetailPrice: check ? item.total_amount : item.fixed_notified_value || 0.0,
           salesTaxApplicable: item.sales_tax,
           salesTaxWithheldAtSource: 0.0,
           extraTax: 0.0,
@@ -321,10 +330,9 @@ export default function ScenarioInvoiceForm() {
           saleType: scenario?.saleType || "",
           sroItemSerialNo: "",
           quantity: item.quantity,
-        })),
-      };
-
-      await validateInvoiceData(payload);
+        };
+      });
+      await validateInvoiceData({ ...formData, items });
       setShowValidationModal(true);
     } catch (error) {
       console.error("Validation error:", error);
