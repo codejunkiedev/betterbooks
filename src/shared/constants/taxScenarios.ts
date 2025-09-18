@@ -9,13 +9,13 @@ export const TAX_SCENARIOS: TaxScenario[] = [
   {
     id: "SN001",
     description: "Goods at standard rate to registered buyers",
-    saleType: "Goods at Standard Rate (default)",
+    saleType: "Goods at standard rate (default)",
     saleTypeId: 75,
   },
   {
     id: "SN002",
     description: "Goods at standard rate to unregistered buyers",
-    saleType: "Goods at Standard Rate (default)",
+    saleType: "Goods at standard rate (default)",
     saleTypeId: 75,
   },
   {
@@ -159,7 +159,7 @@ export const TAX_SCENARIOS: TaxScenario[] = [
   {
     id: "SN026",
     description: "Sale to End Consumer by retailers",
-    saleType: "Goods at Standard Rate (default)",
+    saleType: "Goods at standard rate (default)",
     saleTypeId: 75,
   },
   {
