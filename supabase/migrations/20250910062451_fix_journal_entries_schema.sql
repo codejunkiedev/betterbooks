@@ -272,10 +272,24 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.complete_onboarding_transaction TO authenticated;
+GRANT EXECUTE ON FUNCTION public.complete_onboarding_transaction(
+    p_user_id UUID,
+    p_company_data JSONB,
+    p_fbr_data JSONB,
+    p_opening_balance JSONB,
+    p_skip_balance BOOLEAN,
+    p_skip_tax_info BOOLEAN
+) TO authenticated;
 
 -- Add comment
-COMMENT ON FUNCTION public.complete_onboarding_transaction IS 'Complete user onboarding process - Fixed with correct journal_entries schema (no reference column, uses type/amount)';
+COMMENT ON FUNCTION public.complete_onboarding_transaction(
+    p_user_id UUID,
+    p_company_data JSONB,
+    p_fbr_data JSONB,
+    p_opening_balance JSONB,
+    p_skip_balance BOOLEAN,
+    p_skip_tax_info BOOLEAN
+) IS 'Complete user onboarding process - Fixed with correct journal_entries schema (no reference column, uses type/amount)';
 
 -- Verify function was created successfully
 DO $$
