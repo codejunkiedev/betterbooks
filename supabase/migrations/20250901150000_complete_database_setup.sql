@@ -136,18 +136,29 @@ CREATE POLICY companies_update_own ON public.companies
 CREATE POLICY companies_delete_own ON public.companies
     FOR DELETE USING (auth.uid() = user_id);
 
--- Create RLS policies for fbr_profiles
-CREATE POLICY fbr_profiles_select_own ON public.fbr_profiles
-    FOR SELECT USING (auth.uid() = user_id);
+-- Create RLS policies for fbr_profiles (with existence checks)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_profiles_select_own' AND tablename = 'fbr_profiles') THEN
+        CREATE POLICY fbr_profiles_select_own ON public.fbr_profiles
+            FOR SELECT USING (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY fbr_profiles_insert_own ON public.fbr_profiles
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_profiles_insert_own' AND tablename = 'fbr_profiles') THEN
+        CREATE POLICY fbr_profiles_insert_own ON public.fbr_profiles
+            FOR INSERT WITH CHECK (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY fbr_profiles_update_own ON public.fbr_profiles
-    FOR UPDATE USING (auth.uid() = user_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_profiles_update_own' AND tablename = 'fbr_profiles') THEN
+        CREATE POLICY fbr_profiles_update_own ON public.fbr_profiles
+            FOR UPDATE USING (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY fbr_profiles_delete_own ON public.fbr_profiles
-    FOR DELETE USING (auth.uid() = user_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_profiles_delete_own' AND tablename = 'fbr_profiles') THEN
+        CREATE POLICY fbr_profiles_delete_own ON public.fbr_profiles
+            FOR DELETE USING (auth.uid() = user_id);
+    END IF;
+END $$;
 
 -- Create RLS policies for fbr_api_configs
 CREATE POLICY fbr_api_configs_select_own ON public.fbr_api_configs
