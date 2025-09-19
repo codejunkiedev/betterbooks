@@ -13,4 +13,5 @@ export interface EnvironmentConfig {
     VITE_APP_NAME: string;
     VITE_APP_VERSION: string;
     VITE_APP_ENV: string;
+    VITE_APP_BASE_URL: string;
 } 

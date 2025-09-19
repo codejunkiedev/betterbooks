@@ -34,7 +34,5 @@ export * from './DocumentPreview';
 export * from './documentUtils';
 export * from './CommentPanel';
 export * from './AskUserModal';
-
-// Auth and Role components
-export { default as RoleGuard } from './RoleGuard';
-export { default as Unauthorized } from './Unauthorized'; 
+export * from './RoleGuard';
+export * from './Unauthorized';

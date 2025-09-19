@@ -4,7 +4,7 @@ import { Button } from '@/shared/components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/Card';
 import { Shield, ArrowLeft, Home } from 'lucide-react';
 
-export default function Unauthorized() {
+export function Unauthorized() {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <Card className="w-full max-w-md">

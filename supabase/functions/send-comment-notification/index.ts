@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders, handleCorsOptions, getAppBaseUrl } from '../_shared/utils.ts'
 
 const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
@@ -19,8 +15,10 @@ interface NotificationRequest {
 
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return handleCorsOptions(req)
     }
+
+    const cors = getCorsHeaders(req)
 
     try {
         const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -55,6 +53,7 @@ serve(async (req) => {
             throw new Error('Receiver email not found')
         }
 
+        const appBaseUrl = getAppBaseUrl()
         // Send email
         const emailResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
@@ -75,7 +74,7 @@ serve(async (req) => {
                     </div>
                     <p>Please log in to your account to view the full comment thread.</p>
                     <div style="margin-top: 20px;">
-                        <a href="https://betterbooks-two.vercel.app/" 
+                        <a href="${appBaseUrl}/" 
                            style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
                             View in BetterBooks
                         </a>
@@ -100,7 +99,7 @@ serve(async (req) => {
                 to: receiverData.user.email
             }),
             {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                headers: { ...cors, 'Content-Type': 'application/json' },
                 status: 200,
             },
         )
@@ -109,11 +108,11 @@ serve(async (req) => {
         console.error('Error in send-comment-notification function:', error)
         return new Response(
             JSON.stringify({
-                error: error.message,
+                error: (error as Error).message,
                 success: false
             }),
             {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                headers: { ...cors, 'Content-Type': 'application/json' },
                 status: 400,
             },
         )

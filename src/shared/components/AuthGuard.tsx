@@ -7,13 +7,15 @@ interface AuthGuardProps {
 
 export default function AuthGuard({ children }: AuthGuardProps) {
     const { user, isAuthenticated } = useAppSelector(state => state.user);
-    const { currentCompany } = useAppSelector(state => state.company);
+    const { onboardingStatus } = useAppSelector(state => state.company);
 
-    // If user is authenticated, redirect based on company status
-    if (isAuthenticated && user) {
-        if (currentCompany) {
+    // If user is authenticated, redirect based on onboarding status
+    if (isAuthenticated && user && onboardingStatus) {
+        if (onboardingStatus.isCompleted) {
+            // User has completed onboarding, redirect to dashboard
             return <Navigate to="/" replace />;
         } else {
+            // User hasn't completed onboarding, redirect to onboarding
             return <Navigate to="/onboarding" replace />;
         }
     }

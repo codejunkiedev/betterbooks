@@ -2,6 +2,7 @@
 export * from './client';
 export * from './auth';
 export * from './accounting';
+export * from './buyer';
 export * from './coa';
 export * from './company';
 export * from './document';
@@ -14,3 +15,5 @@ export * from './suggestion';
 export * from './message';
 export * from './reports';
 export * from './activity';
+export * from './admin';
+export * from './fbr';
