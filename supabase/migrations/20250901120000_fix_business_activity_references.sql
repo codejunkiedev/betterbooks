@@ -93,6 +93,15 @@ EXCEPTION
 END $$;
 
 -- Recreate the functions with the correct table references
+-- Drop all functions first since we're changing their return types/signatures
+DROP FUNCTION IF EXISTS public.get_user_primary_business_activity(uuid);
+DROP FUNCTION IF EXISTS public.get_user_business_activities(uuid);
+DROP FUNCTION IF EXISTS public.add_user_business_activity(uuid, integer, boolean);
+DROP FUNCTION IF EXISTS public.remove_user_business_activity(uuid, integer);
+DROP FUNCTION IF EXISTS public.set_primary_business_activity(uuid, integer);
+DROP FUNCTION IF EXISTS public.get_available_sectors_for_activities(integer[]);
+DROP FUNCTION IF EXISTS public.get_scenarios_for_combinations(integer[], integer[]);
+
 CREATE OR REPLACE FUNCTION public.get_user_primary_business_activity(p_user_id uuid)
 RETURNS TABLE (
     id integer,
