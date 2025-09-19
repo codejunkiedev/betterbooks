@@ -115,10 +115,31 @@ CREATE INDEX IF NOT EXISTS idx_business_activity_sector_scenario_scenario ON pub
 ALTER TABLE public.user_business_activities ADD COLUMN IF NOT EXISTS business_activity_sector_combination_id INTEGER;
 
 -- Update the new column with the correct combination IDs
-UPDATE public.user_business_activities 
-SET business_activity_sector_combination_id = mapping.new_id
-FROM business_activity_mapping mapping
-WHERE user_business_activities.business_activity_id = mapping.old_id;
+-- Check if business_activity_id column exists (from migration 20250120000000)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'user_business_activities'
+        AND column_name = 'business_activity_id'
+    ) THEN
+        UPDATE public.user_business_activities
+        SET business_activity_sector_combination_id = mapping.new_id
+        FROM business_activity_mapping mapping
+        WHERE user_business_activities.business_activity_id = mapping.old_id;
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'user_business_activities'
+        AND column_name = 'business_activity_type_id'
+    ) THEN
+        -- Handle the case where we have business_activity_type_id instead
+        -- This would need proper mapping from business_activity_types to the new structure
+        -- For now, we'll skip the update as the mapping would be different
+        RAISE NOTICE 'user_business_activities table has business_activity_type_id column - manual migration may be required';
+    END IF;
+END $$;
 
 -- Add foreign key constraint for the new column
 ALTER TABLE public.user_business_activities 
