@@ -1,10 +1,18 @@
 -- Migration: Add comprehensive permissions for business activity tables and views
 -- This migration ensures all roles have proper access to business activity related data
 
--- Grant comprehensive permissions on business_activity_combinations view
-GRANT ALL PRIVILEGES ON public.business_activity_combinations TO authenticated;
-GRANT ALL PRIVILEGES ON public.business_activity_combinations TO anon;
-GRANT ALL PRIVILEGES ON public.business_activity_combinations TO service_role;
+-- Grant comprehensive permissions on business_activity_combinations view (if it exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.views WHERE table_name = 'business_activity_combinations' AND table_schema = 'public') THEN
+        GRANT ALL PRIVILEGES ON public.business_activity_combinations TO authenticated;
+        GRANT ALL PRIVILEGES ON public.business_activity_combinations TO anon;
+        GRANT ALL PRIVILEGES ON public.business_activity_combinations TO service_role;
+        RAISE NOTICE 'Granted permissions on business_activity_combinations view';
+    ELSE
+        RAISE NOTICE 'business_activity_combinations view does not exist - skipping permissions';
+    END IF;
+END $$;
 
 -- Grant comprehensive permissions on related tables
 GRANT ALL PRIVILEGES ON public.business_activity_types TO authenticated;
