@@ -160,37 +160,73 @@ BEGIN
     END IF;
 END $$;
 
--- Create RLS policies for fbr_api_configs
-CREATE POLICY fbr_api_configs_select_own ON public.fbr_api_configs
-    FOR SELECT USING (auth.uid() = user_id);
+-- Create RLS policies for fbr_api_configs (with existence checks)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_api_configs_select_own' AND tablename = 'fbr_api_configs') THEN
+        CREATE POLICY fbr_api_configs_select_own ON public.fbr_api_configs
+            FOR SELECT USING (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY fbr_api_configs_insert_own ON public.fbr_api_configs
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_api_configs_insert_own' AND tablename = 'fbr_api_configs') THEN
+        CREATE POLICY fbr_api_configs_insert_own ON public.fbr_api_configs
+            FOR INSERT WITH CHECK (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY fbr_api_configs_update_own ON public.fbr_api_configs
-    FOR UPDATE USING (auth.uid() = user_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_api_configs_update_own' AND tablename = 'fbr_api_configs') THEN
+        CREATE POLICY fbr_api_configs_update_own ON public.fbr_api_configs
+            FOR UPDATE USING (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY fbr_api_configs_delete_own ON public.fbr_api_configs
-    FOR DELETE USING (auth.uid() = user_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_api_configs_delete_own' AND tablename = 'fbr_api_configs') THEN
+        CREATE POLICY fbr_api_configs_delete_own ON public.fbr_api_configs
+            FOR DELETE USING (auth.uid() = user_id);
+    END IF;
+END $$;
 
--- Create RLS policies for fbr_scenario_progress
-CREATE POLICY fbr_scenario_progress_select_own ON public.fbr_scenario_progress
-    FOR SELECT USING (auth.uid() = user_id);
+-- Create RLS policies for fbr_scenario_progress (with existence checks)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_scenario_progress_select_own' AND tablename = 'fbr_scenario_progress') THEN
+        CREATE POLICY fbr_scenario_progress_select_own ON public.fbr_scenario_progress
+            FOR SELECT USING (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY fbr_scenario_progress_insert_own ON public.fbr_scenario_progress
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_scenario_progress_insert_own' AND tablename = 'fbr_scenario_progress') THEN
+        CREATE POLICY fbr_scenario_progress_insert_own ON public.fbr_scenario_progress
+            FOR INSERT WITH CHECK (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY fbr_scenario_progress_update_own ON public.fbr_scenario_progress
-    FOR UPDATE USING (auth.uid() = user_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_scenario_progress_update_own' AND tablename = 'fbr_scenario_progress') THEN
+        CREATE POLICY fbr_scenario_progress_update_own ON public.fbr_scenario_progress
+            FOR UPDATE USING (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY fbr_scenario_progress_delete_own ON public.fbr_scenario_progress
-    FOR DELETE USING (auth.uid() = user_id);
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'fbr_scenario_progress_delete_own' AND tablename = 'fbr_scenario_progress') THEN
+        CREATE POLICY fbr_scenario_progress_delete_own ON public.fbr_scenario_progress
+            FOR DELETE USING (auth.uid() = user_id);
+    END IF;
+END $$;
 
--- Create RLS policies for public read access
-CREATE POLICY scenario_select_all ON public.scenario FOR SELECT USING (true);
-CREATE POLICY business_activity_scenario_select_all ON public.business_activity_scenario FOR SELECT USING (true);
-CREATE POLICY business_activity_sector_scenario_select_all ON public.business_activity_sector_scenario FOR SELECT USING (true);
-CREATE POLICY province_codes_select_all ON public.province_codes FOR SELECT USING (true);
+-- Create RLS policies for public read access (with existence checks)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'scenario_select_all' AND tablename = 'scenario') THEN
+        CREATE POLICY scenario_select_all ON public.scenario FOR SELECT USING (true);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'business_activity_scenario_select_all' AND tablename = 'business_activity_scenario') THEN
+        CREATE POLICY business_activity_scenario_select_all ON public.business_activity_scenario FOR SELECT USING (true);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'business_activity_sector_scenario_select_all' AND tablename = 'business_activity_sector_scenario') THEN
+        CREATE POLICY business_activity_sector_scenario_select_all ON public.business_activity_sector_scenario FOR SELECT USING (true);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'province_codes_select_all' AND tablename = 'province_codes') THEN
+        CREATE POLICY province_codes_select_all ON public.province_codes FOR SELECT USING (true);
+    END IF;
+END $$;
 
 -- Create triggers for updated_at columns
 CREATE OR REPLACE FUNCTION public.set_updated_at()
