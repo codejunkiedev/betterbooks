@@ -34,15 +34,15 @@ GRANT SELECT ON public.scenario TO authenticated;
 COMMENT ON TABLE public.scenario IS 'FBR tax scenarios and their metadata';
 
 -- Insert basic scenarios if they don't exist (idempotent)
-INSERT INTO public.scenario (code, description, sale_type, category, transaction_type_id) VALUES
-('SN001', 'Standard Sale', 'B2B', 'Sales', 1),
-('SN002', 'Export Sale', 'Export', 'Sales', 1),
-('SN003', 'Import Purchase', 'Import', 'Purchase', 2),
-('SN004', 'Local Purchase', 'B2B', 'Purchase', 2),
-('SN005', 'Service Sale', 'Service', 'Sales', 1),
-('SN006', 'Retail Sale', 'B2C', 'Sales', 1),
-('SN007', 'Wholesale Sale', 'B2B', 'Sales', 1),
-('SN008', 'Manufacturing Sale', 'Manufacturing', 'Sales', 1),
-('SN009', 'Distributor Sale', 'Distribution', 'Sales', 1),
-('SN010', 'Agent Commission', 'Commission', 'Income', 1)
-ON CONFLICT (code) DO NOTHING;
+-- INSERT INTO public.scenario (code, description, sale_type, category, transaction_type_id) VALUES
+-- ('SN001', 'Standard Sale', 'B2B', 'Sales', 1),
+-- ('SN002', 'Export Sale', 'Export', 'Sales', 1),
+-- ('SN003', 'Import Purchase', 'Import', 'Purchase', 2),
+-- ('SN004', 'Local Purchase', 'B2B', 'Purchase', 2),
+-- ('SN005', 'Service Sale', 'Service', 'Sales', 1),
+-- ('SN006', 'Retail Sale', 'B2C', 'Sales', 1),
+-- ('SN007', 'Wholesale Sale', 'B2B', 'Sales', 1),
+-- ('SN008', 'Manufacturing Sale', 'Manufacturing', 'Sales', 1),
+-- ('SN009', 'Distributor Sale', 'Distribution', 'Sales', 1),
+-- ('SN010', 'Agent Commission', 'Commission', 'Income', 1)
+-- ON CONFLICT (code) DO NOTHING;
