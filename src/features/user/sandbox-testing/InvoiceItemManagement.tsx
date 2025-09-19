@@ -146,6 +146,18 @@ export function InvoiceItemManagement({
     }
   }, [scenario?.saleTypeId, sellerProvinceId, fetchTaxRatesForScenario]);
 
+  // Auto-select the only available tax rate when available rates change
+  useEffect(() => {
+    if (availableTaxRates.length === 1 && (!selectedTaxRate || selectedTaxRate.rateId !== availableTaxRates[0].rateId)) {
+      const singleRate = availableTaxRates[0];
+      setSelectedTaxRate(singleRate);
+      setFormData((prev) => ({
+        ...prev,
+        tax_rate: singleRate.value,
+      }));
+    }
+  }, [availableTaxRates, selectedTaxRate]);
+
   const filterUomOptionsByHSCode = useCallback(
     async (hsCode: string) => {
       if (!hsCode) {
@@ -425,7 +437,7 @@ export function InvoiceItemManagement({
       quantity: SYSTEM_DEFAULTS.DEFAULT_QUANTITY,
       unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
       uom_code: "",
-      tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
+      tax_rate: selectedTaxRate?.value || SYSTEM_DEFAULTS.MIN_TAX_RATE,
       invoice_note: "",
       is_third_schedule: false,
     });
@@ -478,13 +490,16 @@ export function InvoiceItemManagement({
   };
 
   const openAddModal = () => {
+    // Use the selected tax rate if available, otherwise use system default
+    const defaultTaxRate = selectedTaxRate?.value || SYSTEM_DEFAULTS.MIN_TAX_RATE;
+
     setFormData({
       hs_code: "",
       item_name: "",
       quantity: SYSTEM_DEFAULTS.DEFAULT_QUANTITY,
       unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
       uom_code: "",
-      tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
+      tax_rate: defaultTaxRate,
       invoice_note: "",
       is_third_schedule: false,
     });
