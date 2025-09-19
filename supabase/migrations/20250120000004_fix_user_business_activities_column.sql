@@ -78,14 +78,21 @@ BEGIN
 END $$;
 
 -- Create a view for easy querying of user business activities with activity details
--- Use the new normalized structure (business_activity_types and sectors)
+-- Check which column structure exists and create appropriate view
 DO $$
 BEGIN
+    -- Check if new structure exists (business_activity_types table and business_activity_type_id column)
     IF EXISTS (
         SELECT 1 FROM information_schema.tables
         WHERE table_schema = 'public'
         AND table_name = 'business_activity_types'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'user_business_activities'
+        AND column_name = 'business_activity_type_id'
     ) THEN
+        -- Create view using new normalized structure
         CREATE OR REPLACE VIEW public.user_business_activities_view AS
         SELECT
             uba.id,
@@ -99,8 +106,27 @@ BEGIN
         FROM public.user_business_activities uba
         LEFT JOIN public.business_activity_types bat ON uba.business_activity_type_id = bat.id
         LEFT JOIN public.sectors s ON uba.sector_id = s.id;
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'user_business_activities'
+        AND column_name = 'business_activity_id'
+    ) THEN
+        -- Create view using legacy structure with business_activity table
+        CREATE OR REPLACE VIEW public.user_business_activities_view AS
+        SELECT
+            uba.id,
+            uba.user_id,
+            uba.business_activity_id,
+            NULL::INTEGER as sector_id,
+            uba.is_primary,
+            uba.created_at,
+            ba.business_activity as business_activity_type,
+            ba.sector
+        FROM public.user_business_activities uba
+        LEFT JOIN public.business_activity ba ON uba.business_activity_id = ba.id;
     ELSE
-        RAISE NOTICE 'business_activity_types table does not exist - skipping view creation';
+        RAISE NOTICE 'user_business_activities table structure not recognized - skipping view creation';
     END IF;
 END $$;
 
