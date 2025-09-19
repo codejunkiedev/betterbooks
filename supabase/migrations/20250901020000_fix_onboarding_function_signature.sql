@@ -8,7 +8,7 @@ DROP FUNCTION IF EXISTS complete_onboarding_transaction(JSONB, JSONB, JSONB, BOO
 DROP FUNCTION IF EXISTS complete_onboarding_transaction(JSONB, JSONB, JSONB, BOOLEAN, BOOLEAN, UUID);
 
 -- Create function with the exact signature that matches the application call
-CREATE OR REPLACE FUNCTION complete_onboarding_transaction(
+CREATE OR REPLACE FUNCTION public.complete_onboarding_transaction(
     p_company_data JSONB,
     p_fbr_data JSONB,
     p_opening_balance JSONB DEFAULT NULL,

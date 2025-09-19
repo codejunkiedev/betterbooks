@@ -1,5 +1,5 @@
 -- Create a comprehensive onboarding transaction function
-CREATE OR REPLACE FUNCTION complete_onboarding_transaction(
+CREATE OR REPLACE FUNCTION public.complete_onboarding_transaction(
     p_user_id UUID,
     p_company_data JSONB,
     p_fbr_data JSONB,

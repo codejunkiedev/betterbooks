@@ -11,7 +11,7 @@ DROP FUNCTION IF EXISTS public.complete_onboarding_transaction(
     p_skip_tax_info BOOLEAN
 );
 
-CREATE OR REPLACE FUNCTION complete_onboarding_transaction(
+CREATE OR REPLACE FUNCTION public.complete_onboarding_transaction(
     p_user_id UUID,
     p_company_data JSONB,
     p_fbr_data JSONB,
