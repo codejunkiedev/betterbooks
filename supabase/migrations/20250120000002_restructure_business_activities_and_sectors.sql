@@ -156,11 +156,45 @@ ALTER TABLE public.sectors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.business_activity_sector_combinations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.business_activity_sector_scenario ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies for new tables
-CREATE POLICY business_activities_select_all ON public.business_activities FOR SELECT USING (true);
-CREATE POLICY sectors_select_all ON public.sectors FOR SELECT USING (true);
-CREATE POLICY business_activity_sector_combinations_select_all ON public.business_activity_sector_combinations FOR SELECT USING (true);
-CREATE POLICY business_activity_sector_scenario_select_all ON public.business_activity_sector_scenario FOR SELECT USING (true);
+-- Create RLS policies for new tables (with existence checks)
+DO $$
+BEGIN
+    -- Policy for business_activities
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'business_activities_select_all'
+        AND tablename = 'business_activities'
+    ) THEN
+        CREATE POLICY business_activities_select_all ON public.business_activities FOR SELECT USING (true);
+    END IF;
+
+    -- Policy for sectors
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'sectors_select_all'
+        AND tablename = 'sectors'
+    ) THEN
+        CREATE POLICY sectors_select_all ON public.sectors FOR SELECT USING (true);
+    END IF;
+
+    -- Policy for business_activity_sector_combinations
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'business_activity_sector_combinations_select_all'
+        AND tablename = 'business_activity_sector_combinations'
+    ) THEN
+        CREATE POLICY business_activity_sector_combinations_select_all ON public.business_activity_sector_combinations FOR SELECT USING (true);
+    END IF;
+
+    -- Policy for business_activity_sector_scenario
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'business_activity_sector_scenario_select_all'
+        AND tablename = 'business_activity_sector_scenario'
+    ) THEN
+        CREATE POLICY business_activity_sector_scenario_select_all ON public.business_activity_sector_scenario FOR SELECT USING (true);
+    END IF;
+END $$;
 
 -- Create views for easy querying
 CREATE OR REPLACE VIEW public.business_activity_sector_combinations_view AS
