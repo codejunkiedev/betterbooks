@@ -29,7 +29,7 @@ DROP FUNCTION IF EXISTS public.complete_onboarding_transaction(
     p_user_id uuid
 );
 
--- Verify only one function remains
+-- Verify function state after cleanup
 DO $$
 DECLARE
     function_count integer;
@@ -39,11 +39,11 @@ BEGIN
     JOIN pg_namespace n ON p.pronamespace = n.oid
     WHERE p.proname = 'complete_onboarding_transaction'
     AND n.nspname = 'public';
-    
+
     IF function_count = 1 THEN
         RAISE NOTICE 'SUCCESS: Only one complete_onboarding_transaction function remains';
     ELSIF function_count = 0 THEN
-        RAISE EXCEPTION 'ERROR: No complete_onboarding_transaction function found!';
+        RAISE NOTICE 'INFO: No complete_onboarding_transaction function found - will be created by later migrations';
     ELSE
         RAISE EXCEPTION 'ERROR: Still % complete_onboarding_transaction functions exist', function_count;
     END IF;
