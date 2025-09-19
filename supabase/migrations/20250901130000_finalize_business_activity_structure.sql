@@ -91,14 +91,28 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Create business activity sector combinations if they don't exist
 -- This creates all possible combinations of business activities and sectors
-INSERT INTO public.business_activity_sector_combinations (business_activity_id, sector_id, sr)
-SELECT 
-    ba.id,
-    s.id,
-    ROW_NUMBER() OVER (ORDER BY ba.id, s.id) as sr
-FROM public.business_activities ba
-CROSS JOIN public.sectors s
-ON CONFLICT (business_activity_id, sector_id) DO NOTHING;
+-- Use a more sophisticated approach to handle existing sr values
+DO $$
+DECLARE
+    max_sr INTEGER;
+BEGIN
+    -- Get the current maximum sr value
+    SELECT COALESCE(MAX(sr), 0) INTO max_sr FROM public.business_activity_sector_combinations;
+
+    -- Insert new combinations with sr values starting after the maximum
+    INSERT INTO public.business_activity_sector_combinations (business_activity_id, sector_id, sr)
+    SELECT
+        ba.id,
+        s.id,
+        max_sr + ROW_NUMBER() OVER (ORDER BY ba.id, s.id) as sr
+    FROM public.business_activities ba
+    CROSS JOIN public.sectors s
+    WHERE NOT EXISTS (
+        SELECT 1 FROM public.business_activity_sector_combinations basc
+        WHERE basc.business_activity_id = ba.id
+        AND basc.sector_id = s.id
+    );
+END $$;
 
 -- Update sr values to match the original business_activity table if it exists
 DO $$
