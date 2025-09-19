@@ -18,6 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_business_activity_sector ON public.business_activ
 ALTER TABLE public.business_activity ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policy for public access (this table should be readable by all authenticated users)
+DROP POLICY IF EXISTS business_activity_select_all ON public.business_activity;
 CREATE POLICY business_activity_select_all ON public.business_activity FOR SELECT USING (true);
 
 -- Insert sample business activities (these will be migrated to the new structure later)
