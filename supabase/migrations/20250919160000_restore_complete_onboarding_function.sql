@@ -100,51 +100,111 @@ BEGIN
         -- Generate company ID
         v_company_id := gen_random_uuid();
 
-        -- Create company record
-        INSERT INTO public.companies (
-            id,
-            name,
-            type,
-            tax_id_number,
-            filing_status,
-            tax_year_end,
-            user_id,
-            assigned_accountant_id,
-            created_at
-        ) VALUES (
-            v_company_id,
-            v_company_name,
-            v_company_type,
-            v_tax_id_number,
-            v_filing_status,
-            v_tax_year_end,
-            p_user_id,
-            v_assigned_accountant_id,
-            NOW()
-        );
+        -- Create company record (check if updated_at column exists)
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'companies'
+            AND column_name = 'updated_at'
+        ) THEN
+            INSERT INTO public.companies (
+                id,
+                name,
+                type,
+                tax_id_number,
+                filing_status,
+                tax_year_end,
+                user_id,
+                assigned_accountant_id,
+                created_at,
+                updated_at
+            ) VALUES (
+                v_company_id,
+                v_company_name,
+                v_company_type,
+                v_tax_id_number,
+                v_filing_status,
+                v_tax_year_end,
+                p_user_id,
+                v_assigned_accountant_id,
+                NOW(),
+                NOW()
+            );
+        ELSE
+            INSERT INTO public.companies (
+                id,
+                name,
+                type,
+                tax_id_number,
+                filing_status,
+                tax_year_end,
+                user_id,
+                assigned_accountant_id,
+                created_at
+            ) VALUES (
+                v_company_id,
+                v_company_name,
+                v_company_type,
+                v_tax_id_number,
+                v_filing_status,
+                v_tax_year_end,
+                p_user_id,
+                v_assigned_accountant_id,
+                NOW()
+            );
+        END IF;
 
-        -- Create FBR profile record with activities and sectors
-        INSERT INTO public.fbr_profiles (
-            user_id,
-            cnic_ntn,
-            business_name,
-            province_code,
-            address,
-            mobile_number,
-            activities,
-            sectors,
-            created_at
-        ) VALUES (
-            p_user_id,
-            v_cnic_ntn,
-            v_business_name,
-            v_province_code,
-            v_address,
-            v_mobile_number,
-            v_activities,
-            v_sectors,
-            NOW()
-        );
+        -- Create FBR profile record with activities and sectors (check if updated_at column exists)
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'fbr_profiles'
+            AND column_name = 'updated_at'
+        ) THEN
+            INSERT INTO public.fbr_profiles (
+                user_id,
+                cnic_ntn,
+                business_name,
+                province_code,
+                address,
+                mobile_number,
+                activities,
+                sectors,
+                created_at,
+                updated_at
+            ) VALUES (
+                p_user_id,
+                v_cnic_ntn,
+                v_business_name,
+                v_province_code,
+                v_address,
+                v_mobile_number,
+                v_activities,
+                v_sectors,
+                NOW(),
+                NOW()
+            );
+        ELSE
+            INSERT INTO public.fbr_profiles (
+                user_id,
+                cnic_ntn,
+                business_name,
+                province_code,
+                address,
+                mobile_number,
+                activities,
+                sectors,
+                created_at
+            ) VALUES (
+                p_user_id,
+                v_cnic_ntn,
+                v_business_name,
+                v_province_code,
+                v_address,
+                v_mobile_number,
+                v_activities,
+                v_sectors,
+                NOW()
+            );
+        END IF;
 
         -- Set up chart of accounts for the company from template
         INSERT INTO public.company_coa (
