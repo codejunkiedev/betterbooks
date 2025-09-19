@@ -9,15 +9,42 @@ ADD COLUMN IF NOT EXISTS is_primary boolean DEFAULT false;
 -- No need to add business_activity_id column since it references a non-existent table
 
 -- Create unique constraint for the actual columns that exist
+-- Check which column exists: business_activity_id or business_activity_type_id
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint
-        WHERE conname = 'user_business_activities_user_id_business_activity_type_id_key'
+    -- Check if business_activity_type_id column exists
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'user_business_activities'
+        AND column_name = 'business_activity_type_id'
     ) THEN
-        ALTER TABLE public.user_business_activities
-        ADD CONSTRAINT user_business_activities_user_id_business_activity_type_id_key
-        UNIQUE(user_id, business_activity_type_id);
+        -- Create constraint for business_activity_type_id
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'user_business_activities_user_id_business_activity_type_id_key'
+        ) THEN
+            ALTER TABLE public.user_business_activities
+            ADD CONSTRAINT user_business_activities_user_id_business_activity_type_id_key
+            UNIQUE(user_id, business_activity_type_id);
+        END IF;
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'user_business_activities'
+        AND column_name = 'business_activity_id'
+    ) THEN
+        -- Create constraint for business_activity_id (legacy column)
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'user_business_activities_user_id_business_activity_id_key'
+        ) THEN
+            ALTER TABLE public.user_business_activities
+            ADD CONSTRAINT user_business_activities_user_id_business_activity_id_key
+            UNIQUE(user_id, business_activity_id);
+        END IF;
+    ELSE
+        RAISE NOTICE 'Neither business_activity_id nor business_activity_type_id column exists in user_business_activities table';
     END IF;
 END $$;
 
