@@ -5,7 +5,7 @@
 -- 4. Empty template_id values in company_coa
 
 -- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.complete_onboarding_transaction TO authenticated;
+GRANT EXECUTE ON FUNCTION public.complete_onboarding_transaction(UUID, JSONB, JSONB, JSONB, BOOLEAN, BOOLEAN) TO authenticated;
 
 -- Add comment
-COMMENT ON FUNCTION complete_onboarding_transaction IS 'Completes user onboarding with company creation, FBR profile setup - final complete fix';
+COMMENT ON FUNCTION public.complete_onboarding_transaction(UUID, JSONB, JSONB, JSONB, BOOLEAN, BOOLEAN) IS 'Completes user onboarding with company creation, FBR profile setup - final complete fix';

@@ -11,8 +11,5 @@ DROP FUNCTION IF EXISTS public.complete_onboarding_transaction(
     p_skip_tax_info BOOLEAN
 );
 
--- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.complete_onboarding_transaction TO authenticated;
-
--- Add comment
-COMMENT ON FUNCTION complete_onboarding_transaction IS 'Completes user onboarding with company creation, FBR profile setup - fixes account_type enum values';
+-- Note: GRANT and COMMENT statements removed because function was dropped above
+-- These would fail since the function no longer exists after the DROP statement
