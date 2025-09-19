@@ -3,9 +3,11 @@
 
 -- First, let's check what functions exist (for debugging)
 DO $$
+DECLARE
+    rec RECORD;
 BEGIN
     RAISE NOTICE 'Existing functions:';
-    FOR rec IN 
+    FOR rec IN
         SELECT pg_get_function_arguments(p.oid) as arguments
         FROM pg_proc p
         JOIN pg_namespace n ON p.pronamespace = n.oid
