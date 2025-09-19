@@ -1,8 +1,34 @@
 -- Add additional columns to scenario table
-ALTER TABLE public.scenario 
+ALTER TABLE public.scenario
 ADD COLUMN IF NOT EXISTS description TEXT,
 ADD COLUMN IF NOT EXISTS sale_type VARCHAR(100),
 ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+
+-- Increase varchar length for existing columns if they're too short
+DO $$
+BEGIN
+    -- Check if sale_type column exists and has limited length
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'scenario'
+        AND column_name = 'sale_type'
+        AND character_maximum_length < 100
+    ) THEN
+        ALTER TABLE public.scenario ALTER COLUMN sale_type TYPE VARCHAR(100);
+    END IF;
+
+    -- Check if category column exists and has limited length
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'scenario'
+        AND column_name = 'category'
+        AND character_maximum_length < 100
+    ) THEN
+        ALTER TABLE public.scenario ALTER COLUMN category TYPE VARCHAR(100);
+    END IF;
+END $$;
 
 -- Update scenario descriptions and details
 UPDATE public.scenario SET 
