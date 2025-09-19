@@ -24,8 +24,8 @@ CREATE TRIGGER user_business_activities_set_updated_at
     FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 
--- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION public.complete_onboarding_transaction TO authenticated;
+-- Grant execute permission to authenticated users (with full signature)
+GRANT EXECUTE ON FUNCTION public.complete_onboarding_transaction(UUID, JSONB, JSONB, JSONB, BOOLEAN, BOOLEAN) TO authenticated;
 
--- Add comment
-COMMENT ON FUNCTION complete_onboarding_transaction IS 'Completes user onboarding with company creation, FBR profile setup, and support for both new business activity/sector structure and legacy structure - fixed for updated_at trigger issues by including updated_at columns in all INSERT statements';
+-- Add comment (with full signature)
+COMMENT ON FUNCTION public.complete_onboarding_transaction(UUID, JSONB, JSONB, JSONB, BOOLEAN, BOOLEAN) IS 'Completes user onboarding with company creation, FBR profile setup, and support for both new business activity/sector structure and legacy structure - fixed for updated_at trigger issues by including updated_at columns in all INSERT statements';
