@@ -1,3 +1,4 @@
+
 export interface CompanySetupData {
     company_name: string;
     company_type: string;
@@ -13,8 +14,8 @@ export interface CompanySetupData {
     fbr_province_code: string;
     fbr_address: string;
     fbr_mobile_number: string;
-    fbr_activity_name: string;
-    fbr_sector: string;
+    fbr_activities: string[];
+    fbr_sectors: string[];
 }
 
 export interface OnboardingPayload {
@@ -32,7 +33,8 @@ export interface OnboardingPayload {
         province_code: number;
         address: string;
         mobile_number: string;
-        business_activity_id: number;
+        activities: string[];
+        sectors: string[];
     };
     opening_balance?: {
         amount: number;

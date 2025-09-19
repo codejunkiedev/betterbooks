@@ -9,7 +9,7 @@ import type {
 	FbrProfile,
 	FbrProfilePayload,
 	ScenarioFilters,
-	ScenarioWithProgress
+	ScenarioWithProgress,
 } from '@/shared/types/fbr';
 
 /**
@@ -52,19 +52,26 @@ export async function getFbrProfileForSellerData(userId: string) {
 		// Get province description
 		const { data: provinceData, error: provinceError } = await supabase
 			.from("province_codes")
-			.select("state_province_desc")
+			.select("*")
 			.eq("state_province_code", data.province_code)
 			.single();
 
 		if (provinceError) {
-			console.error('Error fetching province data:', provinceError);
-			throw provinceError;
+			if (provinceError.code === 'PGRST116') {
+				console.warn(`Province code ${data.province_code} not found in province_codes table`);
+				// Continue without province description
+			} else {
+				console.error('Error fetching province data:', provinceError);
+				throw provinceError;
+			}
 		}
+		console.log('Province data:', provinceData);
 
 		return {
 			sellerNTNCNIC: data.cnic_ntn,
 			sellerBusinessName: data.business_name,
 			sellerProvince: provinceData?.state_province_desc || '',
+			sellerProvinceCode: provinceData?.state_province_code,
 			sellerAddress: data.address
 		};
 	} catch (error) {
@@ -300,7 +307,7 @@ export async function getProvinceCodes() {
 }
 
 /**
- * Get all business activities
+ * Get all business activities (legacy - for backward compatibility)
  */
 export async function getBusinessActivities() {
 	const { data, error } = await supabase
@@ -312,7 +319,144 @@ export async function getBusinessActivities() {
 }
 
 /**
- * Get user's business activity ID from FBR profile
+ * Get all business activity types (Manufacturer, Importer, etc.)
+ */
+export async function getBusinessActivityTypes() {
+	const { data, error } = await supabase
+		.from("business_activity_types")
+		.select("*")
+		.order("name");
+
+	return { data, error };
+}
+
+/**
+ * Get all sectors
+ */
+export async function getSectors() {
+	const { data, error } = await supabase
+		.from("sectors")
+		.select("*")
+		.order("name");
+
+	return { data, error };
+}
+
+/**
+ * Get available sectors for selected business activity types
+ * This is an alias for getAvailableSectorsForBusinessActivityTypes for backward compatibility
+ */
+export async function getAvailableSectorsForActivities(businessActivityTypeIds: number[]) {
+	return getAvailableSectorsForBusinessActivityTypes(businessActivityTypeIds);
+}
+
+/**
+ * Get scenarios for business activity and sector combinations
+ */
+export async function getScenariosForCombinations(
+	businessActivityTypeIds: number[],
+	sectorIds: number[]
+) {
+	const { data, error } = await supabase
+		.from('business_activity_scenarios')
+		.select('scenario_id')
+		.in('business_activity_type_id', businessActivityTypeIds)
+		.in('sector_id', sectorIds);
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data || [], error: null };
+}
+
+/**
+ * Get all business activity types with their scenario counts per sector
+ */
+export async function getBusinessActivityTypesWithCounts() {
+	const { data, error } = await supabase
+		.from('business_activity_types')
+		.select(`
+			id,
+			name,
+			description,
+			created_at
+		`)
+		.order('name');
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data || [], error: null };
+}
+
+/**
+ * Get available sectors for specific business activity types
+ * This now fetches all sectors and filters them based on business_activity_scenarios
+ */
+export async function getAvailableSectorsForBusinessActivityTypes(businessActivityTypeIds: number[]) {
+	if (!businessActivityTypeIds || businessActivityTypeIds.length === 0) {
+		return { data: [], error: null };
+	}
+
+	const { data, error } = await supabase
+		.from('business_activity_scenarios')
+		.select(`
+			sector_id,
+			sectors (
+				id,
+				name,
+				description
+			)
+		`)
+		.in('business_activity_type_id', businessActivityTypeIds);
+
+	if (error) {
+		throw error;
+	}
+
+	// Remove duplicates and transform data using Map for better performance
+	const sectorMap = new Map<number, { sector_id: number; sector_name: string; sector_description: string }>();
+
+	data?.forEach((item: { sector_id: number; sectors: { id: number; name: string; description: string | null } | { id: number; name: string; description: string | null }[] }) => {
+		// Handle both single object and array responses from Supabase
+		const sector = Array.isArray(item.sectors) ? item.sectors[0] : item.sectors;
+		if (sector && sector.id && !sectorMap.has(sector.id)) {
+			sectorMap.set(sector.id, {
+				sector_id: sector.id,
+				sector_name: sector.name || '',
+				sector_description: sector.description || ''
+			});
+		}
+	});
+
+	const uniqueSectors = Array.from(sectorMap.values());
+	return { data: uniqueSectors, error: null };
+}
+
+/**
+ * Get scenarios for business activity types and sectors
+ */
+export async function getScenariosForBusinessActivityAndSector(
+	businessActivityTypeIds: number[],
+	sectorIds: number[]
+) {
+	const { data, error } = await supabase
+		.rpc('get_scenarios_for_business_activity_and_sector', {
+			p_business_activity_type_ids: businessActivityTypeIds,
+			p_sector_ids: sectorIds
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data || [], error: null };
+}
+
+/**
+ * Get user's business activity ID from FBR profile (backward compatibility)
  */
 export async function getUserBusinessActivityId(userId: string): Promise<number | null> {
 	const { data, error } = await supabase
@@ -332,6 +476,98 @@ export async function getUserBusinessActivityId(userId: string): Promise<number 
 }
 
 /**
+ * Get user's primary business activity
+ */
+export async function getUserPrimaryBusinessActivity(userId: string) {
+	const { data, error } = await supabase
+		.rpc('get_user_primary_business_activity', { p_user_id: userId });
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data?.[0] || null, error: null };
+}
+
+/**
+ * Get all user business activities
+ */
+export async function getUserBusinessActivities(userId: string) {
+	const { data, error } = await supabase
+		.rpc('get_user_business_activities', { p_user_id: userId });
+
+	if (error) {
+		throw error;
+	}
+
+	return { data: data || [], error: null };
+}
+
+/**
+ * Add business activity to user
+ */
+export async function addUserBusinessActivity(
+	userId: string,
+	businessActivityTypeId: number,
+	sectorId: number | null = null,
+	isPrimary: boolean = false
+) {
+	const { data, error } = await supabase
+		.rpc('add_user_business_activity', {
+			p_user_id: userId,
+			p_business_activity_type_id: businessActivityTypeId,
+			p_sector_id: sectorId,
+			p_is_primary: isPrimary
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return { data, error: null };
+}
+
+/**
+ * Remove business activity from user
+ */
+export async function removeUserBusinessActivity(
+	userId: string,
+	businessActivityTypeId: number
+) {
+	const { data, error } = await supabase
+		.rpc('remove_user_business_activity', {
+			p_user_id: userId,
+			p_business_activity_type_id: businessActivityTypeId
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return { data, error: null };
+}
+
+/**
+ * Set primary business activity for user
+ */
+export async function setPrimaryBusinessActivity(
+	userId: string,
+	businessActivityTypeId: number
+) {
+	const { data, error } = await supabase
+		.rpc('set_primary_business_activity', {
+			p_user_id: userId,
+			p_business_activity_type_id: businessActivityTypeId
+		});
+
+	if (error) {
+		throw error;
+	}
+
+	return { data, error: null };
+}
+
+/**
  * Get mandatory scenarios for a business activity with full scenario details
  */
 export async function getMandatoryScenarios(businessActivityId: number): Promise<Array<{
@@ -341,6 +577,7 @@ export async function getMandatoryScenarios(businessActivityId: number): Promise
 		description: string;
 		sale_type: string;
 		category: string;
+		transaction_type_id: number;
 	};
 }>> {
 	const { data, error } = await supabase
@@ -351,7 +588,8 @@ export async function getMandatoryScenarios(businessActivityId: number): Promise
 				code,
 				description,
 				sale_type,
-				category
+				category,
+				transaction_type_id
 			)
 		`)
 		.eq('business_activity_id', businessActivityId);
@@ -373,11 +611,15 @@ export async function getMandatoryScenarios(businessActivityId: number): Promise
 export async function getScenarioDetails(scenarioId: string) {
 	const { data, error } = await supabase
 		.from('scenario')
-		.select('code, description, sale_type, category')
+		.select('code, description, sale_type, category, transaction_type_id')
 		.eq('code', scenarioId)
 		.single();
 
 	if (error) {
+		if (error.code === 'PGRST116') {
+			console.warn(`Scenario ${scenarioId} not found`);
+			return null;
+		}
 		throw error;
 	}
 
@@ -560,7 +802,7 @@ export async function getFilteredMandatoryScenarios(
 ): Promise<ScenarioWithProgress[]> {
 	let query = supabase
 		.from('business_activity_scenario')
-		.select('scenario_id, scenario!scenario_id (code, description, sale_type, category)')
+		.select('scenario_id, scenario!scenario_id (code, description, sale_type, category, transaction_type_id)')
 		.eq('business_activity_id', businessActivityId);
 
 	if (filters.category) query = query.eq('scenario.category', filters.category);
@@ -595,6 +837,104 @@ export async function getFilteredMandatoryScenarios(
 			category: scenario?.category || '',
 			sale_type: scenario?.sale_type || '',
 			description: scenario?.description || '',
+			transaction_type_id: scenario?.transaction_type_id,
+			status: progress?.status || FBR_SCENARIO_STATUS.NOT_STARTED,
+			attempts: progress?.attempts || 0,
+			last_attempt: progress?.last_attempt || null,
+			completion_timestamp: progress?.completion_timestamp || null
+		};
+	});
+}
+
+/**
+ * Get filtered mandatory scenarios based on user's complete business activity selection
+ * This uses the new business activity/sector combination structure
+ */
+export async function getFilteredMandatoryScenariosForUser(
+	userId: string,
+	filters: ScenarioFilters = {}
+): Promise<ScenarioWithProgress[]> {
+	// Get user's business activity and sector combinations
+	const { data: userActivities, error: activitiesError } = await supabase
+		.from('user_business_activities')
+		.select(`
+			business_activity_type_id,
+			sector_id
+		`)
+		.eq('user_id', userId);
+
+	if (activitiesError) throw activitiesError;
+
+	if (!userActivities || userActivities.length === 0) {
+		return [];
+	}
+
+	// Extract business activity type IDs and sector IDs
+	const businessActivityTypeIds = [...new Set(userActivities.map(ua => ua.business_activity_type_id))];
+	const sectorIds = [...new Set(
+		userActivities
+			.map(ua => ua.sector_id)
+			.filter(Boolean)
+	)];
+
+	if (businessActivityTypeIds.length === 0) {
+		return [];
+	}
+
+	// Get scenarios for all business activity type and sector combinations
+	const { data: scenarios, error } = await supabase
+		.from('business_activity_scenarios')
+		.select('scenario_id')
+		.in('business_activity_type_id', businessActivityTypeIds)
+		.in('sector_id', sectorIds);
+
+	if (error) throw error;
+
+	if (!scenarios || scenarios.length === 0) {
+		return [];
+	}
+
+	// Get scenario details
+	const scenarioIds = [...new Set(scenarios.map(s => s.scenario_id))];
+	let query = supabase
+		.from('scenario')
+		.select('id, code, description, sale_type, category, transaction_type_id')
+		.in('id', scenarioIds);
+
+	if (filters.category) query = query.eq('category', filters.category);
+	if (filters.saleType) query = query.eq('sale_type', filters.saleType);
+	if (filters.scenarioId) query = query.eq('code', filters.scenarioId);
+	if (filters.searchTerm) {
+		query = query.or(`description.ilike.%${filters.searchTerm}%,code.ilike.%${filters.searchTerm}%`);
+	}
+
+	const { data: scenarioDetails, error: detailsError } = await query;
+	if (detailsError) throw detailsError;
+
+	// Get user's progress for these scenarios
+	const progressMap = new Map<string, Pick<FbrScenarioProgress, 'scenario_id' | 'status' | 'attempts' | 'last_attempt' | 'completion_timestamp'>>();
+
+	if (scenarioDetails?.length) {
+		const { data: progress } = await supabase
+			.from('fbr_scenario_progress')
+			.select('scenario_id, status, attempts, last_attempt, completion_timestamp')
+			.eq('user_id', userId)
+			.in('scenario_id', scenarioDetails.map(s => s.id));
+
+		progress?.forEach(p => progressMap.set(String(p.scenario_id), p));
+	}
+
+	// Combine scenario details with progress
+	return (scenarioDetails || []).map(scenario => {
+		const progress = progressMap.get(String(scenario.id));
+
+		return {
+			id: scenario.id,
+			code: scenario.code || '',
+			category: scenario.category || '',
+			sale_type: scenario.sale_type || '',
+			description: scenario.description || '',
+			transaction_type_id: scenario.transaction_type_id,
 			status: progress?.status || FBR_SCENARIO_STATUS.NOT_STARTED,
 			attempts: progress?.attempts || 0,
 			last_attempt: progress?.last_attempt || null,
@@ -617,7 +957,15 @@ export async function getScenarioById(
 			.eq('code', scenarioId)
 			.single();
 
-		if (scenarioError || !scenarioData) {
+		if (scenarioError) {
+			if (scenarioError.code === 'PGRST116') {
+				console.warn(`Scenario ${scenarioId} not found`);
+				return null;
+			}
+			throw scenarioError;
+		}
+
+		if (!scenarioData) {
 			return null;
 		}
 
@@ -628,6 +976,7 @@ export async function getScenarioById(
 			description: scenarioData.description,
 			sale_type: scenarioData.sale_type,
 			category: scenarioData.category,
+			transaction_type_id: scenarioData.transaction_type_id,
 			status: FBR_SCENARIO_STATUS.NOT_STARTED,
 			attempts: 0,
 			last_attempt: null,
@@ -679,7 +1028,20 @@ export async function cleanupScenarioProgressData(userId: string): Promise<void>
 					.eq('code', record.scenario_id)
 					.single();
 
-				if (scenarioError || !scenarioData) {
+				if (scenarioError) {
+					if (scenarioError.code === 'PGRST116') {
+						console.log(`Scenario not found for code ${record.scenario_id}, deleting progress record`);
+						// Delete the incorrect record
+						await supabase
+							.from('fbr_scenario_progress')
+							.delete()
+							.eq('id', record.id);
+						continue;
+					}
+					throw scenarioError;
+				}
+
+				if (!scenarioData) {
 					console.log(`Scenario not found for code ${record.scenario_id}, deleting progress record`);
 					// Delete the incorrect record
 					await supabase

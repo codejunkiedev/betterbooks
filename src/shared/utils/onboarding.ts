@@ -107,6 +107,14 @@ export const formatOnboardingError = (error: Error): OnboardingErrorInfo => {
         };
     }
 
+    // Onboarding function errors
+    if (errorMessage.includes("onboarding failed")) {
+        return {
+            title: "Setup Failed",
+            message: error.message.replace("Onboarding failed: ", "")
+        };
+    }
+
     // Default case - return the original error
     return defaultError;
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../shared/components/Button';
 import { Input } from '../../shared/components/Input';
+import { PasswordInput } from '../../shared/components/PasswordInput';
 import { Label } from '../../shared/components/Label';
 import { Card } from '../../shared/components/Card';
 import { useToast } from '../../shared/hooks/useToast';
@@ -97,9 +98,8 @@ const Login: React.FC = () => {
                                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                                     Password
                                 </Label>
-                                <Input
+                                <PasswordInput
                                     id="password"
-                                    type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
