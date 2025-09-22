@@ -68,6 +68,7 @@ export function InvoiceItemManagement({
     tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
     invoice_note: "",
     is_third_schedule: false,
+    sroScheduleNo: "",
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [hsCodeSearchTerm, setHsCodeSearchTerm] = useState("");
@@ -399,7 +400,7 @@ export function InvoiceItemManagement({
   };
 
   const validateForm = (): boolean => {
-    const validation = validateInvoiceItem(formData);
+    const validation = validateInvoiceItem(formData, scenario?.saleType);
     setValidationErrors(validation.errors);
     return validation.isValid;
   };
@@ -428,6 +429,7 @@ export function InvoiceItemManagement({
       tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
       invoice_note: "",
       is_third_schedule: false,
+      sroScheduleNo: "",
     });
     setValidationErrors({});
     setHsCodeSearchTerm("");
@@ -454,6 +456,7 @@ export function InvoiceItemManagement({
       mrp_excluding_tax: item.mrp_excluding_tax || 0,
       invoice_note: item.invoice_note || "",
       is_third_schedule: item.is_third_schedule,
+      sroScheduleNo: item.sroScheduleNo || "",
     });
     setEditingItemIndex(index);
     setIsAddItemOpen(true);
@@ -487,6 +490,7 @@ export function InvoiceItemManagement({
       tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
       invoice_note: "",
       is_third_schedule: false,
+      sroScheduleNo: "",
     });
     setValidationErrors({});
     setHsCodeSearchTerm("");
@@ -851,6 +855,26 @@ export function InvoiceItemManagement({
                     <p className="text-sm text-red-500">{validationErrors.mrp_excluding_tax}</p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {scenario?.saleType === "3rd Schedule Goods" && (
+              <div className="space-y-2">
+                <Label htmlFor="sro-schedule-no">SRO Schedule No *</Label>
+                <Input
+                  id="sro-schedule-no"
+                  value={formData.sroScheduleNo || ""}
+                  onChange={(e) => handleFormChange("sroScheduleNo", e.target.value)}
+                  placeholder="Enter SRO Schedule Number"
+                  maxLength={10}
+                  className={validationErrors.sroScheduleNo ? "border-red-500" : ""}
+                />
+                {validationErrors.sroScheduleNo && (
+                  <p className="text-sm text-red-500">{validationErrors.sroScheduleNo}</p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Required for 3rd Schedule Goods sale type (max 10 characters)
+                </p>
               </div>
             )}
           </div>

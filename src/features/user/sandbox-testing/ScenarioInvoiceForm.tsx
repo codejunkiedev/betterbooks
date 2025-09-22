@@ -325,7 +325,7 @@ export default function ScenarioInvoiceForm() {
           salesTaxWithheldAtSource: 0.0,
           extraTax: 0.0,
           furtherTax: 0.0,
-          sroScheduleNo: "",
+          sroScheduleNo: item.sroScheduleNo || "",
           fedPayable: 0.0,
           saleType: scenario?.saleType || "",
           sroItemSerialNo: "",
