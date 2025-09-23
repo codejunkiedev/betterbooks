@@ -319,7 +319,7 @@ export default function ScenarioInvoiceForm() {
           uoM: item.uom_code,
           discount: 0.0,
           totalValues: item.total_amount,
-          valueSalesExcludingST: item.value_sales_excluding_st,
+          valueSalesExcludingST: check ? item.total_amount : item.value_sales_excluding_st,
           fixedNotifiedValueOrRetailPrice: check ? item.total_amount : item.fixed_notified_value || 0.0,
           salesTaxApplicable: item.sales_tax,
           salesTaxWithheldAtSource: 0.0,
