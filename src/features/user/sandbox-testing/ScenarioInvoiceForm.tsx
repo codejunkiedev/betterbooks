@@ -328,7 +328,7 @@ export default function ScenarioInvoiceForm() {
           sroScheduleNo: item.sroScheduleNo || "",
           fedPayable: 0.0,
           saleType: scenario?.saleType || "",
-          sroItemSerialNo: "",
+          sroItemSerialNo: item?.sroItemSerialNo || "",
           quantity: item.quantity,
         };
       });

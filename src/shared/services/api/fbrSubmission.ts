@@ -64,11 +64,11 @@ function convertItemToFBRFormat(item: InvoiceItemCalculated, saleType: string) {
     salesTaxWithheldAtSource: 0.0, // Default value - should be calculated based on business rules
     extraTax: 0.0, // Default value - should be calculated based on business rules
     furtherTax: 0.0, // Default value - should be calculated based on business rules
-    sroScheduleNo: item.is_third_schedule ? "3" : "", // Third schedule indicator
+    sroScheduleNo: item.sroScheduleNo || (item.is_third_schedule ? "3" : ""), // Use form value or third schedule indicator
     fedPayable: 0.0, // Default value - should be calculated based on business rules
     discount: 0.0, // Default value - should be calculated based on business rules
     saleType: saleType, // Dynamic sale type from scenario
-    sroItemSerialNo: "",
+    sroItemSerialNo: item.sroItemSerialNo || "",
   };
 }
 

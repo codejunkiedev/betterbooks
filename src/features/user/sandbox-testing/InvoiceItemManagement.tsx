@@ -69,6 +69,7 @@ export function InvoiceItemManagement({
     invoice_note: "",
     is_third_schedule: false,
     sroScheduleNo: "",
+    sroItemSerialNo: "",
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [hsCodeSearchTerm, setHsCodeSearchTerm] = useState("");
@@ -430,6 +431,7 @@ export function InvoiceItemManagement({
       invoice_note: "",
       is_third_schedule: false,
       sroScheduleNo: "",
+      sroItemSerialNo: "",
     });
     setValidationErrors({});
     setHsCodeSearchTerm("");
@@ -457,6 +459,7 @@ export function InvoiceItemManagement({
       invoice_note: item.invoice_note || "",
       is_third_schedule: item.is_third_schedule,
       sroScheduleNo: item.sroScheduleNo || "",
+      sroItemSerialNo: item.sroItemSerialNo || "",
     });
     setEditingItemIndex(index);
     setIsAddItemOpen(true);
@@ -491,6 +494,7 @@ export function InvoiceItemManagement({
       invoice_note: "",
       is_third_schedule: false,
       sroScheduleNo: "",
+      sroItemSerialNo: "",
     });
     setValidationErrors({});
     setHsCodeSearchTerm("");
@@ -859,22 +863,37 @@ export function InvoiceItemManagement({
             )}
 
             {scenario?.saleType === "3rd Schedule Goods" && (
-              <div className="space-y-2">
-                <Label htmlFor="sro-schedule-no">SRO Schedule No *</Label>
-                <Input
-                  id="sro-schedule-no"
-                  value={formData.sroScheduleNo || ""}
-                  onChange={(e) => handleFormChange("sroScheduleNo", e.target.value)}
-                  placeholder="Enter SRO Schedule Number"
-                  maxLength={10}
-                  className={validationErrors.sroScheduleNo ? "border-red-500" : ""}
-                />
-                {validationErrors.sroScheduleNo && (
-                  <p className="text-sm text-red-500">{validationErrors.sroScheduleNo}</p>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  Required for 3rd Schedule Goods sale type (max 10 characters)
-                </p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="sro-schedule-no">SRO Schedule No *</Label>
+                    <Input
+                      id="sro-schedule-no"
+                      value={formData.sroScheduleNo || ""}
+                      onChange={(e) => handleFormChange("sroScheduleNo", e.target.value)}
+                      placeholder="Enter SRO Schedule Number"
+                      maxLength={10}
+                      className={validationErrors.sroScheduleNo ? "border-red-500" : ""}
+                    />
+                    {validationErrors.sroScheduleNo && (
+                      <p className="text-sm text-red-500">{validationErrors.sroScheduleNo}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sro-item-serial-no">SRO Item Number *</Label>
+                    <Input
+                      id="sro-item-serial-no"
+                      value={formData.sroItemSerialNo || ""}
+                      onChange={(e) => handleFormChange("sroItemSerialNo", e.target.value)}
+                      placeholder="Enter SRO Item Number"
+                      maxLength={10}
+                      className={validationErrors.sroItemSerialNo ? "border-red-500" : ""}
+                    />
+                    {validationErrors.sroItemSerialNo && (
+                      <p className="text-sm text-red-500">{validationErrors.sroItemSerialNo}</p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>

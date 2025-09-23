@@ -157,6 +157,9 @@ export function calculateInvoiceItem(formData: InvoiceItemForm): InvoiceItemCalc
   if (formData.sroScheduleNo !== undefined) {
     result.sroScheduleNo = formData.sroScheduleNo;
   }
+  if (formData.sroItemSerialNo !== undefined) {
+    result.sroItemSerialNo = formData.sroItemSerialNo;
+  }
 
   return result;
 }
@@ -222,6 +225,12 @@ export function validateInvoiceItem(
       errors.sroScheduleNo = "SRO Schedule No is required for 3rd Schedule Goods";
     } else if (formData.sroScheduleNo.length > 10) {
       errors.sroScheduleNo = "SRO Schedule No must be 10 characters or less";
+    }
+
+    if (!formData.sroItemSerialNo?.trim()) {
+      errors.sroItemSerialNo = "SRO Item Number is required for 3rd Schedule Goods";
+    } else if (formData.sroItemSerialNo.length > 10) {
+      errors.sroItemSerialNo = "SRO Item Number must be 10 characters or less";
     }
   }
 
