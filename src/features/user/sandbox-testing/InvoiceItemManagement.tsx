@@ -149,18 +149,6 @@ export function InvoiceItemManagement({
     }
   }, [scenario?.saleTypeId, sellerProvinceId, fetchTaxRatesForScenario]);
 
-  // Auto-select the only available tax rate when available rates change
-  useEffect(() => {
-    if (availableTaxRates.length === 1 && (!selectedTaxRate || selectedTaxRate.rateId !== availableTaxRates[0].rateId)) {
-      const singleRate = availableTaxRates[0];
-      setSelectedTaxRate(singleRate);
-      setFormData((prev) => ({
-        ...prev,
-        tax_rate: singleRate.value,
-      }));
-    }
-  }, [availableTaxRates, selectedTaxRate]);
-
   const filterUomOptionsByHSCode = useCallback(
     async (hsCode: string) => {
       if (!hsCode) {
