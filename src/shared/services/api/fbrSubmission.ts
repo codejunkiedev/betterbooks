@@ -58,17 +58,17 @@ function convertItemToFBRFormat(item: InvoiceItemCalculated, saleType: string) {
     uoM: item.uom_code,
     quantity: parseFloat(formatNumberToString(item.quantity, true)), // Quantity supports 3 decimal places
     totalValues: parseFloat(formatNumberToString(item.total_amount)),
-    valueSalesExcludingST: parseFloat(formatNumberToString(item.value_sales_excluding_st)),
-    fixedNotifiedValueOrRetailPrice: parseFloat(formatNumberToString(item.fixed_notified_value)),
+    valueSalesExcludingST: parseFloat(formatNumberToString(item.total_amount - item.sales_tax || 0.0)),
+    fixedNotifiedValueOrRetailPrice: parseFloat(formatNumberToString(item.total_amount - item.sales_tax || 0.0)),
     salesTaxApplicable: parseFloat(formatNumberToString(item.sales_tax)),
     salesTaxWithheldAtSource: 0.0, // Default value - should be calculated based on business rules
     extraTax: 0.0, // Default value - should be calculated based on business rules
     furtherTax: 0.0, // Default value - should be calculated based on business rules
-    sroScheduleNo: item.is_third_schedule ? "3" : "", // Third schedule indicator
+    sroScheduleNo: item.sroScheduleNo || (item.is_third_schedule ? "3" : ""), // Use form value or third schedule indicator
     fedPayable: 0.0, // Default value - should be calculated based on business rules
     discount: 0.0, // Default value - should be calculated based on business rules
     saleType: saleType, // Dynamic sale type from scenario
-    sroItemSerialNo: "",
+    sroItemSerialNo: item.sroItemSerialNo || "",
   };
 }
 
