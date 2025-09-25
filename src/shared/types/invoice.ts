@@ -253,6 +253,8 @@ export interface InvoiceItemForm {
   is_third_schedule: boolean;
   mrp_including_tax?: number;
   mrp_excluding_tax?: number;
+  sroScheduleNo?: string;
+  sroItemSerialNo?: string;
 }
 
 export interface InvoiceItemCalculated extends InvoiceItemForm {
@@ -265,6 +267,8 @@ export interface InvoiceItemCalculated extends InvoiceItemForm {
   invoice_note?: string;
   mrp_including_tax?: number;
   mrp_excluding_tax?: number;
+  sroScheduleNo?: string;
+  sroItemSerialNo?: string;
   created_at?: string;
   updated_at?: string;
 }
