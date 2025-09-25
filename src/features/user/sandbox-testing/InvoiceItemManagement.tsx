@@ -37,6 +37,7 @@ import { getAllHSCodes } from "@/shared/services/api/fbr";
 import { getUOMCodes } from "@/shared/services/api/fbr";
 import { fetchTaxRates, type TaxRateInfo } from "@/shared/services/api/fbrTaxRates";
 import { TaxScenario } from "@/shared/constants";
+import { getHSCodesFromCache, saveHSCodesToCache } from "@/shared/utils/hsCodeCache";
 
 interface InvoiceItemManagementProps {
   items: InvoiceItemCalculated[];
@@ -217,35 +218,55 @@ export function InvoiceItemManagement({
       }
 
       if (allHSCodes.length === 0) {
-        const hsCodeResponse = await getAllHSCodes(apiKey);
-
-        if (hsCodeResponse.success) {
-          setAllHSCodes(hsCodeResponse.data);
-
-          try {
-            const { checkCacheStatus } = await import("@/shared/services/supabase/invoice");
-            const cacheStatus = await checkCacheStatus();
-
-            if (!cacheStatus.hasData) {
-              const hsCodeCache = hsCodeResponse.data.map((item) => ({
-                hs_code: item.hS_CODE,
-                description: item.description,
-                default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : "50",
-                default_tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
-                is_third_schedule: isThirdScheduleItem(item.hS_CODE),
-              }));
-
-              const batchSize = 50;
-              for (let i = 0; i < hsCodeCache.length; i += batchSize) {
-                const batch = hsCodeCache.slice(i, i + batchSize);
-                await bulkCacheHSCodes(batch);
-              }
-            }
-          } catch {
-            // Optional caching
-          }
+        const cachedHSCodes = getHSCodesFromCache();
+        if (cachedHSCodes && cachedHSCodes.length > 0) {
+          setAllHSCodes(cachedHSCodes);
+          toast({
+            title: "HS Codes Loaded",
+            description: `Loaded ${cachedHSCodes.length} HS codes from cache`,
+            variant: "default",
+          });
         } else {
-          throw new Error(hsCodeResponse.message);
+          const hsCodeResponse = await getAllHSCodes(apiKey);
+
+          if (hsCodeResponse.success) {
+            setAllHSCodes(hsCodeResponse.data);
+            saveHSCodesToCache(hsCodeResponse.data);
+            toast({
+              title: "HS Codes Loaded",
+              description: `Fetched ${hsCodeResponse.data.length} HS codes from FBR API`,
+              variant: "default",
+            });
+
+            try {
+              const { checkCacheStatus } = await import("@/shared/services/supabase/invoice");
+              const cacheStatus = await checkCacheStatus();
+
+              if (!cacheStatus.hasData) {
+                const hsCodeCache = hsCodeResponse.data.map((item) => ({
+                  hs_code: item.hS_CODE,
+                  description: item.description,
+                  default_uom: uomOptions.length > 0 ? uomOptions[0].uoM_ID.toString() : "50",
+                  default_tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
+                  is_third_schedule: isThirdScheduleItem(item.hS_CODE),
+                }));
+
+                const batchSize = 50;
+                for (let i = 0; i < hsCodeCache.length; i += batchSize) {
+                  const batch = hsCodeCache.slice(i, i + batchSize);
+                  await bulkCacheHSCodes(batch);
+                }
+              }
+            } catch {
+              toast({
+                title: "Error",
+                description: "Failed to cache HS codes. Please check your API configuration and try again.",
+                variant: "destructive",
+              });
+            }
+          } else {
+            throw new Error(hsCodeResponse.message);
+          }
         }
       }
 
