@@ -100,18 +100,7 @@ export function InvoiceItemManagement({
     setIsLoadingTaxRates(true);
     try {
       const rates = await fetchTaxRates(scenario.saleTypeId, sellerProvinceId, user.id, "sandbox");
-
       setAvailableTaxRates(rates);
-
-      // Set the first rate as default if available
-      if (rates.length > 0) {
-        const defaultRate = rates[0];
-        setSelectedTaxRate(defaultRate);
-        setFormData((prev) => ({
-          ...prev,
-          tax_rate: defaultRate.value,
-        }));
-      }
     } catch (error) {
       console.error("Error fetching tax rates:", error);
 
@@ -125,11 +114,6 @@ export function InvoiceItemManagement({
       };
 
       setAvailableTaxRates([defaultRate]);
-      setSelectedTaxRate(defaultRate);
-      setFormData((prev) => ({
-        ...prev,
-        tax_rate: defaultRate.value,
-      }));
 
       toast({
         title: "Warning",
@@ -812,10 +796,7 @@ export function InvoiceItemManagement({
                       const rate = availableTaxRates.find((r) => r.rateId.toString() === value);
                       if (rate) {
                         setSelectedTaxRate(rate);
-                        setFormData((prev) => ({
-                          ...prev,
-                          tax_rate: rate.value,
-                        }));
+                        setFormData((prev) => ({ ...prev, tax_rate: rate.value }));
                       }
                     }}
                   >
