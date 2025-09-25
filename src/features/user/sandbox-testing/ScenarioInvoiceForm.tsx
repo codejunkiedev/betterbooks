@@ -311,7 +311,8 @@ export default function ScenarioInvoiceForm() {
       }
 
       const items: FBRInvoicePayload["items"] = formData.items.map((item) => {
-        const check = ["SN008", "SN027"].includes(scenario?.id);
+        const SalesTaxCheck = ["SN008", "SN027"].includes(scenario?.id);
+        const valueSalesExcludingST = item.total_amount - item.sales_tax || 0.0;
         return {
           hsCode: item.hs_code,
           productDescription: item.item_name,
@@ -319,8 +320,8 @@ export default function ScenarioInvoiceForm() {
           uoM: item.uom_code,
           discount: 0.0,
           totalValues: item.total_amount,
-          valueSalesExcludingST: check ? item.total_amount : item.value_sales_excluding_st,
-          fixedNotifiedValueOrRetailPrice: check ? item.total_amount : item.fixed_notified_value || 0.0,
+          valueSalesExcludingST: valueSalesExcludingST,
+          fixedNotifiedValueOrRetailPrice: SalesTaxCheck ? valueSalesExcludingST : item.fixed_notified_value || 0.0,
           salesTaxApplicable: item.sales_tax,
           salesTaxWithheldAtSource: 0.0,
           extraTax: 0.0,

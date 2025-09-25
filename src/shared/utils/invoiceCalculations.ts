@@ -190,10 +190,7 @@ export function calculateRunningTotalsForCalculatedItems(items: InvoiceItemCalcu
 /**
  * Validate invoice item form
  */
-export function validateInvoiceItem(
-  formData: InvoiceItemForm,
-  saleType?: string
-): { isValid: boolean; errors: Record<string, string> } {
+export function validateInvoiceItem(formData: InvoiceItemForm): { isValid: boolean; errors: Record<string, string> } {
   const errors: Record<string, string> = {};
 
   if (!formData.hs_code?.trim()) {
@@ -218,20 +215,6 @@ export function validateInvoiceItem(
 
   if (formData.tax_rate < 0 || formData.tax_rate > 100) {
     errors.tax_rate = "Tax rate must be between 0% and 100%";
-  }
-
-  if (saleType === "3rd Schedule Goods") {
-    if (!formData.sroScheduleNo?.trim()) {
-      errors.sroScheduleNo = "SRO Schedule No is required for 3rd Schedule Goods";
-    } else if (formData.sroScheduleNo.length > 10) {
-      errors.sroScheduleNo = "SRO Schedule No must be 10 characters or less";
-    }
-
-    if (!formData.sroItemSerialNo?.trim()) {
-      errors.sroItemSerialNo = "SRO Item Number is required for 3rd Schedule Goods";
-    } else if (formData.sroItemSerialNo.length > 10) {
-      errors.sroItemSerialNo = "SRO Item Number must be 10 characters or less";
-    }
   }
 
   return {
