@@ -38,6 +38,9 @@ import { getUOMCodes } from "@/shared/services/api/fbr";
 import { fetchTaxRates, type TaxRateInfo } from "@/shared/services/api/fbrTaxRates";
 import { TaxScenario } from "@/shared/constants";
 import { getHSCodesFromCache, saveHSCodesToCache } from "@/shared/utils/hsCodeCache";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/shared/services/store";
+import { setTaxRates } from "@/shared/services/store/taxInfoSlice";
 
 interface InvoiceItemManagementProps {
   items: InvoiceItemCalculated[];
@@ -85,6 +88,8 @@ export function InvoiceItemManagement({
   const [isLoadingTaxRates, setIsLoadingTaxRates] = useState(false);
   const [selectedTaxRate, setSelectedTaxRate] = useState<TaxRateInfo | null>(null);
 
+  const dispatch = useDispatch<AppDispatch>();
+
   const getUomDescription = (uomId: string | number | undefined | null): string => {
     if (!uomId) return "N/A";
     const uom = uomOptions.find((option) => option.uoM_ID.toString() === uomId.toString());
@@ -94,6 +99,7 @@ export function InvoiceItemManagement({
   // Fetch tax rates based on scenario's transaction_type_id
   const fetchTaxRatesForScenario = useCallback(async () => {
     if (!scenario?.saleTypeId || !user?.id || !sellerProvinceId) {
+      console.log("No scenario or user or seller province id");
       return;
     }
 
@@ -101,6 +107,7 @@ export function InvoiceItemManagement({
     try {
       const rates = await fetchTaxRates(scenario.saleTypeId, sellerProvinceId, user.id, "sandbox");
       setAvailableTaxRates(rates);
+      dispatch(setTaxRates(rates));
     } catch (error) {
       console.error("Error fetching tax rates:", error);
 
@@ -114,6 +121,7 @@ export function InvoiceItemManagement({
       };
 
       setAvailableTaxRates([defaultRate]);
+      dispatch(setTaxRates([defaultRate]));
 
       toast({
         title: "Warning",
