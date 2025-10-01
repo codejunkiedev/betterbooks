@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { RootState } from "@/shared/services/store";
 import { useToast } from "@/shared/hooks/useToast";
 import { Card } from "@/shared/components/Card";
@@ -8,7 +8,7 @@ import { Button } from "@/shared/components/Button";
 import { Alert, AlertDescription } from "@/shared/components/Alert";
 import { ScenarioCard } from "./ScenarioCard";
 import { AlertCircle, FileText, Search } from "lucide-react";
-import { getFbrConfigStatus, getFbrProfileByUser } from "@/shared/services/supabase/fbr";
+import { getFbrConfigStatus, getFbrProfileByUser, getUserSuccessfulScenarios } from "@/shared/services/supabase/fbr";
 import { FBR_API_STATUS } from "@/shared/constants/fbr";
 import { getTaxScenariosByBusinessActivityAndSector, TaxScenario } from "@/shared/constants";
 
@@ -16,11 +16,13 @@ export default function SandboxTesting() {
   const { user } = useSelector((s: RootState) => s.user);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [scenarios, setScenarios] = useState<TaxScenario[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasValidSandboxKey, setHasValidSandboxKey] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [successfulScenarios, setSuccessfulScenarios] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -82,6 +84,18 @@ export default function SandboxTesting() {
       }
     })();
   }, [hasValidSandboxKey, toast, user?.id]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!user?.id) return;
+        const successful = await getUserSuccessfulScenarios(user.id);
+        setSuccessfulScenarios(successful);
+      } catch (error) {
+        console.error("Error loading successful scenarios:", error);
+      }
+    })();
+  }, [user?.id, location.state?.refresh]);
 
   const filteredScenarios = useMemo(() => {
     if (!searchQuery.trim()) return scenarios;
@@ -270,6 +284,7 @@ export default function SandboxTesting() {
               scenario={scenario}
               onStartScenario={handleStartScenario}
               isApiConfigured={hasValidSandboxKey}
+              isSubmittedToFBR={successfulScenarios.includes(scenario.id)}
             />
           ))
         )}
