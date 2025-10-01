@@ -32,6 +32,8 @@ import { getScenarioById, TaxScenario } from "@/shared/constants";
 export default function ScenarioInvoiceForm() {
   const { scenarioId } = useParams<{ scenarioId: string }>();
   const { user } = useSelector((s: RootState) => s.user);
+  const { taxRates } = useSelector((s: RootState) => s.taxInfo);
+
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -313,10 +315,11 @@ export default function ScenarioInvoiceForm() {
       const items: FBRInvoicePayload["items"] = formData.items.map((item) => {
         const SalesTaxCheck = ["SN008", "SN027"].includes(scenario?.id);
         const valueSalesExcludingST = item.total_amount - item.sales_tax || 0.0;
+        const taxRate = taxRates?.find((e) => e.value === item.tax_rate)?.description || `${item.tax_rate}%`;
         return {
           hsCode: item.hs_code,
           productDescription: item.item_name,
-          rate: `${item.tax_rate.toString()}%`,
+          rate: taxRate,
           uoM: item.uom_code,
           discount: 0.0,
           totalValues: item.total_amount,
@@ -391,9 +394,17 @@ export default function ScenarioInvoiceForm() {
         };
       }
 
+      const updatedFormData = {
+        ...formData,
+        items: formData.items.map((item) => ({
+          ...item,
+          tax_rate: taxRates?.find((e) => e.value === item.tax_rate)?.description || `${item.tax_rate}%`,
+        })),
+      };
+
       const response = await submitInvoiceToFBR({
         userId: user.id,
-        invoiceData: formData,
+        invoiceData: updatedFormData,
         environment: "sandbox",
         apiKey: config.sandbox_api_key,
         maxRetries: 3,

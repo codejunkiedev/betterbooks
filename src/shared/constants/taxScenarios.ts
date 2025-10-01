@@ -39,7 +39,7 @@ export const TAX_SCENARIOS: TaxScenario[] = [
   {
     id: "SN006",
     description: "Exempt goods sale",
-    saleType: "Exempt Goods",
+    saleType: "Exempt goods",
     saleTypeId: 81,
   },
   {
