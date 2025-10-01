@@ -1032,9 +1032,13 @@ export function InvoiceItemManagement({
                       </SelectContent>
                     </Select>
                   ) : (
-                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/30">
-                      No SRO schedules available for this tax rate
-                    </div>
+                    <Input
+                      id="sro-schedule-no"
+                      value={formData.sroScheduleNo || ""}
+                      onChange={(e) => handleFormChange("sroScheduleNo", e.target.value)}
+                      placeholder="Enter SRO Schedule No manually"
+                      className={validationErrors.sroScheduleNo ? "border-red-500" : ""}
+                    />
                   )}
                   {validationErrors.sroScheduleNo && (
                     <p className="text-sm text-red-500">{validationErrors.sroScheduleNo}</p>
@@ -1042,7 +1046,11 @@ export function InvoiceItemManagement({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sro-item-serial-no">SRO Item Number</Label>
-                  {!selectedSroSchedule ? (
+                  {!selectedTaxRate ? (
+                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/30">
+                      Please select a tax rate first
+                    </div>
+                  ) : !selectedSroSchedule && sroScheduleOptions.length > 0 ? (
                     <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/30">
                       Please select an SRO schedule first
                     </div>
@@ -1073,9 +1081,13 @@ export function InvoiceItemManagement({
                       </SelectContent>
                     </Select>
                   ) : (
-                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/30">
-                      No SRO items available for this schedule
-                    </div>
+                    <Input
+                      id="sro-item-serial-no"
+                      value={formData.sroItemSerialNo || ""}
+                      onChange={(e) => handleFormChange("sroItemSerialNo", e.target.value)}
+                      placeholder="Enter SRO Item Number manually"
+                      className={validationErrors.sroItemSerialNo ? "border-red-500" : ""}
+                    />
                   )}
                   {validationErrors.sroItemSerialNo && (
                     <p className="text-sm text-red-500">{validationErrors.sroItemSerialNo}</p>
