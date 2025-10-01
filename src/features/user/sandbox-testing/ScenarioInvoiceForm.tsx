@@ -17,7 +17,7 @@ import { FBRSubmissionModal } from "./FBRSubmissionModal";
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/components/Tooltip";
 import { Play, Target, FileText, AlertCircle, Trash2, Eye, CheckCircle } from "lucide-react";
-import { getProvinceCodes, getFbrProfileForSellerData } from "@/shared/services/supabase/fbr";
+import { getProvinceCodes, getFbrProfileForSellerData, addSuccessfulScenario } from "@/shared/services/supabase/fbr";
 import { FBRInvoiceData, FBRInvoicePayload, InvoiceFormData, InvoiceItemCalculated } from "@/shared/types/invoice";
 import { generateRandomSampleData, generateScenarioSpecificSampleData } from "@/shared/data/fbrSampleData";
 import { generateFBRInvoiceNumberForPreview } from "@/shared/services/supabase/invoice";
@@ -412,13 +412,11 @@ export default function ScenarioInvoiceForm() {
       });
 
       if (response.success) {
-        // // Mark scenario as completed
-        // await updateScenarioProgress(
-        //   user.id,
-        //   scenario.id,
-        //   FBR_SCENARIO_STATUS.COMPLETED,
-        //   JSON.stringify(response.data?.response)
-        // );
+        try {
+          await addSuccessfulScenario(user.id, scenario.id);
+        } catch (error) {
+          console.error("Error adding successful scenario:", error);
+        }
 
         // Navigate back to sandbox testing with a flag to refresh
         toast({
@@ -426,14 +424,6 @@ export default function ScenarioInvoiceForm() {
           description: "Invoice submitted successfully.",
         });
         navigate("/fbr/sandbox-testing", { state: { refresh: true } });
-      } else {
-        // // Mark scenario as failed
-        // await updateScenarioProgress(
-        //   user.id,
-        //   scenario.id,
-        //   FBR_SCENARIO_STATUS.FAILED,
-        //   response.error || "Submission failed"
-        // );
       }
 
       return response;
