@@ -400,7 +400,7 @@ export default function ScenarioInvoiceForm() {
           ...item,
           tax_rate: taxRates?.find((e) => e.value === item.tax_rate)?.description || `${item.tax_rate}%`,
         })),
-      };
+      } as unknown as FBRInvoiceData;
 
       const response = await submitInvoiceToFBR({
         userId: user.id,
