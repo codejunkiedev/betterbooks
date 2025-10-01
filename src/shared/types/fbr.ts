@@ -231,3 +231,39 @@ export interface SaleTypeToRateParams {
   transTypeId: number; // Type of transaction (18 = standard goods sale)
   originationSupplier: number; // Province ID of seller
 }
+
+/**
+ * Response from FBR SroSchedule API
+ * This API returns SRO schedule details for a specific rate ID and date
+ */
+export interface SroScheduleResponse {
+  srO_ID: number; // SRO identifier
+  serNo: number; // SRO serial number
+  srO_DESC: string;
+}
+
+/**
+ * Parameters for SroSchedule API call
+ */
+export interface SroScheduleParams {
+  rateId: number; // Rate identifier
+  date: string; // Date in DD-MMM-YYYY format (e.g., "30-Sep-2025")
+  originationSupplier: number; // Province ID of supplier
+}
+
+/**
+ * Response from FBR SROItem API
+ * This API returns SRO item details for a specific SRO and date
+ */
+export interface SroItemResponse {
+  srO_ITEM_ID: number; // SRO item identifier
+  srO_ITEM_DESC: string; // SRO item description
+}
+
+/**
+ * Parameters for SROItem API call
+ */
+export interface SroItemParams {
+  date: string; // Date in YYYY-MM-DD format
+  sroId: number; // SRO identifier
+}
