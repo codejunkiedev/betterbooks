@@ -33,7 +33,7 @@ import {
 } from "@/shared/services/supabase/invoice";
 import { getFbrConfigStatus } from "@/shared/services/supabase/fbr";
 import { Plus, Trash2, Edit, MoveUp, MoveDown } from "lucide-react";
-import { getAllHSCodes } from "@/shared/services/api/fbr";
+import { getAllHSCodes, getSroSchedule, getSroItem } from "@/shared/services/api/fbr";
 import { getUOMCodes } from "@/shared/services/api/fbr";
 import { fetchTaxRates, type TaxRateInfo } from "@/shared/services/api/fbrTaxRates";
 import { TaxScenario } from "@/shared/constants";
@@ -41,6 +41,7 @@ import { getHSCodesFromCache, saveHSCodesToCache } from "@/shared/utils/hsCodeCa
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/shared/services/store";
 import { setTaxRates } from "@/shared/services/store/taxInfoSlice";
+import type { SroScheduleResponse, SroItemResponse } from "@/shared/types/fbr";
 
 interface InvoiceItemManagementProps {
   items: InvoiceItemCalculated[];
@@ -87,6 +88,11 @@ export function InvoiceItemManagement({
   const [availableTaxRates, setAvailableTaxRates] = useState<TaxRateInfo[]>([]);
   const [isLoadingTaxRates, setIsLoadingTaxRates] = useState(false);
   const [selectedTaxRate, setSelectedTaxRate] = useState<TaxRateInfo | null>(null);
+  const [sroScheduleOptions, setSroScheduleOptions] = useState<SroScheduleResponse[]>([]);
+  const [sroItemOptions, setSroItemOptions] = useState<SroItemResponse[]>([]);
+  const [isLoadingSroSchedules, setIsLoadingSroSchedules] = useState(false);
+  const [isLoadingSroItems, setIsLoadingSroItems] = useState(false);
+  const [selectedSroSchedule, setSelectedSroSchedule] = useState<SroScheduleResponse | null>(null);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -133,6 +139,98 @@ export function InvoiceItemManagement({
       setIsLoadingTaxRates(false);
     }
   }, [scenario?.saleTypeId, user?.id, sellerProvinceId, toast]);
+
+  // Fetch SRO schedule numbers based on selected tax rate
+  const fetchSroScheduleNumbers = useCallback(
+    async (rateId: number) => {
+      if (!user?.id || !sellerProvinceId) {
+        return;
+      }
+
+      setIsLoadingSroSchedules(true);
+      try {
+        const fbrConfig = await getFbrConfigStatus(user.id);
+        const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
+
+        if (!apiKey) {
+          toast({
+            title: "API Key Required",
+            description: "FBR API key is required to fetch SRO schedule numbers.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const today = new Date();
+        const dateStr = `${String(today.getDate()).padStart(2, "0")}-${today.toLocaleDateString("en-US", {
+          month: "short",
+        })}-${today.getFullYear()}`;
+
+        const response = await getSroSchedule(apiKey, {
+          rateId: rateId,
+          date: dateStr,
+          originationSupplier: sellerProvinceId,
+        });
+
+        if (response.success) {
+          setSroScheduleOptions(response.data);
+        } else {
+          console.error("Error fetching SRO schedules:", response.message);
+          setSroScheduleOptions([]);
+        }
+      } catch (error) {
+        console.error("Error fetching SRO schedules:", error);
+        setSroScheduleOptions([]);
+      } finally {
+        setIsLoadingSroSchedules(false);
+      }
+    },
+    [user?.id, sellerProvinceId, toast]
+  );
+
+  // Fetch SRO items based on selected SRO schedule
+  const fetchSroItems = useCallback(
+    async (sroId: number) => {
+      if (!user?.id) {
+        return;
+      }
+
+      setIsLoadingSroItems(true);
+      try {
+        const fbrConfig = await getFbrConfigStatus(user.id);
+        const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
+
+        if (!apiKey) {
+          toast({
+            title: "API Key Required",
+            description: "FBR API key is required to fetch SRO items.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+
+        const response = await getSroItem(apiKey, {
+          date: today,
+          sroId: sroId,
+        });
+
+        if (response.success) {
+          setSroItemOptions(response.data);
+        } else {
+          console.error("Error fetching SRO items:", response.message);
+          setSroItemOptions([]);
+        }
+      } catch (error) {
+        console.error("Error fetching SRO items:", error);
+        setSroItemOptions([]);
+      } finally {
+        setIsLoadingSroItems(false);
+      }
+    },
+    [user?.id, toast]
+  );
 
   // Fetch tax rates when scenario changes
   useEffect(() => {
@@ -450,6 +548,10 @@ export function InvoiceItemManagement({
     setHsCodeSearchTerm("");
     setHsCodeResults([]);
     setFilteredUomOptions(uomOptions);
+    setSelectedTaxRate(null);
+    setSelectedSroSchedule(null);
+    setSroScheduleOptions([]);
+    setSroItemOptions([]);
 
     toast({
       title: "Success",
@@ -476,6 +578,14 @@ export function InvoiceItemManagement({
     });
     setEditingItemIndex(index);
     setIsAddItemOpen(true);
+
+    const currentTaxRate = availableTaxRates.find((rate) => rate.value === item.tax_rate);
+    if (currentTaxRate) {
+      setSelectedTaxRate(currentTaxRate);
+      if (item.sroScheduleNo) {
+        fetchSroScheduleNumbers(currentTaxRate.rateId);
+      }
+    }
   };
 
   const handleDeleteItem = (index: number) => {
@@ -515,6 +625,10 @@ export function InvoiceItemManagement({
     setEditingItemIndex(null);
     setIsAddItemOpen(true);
     setFilteredUomOptions(uomOptions);
+    setSelectedTaxRate(null);
+    setSelectedSroSchedule(null);
+    setSroScheduleOptions([]);
+    setSroItemOptions([]);
   };
 
   const runningTotals =
@@ -804,7 +918,15 @@ export function InvoiceItemManagement({
                       const rate = availableTaxRates.find((r) => r.rateId.toString() === value);
                       if (rate) {
                         setSelectedTaxRate(rate);
-                        setFormData((prev) => ({ ...prev, tax_rate: rate.value }));
+                        setFormData((prev) => ({
+                          ...prev,
+                          tax_rate: rate.value,
+                          sroScheduleNo: "",
+                          sroItemSerialNo: "",
+                        }));
+                        setSelectedSroSchedule(null);
+                        setSroItemOptions([]);
+                        fetchSroScheduleNumbers(rate.rateId);
                       }
                     }}
                   >
@@ -876,28 +998,85 @@ export function InvoiceItemManagement({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="sro-schedule-no">SRO Schedule No</Label>
-                  <Input
-                    id="sro-schedule-no"
-                    value={formData.sroScheduleNo || ""}
-                    onChange={(e) => handleFormChange("sroScheduleNo", e.target.value)}
-                    placeholder="Enter SRO Schedule Number"
-                    maxLength={10}
-                    className={validationErrors.sroScheduleNo ? "border-red-500" : ""}
-                  />
+                  {!selectedTaxRate ? (
+                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/30">
+                      Please select a tax rate first
+                    </div>
+                  ) : isLoadingSroSchedules ? (
+                    <div className="flex items-center space-x-2 p-2 border rounded-md">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-sm text-gray-500">Loading SRO schedules...</span>
+                    </div>
+                  ) : sroScheduleOptions.length > 0 ? (
+                    <Select
+                      value={selectedSroSchedule?.srO_ID.toString() || ""}
+                      onValueChange={(value) => {
+                        const schedule = sroScheduleOptions.find((s) => s.srO_ID.toString() === value);
+                        if (schedule) {
+                          setSelectedSroSchedule(schedule);
+                          setFormData((prev) => ({ ...prev, sroScheduleNo: schedule.srO_DESC, sroItemSerialNo: "" }));
+                          setSroItemOptions([]);
+                          fetchSroItems(schedule.srO_ID);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className={validationErrors.sroScheduleNo ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select SRO Schedule" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sroScheduleOptions.map((schedule) => (
+                          <SelectItem key={schedule.srO_ID} value={schedule.srO_ID.toString()}>
+                            {schedule.srO_DESC}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/30">
+                      No SRO schedules available for this tax rate
+                    </div>
+                  )}
                   {validationErrors.sroScheduleNo && (
                     <p className="text-sm text-red-500">{validationErrors.sroScheduleNo}</p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sro-item-serial-no">SRO Item Number</Label>
-                  <Input
-                    id="sro-item-serial-no"
-                    value={formData.sroItemSerialNo || ""}
-                    onChange={(e) => handleFormChange("sroItemSerialNo", e.target.value)}
-                    placeholder="Enter SRO Item Number"
-                    maxLength={10}
-                    className={validationErrors.sroItemSerialNo ? "border-red-500" : ""}
-                  />
+                  {!selectedSroSchedule ? (
+                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/30">
+                      Please select an SRO schedule first
+                    </div>
+                  ) : isLoadingSroItems ? (
+                    <div className="flex items-center space-x-2 p-2 border rounded-md">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-sm text-gray-500">Loading SRO items...</span>
+                    </div>
+                  ) : sroItemOptions.length > 0 ? (
+                    <Select
+                      value={formData.sroItemSerialNo || ""}
+                      onValueChange={(value) => {
+                        const item = sroItemOptions.find((i) => i.srO_ITEM_DESC === value);
+                        if (item) {
+                          setFormData((prev) => ({ ...prev, sroItemSerialNo: item.srO_ITEM_DESC }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className={validationErrors.sroItemSerialNo ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select SRO Item" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sroItemOptions.map((item) => (
+                          <SelectItem key={item.srO_ITEM_ID} value={item.srO_ITEM_DESC}>
+                            {item.srO_ITEM_DESC}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/30">
+                      No SRO items available for this schedule
+                    </div>
+                  )}
                   {validationErrors.sroItemSerialNo && (
                     <p className="text-sm text-red-500">{validationErrors.sroItemSerialNo}</p>
                   )}
