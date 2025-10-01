@@ -39,11 +39,6 @@ export interface FBRSubmissionResponse {
  * Convert InvoiceItemCalculated to FBR API format
  */
 function convertItemToFBRFormat(item: InvoiceItemCalculated, saleType: string) {
-  // Format rate as percentage string
-  const formatRate = (rate: number): string => {
-    return `${rate}%`;
-  };
-
   // Format number to appropriate decimal places
   // Quantities can have up to 3 decimal places (e.g., 0.125 kg)
   // Monetary values use 2 decimal places
@@ -54,7 +49,7 @@ function convertItemToFBRFormat(item: InvoiceItemCalculated, saleType: string) {
   return {
     hsCode: item.hs_code,
     productDescription: item.item_name,
-    rate: formatRate(item.tax_rate),
+    rate: item.tax_rate.toString(),
     uoM: item.uom_code,
     quantity: parseFloat(formatNumberToString(item.quantity, true)), // Quantity supports 3 decimal places
     totalValues: parseFloat(formatNumberToString(item.total_amount)),
