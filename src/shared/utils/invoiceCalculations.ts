@@ -35,14 +35,33 @@ export function calculateRunningTotals(items: FBRInvoiceItem[]): InvoiceRunningT
 export function calculateItemTotals(
   quantity: number,
   unitPrice: number,
-  taxRate: number
+  taxRate: number,
+  taxUnit: "percentage" | "rupee" | "fixed" = "percentage"
 ): {
   valueSalesExcludingST: number;
   salesTaxApplicable: number;
   totalValues: number;
 } {
   const valueSalesExcludingST = quantity * unitPrice;
-  const salesTaxApplicable = valueSalesExcludingST * (taxRate / 100);
+
+  let salesTaxApplicable: number;
+
+  switch (taxUnit) {
+    case "percentage":
+      salesTaxApplicable = valueSalesExcludingST * (taxRate / 100);
+      break;
+    case "rupee":
+      // For rupee-based rates, tax is calculated per unit quantity
+      salesTaxApplicable = quantity * taxRate;
+      break;
+    case "fixed":
+      // For fixed rates (usually exempt), tax is typically 0 or a fixed amount
+      salesTaxApplicable = taxRate;
+      break;
+    default:
+      salesTaxApplicable = valueSalesExcludingST * (taxRate / 100);
+  }
+
   const totalValues = valueSalesExcludingST + salesTaxApplicable;
 
   return {
@@ -124,9 +143,8 @@ export function formatTaxRate(rate: number): string {
  * Calculate invoice item with all computed values
  */
 export function calculateInvoiceItem(formData: InvoiceItemForm): InvoiceItemCalculated {
-  const valueSalesExcludingST = formData.quantity * formData.unit_price;
-  const salesTaxApplicable = valueSalesExcludingST * (formData.tax_rate / 100);
-  const totalAmount = valueSalesExcludingST + salesTaxApplicable;
+  const taxUnit = formData.tax_unit || "percentage";
+  const calculations = calculateItemTotals(formData.quantity, formData.unit_price, formData.tax_rate, taxUnit);
 
   const result: InvoiceItemCalculated = {
     id: formData.id || `item_${Date.now()}`,
@@ -136,10 +154,11 @@ export function calculateInvoiceItem(formData: InvoiceItemForm): InvoiceItemCalc
     unit_price: formData.unit_price,
     uom_code: formData.uom_code,
     tax_rate: formData.tax_rate,
+    tax_unit: taxUnit,
     is_third_schedule: formData.is_third_schedule,
-    total_amount: Math.round(totalAmount * 100) / 100,
-    sales_tax: Math.round(salesTaxApplicable * 100) / 100,
-    value_sales_excluding_st: Math.round(valueSalesExcludingST * 100) / 100,
+    total_amount: calculations.totalValues,
+    sales_tax: calculations.salesTaxApplicable,
+    value_sales_excluding_st: calculations.valueSalesExcludingST,
     fixed_notified_value: formData.mrp_including_tax || 0,
     retail_price: formData.mrp_excluding_tax || 0,
   };
@@ -213,8 +232,20 @@ export function validateInvoiceItem(formData: InvoiceItemForm): { isValid: boole
     errors.uom_code = "Unit of measure is required";
   }
 
-  if (formData.tax_rate < 0 || formData.tax_rate > 100) {
-    errors.tax_rate = "Tax rate must be between 0% and 100%";
+  const taxUnit = formData.tax_unit || "percentage";
+
+  if (taxUnit === "percentage") {
+    if (formData.tax_rate < 0 || formData.tax_rate > 100) {
+      errors.tax_rate = "Tax rate must be between 0% and 100%";
+    }
+  } else if (taxUnit === "rupee") {
+    if (formData.tax_rate < 0) {
+      errors.tax_rate = "Tax rate cannot be negative";
+    }
+  } else if (taxUnit === "fixed") {
+    if (formData.tax_rate < 0) {
+      errors.tax_rate = "Tax amount cannot be negative";
+    }
   }
 
   return {
@@ -235,6 +266,22 @@ export function formatQuantity(quantity: number): string {
  */
 export function formatPercentage(rate: number): string {
   return `${rate.toFixed(2)}%`;
+}
+
+/**
+ * Format tax rate for display based on unit type
+ */
+export function formatTaxRateDisplay(rate: number, unit: "percentage" | "rupee" | "fixed"): string {
+  switch (unit) {
+    case "percentage":
+      return `${rate.toFixed(2)}%`;
+    case "rupee":
+      return `Rs. ${rate.toFixed(2)}`;
+    case "fixed":
+      return rate === 0 ? "Exempt" : `Rs. ${rate.toFixed(2)}`;
+    default:
+      return `${rate.toFixed(2)}%`;
+  }
 }
 
 /**

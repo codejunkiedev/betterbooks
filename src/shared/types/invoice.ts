@@ -249,6 +249,7 @@ export interface InvoiceItemForm {
   unit_price: number;
   uom_code: string;
   tax_rate: number;
+  tax_unit?: "percentage" | "rupee" | "fixed";
   invoice_note?: string;
   is_third_schedule: boolean;
   mrp_including_tax?: number;
