@@ -138,7 +138,7 @@ export function InvoiceItemManagement({
     } finally {
       setIsLoadingTaxRates(false);
     }
-  }, [scenario?.saleTypeId, user?.id, sellerProvinceId, toast]);
+  }, [dispatch, scenario?.saleTypeId, sellerProvinceId, toast, user?.id]);
 
   // Fetch SRO schedule numbers based on selected tax rate
   const fetchSroScheduleNumbers = useCallback(
