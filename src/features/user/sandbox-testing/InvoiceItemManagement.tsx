@@ -37,7 +37,7 @@ import { getAllHSCodes, getSroSchedule, getSroItem } from "@/shared/services/api
 import { getUOMCodes } from "@/shared/services/api/fbr";
 import { fetchTaxRates, type TaxRateInfo } from "@/shared/services/api/fbrTaxRates";
 import { TaxScenario } from "@/shared/constants";
-import { getHSCodesFromCache, saveHSCodesToCache } from "@/shared/utils/hsCodeCache";
+import { getHSCodesFromCache, saveHSCodesToCache, getUOMCodesFromCache, saveUOMCodesToCache } from "@/shared/utils/fbrDataCache";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/shared/services/store";
 import { setTaxRates } from "@/shared/services/store/taxInfoSlice";
@@ -360,13 +360,33 @@ export function InvoiceItemManagement({
         }
       }
 
-      const uomResponse = await getUOMCodes(apiKey);
-
-      if (uomResponse.success && uomResponse.data && uomResponse.data.length > 0) {
-        const uniqueUomOptions = uomResponse.data.filter(
+      // Load UOM codes from cache first, then from API if needed
+      const cachedUOMCodes = getUOMCodesFromCache();
+      if (cachedUOMCodes && cachedUOMCodes.length > 0) {
+        const uniqueUomOptions = cachedUOMCodes.filter(
           (uom, index, self) => index === self.findIndex((u) => u.uoM_ID === uom.uoM_ID)
         );
         setUomOptions(uniqueUomOptions);
+        toast({
+          title: "UOM Codes Loaded",
+          description: `Loaded ${uniqueUomOptions.length} UOM codes from cache`,
+          variant: "default",
+        });
+      } else {
+        const uomResponse = await getUOMCodes(apiKey);
+
+        if (uomResponse.success && uomResponse.data && uomResponse.data.length > 0) {
+          const uniqueUomOptions = uomResponse.data.filter(
+            (uom, index, self) => index === self.findIndex((u) => u.uoM_ID === uom.uoM_ID)
+          );
+          setUomOptions(uniqueUomOptions);
+          saveUOMCodesToCache(uniqueUomOptions);
+          toast({
+            title: "UOM Codes Loaded",
+            description: `Fetched ${uniqueUomOptions.length} UOM codes from FBR API`,
+            variant: "default",
+          });
+        }
       }
     } catch {
       toast({
