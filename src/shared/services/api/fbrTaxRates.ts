@@ -23,21 +23,20 @@ function parseTaxRateDescription(
 ): { unit: "percentage" | "rupee" | "fixed"; formattedValue: string } {
   const desc = description.toLowerCase();
 
-  if (desc.includes("%") || desc.includes("percent")) {
-    return {
-      unit: "percentage",
-      formattedValue: `${value}%`,
-    };
-  } else if (desc.includes("rupee") || desc.includes("rs") || desc.includes("per kg") || desc.includes("per unit")) {
-    return {
-      unit: "rupee",
-      formattedValue: `Rs. ${value}`,
-    };
+  if (desc.includes("exempt") || (value === 0 && desc.includes("0"))) {
+    return { unit: "fixed", formattedValue: "Exempt" };
+  } else if (desc.includes("%") || desc.includes("percent")) {
+    return { unit: "percentage", formattedValue: `${value}%` };
+  } else if (
+    desc.includes("rupee") ||
+    desc.includes("rs") ||
+    desc.includes("per kg") ||
+    desc.includes("per unit") ||
+    desc.includes("kilogram")
+  ) {
+    return { unit: "rupee", formattedValue: `Rs. ${value}` };
   } else {
-    return {
-      unit: "fixed",
-      formattedValue: value.toString(),
-    };
+    return { unit: "fixed", formattedValue: value === 0 ? "Exempt" : `Rs. ${value}` };
   }
 }
 

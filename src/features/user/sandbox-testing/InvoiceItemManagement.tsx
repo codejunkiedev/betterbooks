@@ -22,7 +22,7 @@ import {
   validateInvoiceItem,
   formatCurrency,
   formatQuantity,
-  formatPercentage,
+  formatTaxRateDisplay,
   isThirdScheduleItem,
 } from "@/shared/utils/invoiceCalculations";
 import { SYSTEM_DEFAULTS } from "@/shared/constants/invoiceDefaults";
@@ -37,7 +37,12 @@ import { getAllHSCodes, getSroSchedule, getSroItem } from "@/shared/services/api
 import { getUOMCodes } from "@/shared/services/api/fbr";
 import { fetchTaxRates, type TaxRateInfo } from "@/shared/services/api/fbrTaxRates";
 import { TaxScenario } from "@/shared/constants";
-import { getHSCodesFromCache, saveHSCodesToCache, getUOMCodesFromCache, saveUOMCodesToCache } from "@/shared/utils/fbrDataCache";
+import {
+  getHSCodesFromCache,
+  saveHSCodesToCache,
+  getUOMCodesFromCache,
+  saveUOMCodesToCache,
+} from "@/shared/utils/fbrDataCache";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/shared/services/store";
 import { setTaxRates } from "@/shared/services/store/taxInfoSlice";
@@ -71,6 +76,7 @@ export function InvoiceItemManagement({
     unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
     uom_code: "",
     tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
+    tax_unit: "percentage",
     invoice_note: "",
     is_third_schedule: false,
     sroScheduleNo: "",
@@ -559,6 +565,7 @@ export function InvoiceItemManagement({
       unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
       uom_code: "",
       tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
+      tax_unit: "percentage",
       invoice_note: "",
       is_third_schedule: false,
       sroScheduleNo: "",
@@ -589,6 +596,7 @@ export function InvoiceItemManagement({
       unit_price: item.unit_price,
       uom_code: item.uom_code,
       tax_rate: item.tax_rate,
+      tax_unit: item.tax_unit || "percentage",
       mrp_including_tax: item.mrp_including_tax || 0,
       mrp_excluding_tax: item.mrp_excluding_tax || 0,
       invoice_note: item.invoice_note || "",
@@ -599,7 +607,9 @@ export function InvoiceItemManagement({
     setEditingItemIndex(index);
     setIsAddItemOpen(true);
 
-    const currentTaxRate = availableTaxRates.find((rate) => rate.value === item.tax_rate);
+    const currentTaxRate = availableTaxRates.find(
+      (rate) => rate.value === item.tax_rate && rate.unit === (item.tax_unit || "percentage")
+    );
     if (currentTaxRate) {
       setSelectedTaxRate(currentTaxRate);
       if (item.sroScheduleNo) {
@@ -634,6 +644,7 @@ export function InvoiceItemManagement({
       unit_price: SYSTEM_DEFAULTS.MIN_UNIT_PRICE,
       uom_code: "",
       tax_rate: SYSTEM_DEFAULTS.MIN_TAX_RATE,
+      tax_unit: "percentage",
       invoice_note: "",
       is_third_schedule: false,
       sroScheduleNo: "",
@@ -726,7 +737,9 @@ export function InvoiceItemManagement({
                       <TableCell className="text-right font-mono">{formatQuantity(item.quantity || 0)}</TableCell>
                       <TableCell className="text-right font-mono">{formatCurrency(item.unit_price || 0)}</TableCell>
                       <TableCell className="font-mono">{getUomDescription(item.uom_code)}</TableCell>
-                      <TableCell className="text-right">{formatPercentage(item.tax_rate || 0)}</TableCell>
+                      <TableCell className="text-right">
+                        {formatTaxRateDisplay(item.tax_rate || 0, item.tax_unit || "percentage")}
+                      </TableCell>
                       <TableCell className="text-right font-mono font-semibold">
                         {formatCurrency(item.total_amount || 0)}
                       </TableCell>
@@ -941,6 +954,7 @@ export function InvoiceItemManagement({
                         setFormData((prev) => ({
                           ...prev,
                           tax_rate: rate.value,
+                          tax_unit: rate.unit,
                           sroScheduleNo: "",
                           sroItemSerialNo: "",
                         }));
