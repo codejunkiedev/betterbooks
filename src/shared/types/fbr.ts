@@ -219,7 +219,7 @@ export interface FbrSandboxTestResponse {
  */
 export interface SaleTypeToRateResponse {
   ratE_ID: number; // Unique rate identifier
-  ratE_DESC: string; // Rate description (e.g., "18% along with rupees 60 per kilogram")
+  ratE_DESC: string; // Rate description (e.g., "18% along with rupees 60 per kilogram") can be Rs.100, 5% or Exempt
   ratE_VALUE: number; // Tax rate percentage value
 }
 
