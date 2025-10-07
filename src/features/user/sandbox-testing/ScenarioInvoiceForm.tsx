@@ -729,7 +729,7 @@ export default function ScenarioInvoiceForm() {
                 onItemsChange={handleItemsChange}
                 onRunningTotalsChange={() => {}}
                 scenario={scenario}
-                sellerProvinceId={sellerProvinceCode || 1}
+                sellerProvinceId={sellerProvinceCode}
               />
             </div>
 

@@ -94,9 +94,6 @@ export async function generateInvoiceRefNo(userId: string): Promise<string> {
  * Format invoice data according to FBR API requirements
  */
 async function formatInvoiceDataForFBR(invoiceData: FBRInvoiceData, userId: string): Promise<Record<string, unknown>> {
-  // Clean NTN/CNIC by removing non-digits
-  const cleanNTNCNIC = (value: string) => value.replace(/\D/g, "");
-
   // Generate invoice reference number if not provided
   const invoiceRefNo = invoiceData.invoiceRefNo || (await generateInvoiceRefNo(userId));
 
@@ -114,11 +111,11 @@ async function formatInvoiceDataForFBR(invoiceData: FBRInvoiceData, userId: stri
   return {
     invoiceType: invoiceData.invoiceType || "Sale Invoice",
     invoiceDate: invoiceData.invoiceDate,
-    sellerNTNCNIC: cleanNTNCNIC(invoiceData.sellerNTNCNIC),
+    sellerNTNCNIC: invoiceData.sellerNTNCNIC,
     sellerBusinessName: invoiceData.sellerBusinessName,
     sellerProvince: invoiceData.sellerProvince,
     sellerAddress: invoiceData.sellerAddress,
-    buyerNTNCNIC: cleanNTNCNIC(invoiceData.buyerNTNCNIC),
+    buyerNTNCNIC: invoiceData.buyerNTNCNIC,
     buyerBusinessName: invoiceData.buyerBusinessName,
     buyerProvince: invoiceData.buyerProvince,
     buyerAddress: invoiceData.buyerAddress,

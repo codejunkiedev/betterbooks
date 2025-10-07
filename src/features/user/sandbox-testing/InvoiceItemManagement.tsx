@@ -53,7 +53,7 @@ interface InvoiceItemManagementProps {
   onItemsChange: (items: InvoiceItemCalculated[]) => void;
   onRunningTotalsChange: (totals: InvoiceRunningTotals) => void;
   scenario?: TaxScenario | null;
-  sellerProvinceId?: number;
+  sellerProvinceId?: number | null;
   className?: string;
 }
 

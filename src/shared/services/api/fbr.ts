@@ -190,7 +190,6 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
     }
 
     // Format data
-    const cleanNTNCNIC = (value: string) => value.replace(/\D/g, "");
     const formatNumber = (value: number | string, isQuantity: boolean = false) => {
       const numValue = typeof value === "string" ? parseFloat(value) || 0 : value;
       return isQuantity ? Math.round(numValue * 1000) / 1000 : Math.round(numValue * 100) / 100;
@@ -200,11 +199,11 @@ export async function submitSandboxTestInvoice(params: FbrSandboxTestRequest): P
     const formattedInvoiceData = {
       invoiceType: invoiceData.invoiceType || "Sale Invoice",
       invoiceDate: invoiceData.invoiceDate,
-      sellerNTNCNIC: cleanNTNCNIC(invoiceData.sellerNTNCNIC),
+      sellerNTNCNIC: invoiceData.sellerNTNCNIC,
       sellerBusinessName: invoiceData.sellerBusinessName,
       sellerProvince: invoiceData.sellerProvince,
       sellerAddress: invoiceData.sellerAddress,
-      buyerNTNCNIC: cleanNTNCNIC(invoiceData.buyerNTNCNIC),
+      buyerNTNCNIC: invoiceData.buyerNTNCNIC,
       buyerBusinessName: invoiceData.buyerBusinessName,
       buyerProvince: invoiceData.buyerProvince,
       buyerAddress: invoiceData.buyerAddress,
