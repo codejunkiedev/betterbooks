@@ -314,6 +314,7 @@ export default function ScenarioInvoiceForm() {
 
       const items: FBRInvoicePayload["items"] = formData.items.map((item) => {
         const SalesTaxCheck = ["SN008", "SN027"].includes(scenario?.id);
+        const ExtraTaxCheck = ["SN028", "SN016"].includes(scenario?.id);
         const valueSalesExcludingST = item.total_amount - item.sales_tax || 0.0;
         const taxRate = taxRates?.find((e) => e.value === item.tax_rate)?.description || `${item.tax_rate}%`;
         return {
@@ -327,7 +328,7 @@ export default function ScenarioInvoiceForm() {
           fixedNotifiedValueOrRetailPrice: SalesTaxCheck ? valueSalesExcludingST : item.fixed_notified_value || 0.0,
           salesTaxApplicable: item.sales_tax,
           salesTaxWithheldAtSource: 0.0,
-          extraTax: 0.0,
+          extraTax: ExtraTaxCheck ? "" : 0.0,
           furtherTax: 0.0,
           sroScheduleNo: item.sroScheduleNo || "",
           fedPayable: 0.0,
