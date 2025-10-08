@@ -1,6 +1,6 @@
 import { HttpClientApi } from "./http-client";
 import { generateFBRInvoiceNumber } from "../supabase/invoice";
-import { FBRInvoiceData, InvoiceItemCalculated } from "@/shared/types/invoice";
+import { FBRInvoiceData, FBRInvoicePayload, InvoiceItemCalculated } from "@/shared/types/invoice";
 import { getScenarioById } from "@/shared/constants";
 
 // FBR API endpoints
@@ -38,13 +38,21 @@ export interface FBRSubmissionResponse {
 /**
  * Convert InvoiceItemCalculated to FBR API format
  */
-function convertItemToFBRFormat(item: InvoiceItemCalculated, saleType: string) {
+function convertItemToFBRFormat(
+  item: InvoiceItemCalculated,
+  saleType: string,
+  scenarioId: string
+): FBRInvoicePayload["items"][number] {
   // Format number to appropriate decimal places
   // Quantities can have up to 3 decimal places (e.g., 0.125 kg)
   // Monetary values use 2 decimal places
   const formatNumberToString = (value: number, isQuantity: boolean = false): string => {
     return isQuantity ? value.toFixed(3) : value.toFixed(2);
   };
+
+  const SalesTaxCheck = ["SN008", "SN027"].includes(scenarioId);
+  const ExtraTaxCheck = ["SN028", "SN016"].includes(scenarioId);
+  const valueSalesExcludingST = item.total_amount - item.sales_tax || 0.0;
 
   return {
     hsCode: item.hs_code,
@@ -53,11 +61,11 @@ function convertItemToFBRFormat(item: InvoiceItemCalculated, saleType: string) {
     uoM: item.uom_code,
     quantity: parseFloat(formatNumberToString(item.quantity, true)), // Quantity supports 3 decimal places
     totalValues: parseFloat(formatNumberToString(item.total_amount)),
-    valueSalesExcludingST: parseFloat(formatNumberToString(item.total_amount - item.sales_tax || 0.0)),
-    fixedNotifiedValueOrRetailPrice: parseFloat(formatNumberToString(item.total_amount - item.sales_tax || 0.0)),
+    valueSalesExcludingST: valueSalesExcludingST,
+    fixedNotifiedValueOrRetailPrice: SalesTaxCheck ? valueSalesExcludingST : item.fixed_notified_value || 0.0,
     salesTaxApplicable: parseFloat(formatNumberToString(item.sales_tax)),
     salesTaxWithheldAtSource: 0.0, // Default value - should be calculated based on business rules
-    extraTax: 0.0, // Default value - should be calculated based on business rules
+    extraTax: ExtraTaxCheck ? "" : 0.0,
     furtherTax: 0.0, // Default value - should be calculated based on business rules
     sroScheduleNo: item.sroScheduleNo || (item.is_third_schedule ? "3" : ""), // Use form value or third schedule indicator
     fedPayable: 0.0, // Default value - should be calculated based on business rules
@@ -122,7 +130,7 @@ async function formatInvoiceDataForFBR(invoiceData: FBRInvoiceData, userId: stri
     buyerRegistrationType: invoiceData.buyerRegistrationType || "Registered",
     invoiceRefNo: invoiceRefNo,
     scenarioId: invoiceData.scenarioId,
-    items: invoiceData.items.map((item) => convertItemToFBRFormat(item, saleType)),
+    items: invoiceData.items.map((item) => convertItemToFBRFormat(item, saleType, invoiceData.scenarioId)),
   };
 }
 
