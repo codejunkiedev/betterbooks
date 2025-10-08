@@ -76,7 +76,7 @@ export interface FBRInvoicePayload {
     fixedNotifiedValueOrRetailPrice: number;
     salesTaxApplicable: number;
     salesTaxWithheldAtSource: number;
-    extraTax: number;
+    extraTax?: number;
     furtherTax: number;
     sroScheduleNo: string;
     fedPayable: number;
