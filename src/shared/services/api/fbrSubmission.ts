@@ -51,7 +51,7 @@ function convertItemToFBRFormat(
   };
 
   const SalesTaxCheck = ["SN008", "SN027"].includes(scenarioId);
-  const ExtraTaxCheck = ["SN028", "SN016"].includes(scenarioId);
+  const ExtraTaxCheck = ["SN028", "SN016", "SN005"].includes(scenarioId);
   const valueSalesExcludingST = item.total_amount - item.sales_tax || 0.0;
 
   return {
