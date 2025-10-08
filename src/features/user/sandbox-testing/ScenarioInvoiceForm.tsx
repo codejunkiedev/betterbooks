@@ -314,7 +314,7 @@ export default function ScenarioInvoiceForm() {
 
       const items: FBRInvoicePayload["items"] = formData.items.map((item) => {
         const SalesTaxCheck = ["SN008", "SN027"].includes(scenario?.id);
-        const ExtraTaxCheck = ["SN028", "SN016"].includes(scenario?.id);
+        const ExtraTaxCheck = ["SN028", "SN016", "SN005"].includes(scenario?.id);
         const valueSalesExcludingST = item.total_amount - item.sales_tax || 0.0;
         const taxRate = taxRates?.find((e) => e.value === item.tax_rate)?.description || `${item.tax_rate}%`;
         return {
