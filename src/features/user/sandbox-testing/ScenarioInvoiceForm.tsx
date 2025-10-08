@@ -328,7 +328,7 @@ export default function ScenarioInvoiceForm() {
           fixedNotifiedValueOrRetailPrice: SalesTaxCheck ? valueSalesExcludingST : item.fixed_notified_value || 0.0,
           salesTaxApplicable: item.sales_tax,
           salesTaxWithheldAtSource: 0.0,
-          ...(!ExtraTaxCheck && { extraTax: 0.0 }),
+          extraTax: ExtraTaxCheck ? "" : 0.0,
           furtherTax: 0.0,
           sroScheduleNo: item.sroScheduleNo || "",
           fedPayable: 0.0,
