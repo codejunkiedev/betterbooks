@@ -2,6 +2,7 @@ import { HttpClientApi } from "./http-client";
 import { generateFBRInvoiceNumber } from "../supabase/invoice";
 import { FBRInvoiceData, FBRInvoicePayload, InvoiceItemCalculated } from "@/shared/types/invoice";
 import { getScenarioById } from "@/shared/constants";
+import { calculateItemTotals, parseCompoundTaxRate } from "@/shared/utils/invoiceCalculations";
 
 // FBR API endpoints
 const FBR_ENDPOINTS = {
@@ -41,7 +42,8 @@ export interface FBRSubmissionResponse {
 function convertItemToFBRFormat(
   item: InvoiceItemCalculated,
   saleType: string,
-  scenarioId: string
+  scenarioId: string,
+  rateDescription?: string
 ): FBRInvoicePayload["items"][number] {
   // Format number to appropriate decimal places
   // Quantities can have up to 3 decimal places (e.g., 0.125 kg)
@@ -52,7 +54,33 @@ function convertItemToFBRFormat(
 
   const SalesTaxCheck = ["SN008", "SN027"].includes(scenarioId);
   const ExtraTaxCheck = ["SN028", "SN016", "SN005"].includes(scenarioId);
-  const valueSalesExcludingST = item.total_amount - item.sales_tax || 0.0;
+
+  let valueSalesExcludingST = item.value_sales_excluding_st || 0;
+  let salesTaxApplicable = item.sales_tax || 0;
+  let totalValues = item.total_amount || 0;
+
+  // Special handling for SN022 (Potassium Chlorate) with compound tax
+  if (scenarioId === "SN022" && rateDescription) {
+    const compoundRate = parseCompoundTaxRate(rateDescription);
+
+    if (compoundRate.isCompound) {
+      // Recalculate with compound tax
+      const calculations = calculateItemTotals(
+        item.quantity,
+        item.unit_price,
+        compoundRate.percentage,
+        "compound",
+        compoundRate.fixedAmount
+      );
+
+      valueSalesExcludingST = calculations.valueSalesExcludingST;
+      salesTaxApplicable = calculations.salesTaxApplicable;
+      totalValues = calculations.totalValues;
+    }
+  } else {
+    // Use existing calculation for non-compound scenarios
+    valueSalesExcludingST = item.total_amount - item.sales_tax || 0.0;
+  }
 
   return {
     hsCode: item.hs_code,
@@ -60,10 +88,10 @@ function convertItemToFBRFormat(
     rate: item.tax_rate.toString(),
     uoM: item.uom_code,
     quantity: parseFloat(formatNumberToString(item.quantity, true)), // Quantity supports 3 decimal places
-    totalValues: parseFloat(formatNumberToString(item.total_amount)),
+    totalValues: parseFloat(formatNumberToString(totalValues)),
     valueSalesExcludingST: valueSalesExcludingST,
     fixedNotifiedValueOrRetailPrice: SalesTaxCheck ? valueSalesExcludingST : item.fixed_notified_value || 0.0,
-    salesTaxApplicable: parseFloat(formatNumberToString(item.sales_tax)),
+    salesTaxApplicable: parseFloat(formatNumberToString(salesTaxApplicable)),
     salesTaxWithheldAtSource: 0.0, // Default value - should be calculated based on business rules
     extraTax: ExtraTaxCheck ? "" : 0.0,
     furtherTax: 0.0, // Default value - should be calculated based on business rules
@@ -130,7 +158,7 @@ async function formatInvoiceDataForFBR(invoiceData: FBRInvoiceData, userId: stri
     buyerRegistrationType: invoiceData.buyerRegistrationType || "Registered",
     invoiceRefNo: invoiceRefNo,
     scenarioId: invoiceData.scenarioId,
-    items: invoiceData.items.map((item) => convertItemToFBRFormat(item, saleType, invoiceData.scenarioId)),
+    items: invoiceData.items.map((item) => convertItemToFBRFormat(item, saleType, invoiceData.scenarioId, (item as any).rate_description)),
   };
 }
 

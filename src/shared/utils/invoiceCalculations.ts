@@ -36,7 +36,8 @@ export function calculateItemTotals(
   quantity: number,
   unitPrice: number,
   taxRate: number,
-  taxUnit: "percentage" | "rupee" | "fixed" = "percentage"
+  taxUnit: "percentage" | "rupee" | "fixed" | "compound" = "percentage",
+  fixedRatePerUnit: number = 0
 ): {
   valueSalesExcludingST: number;
   salesTaxApplicable: number;
@@ -57,6 +58,13 @@ export function calculateItemTotals(
     case "fixed":
       // For fixed rates (usually exempt), tax is typically 0 or a fixed amount
       salesTaxApplicable = taxRate;
+      break;
+    case "compound":
+      // For compound rates: percentage of value + fixed amount per unit
+      // e.g., "18% along with rupees 60 per kilogram"
+      const percentageTax = valueSalesExcludingST * (taxRate / 100);
+      const fixedTax = quantity * fixedRatePerUnit;
+      salesTaxApplicable = percentageTax + fixedTax;
       break;
     default:
       salesTaxApplicable = valueSalesExcludingST * (taxRate / 100);
@@ -144,7 +152,8 @@ export function formatTaxRate(rate: number): string {
  */
 export function calculateInvoiceItem(formData: InvoiceItemForm): InvoiceItemCalculated {
   const taxUnit = formData.tax_unit || "percentage";
-  const calculations = calculateItemTotals(formData.quantity, formData.unit_price, formData.tax_rate, taxUnit);
+  const fixedRatePerUnit = (formData as any).fixed_rate_per_unit || 0;
+  const calculations = calculateItemTotals(formData.quantity, formData.unit_price, formData.tax_rate, taxUnit, fixedRatePerUnit);
 
   const result: InvoiceItemCalculated = {
     id: formData.id || `item_${Date.now()}`,
@@ -271,7 +280,7 @@ export function formatPercentage(rate: number): string {
 /**
  * Format tax rate for display based on unit type
  */
-export function formatTaxRateDisplay(rate: number, unit: "percentage" | "rupee" | "fixed"): string {
+export function formatTaxRateDisplay(rate: number, unit: "percentage" | "rupee" | "fixed" | "compound", fixedRatePerUnit?: number): string {
   switch (unit) {
     case "percentage":
       return `${rate.toFixed(2)}%`;
@@ -279,9 +288,65 @@ export function formatTaxRateDisplay(rate: number, unit: "percentage" | "rupee" 
       return `Rs. ${rate.toFixed(2)}`;
     case "fixed":
       return rate === 0 ? "Exempt" : `Rs. ${rate.toFixed(2)}`;
+    case "compound":
+      return fixedRatePerUnit
+        ? `${rate.toFixed(2)}% + Rs. ${fixedRatePerUnit.toFixed(2)}/unit`
+        : `${rate.toFixed(2)}%`;
     default:
       return `${rate.toFixed(2)}%`;
   }
+}
+
+/**
+ * Parse compound tax rate from rate description
+ * e.g., "18% along with rupees 60 per kilogram" returns { percentage: 18, fixedAmount: 60 }
+ */
+export function parseCompoundTaxRate(rateDesc: string): {
+  percentage: number;
+  fixedAmount: number;
+  isCompound: boolean;
+} {
+  // Check for compound rate pattern: "X% along with rupees Y per [unit]"
+  const compoundPattern = /(\d+(?:\.\d+)?)%\s*along\s*with\s*rupees?\s*(\d+(?:\.\d+)?)/i;
+  const match = rateDesc.match(compoundPattern);
+
+  if (match) {
+    return {
+      percentage: parseFloat(match[1]),
+      fixedAmount: parseFloat(match[2]),
+      isCompound: true
+    };
+  }
+
+  // Not a compound rate, check for simple percentage
+  const percentagePattern = /(\d+(?:\.\d+)?)%/;
+  const percentMatch = rateDesc.match(percentagePattern);
+
+  if (percentMatch) {
+    return {
+      percentage: parseFloat(percentMatch[1]),
+      fixedAmount: 0,
+      isCompound: false
+    };
+  }
+
+  // Check for fixed rupee amount only
+  const rupeePattern = /rupees?\s*(\d+(?:\.\d+)?)/i;
+  const rupeeMatch = rateDesc.match(rupeePattern);
+
+  if (rupeeMatch) {
+    return {
+      percentage: 0,
+      fixedAmount: parseFloat(rupeeMatch[1]),
+      isCompound: false
+    };
+  }
+
+  return {
+    percentage: 0,
+    fixedAmount: 0,
+    isCompound: false
+  };
 }
 
 /**
