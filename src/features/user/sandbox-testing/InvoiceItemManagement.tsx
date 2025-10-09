@@ -546,7 +546,16 @@ export function InvoiceItemManagement({
   const handleSaveItem = () => {
     if (!validateForm()) return;
 
-    const calculatedItem = calculateInvoiceItem(formData);
+    // Special handling for SN022 (Potassium Chlorate) - apply compound tax
+    let modifiedFormData = { ...formData };
+    if (scenario?.id === "SN022") {
+      // Potassium Chlorate has compound tax: 18% + Rs. 60 per kg
+      modifiedFormData.tax_unit = "compound" as any;
+      modifiedFormData.fixed_rate_per_unit = 60; // Rs. 60 per kilogram
+      modifiedFormData.tax_rate = 18; // 18% percentage component
+    }
+
+    const calculatedItem = calculateInvoiceItem(modifiedFormData);
 
     if (editingItemIndex !== null) {
       const updatedItems = [...items];
@@ -738,7 +747,10 @@ export function InvoiceItemManagement({
                       <TableCell className="text-right font-mono">{formatCurrency(item.unit_price || 0)}</TableCell>
                       <TableCell className="font-mono">{getUomDescription(item.uom_code)}</TableCell>
                       <TableCell className="text-right">
-                        {formatTaxRateDisplay(item.tax_rate || 0, item.tax_unit || "percentage")}
+                        {scenario?.id === "SN022"
+                          ? formatTaxRateDisplay(18, "compound", 60) // Potassium Chlorate compound rate
+                          : formatTaxRateDisplay(item.tax_rate || 0, item.tax_unit || "percentage", item.fixed_rate_per_unit)
+                        }
                       </TableCell>
                       <TableCell className="text-right font-mono font-semibold">
                         {formatCurrency(item.total_amount || 0)}

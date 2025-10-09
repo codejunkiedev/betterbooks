@@ -249,7 +249,9 @@ export interface InvoiceItemForm {
   unit_price: number;
   uom_code: string;
   tax_rate: number;
-  tax_unit?: "percentage" | "rupee" | "fixed";
+  tax_unit?: "percentage" | "rupee" | "fixed" | "compound";
+  fixed_rate_per_unit?: number; // For compound tax (e.g., Rs. 60 per kg)
+  rate_description?: string; // FBR rate description (e.g., "18% along with rupees 60 per kilogram")
   invoice_note?: string;
   is_third_schedule: boolean;
   mrp_including_tax?: number;
@@ -272,6 +274,7 @@ export interface InvoiceItemCalculated extends InvoiceItemForm {
   sroItemSerialNo?: string;
   created_at?: string;
   updated_at?: string;
+  rate_description?: string; // FBR rate description for compound rates
 }
 
 export interface InvoiceRunningTotals {
