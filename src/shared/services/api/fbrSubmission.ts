@@ -60,7 +60,25 @@ function convertItemToFBRFormat(
   let totalValues = item.total_amount || 0;
 
   // Special handling for SN022 (Potassium Chlorate) with compound tax
-  if (scenarioId === "SN022" && rateDescription) {
+  if (scenarioId === "SN022") {
+    // Potassium Chlorate has a fixed compound rate: "18% along with rupees 60 per kilogram"
+    const percentageRate = 18; // 18%
+    const fixedRatePerKg = 60; // Rs. 60 per kilogram
+
+    // Recalculate with compound tax
+    const calculations = calculateItemTotals(
+      item.quantity,
+      item.unit_price,
+      percentageRate,
+      "compound",
+      fixedRatePerKg
+    );
+
+    valueSalesExcludingST = calculations.valueSalesExcludingST;
+    salesTaxApplicable = calculations.salesTaxApplicable;
+    totalValues = calculations.totalValues;
+  } else if (scenarioId === "SN022" && rateDescription) {
+    // Fallback: try to parse from rate description if provided
     const compoundRate = parseCompoundTaxRate(rateDescription);
 
     if (compoundRate.isCompound) {
@@ -76,6 +94,9 @@ function convertItemToFBRFormat(
       valueSalesExcludingST = calculations.valueSalesExcludingST;
       salesTaxApplicable = calculations.salesTaxApplicable;
       totalValues = calculations.totalValues;
+    } else {
+      // Use existing calculation
+      valueSalesExcludingST = item.total_amount - item.sales_tax || 0.0;
     }
   } else {
     // Use existing calculation for non-compound scenarios
