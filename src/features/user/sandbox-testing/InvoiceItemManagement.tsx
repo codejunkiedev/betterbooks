@@ -54,6 +54,7 @@ interface InvoiceItemManagementProps {
   onRunningTotalsChange: (totals: InvoiceRunningTotals) => void;
   scenario?: TaxScenario | null;
   sellerProvinceId?: number | null;
+  environment?: "sandbox" | "production";
   className?: string;
 }
 
@@ -63,6 +64,7 @@ export function InvoiceItemManagement({
   onRunningTotalsChange,
   scenario,
   sellerProvinceId,
+  environment = "sandbox",
   className = "",
 }: InvoiceItemManagementProps) {
   const { user } = useAppSelector((state) => state.user);
@@ -117,7 +119,7 @@ export function InvoiceItemManagement({
 
     setIsLoadingTaxRates(true);
     try {
-      const rates = await fetchTaxRates(scenario.saleTypeId, sellerProvinceId, user.id, "sandbox");
+      const rates = await fetchTaxRates(scenario.saleTypeId, sellerProvinceId, user.id, environment);
       setAvailableTaxRates(rates);
       dispatch(setTaxRates(rates));
     } catch (error) {
@@ -144,7 +146,7 @@ export function InvoiceItemManagement({
     } finally {
       setIsLoadingTaxRates(false);
     }
-  }, [dispatch, scenario?.saleTypeId, sellerProvinceId, toast, user?.id]);
+  }, [dispatch, scenario?.saleTypeId, sellerProvinceId, toast, user?.id, environment]);
 
   // Fetch SRO schedule numbers based on selected tax rate
   const fetchSroScheduleNumbers = useCallback(
@@ -156,7 +158,7 @@ export function InvoiceItemManagement({
       setIsLoadingSroSchedules(true);
       try {
         const fbrConfig = await getFbrConfigStatus(user.id);
-        const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
+        const apiKey = environment === "sandbox" ? fbrConfig.sandbox_api_key : fbrConfig.production_api_key;
 
         if (!apiKey) {
           toast({
@@ -191,7 +193,7 @@ export function InvoiceItemManagement({
         setIsLoadingSroSchedules(false);
       }
     },
-    [user?.id, sellerProvinceId, toast]
+    [user?.id, sellerProvinceId, toast, environment]
   );
 
   // Fetch SRO items based on selected SRO schedule
@@ -204,7 +206,7 @@ export function InvoiceItemManagement({
       setIsLoadingSroItems(true);
       try {
         const fbrConfig = await getFbrConfigStatus(user.id);
-        const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
+        const apiKey = environment === "sandbox" ? fbrConfig.sandbox_api_key : fbrConfig.production_api_key;
 
         if (!apiKey) {
           toast({
@@ -235,7 +237,7 @@ export function InvoiceItemManagement({
         setIsLoadingSroItems(false);
       }
     },
-    [user?.id, toast]
+    [user?.id, toast, environment]
   );
 
   // Fetch tax rates when scenario changes
@@ -254,7 +256,7 @@ export function InvoiceItemManagement({
 
       try {
         const fbrConfig = await getFbrConfigStatus(user?.id || "");
-        const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
+        const apiKey = environment === "sandbox" ? fbrConfig.sandbox_api_key : fbrConfig.production_api_key;
 
         if (!apiKey) {
           setFilteredUomOptions(uomOptions);
@@ -273,7 +275,7 @@ export function InvoiceItemManagement({
         setFilteredUomOptions(uomOptions);
       }
     },
-    [uomOptions, user?.id]
+    [uomOptions, user?.id, environment]
   );
 
   useEffect(() => {
@@ -297,7 +299,7 @@ export function InvoiceItemManagement({
     try {
       setIsCaching(true);
       const fbrConfig = await getFbrConfigStatus(user.id);
-      const apiKey = fbrConfig.sandbox_api_key || fbrConfig.production_api_key;
+      const apiKey = environment === "sandbox" ? fbrConfig.sandbox_api_key : fbrConfig.production_api_key;
 
       if (!apiKey) {
         toast({
@@ -404,7 +406,7 @@ export function InvoiceItemManagement({
       setIsCaching(false);
       setHasLoadedData(true);
     }
-  }, [user?.id, toast, allHSCodes.length, uomOptions, isCaching]);
+  }, [user?.id, toast, allHSCodes.length, uomOptions, isCaching, environment]);
 
   useEffect(() => {
     if (!hasLoadedData && user?.id) {

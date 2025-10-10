@@ -29,7 +29,11 @@ import { submitInvoiceToFBR } from "@/shared/services/api/fbrSubmission";
 import { getFbrConfigStatus } from "@/shared/services/supabase/fbr";
 import { getScenarioById, TaxScenario } from "@/shared/constants";
 
-export default function ScenarioInvoiceForm() {
+type ScenarioInvoiceFormProps = {
+  environment?: "sandbox" | "production";
+};
+
+export default function ScenarioInvoiceForm({ environment = "sandbox" }: ScenarioInvoiceFormProps) {
   const { scenarioId } = useParams<{ scenarioId: string }>();
   const { user } = useSelector((s: RootState) => s.user);
   const { taxRates } = useSelector((s: RootState) => s.taxInfo);
@@ -44,7 +48,7 @@ export default function ScenarioInvoiceForm() {
     validateInvoice: validateInvoiceData,
   } = useInvoiceValidation({
     includeFBRValidation: true,
-    environment: "sandbox",
+    environment,
   });
 
   const [scenario, setScenario] = useState<TaxScenario | null>(null);
@@ -388,10 +392,12 @@ export default function ScenarioInvoiceForm() {
       // Get user's FBR API key
       const config = await getFbrConfigStatus(user.id);
 
-      if (!config.sandbox_api_key) {
+      const apiKey = environment === "sandbox" ? config.sandbox_api_key : config.production_api_key;
+
+      if (!apiKey) {
         return {
           success: false,
-          error: "FBR API Key Required - Please configure your FBR sandbox API key before submitting invoices.",
+          error: `FBR API Key Required - Please configure your FBR ${environment} API key before submitting invoices.`,
         };
       }
 
@@ -406,8 +412,8 @@ export default function ScenarioInvoiceForm() {
       const response = await submitInvoiceToFBR({
         userId: user.id,
         invoiceData: updatedFormData,
-        environment: "sandbox",
-        apiKey: config.sandbox_api_key,
+        environment,
+        apiKey: apiKey,
         maxRetries: 3,
         timeout: 90000,
       });
@@ -731,6 +737,7 @@ export default function ScenarioInvoiceForm() {
                 onRunningTotalsChange={() => {}}
                 scenario={scenario}
                 sellerProvinceId={sellerProvinceCode}
+                environment={environment}
               />
             </div>
 
@@ -888,7 +895,7 @@ export default function ScenarioInvoiceForm() {
         isOpen={showSubmissionModal}
         onClose={() => setShowSubmissionModal(false)}
         invoiceData={formData}
-        environment="sandbox"
+        environment={environment}
         userId={user?.id || ""}
         onSubmit={handleSubmitToFBRWrapper}
         maxRetries={3}
