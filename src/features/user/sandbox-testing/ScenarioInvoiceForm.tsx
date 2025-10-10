@@ -120,7 +120,7 @@ export default function ScenarioInvoiceForm({ environment = "sandbox" }: Scenari
           description: "The requested scenario could not be found.",
           variant: "destructive",
         });
-        navigate("/fbr/sandbox-testing");
+        navigate(environment === "sandbox" ? "/fbr/sandbox-testing" : "/fbr/live-invoices");
       }
     } catch (error) {
       console.error("Error loading scenario:", error);
@@ -133,7 +133,7 @@ export default function ScenarioInvoiceForm({ environment = "sandbox" }: Scenari
     } finally {
       setLoading(false);
     }
-  }, [scenarioId, user?.id, toast, navigate]);
+  }, [scenarioId, user?.id, toast, navigate, environment]);
 
   // Load scenario and provinces on component mount
   useEffect(() => {
@@ -430,7 +430,7 @@ export default function ScenarioInvoiceForm({ environment = "sandbox" }: Scenari
           title: "Invoice Submitted",
           description: "Invoice submitted successfully.",
         });
-        navigate("/fbr/sandbox-testing", { state: { refresh: true } });
+        navigate(environment === "sandbox" ? "/fbr/sandbox-testing" : "/fbr/live-invoices", { state: { refresh: true } });
       }
 
       return response;
@@ -860,7 +860,7 @@ export default function ScenarioInvoiceForm({ environment = "sandbox" }: Scenari
                 <div className="flex justify-center sm:justify-start">
                   <Button
                     variant="outline"
-                    onClick={() => navigate("/fbr/sandbox-testing")}
+                    onClick={() => navigate(environment === "sandbox" ? "/fbr/sandbox-testing" : "/fbr/live-invoices")}
                     className="px-6 py-2 h-10 w-full sm:w-auto"
                   >
                     Cancel
