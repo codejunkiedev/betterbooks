@@ -7,10 +7,11 @@ import type { InvoiceValidationResponse } from "@/shared/services/api/invoiceVal
 import { ValidationResult } from "@/shared/types/fbrValidation";
 import { ValidationSeverity } from "@/shared/constants/fbr";
 import type { FBRInvoicePayload } from "@/shared/types/invoice";
+import { FbrEnvironment } from "../types/fbr";
 
 interface UseInvoiceValidationOptions {
   includeFBRValidation?: boolean;
-  environment?: "sandbox" | "production";
+  environment?: FbrEnvironment;
   autoValidate?: boolean;
 }
 
@@ -37,7 +38,7 @@ interface UseInvoiceValidationReturn {
 }
 
 export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}): UseInvoiceValidationReturn {
-  const { includeFBRValidation = true } = options;
+  const { includeFBRValidation = true, environment = "sandbox" } = options;
 
   const { user } = useSelector((s: RootState) => s.user);
 
@@ -57,6 +58,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
         const result = await validateInvoice(invoiceData, {
           includeFBRValidation,
           userId: user.id,
+          environment,
         });
 
         setValidationResult(result);
@@ -104,7 +106,7 @@ export function useInvoiceValidation(options: UseInvoiceValidationOptions = {}):
         setIsValidating(false);
       }
     },
-    [user?.id, includeFBRValidation]
+    [user?.id, includeFBRValidation, environment]
   );
 
   const clearValidation = useCallback(() => {

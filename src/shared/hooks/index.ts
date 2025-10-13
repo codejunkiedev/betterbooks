@@ -4,6 +4,7 @@ export { useAuth } from './useAuth';
 export { useToast } from './useToast';
 export { useAccountants } from './useAccountants';
 export { useFbrProfile } from './useFbrProfile';
+export { useFbrConfig } from './useFbrConfig';
 export { useModules } from './useModules';
 export { useNotifications } from './useNotifications';
 export { useInvoiceItems } from './useInvoiceItems';

@@ -9,6 +9,7 @@ import type {
   SroScheduleParams,
   SroItemResponse,
   SroItemParams,
+  FbrEnvironment,
 } from "@/shared/types/fbr";
 import type { HSCode, HSCodeSearchResult, UOMCode } from "@/shared/types/invoice";
 import { FBR_SCENARIO_STATUS } from "@/shared/constants/fbr";
@@ -50,7 +51,7 @@ const getFbrErrorMessage = (status: number): string => {
 
 export interface TestConnectionRequest {
   apiKey: string;
-  environment: "sandbox" | "production";
+  environment: FbrEnvironment;
   userId?: string | undefined;
 }
 

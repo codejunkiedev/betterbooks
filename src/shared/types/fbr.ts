@@ -267,3 +267,5 @@ export interface SroItemParams {
   date: string; // Date in YYYY-MM-DD format
   sroId: number; // SRO identifier
 }
+
+export type FbrEnvironment = "sandbox" | "production";

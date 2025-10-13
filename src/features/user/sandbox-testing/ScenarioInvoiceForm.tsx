@@ -28,8 +28,13 @@ import { InvoicePreview } from "./InvoicePreview";
 import { submitInvoiceToFBR } from "@/shared/services/api/fbrSubmission";
 import { getFbrConfigStatus } from "@/shared/services/supabase/fbr";
 import { getScenarioById, TaxScenario } from "@/shared/constants";
+import { FbrEnvironment } from "@/shared/types/fbr";
 
-export default function ScenarioInvoiceForm() {
+type ScenarioInvoiceFormProps = {
+  environment?: FbrEnvironment;
+};
+
+export default function ScenarioInvoiceForm({ environment = "sandbox" }: ScenarioInvoiceFormProps) {
   const { scenarioId } = useParams<{ scenarioId: string }>();
   const { user } = useSelector((s: RootState) => s.user);
   const { taxRates } = useSelector((s: RootState) => s.taxInfo);
@@ -44,8 +49,10 @@ export default function ScenarioInvoiceForm() {
     validateInvoice: validateInvoiceData,
   } = useInvoiceValidation({
     includeFBRValidation: true,
-    environment: "sandbox",
+    environment,
   });
+
+  const isSandbox = environment === "sandbox" || false;
 
   const [scenario, setScenario] = useState<TaxScenario | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,7 +123,7 @@ export default function ScenarioInvoiceForm() {
           description: "The requested scenario could not be found.",
           variant: "destructive",
         });
-        navigate("/fbr/sandbox-testing");
+        navigate(isSandbox ? "/fbr/sandbox-testing" : "/fbr/live-invoices");
       }
     } catch (error) {
       console.error("Error loading scenario:", error);
@@ -125,11 +132,11 @@ export default function ScenarioInvoiceForm() {
         description: "Failed to load scenario details.",
         variant: "destructive",
       });
-      navigate("/fbr/sandbox-testing");
+      navigate(isSandbox ? "/fbr/sandbox-testing" : "/fbr/live-invoices");
     } finally {
       setLoading(false);
     }
-  }, [scenarioId, user?.id, toast, navigate]);
+  }, [scenarioId, user?.id, toast, navigate, isSandbox]);
 
   // Load scenario and provinces on component mount
   useEffect(() => {
@@ -387,11 +394,14 @@ export default function ScenarioInvoiceForm() {
     try {
       // Get user's FBR API key
       const config = await getFbrConfigStatus(user.id);
+      const apiKey = isSandbox ? config.sandbox_api_key : config.production_api_key;
 
-      if (!config.sandbox_api_key) {
+      if (!apiKey) {
         return {
           success: false,
-          error: "FBR API Key Required - Please configure your FBR sandbox API key before submitting invoices.",
+          error: `FBR API Key Required - Please configure your FBR ${
+            isSandbox ? "sandbox" : "production"
+          } API key before submitting invoices.`,
         };
       }
 
@@ -406,8 +416,8 @@ export default function ScenarioInvoiceForm() {
       const response = await submitInvoiceToFBR({
         userId: user.id,
         invoiceData: updatedFormData,
-        environment: "sandbox",
-        apiKey: config.sandbox_api_key,
+        environment,
+        apiKey: apiKey,
         maxRetries: 3,
         timeout: 90000,
       });
@@ -424,7 +434,7 @@ export default function ScenarioInvoiceForm() {
           title: "Invoice Submitted",
           description: "Invoice submitted successfully.",
         });
-        navigate("/fbr/sandbox-testing", { state: { refresh: true } });
+        navigate(isSandbox ? "/fbr/sandbox-testing" : "/fbr/live-invoices", { state: { refresh: true } });
       }
 
       return response;
@@ -731,6 +741,7 @@ export default function ScenarioInvoiceForm() {
                 onRunningTotalsChange={() => {}}
                 scenario={scenario}
                 sellerProvinceId={sellerProvinceCode}
+                environment={environment}
               />
             </div>
 
@@ -853,7 +864,7 @@ export default function ScenarioInvoiceForm() {
                 <div className="flex justify-center sm:justify-start">
                   <Button
                     variant="outline"
-                    onClick={() => navigate("/fbr/sandbox-testing")}
+                    onClick={() => navigate(isSandbox ? "/fbr/sandbox-testing" : "/fbr/live-invoices")}
                     className="px-6 py-2 h-10 w-full sm:w-auto"
                   >
                     Cancel
@@ -888,7 +899,7 @@ export default function ScenarioInvoiceForm() {
         isOpen={showSubmissionModal}
         onClose={() => setShowSubmissionModal(false)}
         invoiceData={formData}
-        environment="sandbox"
+        environment={environment}
         userId={user?.id || ""}
         onSubmit={handleSubmitToFBRWrapper}
         maxRetries={3}
