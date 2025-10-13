@@ -11,12 +11,13 @@ import { generateFBRInvoiceNumberForPreview } from "@/shared/services/supabase/i
 import { FBRErrorHandler } from "@/shared/utils/fbrErrorHandler";
 import { ValidationResult } from "@/shared/types/fbrValidation";
 import { calculateRunningTotalsForCalculatedItems } from "@/shared/utils/invoiceCalculations";
+import { FbrEnvironment } from "@/shared/types/fbr";
 
 export interface FBRSubmissionModalProps {
   isOpen: boolean;
   onClose: () => void;
   invoiceData: InvoiceFormData;
-  environment: "sandbox" | "production";
+  environment: FbrEnvironment;
   userId: string;
   onSubmit: () => Promise<{
     success: boolean;

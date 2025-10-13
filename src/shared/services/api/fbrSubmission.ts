@@ -2,6 +2,7 @@ import { HttpClientApi } from "./http-client";
 import { generateFBRInvoiceNumber } from "../supabase/invoice";
 import { FBRInvoiceData, FBRInvoicePayload, InvoiceItemCalculated } from "@/shared/types/invoice";
 import { getScenarioById } from "@/shared/constants";
+import { FbrEnvironment } from "@/shared/types/fbr";
 
 // FBR API endpoints
 const FBR_ENDPOINTS = {
@@ -15,7 +16,7 @@ const httpClient = new HttpClientApi();
 export interface FBRSubmissionRequest {
   userId: string;
   invoiceData: FBRInvoiceData;
-  environment: "sandbox" | "production";
+  environment: FbrEnvironment;
   apiKey: string;
   maxRetries?: number;
   timeout?: number;

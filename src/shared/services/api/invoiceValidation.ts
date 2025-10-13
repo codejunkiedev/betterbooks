@@ -4,6 +4,7 @@ import { ValidationSeverity } from "@/shared/constants/fbr";
 import { HttpClientApi } from "./http-client";
 import { getFbrConfigStatus } from "../supabase/fbr";
 import { FBRErrorHandler } from "@/shared/utils/fbrErrorHandler";
+import { FbrEnvironment } from "@/shared/types/fbr";
 
 export type { InvoiceValidationResponse } from "@/shared/types/fbrValidation";
 
@@ -265,7 +266,7 @@ export async function validateInvoice(
   options: {
     includeFBRValidation?: boolean;
     userId?: string;
-    environment?: "sandbox" | "production";
+    environment?: FbrEnvironment;
   } = {}
 ): Promise<InvoiceValidationResponse> {
   const { includeFBRValidation = true, environment = "sandbox" } = options;

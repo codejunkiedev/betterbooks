@@ -48,165 +48,197 @@ import ModuleGuard from "@/shared/components/ModuleGuard";
 import { MODULES } from "@/shared/constants/modules";
 
 export const AppRoutes = () => {
-    return useRoutes([
-        // Public Routes
-        { path: "/portal", element: <LoginPortal /> },
-        { path: "/signup", element: <AuthGuard><SignUp /></AuthGuard> },
-        { path: "/login", element: <AuthGuard><UserLogin /></AuthGuard> },
-        { path: "/accountant/login", element: <AuthGuard><AccountantLogin /></AuthGuard> },
-        { path: "/admin/login", element: <AuthGuard><AdminLogin /></AuthGuard> },
-        { path: "/forgot-password", element: <ForgotPassword /> },
-        { path: "/reset-password", element: <ResetPassword /> },
-        { path: "/unauthorized", element: <Unauthorized /> },
+  return useRoutes([
+    // Public Routes
+    { path: "/portal", element: <LoginPortal /> },
+    {
+      path: "/signup",
+      element: (
+        <AuthGuard>
+          <SignUp />
+        </AuthGuard>
+      ),
+    },
+    {
+      path: "/login",
+      element: (
+        <AuthGuard>
+          <UserLogin />
+        </AuthGuard>
+      ),
+    },
+    {
+      path: "/accountant/login",
+      element: (
+        <AuthGuard>
+          <AccountantLogin />
+        </AuthGuard>
+      ),
+    },
+    {
+      path: "/admin/login",
+      element: (
+        <AuthGuard>
+          <AdminLogin />
+        </AuthGuard>
+      ),
+    },
+    { path: "/forgot-password", element: <ForgotPassword /> },
+    { path: "/reset-password", element: <ResetPassword /> },
+    { path: "/unauthorized", element: <Unauthorized /> },
 
-        // User Routes (Protected)
+    // User Routes (Protected)
+    {
+      path: "/",
+      element: (
+        <UserGuard>
+          <UserLayout />
+        </UserGuard>
+      ),
+      children: [
+        { path: "", element: <UserDashboard /> },
         {
-            path: "/",
-            element: (
-                <UserGuard>
-                    <UserLayout />
-                </UserGuard>
-            ),
-            children: [
-                { path: "", element: <UserDashboard /> },
-                {
-                    path: "upload", element: (
-                        <ModuleGuard module={MODULES.ACCOUNTING}>
-                            <UploadDocuments />
-                        </ModuleGuard>
-                    )
-                },
-                {
-                    path: "documents", element: (
-                        <ModuleGuard module={MODULES.ACCOUNTING}>
-                            <DocumentsList />
-                        </ModuleGuard>
-                    )
-                },
-                {
-                    path: "journal", element: (
-                        <ModuleGuard module={MODULES.ACCOUNTING} requiredTier="Basic">
-                            <Journal />
-                        </ModuleGuard>
-                    )
-                },
-                {
-                    path: "reports", element: (
-                        <ModuleGuard module={MODULES.ACCOUNTING} requiredTier="Advanced">
-                            <Reports />
-                        </ModuleGuard>
-                    )
-                },
-                {
-                    path: "invoices",
-                    element: (
-                        <ModuleGuard module={MODULES.TAX_FILING}>
-                            <Invoices />
-                        </ModuleGuard>
-                    )
-                },
-                { path: "messages", element: <Messages /> },
-                { path: "profile", element: <Profile /> },
-                {
-                    path: "fbr/api-config",
-                    element: (
-                        <ModuleGuard module={MODULES.TAX_FILING}>
-                            <FbrApiConfig />
-                        </ModuleGuard>
-                    )
-                },
-                {
-                    path: "fbr/sandbox-testing",
-                    element: (
-                        <ModuleGuard module={MODULES.TAX_FILING}>
-                            <SandboxTesting isSandbox={true} />
-                        </ModuleGuard>
-                    )
-                },
-                {
-                    path: "fbr/live-invoices",
-                    element: (
-                        <ModuleGuard module={MODULES.TAX_FILING}>
-                            <SandboxTesting isSandbox={false} />
-                        </ModuleGuard>
-                    )
-                },
-                {
-                    path: "fbr/sandbox-testing/scenario/:scenarioId",
-                    element: (
-                        <ModuleGuard module={MODULES.TAX_FILING}>
-                            <ScenarioInvoiceForm environment="sandbox" />
-                        </ModuleGuard>
-                    )
-                },
-                {
-                    path: "fbr/live-invoices/scenario/:scenarioId",
-                    element: (
-                        <ModuleGuard module={MODULES.TAX_FILING}>
-                            <ScenarioInvoiceForm environment="production" />
-                        </ModuleGuard>
-                    )
-                },
-            ],
+          path: "upload",
+          element: (
+            <ModuleGuard module={MODULES.ACCOUNTING}>
+              <UploadDocuments />
+            </ModuleGuard>
+          ),
         },
-
-        // Onboarding Route (Protected by UserGuard)
         {
-            path: "/onboarding",
-            element: (
-                <UserGuard>
-                    <Onboarding />
-                </UserGuard>
-            ),
+          path: "documents",
+          element: (
+            <ModuleGuard module={MODULES.ACCOUNTING}>
+              <DocumentsList />
+            </ModuleGuard>
+          ),
         },
-
-        // Blocked Route (Protected by UserGuard)
         {
-            path: "/blocked",
-            element: (
-                <UserGuard>
-                    <Blocked />
-                </UserGuard>
-            ),
+          path: "journal",
+          element: (
+            <ModuleGuard module={MODULES.ACCOUNTING} requiredTier="Basic">
+              <Journal />
+            </ModuleGuard>
+          ),
         },
-
-        // Accountant Routes (Protected)
         {
-            path: "/accountant",
-            element: (
-                <AccountantGuard>
-                    <AccountantLayout />
-                </AccountantGuard>
-            ),
-            children: [
-                { path: "", element: <AccountantDashboard /> },
-                { path: "clients", element: <AccountantClients /> },
-                { path: "bank-statements", element: <AccountantBankStatements /> },
-                { path: "invoices-documents", element: <AccountantInvoicesDocuments /> },
-                { path: "tax-documents", element: <AccountantTaxDocuments /> },
-                { path: "activity-logs", element: <AccountantActivityLogs /> },
-            ],
+          path: "reports",
+          element: (
+            <ModuleGuard module={MODULES.ACCOUNTING} requiredTier="Advanced">
+              <Reports />
+            </ModuleGuard>
+          ),
         },
-
-        // Admin Routes (Protected)
         {
-            path: "/admin",
-            element: (
-                <AdminGuard>
-                    <AdminLayout />
-                </AdminGuard>
-            ),
-            children: [
-                { path: "", element: <AdminDashboard /> },
-                { path: "users", element: <AdminUserManagement /> },
-                { path: "users/:userId", element: <UserDetail /> },
-                { path: "roles", element: <RoleManagement /> },
-                { path: "accountants", element: <AccountantsManagement /> },
-                { path: "accountants/:accountantId", element: <AccountantDetail /> },
-            ],
+          path: "invoices",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <Invoices />
+            </ModuleGuard>
+          ),
         },
+        { path: "messages", element: <Messages /> },
+        { path: "profile", element: <Profile /> },
+        {
+          path: "fbr/api-config",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <FbrApiConfig />
+            </ModuleGuard>
+          ),
+        },
+        {
+          path: "fbr/sandbox-testing",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <SandboxTesting environment="sandbox" />
+            </ModuleGuard>
+          ),
+        },
+        {
+          path: "fbr/live-invoices",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <SandboxTesting environment="production" />
+            </ModuleGuard>
+          ),
+        },
+        {
+          path: "fbr/sandbox-testing/scenario/:scenarioId",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <ScenarioInvoiceForm environment="sandbox" />
+            </ModuleGuard>
+          ),
+        },
+        {
+          path: "fbr/live-invoices/scenario/:scenarioId",
+          element: (
+            <ModuleGuard module={MODULES.TAX_FILING}>
+              <ScenarioInvoiceForm environment="production" />
+            </ModuleGuard>
+          ),
+        },
+      ],
+    },
 
-        // Catch-all - Simple redirect to dashboard
-        { path: "*", element: <Navigate to="/" replace /> },
-    ]);
+    // Onboarding Route (Protected by UserGuard)
+    {
+      path: "/onboarding",
+      element: (
+        <UserGuard>
+          <Onboarding />
+        </UserGuard>
+      ),
+    },
+
+    // Blocked Route (Protected by UserGuard)
+    {
+      path: "/blocked",
+      element: (
+        <UserGuard>
+          <Blocked />
+        </UserGuard>
+      ),
+    },
+
+    // Accountant Routes (Protected)
+    {
+      path: "/accountant",
+      element: (
+        <AccountantGuard>
+          <AccountantLayout />
+        </AccountantGuard>
+      ),
+      children: [
+        { path: "", element: <AccountantDashboard /> },
+        { path: "clients", element: <AccountantClients /> },
+        { path: "bank-statements", element: <AccountantBankStatements /> },
+        { path: "invoices-documents", element: <AccountantInvoicesDocuments /> },
+        { path: "tax-documents", element: <AccountantTaxDocuments /> },
+        { path: "activity-logs", element: <AccountantActivityLogs /> },
+      ],
+    },
+
+    // Admin Routes (Protected)
+    {
+      path: "/admin",
+      element: (
+        <AdminGuard>
+          <AdminLayout />
+        </AdminGuard>
+      ),
+      children: [
+        { path: "", element: <AdminDashboard /> },
+        { path: "users", element: <AdminUserManagement /> },
+        { path: "users/:userId", element: <UserDetail /> },
+        { path: "roles", element: <RoleManagement /> },
+        { path: "accountants", element: <AccountantsManagement /> },
+        { path: "accountants/:accountantId", element: <AccountantDetail /> },
+      ],
+    },
+
+    // Catch-all - Simple redirect to dashboard
+    { path: "*", element: <Navigate to="/" replace /> },
+  ]);
 };

@@ -46,7 +46,7 @@ import {
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/shared/services/store";
 import { setTaxRates } from "@/shared/services/store/taxInfoSlice";
-import type { SroScheduleResponse, SroItemResponse } from "@/shared/types/fbr";
+import type { SroScheduleResponse, SroItemResponse, FbrEnvironment } from "@/shared/types/fbr";
 
 interface InvoiceItemManagementProps {
   items: InvoiceItemCalculated[];
@@ -54,7 +54,7 @@ interface InvoiceItemManagementProps {
   onRunningTotalsChange: (totals: InvoiceRunningTotals) => void;
   scenario?: TaxScenario | null;
   sellerProvinceId?: number | null;
-  environment?: "sandbox" | "production";
+  environment?: FbrEnvironment;
   className?: string;
 }
 
