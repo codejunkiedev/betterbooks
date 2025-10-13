@@ -3,6 +3,7 @@ import { generateFBRInvoiceNumber } from "../supabase/invoice";
 import { FBRInvoiceData, FBRInvoicePayload, InvoiceItemCalculated } from "@/shared/types/invoice";
 import { getScenarioById } from "@/shared/constants";
 import { calculateItemTotals, parseCompoundTaxRate } from "@/shared/utils/invoiceCalculations";
+import { FbrEnvironment } from "@/shared/types/fbr";
 
 // FBR API endpoints
 const FBR_ENDPOINTS = {
@@ -16,7 +17,7 @@ const httpClient = new HttpClientApi();
 export interface FBRSubmissionRequest {
   userId: string;
   invoiceData: FBRInvoiceData;
-  environment: "sandbox" | "production";
+  environment: FbrEnvironment;
   apiKey: string;
   maxRetries?: number;
   timeout?: number;
@@ -179,7 +180,9 @@ async function formatInvoiceDataForFBR(invoiceData: FBRInvoiceData, userId: stri
     buyerRegistrationType: invoiceData.buyerRegistrationType || "Registered",
     invoiceRefNo: invoiceRefNo,
     scenarioId: invoiceData.scenarioId,
-    items: invoiceData.items.map((item) => convertItemToFBRFormat(item, saleType, invoiceData.scenarioId, (item as any).rate_description)),
+    items: invoiceData.items.map((item) =>
+      convertItemToFBRFormat(item, saleType, invoiceData.scenarioId, (item as any).rate_description)
+    ),
   };
 }
 

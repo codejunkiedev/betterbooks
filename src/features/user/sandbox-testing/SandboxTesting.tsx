@@ -11,8 +11,13 @@ import { AlertCircle, FileText, Search } from "lucide-react";
 import { getFbrConfigStatus, getFbrProfileByUser, getUserSuccessfulScenarios } from "@/shared/services/supabase/fbr";
 import { FBR_API_STATUS } from "@/shared/constants/fbr";
 import { getTaxScenariosByBusinessActivityAndSector, TaxScenario } from "@/shared/constants";
+import { FbrEnvironment } from "@/shared/types/fbr";
 
-export default function SandboxTesting() {
+type SandboxTestingProps = {
+  environment?: FbrEnvironment;
+};
+
+export default function SandboxTesting({ environment = "sandbox" }: SandboxTestingProps) {
   const { user } = useSelector((s: RootState) => s.user);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -20,19 +25,23 @@ export default function SandboxTesting() {
 
   const [scenarios, setScenarios] = useState<TaxScenario[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasValidSandboxKey, setHasValidSandboxKey] = useState(false);
+  const [hasValidApiKey, setHasValidApiKey] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [successfulScenarios, setSuccessfulScenarios] = useState<string[]>([]);
+
+  const isSandbox = environment === "sandbox" || false;
 
   useEffect(() => {
     (async () => {
       try {
         if (!user?.id) return;
         setLoading(true);
-        if (hasValidSandboxKey === false) {
+        if (hasValidApiKey === false) {
           const config = await getFbrConfigStatus(user.id);
-          const hasValidKey = config.sandbox_status === FBR_API_STATUS.CONNECTED && !!config.sandbox_api_key;
-          setHasValidSandboxKey(hasValidKey);
+          const status = isSandbox ? config.sandbox_status : config.production_status;
+          const apiKey = isSandbox ? config.sandbox_api_key : config.production_api_key;
+          const hasValidKey = status === FBR_API_STATUS.CONNECTED && !!apiKey;
+          setHasValidApiKey(hasValidKey);
         }
       } catch (error) {
         console.error("Error checking FBR config status:", error);
@@ -45,12 +54,12 @@ export default function SandboxTesting() {
         setLoading(false);
       }
     })();
-  }, [hasValidSandboxKey, toast, user?.id]);
+  }, [hasValidApiKey, toast, user?.id, isSandbox]);
 
   useEffect(() => {
     (async () => {
       try {
-        if (!user?.id || !hasValidSandboxKey) return;
+        if (!user?.id || !hasValidApiKey) return;
         setLoading(true);
         const fbrProfile = await getFbrProfileByUser(user.id);
         const { activities, sectors } = fbrProfile || {};
@@ -83,7 +92,7 @@ export default function SandboxTesting() {
         setLoading(false);
       }
     })();
-  }, [hasValidSandboxKey, toast, user?.id]);
+  }, [hasValidApiKey, toast, user?.id]);
 
   useEffect(() => {
     (async () => {
@@ -111,15 +120,21 @@ export default function SandboxTesting() {
 
   const handleStartScenario = async (scenario: TaxScenario) => {
     if (!user?.id) return;
-    if (!hasValidSandboxKey) {
+    if (!hasValidApiKey) {
       toast({
         title: "API Not Configured",
-        description: "Please configure your FBR sandbox API key before starting scenarios.",
+        description: `Please configure your FBR ${
+          isSandbox ? "sandbox" : "production"
+        } API key before starting scenarios.`,
         variant: "destructive",
       });
       return;
     }
-    navigate(`/fbr/sandbox-testing/scenario/${scenario.id}`);
+    if (isSandbox) {
+      navigate(`/fbr/sandbox-testing/scenario/${scenario.id}`);
+    } else {
+      navigate(`/fbr/live-invoices/scenario/${scenario.id}`);
+    }
   };
 
   if (loading) {
@@ -216,8 +231,12 @@ export default function SandboxTesting() {
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between gap-6">
         <div className="space-y-3">
-          <h1 className="text-3xl font-bold tracking-tight">FBR Sandbox Testing</h1>
-          <p className="text-gray-500 text-lg">Start testing your FBR integration with these mandatory scenarios.</p>
+          <h1 className="text-3xl font-bold tracking-tight">FBR {isSandbox ? "Sandbox Testing" : "Live Invoices"}</h1>
+          <p className="text-gray-500 text-lg">
+            {isSandbox
+              ? "Start testing your FBR integration with these mandatory scenarios."
+              : "Create and submit live invoices to FBR. Use production API keys with caution."}
+          </p>
         </div>
         {scenarios.length > 0 && (
           <div className="flex-shrink-0 w-80">
@@ -235,11 +254,11 @@ export default function SandboxTesting() {
         )}
       </div>
 
-      {!hasValidSandboxKey && (
+      {!hasValidApiKey && (
         <Alert className="border-orange-200 bg-orange-50">
           <AlertCircle className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-800">
-            You need to configure a valid sandbox API key to test scenarios.{" "}
+            You need to configure a valid {isSandbox ? "sandbox" : "production"} API key to test scenarios.{" "}
             <Button
               variant="link"
               className="p-0 h-auto font-semibold text-orange-700 hover:text-orange-800"
@@ -283,7 +302,7 @@ export default function SandboxTesting() {
               key={scenario.id}
               scenario={scenario}
               onStartScenario={handleStartScenario}
-              isApiConfigured={hasValidSandboxKey}
+              isApiConfigured={hasValidApiKey}
               isSubmittedToFBR={successfulScenarios.includes(scenario.id)}
             />
           ))

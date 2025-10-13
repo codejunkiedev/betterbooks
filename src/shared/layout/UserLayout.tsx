@@ -8,6 +8,7 @@ import { Button } from "@/shared/components/Button";
 import { useNotifications } from "@/shared/hooks/useNotifications";
 import { NotificationBadge } from "@/shared/components/NotificationBadge";
 import { useModules } from "@/shared/hooks/useModules";
+import { useFbrConfig } from "@/shared/hooks/useFbrConfig";
 import { MODULES } from "@/shared/constants/modules";
 
 interface Company {
@@ -204,6 +205,7 @@ type SidebarContentProps = {
 function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false, isDark = false }: SidebarContentProps) {
     const { unreadCount } = useNotifications();
     const { hasAccounting, accountingTier, isModuleEnabled } = useModules();
+    const { isProductionConnected } = useFbrConfig();
 
     const handleNavigation = () => {
         onNavigate();
@@ -304,6 +306,17 @@ function SidebarContent({ isActive, onNavigate = () => { }, isCollapsed = false,
                         icon={<Target className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
                         label="Sandbox Testing"
                         active={isActive("/fbr/sandbox-testing")}
+                        onNavigate={handleNavigation}
+                        isCollapsed={isCollapsed}
+                        isDark={isDark}
+                    />
+                )}
+                {isModuleEnabled(MODULES.TAX_FILING) && isProductionConnected && (
+                    <SidebarLink
+                        to="/fbr/live-invoices"
+                        icon={<FileText className={`h-5 w-5 ${isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`} />}
+                        label="Live Invoices"
+                        active={isActive("/fbr/live-invoices")}
                         onNavigate={handleNavigation}
                         isCollapsed={isCollapsed}
                         isDark={isDark}
