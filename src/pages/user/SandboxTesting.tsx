@@ -1,9 +1,10 @@
 import { SandboxTesting } from "@/features/user";
+import { FbrEnvironment } from "@/shared/types/fbr";
 
 type SandboxTestingPageProps = {
-    isSandbox?: boolean;
+  environment?: FbrEnvironment;
 };
 
-export default function SandboxTestingPage({ isSandbox = true }: SandboxTestingPageProps) {
-    return <SandboxTesting isSandbox={isSandbox} />;
+export default function SandboxTestingPage({ environment = "sandbox" }: SandboxTestingPageProps) {
+  return <SandboxTesting environment={environment} />;
 }

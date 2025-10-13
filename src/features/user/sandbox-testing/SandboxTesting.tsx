@@ -11,12 +11,13 @@ import { AlertCircle, FileText, Search } from "lucide-react";
 import { getFbrConfigStatus, getFbrProfileByUser, getUserSuccessfulScenarios } from "@/shared/services/supabase/fbr";
 import { FBR_API_STATUS } from "@/shared/constants/fbr";
 import { getTaxScenariosByBusinessActivityAndSector, TaxScenario } from "@/shared/constants";
+import { FbrEnvironment } from "@/shared/types/fbr";
 
 type SandboxTestingProps = {
-  isSandbox?: boolean;
+  environment?: FbrEnvironment;
 };
 
-export default function SandboxTesting({ isSandbox = true }: SandboxTestingProps) {
+export default function SandboxTesting({ environment = "sandbox" }: SandboxTestingProps) {
   const { user } = useSelector((s: RootState) => s.user);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -27,6 +28,8 @@ export default function SandboxTesting({ isSandbox = true }: SandboxTestingProps
   const [hasValidApiKey, setHasValidApiKey] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [successfulScenarios, setSuccessfulScenarios] = useState<string[]>([]);
+
+  const isSandbox = environment === "sandbox" || false;
 
   useEffect(() => {
     (async () => {
@@ -120,12 +123,14 @@ export default function SandboxTesting({ isSandbox = true }: SandboxTestingProps
     if (!hasValidApiKey) {
       toast({
         title: "API Not Configured",
-        description: `Please configure your FBR ${isSandbox ? 'sandbox' : 'production'} API key before starting scenarios.`,
+        description: `Please configure your FBR ${
+          isSandbox ? "sandbox" : "production"
+        } API key before starting scenarios.`,
         variant: "destructive",
       });
       return;
     }
-    if (isSandbox){
+    if (isSandbox) {
       navigate(`/fbr/sandbox-testing/scenario/${scenario.id}`);
     } else {
       navigate(`/fbr/live-invoices/scenario/${scenario.id}`);
@@ -226,8 +231,12 @@ export default function SandboxTesting({ isSandbox = true }: SandboxTestingProps
     <div className="max-w-7xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between gap-6">
         <div className="space-y-3">
-          <h1 className="text-3xl font-bold tracking-tight">FBR {isSandbox ? 'Sandbox Testing' : 'Live Invoices'}</h1>
-          <p className="text-gray-500 text-lg">{isSandbox ? 'Start testing your FBR integration with these mandatory scenarios.' : 'Create and submit live invoices to FBR. Use production API keys with caution.'}</p>
+          <h1 className="text-3xl font-bold tracking-tight">FBR {isSandbox ? "Sandbox Testing" : "Live Invoices"}</h1>
+          <p className="text-gray-500 text-lg">
+            {isSandbox
+              ? "Start testing your FBR integration with these mandatory scenarios."
+              : "Create and submit live invoices to FBR. Use production API keys with caution."}
+          </p>
         </div>
         {scenarios.length > 0 && (
           <div className="flex-shrink-0 w-80">
@@ -249,7 +258,7 @@ export default function SandboxTesting({ isSandbox = true }: SandboxTestingProps
         <Alert className="border-orange-200 bg-orange-50">
           <AlertCircle className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-800">
-            You need to configure a valid {isSandbox ? 'sandbox' : 'production'} API key to test scenarios.{" "}
+            You need to configure a valid {isSandbox ? "sandbox" : "production"} API key to test scenarios.{" "}
             <Button
               variant="link"
               className="p-0 h-auto font-semibold text-orange-700 hover:text-orange-800"
