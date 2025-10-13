@@ -119,7 +119,15 @@ export const AppRoutes = () => {
                     path: "fbr/sandbox-testing",
                     element: (
                         <ModuleGuard module={MODULES.TAX_FILING}>
-                            <SandboxTesting />
+                            <SandboxTesting isSandbox={true} />
+                        </ModuleGuard>
+                    )
+                },
+                {
+                    path: "fbr/live-invoices",
+                    element: (
+                        <ModuleGuard module={MODULES.TAX_FILING}>
+                            <SandboxTesting isSandbox={false} />
                         </ModuleGuard>
                     )
                 },
@@ -127,7 +135,15 @@ export const AppRoutes = () => {
                     path: "fbr/sandbox-testing/scenario/:scenarioId",
                     element: (
                         <ModuleGuard module={MODULES.TAX_FILING}>
-                            <ScenarioInvoiceForm />
+                            <ScenarioInvoiceForm environment="sandbox" />
+                        </ModuleGuard>
+                    )
+                },
+                {
+                    path: "fbr/live-invoices/scenario/:scenarioId",
+                    element: (
+                        <ModuleGuard module={MODULES.TAX_FILING}>
+                            <ScenarioInvoiceForm environment="production" />
                         </ModuleGuard>
                     )
                 },

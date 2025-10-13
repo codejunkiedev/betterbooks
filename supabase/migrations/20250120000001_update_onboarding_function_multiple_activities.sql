@@ -11,7 +11,7 @@ DROP FUNCTION IF EXISTS public.complete_onboarding_transaction(
 );
 
 -- Create updated function with multiple business activities support
-CREATE OR REPLACE FUNCTION complete_onboarding_transaction(
+CREATE OR REPLACE FUNCTION public.complete_onboarding_transaction(
     p_user_id UUID,
     p_company_data JSONB,
     p_fbr_data JSONB,
@@ -314,8 +314,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Grant execute permission to authenticated users
-GRANT EXECUTE ON FUNCTION complete_onboarding_transaction TO authenticated;
+-- Grant execute permission to authenticated users (with full signature)
+GRANT EXECUTE ON FUNCTION public.complete_onboarding_transaction(UUID, JSONB, JSONB, JSONB, BOOLEAN, BOOLEAN) TO authenticated;
 
--- Add comment
-COMMENT ON FUNCTION complete_onboarding_transaction IS 'Completes user onboarding with company creation, FBR profile setup, and multiple business activities support';
+-- Add comment (with full signature)
+COMMENT ON FUNCTION public.complete_onboarding_transaction(UUID, JSONB, JSONB, JSONB, BOOLEAN, BOOLEAN) IS 'Completes user onboarding with company creation, FBR profile setup, and multiple business activities support';

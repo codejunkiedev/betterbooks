@@ -115,10 +115,31 @@ CREATE INDEX IF NOT EXISTS idx_business_activity_sector_scenario_scenario ON pub
 ALTER TABLE public.user_business_activities ADD COLUMN IF NOT EXISTS business_activity_sector_combination_id INTEGER;
 
 -- Update the new column with the correct combination IDs
-UPDATE public.user_business_activities 
-SET business_activity_sector_combination_id = mapping.new_id
-FROM business_activity_mapping mapping
-WHERE user_business_activities.business_activity_id = mapping.old_id;
+-- Check if business_activity_id column exists (from migration 20250120000000)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'user_business_activities'
+        AND column_name = 'business_activity_id'
+    ) THEN
+        UPDATE public.user_business_activities
+        SET business_activity_sector_combination_id = mapping.new_id
+        FROM business_activity_mapping mapping
+        WHERE user_business_activities.business_activity_id = mapping.old_id;
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'user_business_activities'
+        AND column_name = 'business_activity_type_id'
+    ) THEN
+        -- Handle the case where we have business_activity_type_id instead
+        -- This would need proper mapping from business_activity_types to the new structure
+        -- For now, we'll skip the update as the mapping would be different
+        RAISE NOTICE 'user_business_activities table has business_activity_type_id column - manual migration may be required';
+    END IF;
+END $$;
 
 -- Add foreign key constraint for the new column
 ALTER TABLE public.user_business_activities 
@@ -135,11 +156,45 @@ ALTER TABLE public.sectors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.business_activity_sector_combinations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.business_activity_sector_scenario ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies for new tables
-CREATE POLICY business_activities_select_all ON public.business_activities FOR SELECT USING (true);
-CREATE POLICY sectors_select_all ON public.sectors FOR SELECT USING (true);
-CREATE POLICY business_activity_sector_combinations_select_all ON public.business_activity_sector_combinations FOR SELECT USING (true);
-CREATE POLICY business_activity_sector_scenario_select_all ON public.business_activity_sector_scenario FOR SELECT USING (true);
+-- Create RLS policies for new tables (with existence checks)
+DO $$
+BEGIN
+    -- Policy for business_activities
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'business_activities_select_all'
+        AND tablename = 'business_activities'
+    ) THEN
+        CREATE POLICY business_activities_select_all ON public.business_activities FOR SELECT USING (true);
+    END IF;
+
+    -- Policy for sectors
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'sectors_select_all'
+        AND tablename = 'sectors'
+    ) THEN
+        CREATE POLICY sectors_select_all ON public.sectors FOR SELECT USING (true);
+    END IF;
+
+    -- Policy for business_activity_sector_combinations
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'business_activity_sector_combinations_select_all'
+        AND tablename = 'business_activity_sector_combinations'
+    ) THEN
+        CREATE POLICY business_activity_sector_combinations_select_all ON public.business_activity_sector_combinations FOR SELECT USING (true);
+    END IF;
+
+    -- Policy for business_activity_sector_scenario
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'business_activity_sector_scenario_select_all'
+        AND tablename = 'business_activity_sector_scenario'
+    ) THEN
+        CREATE POLICY business_activity_sector_scenario_select_all ON public.business_activity_sector_scenario FOR SELECT USING (true);
+    END IF;
+END $$;
 
 -- Create views for easy querying
 CREATE OR REPLACE VIEW public.business_activity_sector_combinations_view AS

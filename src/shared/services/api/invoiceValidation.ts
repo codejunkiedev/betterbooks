@@ -9,6 +9,12 @@ export type { InvoiceValidationResponse } from "@/shared/types/fbrValidation";
 
 const httpClient = new HttpClientApi();
 
+// FBR API endpoints for validation
+const FBR_VALIDATION_ENDPOINTS = {
+  sandbox: "https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata_sb",
+  production: "https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata",
+} as const;
+
 /**
  * Process FBR API response to determine if it's a success or error
  */
@@ -259,9 +265,10 @@ export async function validateInvoice(
   options: {
     includeFBRValidation?: boolean;
     userId?: string;
+    environment?: "sandbox" | "production";
   } = {}
 ): Promise<InvoiceValidationResponse> {
-  const { includeFBRValidation = true } = options;
+  const { includeFBRValidation = true, environment = "sandbox" } = options;
 
   if (!includeFBRValidation) {
     return {
@@ -288,16 +295,19 @@ export async function validateInvoice(
     // Get FBR API configuration
     const config = await getFbrConfigStatus(options.userId || "");
 
-    if (!config.sandbox_api_key) {
-      throw new Error("FBR API key not configured");
+    // Select appropriate API key based on environment
+    const apiKey = environment === "production" ? config.production_api_key : config.sandbox_api_key;
+
+    if (!apiKey) {
+      throw new Error(`FBR ${environment} API key not configured`);
     }
 
     // Call FBR validation API
     const response = await httpClient.request({
       method: "POST",
-      url: "https://gw.fbr.gov.pk/di_data/v1/di/validateinvoicedata_sb",
+      url: FBR_VALIDATION_ENDPOINTS[environment],
       headers: {
-        Authorization: `Bearer ${config.sandbox_api_key}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       data: invoiceData,

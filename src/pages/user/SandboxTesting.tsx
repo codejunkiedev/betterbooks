@@ -1,5 +1,9 @@
 import { SandboxTesting } from "@/features/user";
 
-export default function SandboxTestingPage() {
-    return <SandboxTesting />;
+type SandboxTestingPageProps = {
+    isSandbox?: boolean;
+};
+
+export default function SandboxTestingPage({ isSandbox = true }: SandboxTestingPageProps) {
+    return <SandboxTesting isSandbox={isSandbox} />;
 }
